@@ -1,0 +1,11 @@
+ledctl.8.gz
+ledctl.conf.5.gz
+ledmon.8.gz
+*.o
+_build
+ledmon
+ledctl
+*~
+*.bak
+.depend
+*.swp

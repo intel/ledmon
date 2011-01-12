@@ -1,0 +1,117 @@
+=head1 NAME
+
+ledmon - Intel(R) LED monitor service for storage enclosures.
+
+=head1 SYNOPSIS
+
+B<ledmon> [I<OPTIONS>]
+
+=head1 DESCRIPTION
+
+The ledmon application is a daemon process used to monitor a state of
+software RAID devices (md only) or a state of block devices. The state
+is visualizing on LEDs associated to each slot in an enclosure or a
+drive bay. There are two types of system: 2-LEDs system (Activity LED,
+Status LED) and 3-LEDs system (Activity LED, Locate LED, Fail
+LED). This application has the highest priority when accessing the
+LEDs.
+
+The ledmon application uses SGPIO and SES-2 protocol to control
+LEDs. The program implements IBPI patterns of SFF-8489 specification
+for SGPIO. Please note some enclosures do not stick close to SFF-8489
+specification. It might happen that enclosure processor will accept
+IBPI pattern but it will blink LEDs not according to SFF-8489
+specification or it has limited number of patterns supported.
+
+LED management (AHCI) and SAF-TE protocols are not supported.
+
+There's no method provided to specify which RAID volume should be monitored
+and which not. The ledmon application monitors all RAID devices and visualizes
+their state.
+
+The ledmon application has been verified to work with Intel(R) storage
+controllers (i.e. Intel(R) AHCI controller). The application might work with
+storage controllers of other vendors (especially SAS/SCSI
+controllers). However storage controllers of other vendors have not been
+tested.
+
+The ledmon application is part of Intel(R) Enclosure LED Utilities. Only
+single instance of the application is allowed.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-c> or B<--config>=I<path>
+
+Sets a path to local configuration file. If this option is specified the
+global configuration file and user configuration file has no effect.
+
+=item B<-l> or B<--log>=I<path>
+
+Sets a path to local log file. If this option is specified the global log
+file F</var/log/ledctl.log> is not used.
+
+=item B<-t> or B<--interval>=I<seconds>
+
+Sets time interval between scans of sysfs. The value is given in seconds.
+The minimum is 5 seconds the maximum is not specified.
+
+=item B<--quiet> or B<--error> or B<--warning> or B<--info> or B<--debug> or B<--all>
+
+Verbose level - 'quiet' means no logging at all and 'all' means to log
+everything. The levels are given in order. If user specifies more then one
+verbose option the last option comes into effect.
+
+=item B<-h> or B<--help>
+
+Prints this text out and exits.
+
+=item B<-v> or B<--version>
+
+Displays version of ledctl and information about the license and exits.
+
+=back
+
+=head1 FILES
+
+=over 8
+
+=item F</var/log/ledctl.log>
+
+Global log file, used by ledmon application. To force logging to user defined
+file use I<-l> option switch.
+
+=item F<~/.ledctl>
+
+User configuration file, shared between ledmon and all ledctl application
+instances.
+
+=item F</etc/ledcfg.conf>
+
+Global configuration file, shared between ledmon and all ledctl application
+instances.
+
+=back
+
+=head1 LICENSE
+
+Copyright (c) 2009 Intel Corporation. All rights reserved.
+
+This program is distributed under the terms of the GNU General Public License
+as published by the Free Software Foundation. See the build-in help for details
+on the License and the lack of warranty.
+
+=head1 BUGS
+
+The ledmon application does not recognize PFA state (Predicted Failure Analysis),
+hence the PFA pattern from SFF-8489 specification is not visualized.
+
+=head1 SEE ALSO
+
+ledctl(8), ledctl.conf(5)
+
+=head1 AUTHOR
+
+This manual page was written by Artur Wojcik <artur.wojcik@intel.com>. It may
+be used by others.

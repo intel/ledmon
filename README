@@ -1,0 +1,27 @@
+This package contains the Enclosure LED Utilities, version 0.1
+
+Copyright (C) 2009 Intel Corporation. All rights reserved.
+
+All files in this package can be freely distributed and used according
+to the terms of the GNU General Public License, version 2. 
+See http://www.gnu.org/ for details.
+
+1. Compiling the package.
+-------------------------
+
+Run "make" command to compile the package.
+
+2. (Un)installing the package.
+--------------------------
+
+Run "make install" to install the package. The default location for
+ledctl and ledmon applications is /usr/sbin directory. The default 
+location for documentation is /usr/share/man directory.
+
+Run "make DESTDIR=<path> install" to prepend 'path' to the default
+install location. The ledctl and ledmon applications will be installed
+in $DESTDIR/usr/sbin directory and the manual pages will be installed
+in $DESTDIR/usr/share/man directory.
+
+Run "make uninstall" to uninstall the package from default location. 
+Set DESTDIR variable to uninstall the package from non-default location.

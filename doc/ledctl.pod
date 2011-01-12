@@ -1,0 +1,190 @@
+=head1 NAME
+
+ledctl - Intel(R) LED control application for a storage enclosures.
+
+=head1 SYNOPSIS
+
+B<ledctl> [I<OPTIONS>] I<pattern_name>=I<list_of_devices> ...
+
+=head1 DESCRIPTION
+
+The ledctl is user space application design to control LEDs associated with each
+slot in an enclosure or a drive bay. There are two types of system: 2-LEDs
+system (Activity LED, Status LED) and 3-LEDs system (Activity LED, Locate LED,
+Fail LED). User must have root privileges to use this application.
+
+The ledctl application uses SGPIO and SES-2 protocol to control LEDs.
+The program implements IBPI patterns of SFF-8489 specification for SGPIO.
+Please note some enclosures do not stick close to SFF-8489 specification.
+It might happen that enclosure processor will accept an IBPI pattern but it will
+blink the LEDs not according to SFF-8489 specification or it has limited number
+of patterns supported.
+
+LED management (AHCI) and S<SAF-TE> protocols are not supported.
+
+The ledctl application has been verified to work with Intel(R) storage
+controllers (i.e. Intel(R) AHCI controller). The application might work with
+storage controllers of other vendors (especially SCSI/SAS
+controllers). However storage controllers of other vendors have not been
+tested.
+
+The ledmon application has the highest priority when accessing LEDs then other
+programs. It means some patterns set by ledctl may have no effect
+(except Locate pattern).
+
+The ledctl application is part of Intel(R) Enclosure LED Utilities.
+
+=head2 Pattern Names
+
+The ledctl application accepts the following names for I<pattern_name> argument
+according to SFF-8489 specification.
+
+=over 8
+
+=item B<locate>
+
+Turns Locate LED associated with the given device(s) or empty slot(s) on.
+
+=item B<locate_off>
+
+Only turns Locate LED off.
+
+=item B<normal>
+
+Turns Status LED, Failure LED and Locate LED off.
+
+=item B<off>
+
+Only turns Status LED and Failure LED off.
+
+=item B<ica> or B<degraded>
+
+Visualizes "In a Critical Array" pattern.
+
+=item B<rebuild> or B<rebuild_p>
+
+Visualizes "Rebuild" pattern.
+
+=item B<ifa> or B<failed_array>
+
+Visualizes "In a Failed Array" pattern.
+
+=item B<hotspare>
+
+Visualizes "Hotspare" pattern.
+
+=item B<pfa>
+
+Visualizes "Predicted Failure Analysis" pattern.
+
+=item B<failure> or B<disk_failed>
+
+Visualizes "Failure" pattern.
+
+=back
+
+=head2 List of Devices
+
+The application accepts a list of devices in two formats. The first
+format is a list with comma separated elements. The second format is S<a
+list> in curly braces and elements are separated by space. See examples
+section bellow for details.
+
+A device is a path to file in /dev directory or in /sys/block directory.
+It may identify a block device, a RAID device or a container device.
+In case of RAID device or container device a state will be set for all
+block devices associated, respectively.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-c> or B<--config>=I<path>
+
+Sets a path to local configuration file. If this option is specified the
+global configuration file and user configuration file has no effect.
+
+=item B<-l> or B<--log>=I<path>
+
+Sets a path to local log file. If this option is specified the global log
+file F</var/log/ledctl.log> is not used.
+
+=item B<--quiet>
+
+Turns off all messages send to C<stdout> or C<stderr> out. The messages
+will be still logged to local file and syslog facility.
+
+=item B<-h> or B<--help>
+
+Prints this text out and exits.
+
+=item B<-v> or B<--version>
+
+Displays version of ledctl and information about the license and exits.
+
+=back
+
+=head1 FILES
+
+=over 8
+
+=item F</var/log/ledctl.log>
+
+Global log file, used by all instances of ledctl application. To force logging
+to user defined file use I<-l> option switch.
+
+=item F<~/.ledctl>
+
+User configuration file, shared between ledmon and all ledctl application
+instances.
+
+=item F</etc/ledcfg.conf>
+
+Global configuration file, shared between ledmon and all ledctl application
+instances.
+
+=back
+
+=head1 EXAMPLES
+
+The following example illustrates how to locate a single block device.
+
+    ledctl locate=/dev/sda
+
+The following example illustrates how to off Locate LED for the same block
+device.
+
+    ledctl locate_off=/dev/sda
+
+The following example illustrates how to locate disks of a RAID device and
+how to set rebuild pattern for two block devices at the same time. This example
+uses both formats of device list.
+
+     ledctl locate=/dev/md127 rebuild={ /sys/block/sd[a-b] }
+
+The following example illustrates how to off Status LED and Failure LED for
+the given device(s).
+
+     ledctl off={ /dev/sda /dev/sdb }
+
+The following example illustrates how to locate a three block devices. This
+example uses first format of device list.
+
+     ledctl locate=/dev/sda,/dev/sdb,/dev/sdc
+
+=head1 LICENSE
+
+Copyright (c) 2009 Intel Corporation. All rights reserved.
+
+This program is distributed under the terms of the GNU General Public License
+as published by the Free Software Foundation. See the built-in help for
+details on the License and the lack of warranty.
+
+=head1 SEE ALSO
+
+ledmon(8), ledctl.conf(5)
+
+=head1 AUTHOR
+
+This manual page was written by Artur Wojcik <artur.wojcik@intel.com>. It may
+be used by others.

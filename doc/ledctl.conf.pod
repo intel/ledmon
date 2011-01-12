@@ -1,0 +1,26 @@
+=head1 NAME
+
+ledctl.conf - Configuration file for Intel(R) Enclosure LED Utilities.
+
+=head1 DESCRIPTION
+
+This feature is not yet implemented. The Intel(R) Enclosure LED Utilities does
+not use a configuration file at the moment. The name and location of file has
+been reserved for feature improvements.
+
+=head1 LICENSE
+
+Copyright (c) 2009 Intel Corporation. All rights reserved.
+
+This program is distributed under the terms of the GNU General Public License
+as published by the Free Software Foundation. See the built-in help for details
+on the License and the lack of warranty.
+
+=head1 SEE ALSO
+
+ledmon(8), ledctl(8)
+
+=head1 AUTHOR
+
+This manual page was written by Artur Wojcik <artur.wojcik@intel.com>. It may
+be used by others.

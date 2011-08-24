@@ -1,6 +1,6 @@
 #
 # Intel(R) Enclosure LED Utilities
-# Copyright (C) 2009 Intel Corporation. All rights reserved.
+# Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -54,4 +54,3 @@ mrproper:
 TAGS_FILES=$(shell ls Makefile src/Makefile */*.[ch])
 TAGS: $(TAGS_FILES)
 	@etags $(TAGS_FILES)
-

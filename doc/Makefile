@@ -1,6 +1,6 @@
 #
 # Intel(R) Enclosure LED Control Utilities
-# Copyright (C) 2009 Intel Corporation. All rights reserved.
+# Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -23,20 +23,21 @@ MAN_INSTDIR=$(DESTDIR)/usr/share/man
 MAN8_INSTDIR=$(MAN_INSTDIR)/man8
 MAN5_INSTDIR=$(MAN_INSTDIR)/man5
 
-RELEASE_DATE="September 2009"
+RELEASE_DATE="June 2011"
+RELEASE_VER=0.2
 
 default: all
 
 ledctl.conf.5.gz: ledctl.conf.pod
-	pod2man -r "LEDCTL.CONF Version 0.1" -d $(RELEASE_DATE) \
+	pod2man -r "LEDCTL.CONF Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
 		-s 5 -n ledctl.conf -c "Inter(R) Enclosure LED Utilities Config" $< | gzip -9f > $@
 
 ledmon.8.gz: ledmon.pod
-	pod2man -r "LEDMON Version 0.1" -d $(RELEASE_DATE) \
+	pod2man -r "LEDMON Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
 		-s 8 -n ledmon -c "Intel(R) Enclosure LED Monitor Service" $< | gzip -9f > $@
 
 ledctl.8.gz: ledctl.pod
-	pod2man -r "LEDCTL Version 0.1" -d $(RELEASE_DATE) \
+	pod2man -r "LEDCTL Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
 		-s 8 -n ledctl -c "Intel(R) Enclosure LED Control Application" $< | gzip -9f > $@	
 
 install: all

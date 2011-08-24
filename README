@@ -1,6 +1,6 @@
-This package contains the Enclosure LED Utilities, version 0.1
+This package contains the Enclosure LED Utilities, version 0.2a
 
-Copyright (C) 2009 Intel Corporation. All rights reserved.
+Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
 
 All files in this package can be freely distributed and used according
 to the terms of the GNU General Public License, version 2. 
@@ -25,3 +25,6 @@ in $DESTDIR/usr/share/man directory.
 
 Run "make uninstall" to uninstall the package from default location. 
 Set DESTDIR variable to uninstall the package from non-default location.
+
+Note:
+This update removes the dependency of smp_utils to access isci hba.

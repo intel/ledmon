@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,34 +20,8 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef _SCSI_H_INCLUDED
-#define _SCSI_H_INCLUDED
-
-/**
- * @brief Gets a path to slot of an enclosure.
- *
- * This function returns a sysfs path to component of enclosure the device
- * belongs to.
- *
- * @param[in]      path           Canonical sysfs path to block device.
- *
- * @return A sysfs path to enclosure's component associated with the given
- *         block device if successful, otherwise NULL pointer.
- */
-char *scsi_get_slot_path(const char *path, const char *cntrl_path);
-
-/**
- * @brief Gets a path to slot of sas controller.
- *
- * This function returns a sysfs path to component of enclosure the device
- * belongs to.
- *
- * @param[in]      path           Canonical sysfs path to block device.
- *
- * @return A sysfs path to controller device associated with the given
- *         block device if successful, otherwise NULL pointer.
- */
-char *sas_get_slot_path(const char *path, const char *ctrl_path);
+#ifndef _SMP_H_INCLUDED
+#define _SMP_H_INCLUDED
 
 /**
  * @brief Sends message to SES processor of an enclosure.
@@ -63,5 +37,24 @@ char *sas_get_slot_path(const char *path, const char *ctrl_path);
  *         and errno is set to appropriate error code.
  */
 int scsi_libsas_write(struct block_device *device, enum ibpi_pattern ibpi);
+
+/**
+ * @brief Sends message to SMP device.
+ *
+ * This function triggers gpio order to control LEDs of
+ * the given component.
+ *
+ * @param[in]      device         Path to a smp device in sysfs.
+ * @param[in]      ibpi           IBPI pattern to visualize.
+ *
+ * @return Number of bytes written to device if successful or -1 in case of error
+ *         and errno is set to appropriate error code.
+ */
+int scsi_smputil_write(struct block_device *device, enum ibpi_pattern ibpi);
+
+/**
+ * @brief Init smp and get phy index,
+ */
+int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl);
 
 #endif /* _SCSI_H_INCLUDED_ */

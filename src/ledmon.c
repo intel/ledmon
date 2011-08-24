@@ -249,11 +249,11 @@ static void _ledmon_help(void)
          "\t\t\t\t  The smallest interval is 5 seconds.\n");
   printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file " \
          "(not yet\n\t\t\t\t  implemented).\n");
-  printf("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/l" \
-         "ledctl.log global file.\n");
+  printf("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/" \
+         "ledmon.log global file.\n");
   printf("--help\t\t\t\t  Displays this help text.\n");
   printf("--version\t\t\t  Displays version and license information.\n\n");
-  printf("Refer to ledctl(8) man page for more detailed description.\n");
+  printf("Refer to ledmon(8) man page for more detailed description.\n");
   printf("Report bugs to: artur.wojcik@intel.com\n\n");
 }
 
@@ -577,7 +577,7 @@ static void _send_msg(struct block_device *block)
       block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
     }
   }
-  block->send_fn(block->cntrl_path, block->ibpi);
+  block->send_fn(block, block->ibpi);
 }
 
 /**

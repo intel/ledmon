@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -430,8 +430,8 @@ void set_invocation_name(char *invocation_name)
  */
 char *str_cpy(char *dest, const char *src, size_t size)
 {
-  strncpy(dest, src, size);
-  if (size <= strlen(src)) {
+  strncpy(dest, src, size - 1);
+  if (size < strlen(src)) {
     dest[size - 1] = '\0';
   }
   return dest;
@@ -457,5 +457,42 @@ char *str_cat(char *dest, const char *src, size_t size)
     dest[size - 1] = '\0';
   }
   return dest;
+}
+
+char *get_path_component_rev(const char *path, int index)
+{
+  int i;
+  char *c = NULL, *p = strdup(path);
+  char *result = NULL;
+  for (i = 0; i <= index; i++)
+  {
+      if (c) {
+        *c = '\0';
+      }
+      c = strrchr(p, '/');
+  }
+  if (c)
+    result = strdup(c + 1);
+  free(p);
+  return result;
+}
+
+char *truncate_path_component_rev(const char *path, int index)
+{
+  int i;
+  char *c = NULL, *p = str_dup(path);
+  if (!p)
+    return NULL;
+
+  for (i = 0; i <= index; i++)
+  {
+      if (c) {
+        *c = '\0';
+      }
+      c = strrchr(p, '/');
+  }
+  c = strdup(p);
+  free(p);
+  return c;
 }
 

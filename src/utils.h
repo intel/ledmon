@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -325,5 +325,13 @@ char *str_dup(const char *src);
  * @return Pointer to destination buffer even if function failed.
  */
 char *str_cat(char *dest, const char *src, size_t size);
+
+/**
+ */
+char *truncate_path_component_rev(const char *path, int index);
+
+/**
+ */
+char *get_path_component_rev(const char *path, int index);
 
 #endif /* _UTILS_H_INCLUDED_ */

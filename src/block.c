@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -46,11 +46,22 @@
 #include "raid.h"
 #include "cntrl.h"
 #include "scsi.h"
+#include "smp.h"
 #include "ahci.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
    device structure. See block.h for details. */
 time_t timestamp = 0;
+
+/**
+ * @brief Determines if disk is attached directly or via expander
+ */
+static int _is_directly_attached(const char *path)
+{
+  if (strstr(path, "/expander") == 0)
+      return 1;
+  return 0;
+}
 
 /**
  * @brief Determines a send function.
@@ -68,14 +79,16 @@ time_t timestamp = 0;
  *         returns the NULL pointer and it means either the controller does not
  *         support enclosure management or LED control protocol is not supported.
  */
-static send_message_t _get_send_fn(enum cntrl_type type, const char *path)
+static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 {
   send_message_t result = NULL;
 
-  if (type == CNTRL_TYPE_AHCI) {
+  if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
     result = ahci_sgpio_write;
-  } else if (type == CNTRL_TYPE_SCSI) {
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && !_is_directly_attached(path)) {
     result = scsi_libsas_write;
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(path)) {
+    result = scsi_smputil_write;
   }
   return result;
 }
@@ -87,19 +100,19 @@ static send_message_t _get_send_fn(enum cntrl_type type, const char *path)
  * determines a host path to block device in sysfs.
  *
  * @param[in]      path           path to block device in sysfs.
- * @param[in]      cntrl          path to controller device in sysfs the block
+ * @param[in]      cntrl          controller device the block
  *                                device is connected to.
  *
  * @return Pointer to memory block containing a host path. The memory block
  *         should be freed if one don't need the content.
  */
-static char *_get_host(char *path, enum cntrl_type type)
+static char *_get_host(char *path, struct cntrl_device *cntrl)
 {
   char *result = NULL;
 
-  if (type == CNTRL_TYPE_SCSI) {
-    result = scsi_get_slot_path(path);
-  } else if (type == CNTRL_TYPE_AHCI) {
+  if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+    result = scsi_get_slot_path(path, cntrl->sysfs_path);
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
     result = ahci_get_port_path(path);
   }
   return result;
@@ -150,15 +163,21 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
   char link[PATH_MAX], *host;
   struct block_device *device = NULL;
   send_message_t send_fn = NULL;
+  int cntrl_phy_index = -1;
 
   if (realpath(path, link)) {
     if ((cntrl = _get_controller(cntrl_list, link)) == NULL) {
       return NULL;
     }
-    if ((host = _get_host(link, cntrl->cntrl_type)) == NULL) {
+    if ((host = _get_host(link, cntrl)) == NULL) {
       return NULL;
     }
-    if ((send_fn = _get_send_fn(cntrl->cntrl_type, host)) == NULL) {
+
+    if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(link)) {
+        cntrl_phy_index = isci_cntrl_init_smp(link, cntrl);
+    }
+
+    if ((send_fn = _get_send_fn(cntrl, host)) == NULL) {
       free(host);
       return NULL;
     }
@@ -170,6 +189,7 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
       device->ibpi = IBPI_PATTERN_UNKNOWN;
       device->send_fn = send_fn;
       device->timestamp = timestamp;
+      device->phy_index = cntrl_phy_index;
     } else {
       free(host);
     }
@@ -213,6 +233,7 @@ struct block_device * block_device_duplicate(struct block_device *block)
       result->send_fn = block->send_fn;
       result->timestamp = block->timestamp;
       result->cntrl = block->cntrl;
+      result->phy_index = block->phy_index;
     }
   }
   return result;

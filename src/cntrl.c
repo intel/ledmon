@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -37,6 +37,13 @@
 #include "utils.h"
 #include "sysfs.h"
 
+enum int_cntrl_type {
+  INT_CNTRL_TYPE_UNKNOWN = CNTRL_TYPE_UNKNOWN,
+  INT_CNTRL_TYPE_SCSI = CNTRL_TYPE_SCSI,
+  INT_CNTRL_TYPE_AHCI = CNTRL_TYPE_AHCI,
+  INT_CNTRL_TYPE_ISCI = CNTRL_TYPE_AHCI + 1
+};
+
 /**
  */
 static int _is_scsi_cntrl(const char *path)
@@ -44,6 +51,19 @@ static int _is_scsi_cntrl(const char *path)
   uint64_t class;
 
   if (sysfs_enclosure_attached_to_cntrl(path) == 0)
+    return 0;
+
+  class = get_uint64(path, 0, "class");
+  return (class & 0xff0000L) == 0x010000L;
+}
+
+/**
+ */
+static int _is_isci_cntrl(const char *path)
+{
+  uint64_t class;
+
+  if (sysfs_isci_driver(path) == 0)
     return 0;
 
   class = get_uint64(path, 0, "class");
@@ -82,15 +102,19 @@ static int _is_ahci_cntrl(const char *path)
  *         CNTRL_TYPE_UNKNOWN this means a controller device is not
  *         supported.
  */
-static enum cntrl_type _get_type(const char *path)
+static enum int_cntrl_type _get_type(const char *path)
 {
+  enum int_cntrl_type type = CNTRL_TYPE_UNKNOWN;
   if (_is_scsi_cntrl(path)) {
-    return CNTRL_TYPE_SCSI;
+    type = CNTRL_TYPE_SCSI;
+  }
+  if (_is_isci_cntrl(path)) {
+    type = INT_CNTRL_TYPE_ISCI;
   }
   if (_is_ahci_cntrl(path)) {
-    return CNTRL_TYPE_AHCI;
+    type = CNTRL_TYPE_AHCI;
   }
-  return CNTRL_TYPE_UNKNOWN;
+  return type;
 }
 
 /**
@@ -115,16 +139,17 @@ static unsigned int _ahci_em_messages(const char *path)
 struct cntrl_device * cntrl_device_init(const char *path)
 {
   unsigned int em_enabled;
-  enum cntrl_type type;
+  enum int_cntrl_type type;
   struct cntrl_device *device = NULL;
 
   type = _get_type(path);
-  if (type != CNTRL_TYPE_UNKNOWN) {
+  if (type != INT_CNTRL_TYPE_UNKNOWN) {
     switch (type) {
-    case CNTRL_TYPE_SCSI:
+    case INT_CNTRL_TYPE_ISCI:
+    case INT_CNTRL_TYPE_SCSI:
       em_enabled = 1;
       break;
-    case CNTRL_TYPE_AHCI:
+    case INT_CNTRL_TYPE_AHCI:
       em_enabled = _ahci_em_messages(path);
       break;
     default:
@@ -133,8 +158,15 @@ struct cntrl_device * cntrl_device_init(const char *path)
     if (em_enabled) {
       device = malloc(sizeof(struct cntrl_device));
       if (device) {
-        device->cntrl_type = type;
+        if (type == INT_CNTRL_TYPE_ISCI) {
+          device->isci_present = 1;
+          type = CNTRL_TYPE_SCSI;
+        } else {
+          device->isci_present = 0;
+        }
+        device->cntrl_type = (enum cntrl_type)type;
         device->sysfs_path = strdup(path);
+        device->ibpi_state_buffer = NULL;
       }
     } else {
       log_error("%s: enclosure management not " \
@@ -151,8 +183,7 @@ struct cntrl_device * cntrl_device_init(const char *path)
 void cntrl_device_fini(struct cntrl_device *device)
 {
   if (device) {
-    if (device->sysfs_path) {
-      free(device->sysfs_path);
-    }
+    free(device->sysfs_path);
+    free(device->ibpi_state_buffer);
   }
 }

@@ -68,10 +68,11 @@ static const unsigned int ibpi2sgpio[] = {
  * The function sends a LED control message to AHCI controller. It uses
  * SGPIO to control the LEDs. See ahci.h for details.
  */
-int ahci_sgpio_write(const char *sysfs_path, enum ibpi_pattern ibpi)
+int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
   char temp[WRITE_BUFFER_SIZE];
   char path[PATH_MAX];
+  char *sysfs_path = device->cntrl_path;
 
   if (sysfs_path == NULL) {
     __set_errno_and_return(EINVAL);

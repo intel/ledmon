@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -23,6 +23,8 @@
 #ifndef _BLOCK_H_INCLUDED_
 #define _BLOCK_H_INCLUDED_
 
+struct block_device;
+
 /**
  * @brief Pointer to a send message function.
  *
@@ -35,7 +37,7 @@
  *
  * @return 1 if successful, otherwise the function returns 0.
  */
-typedef int (* send_message_t)(const char *path, enum ibpi_pattern ibpi);
+typedef int (* send_message_t)(struct block_device *device, enum ibpi_pattern ibpi);
 
 /**
  * @brief Describes a block device.
@@ -85,6 +87,12 @@ struct block_device {
    * The pointer to storage controller structure the device is connected to.
    */
   struct cntrl_device *cntrl;
+
+	/**
+   * The index of phy utilized by directly attached to controller block device.
+   * It is meaningful if device is controlled by isci driver.
+   */
+  int phy_index;
 };
 
 /**

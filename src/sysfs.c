@@ -697,3 +697,20 @@ int sysfs_enclosure_attached_to_cntrl(const char *path)
   return (list_first_that(enclo_list, _enclo_match, path) != NULL);
 }
 
+/*
+ * This function checks if driver type is isci.
+ */
+int sysfs_isci_driver(const char *path)
+{
+  char buf[PATH_MAX];
+  char *link;
+  int found = 0;
+  str_cpy(buf, path, PATH_MAX);
+  str_cat(buf, "/driver", PATH_MAX);
+
+  link = realpath(buf, NULL);
+  if (link && strstr(link, "/isci"))
+    found = 1;
+  free(link);
+  return found;
+}

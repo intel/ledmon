@@ -41,6 +41,7 @@ OBJECTS=\
 	$(OUTDIR)/slave.o	\
 	$(OUTDIR)/status.o	\
 	$(OUTDIR)/sysfs.o	\
+	$(OUTDIR)/smp.o		\
 	$(OUTDIR)/utils.o
 
 # Build components of ledmon application.

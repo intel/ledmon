@@ -182,7 +182,7 @@ static void _ledctl_help(void)
   printf("\nUsage: %s [OPTIONS] pattern=list_of_devices ...\n\n", progname);
   printf("Mandatory arguments for long options are mandatory for short " \
     "options, too.\n\n");
-  printf("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/l" \
+  printf("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/" \
          "ledctl.log global file.\n");
   printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file " \
          "(not yet\n\t\t\t\t  implemented).\n");
@@ -575,7 +575,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
  */
 static void _send_cntrl_message(struct block_device *device)
 {
-  device->send_fn(device->cntrl_path, device->ibpi);
+  device->send_fn(device, device->ibpi);
 }
 
 /**

@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -38,6 +38,7 @@
 #include "status.h"
 #include "list.h"
 #include "block.h"
+#include "cntrl.h"
 #include "scsi.h"
 #include "enclosure.h"
 #include "sysfs.h"
@@ -123,8 +124,9 @@ static char * _slot_find(const char *enclo_path, const char *device_path)
 
 /**
  */
-int scsi_libsas_write(const char *sysfs_path, enum ibpi_pattern ibpi)
+int scsi_libsas_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
+  const char *sysfs_path = device->cntrl_path;
   if (sysfs_path == NULL) {
     __set_errno_and_return(EINVAL);
   }
@@ -134,6 +136,7 @@ int scsi_libsas_write(const char *sysfs_path, enum ibpi_pattern ibpi)
   switch (ibpi) {
   case IBPI_PATTERN_ONESHOT_NORMAL:
   case IBPI_PATTERN_NORMAL:
+
     _ENCLOSURE_STATUS(sysfs_path, STATUS_OK);
     _ENCLOSURE_FAULT(sysfs_path, VALUE_OFF);
     _ENCLOSURE_LOCATE(sysfs_path, VALUE_OFF);
@@ -161,7 +164,23 @@ int scsi_libsas_write(const char *sysfs_path, enum ibpi_pattern ibpi)
 
 /**
  */
-char *scsi_get_slot_path(const char *path)
+char *sas_get_slot_path(const char *path, const char *ctrl_path)
+{
+  char *host;
+  char host_path[PATH_MAX];
+  size_t ctrl_path_len = strlen(ctrl_path);
+
+  if (strncmp(path, ctrl_path, ctrl_path_len) != 0)
+    return NULL;
+  host = get_path_component_rev(path, /* for hostN */ 6);
+  snprintf(host_path, sizeof(host_path), "%s/%s/bsg/sas_%s", ctrl_path, host, host);
+  free(host);
+  return str_dup(host_path);
+}
+
+/**
+ */
+static char *_get_enc_slot_path(const char *path)
 {
   struct enclosure_device *device;
   char *result = NULL;
@@ -172,6 +191,19 @@ char *scsi_get_slot_path(const char *path)
       break;
     }
     device = list_next(device);
+  }
+  return result;
+}
+
+/**
+ */
+char *scsi_get_slot_path(const char *path, const char *ctrl_path)
+{
+  char *result = NULL;
+
+  result = _get_enc_slot_path(path);
+  if (!result) {
+    result = sas_get_slot_path(path, ctrl_path);
   }
   return result;
 }

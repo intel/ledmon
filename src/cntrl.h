@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009 Intel Corporation. All rights reserved.
+ * Copyright (C) 2009,2011 Intel Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -47,6 +47,16 @@ struct cntrl_device {
    * Type of storage controller device.
    */
   enum cntrl_type cntrl_type;
+
+  /**
+   * Flag if scsi controller driver is "isci"
+   */
+  int isci_present;
+
+  /**
+   * ibpi state buffer for directly attached devices
+   */
+  void *ibpi_state_buffer;
 };
 
 /**

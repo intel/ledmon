@@ -50,3 +50,8 @@ clean:
 mrproper: 
 	$(MAKE) -C src mrproper
 	$(MAKE) -C doc clean
+
+TAGS_FILES=$(shell ls Makefile src/Makefile */*.[ch])
+TAGS: $(TAGS_FILES)
+	@etags $(TAGS_FILES)
+

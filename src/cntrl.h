@@ -28,6 +28,7 @@
  */
 enum cntrl_type {
   CNTRL_TYPE_UNKNOWN = 0,
+  CNTRL_TYPE_DELLSSD,
   CNTRL_TYPE_SCSI,
   CNTRL_TYPE_AHCI
 };
@@ -53,10 +54,20 @@ struct cntrl_device {
    */
   int isci_present;
 
-  /**
-   * ibpi state buffer for directly attached devices
-   */
-  void *ibpi_state_buffer;
+  struct _host_type {
+    /**
+     * ibpi state buffer for directly attached devices
+     */
+    void *ibpi_state_buffer;
+    /**
+     * host identifier for different hba instances
+     */
+    int host_id;
+    /**
+     * pointer to next structure
+     */
+    struct _host_type *next;
+  } *hosts;
 };
 
 /**

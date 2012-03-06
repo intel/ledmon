@@ -50,7 +50,7 @@ global configuration file and user configuration file has no effect.
 =item B<-l> or B<--log>=I<path>
 
 Sets a path to local log file. If this option is specified the global log
-file F</var/log/ledctl.log> is not used.
+file F</var/log/ledmon.log> is not used.
 
 =item B<-t> or B<--interval>=I<seconds>
 
@@ -69,7 +69,7 @@ Prints this text out and exits.
 
 =item B<-v> or B<--version>
 
-Displays version of ledctl and information about the license and exits.
+Displays version of ledmon and information about the license and exits.
 
 =back
 
@@ -77,7 +77,7 @@ Displays version of ledctl and information about the license and exits.
 
 =over 8
 
-=item F</var/log/ledctl.log>
+=item F</var/log/ledmon.log>
 
 Global log file, used by ledmon application. To force logging to user defined
 file use I<-l> option switch.

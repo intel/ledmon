@@ -76,7 +76,7 @@ static void *ibpi_list = NULL;
  * This is internal array holding names of IBPI pattern. Logging routines use
  * this entries to translate enumeration type values into the string.
  */
-static const char *ibpi_str[] = {
+const char *ibpi_str[] = {
   [IBPI_PATTERN_UNKNOWN]        = "",
   [IBPI_PATTERN_NORMAL]         = "NORMAL",
   [IBPI_PATTERN_ONESHOT_NORMAL] = "",

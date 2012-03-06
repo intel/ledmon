@@ -42,6 +42,7 @@ OBJECTS=\
 	$(OUTDIR)/status.o	\
 	$(OUTDIR)/sysfs.o	\
 	$(OUTDIR)/smp.o		\
+	$(OUTDIR)/dellssd.o	\
 	$(OUTDIR)/utils.o
 
 # Build components of ledmon application.

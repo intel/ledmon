@@ -63,7 +63,7 @@
 
 /**
  */
-enum verbose_level verbose = VERB_ALL;
+enum verbose_level verbose = VERB_WARN;
 
 /**
  * Name of the executable. It is the last section of invocation path.
@@ -227,7 +227,7 @@ void get_id(const char *path, struct device_id *did)
       }
       free(p);
     }
-  } 
+  }
 }
 
 /**
@@ -322,7 +322,7 @@ void log_debug(const char *buf, ...)
     fprintf(s_log, PREFIX_DEBUG);
     va_start(vl, buf);
     vfprintf(s_log, buf, vl);
-    va_end(vl); 
+    va_end(vl);
     fprintf(s_log, "\n");
     fflush(s_log);
   }
@@ -403,7 +403,7 @@ void log_info(const char *buf, ...)
 /**
  * @brief Sets program's short name.
  *
- * This is internal function of monitor service. It is used to extract the name 
+ * This is internal function of monitor service. It is used to extract the name
  * of executable file from command line argument.
  *
  * @param[in]     invocation_name - the pointer to command line argument with the

@@ -44,7 +44,7 @@ static unsigned char _get_state(const char *path)
 {
   char *p, *t, *s;
   unsigned char result = SLAVE_STATE_UNKNOWN;
-  
+
   s = p = get_text(path, "state");
   if (p) {
     while (s) {
@@ -107,7 +107,7 @@ static struct block_device *_get_block(const char *path, void *block_list)
   char temp[PATH_MAX];
   char link[PATH_MAX];
   struct block_device *device = NULL;
-  
+
   str_cpy(temp, path, PATH_MAX);
   str_cat(temp, "/block", PATH_MAX);
 
@@ -125,7 +125,7 @@ struct slave_device * slave_device_init(const char *path, void *block_list)
   struct block_device *block;
 
   block = _get_block(path, block_list);
-  if (block) { 
+  if (block) {
     device = malloc(sizeof(struct slave_device));
     if (device) {
       device->raid = NULL;
@@ -140,7 +140,7 @@ struct slave_device * slave_device_init(const char *path, void *block_list)
 
 /**
  */
-void slave_device_fini(struct slave_device *device) 
+void slave_device_fini(struct slave_device *device)
 {
   (void)device;
   /* Function reserved for future improvements. */

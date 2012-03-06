@@ -50,7 +50,7 @@ enum verbose_level {
  * Global variable indicates current level of verbosity.
  */
 extern enum verbose_level verbose;
- 
+
 /**
  * This structure describes a device identifier. It consists of major and minor
  * attributes of device.
@@ -60,7 +60,7 @@ struct device_id {
 };
 
 /**
- * This global variable holds the name of binary file an application has been 
+ * This global variable holds the name of binary file an application has been
  * executed from.
  */
 extern char *progname;
@@ -85,15 +85,15 @@ int get_int(const char *path, int defval, const char *name);
 /**
  * @brief Reads 64-bit unsigned integer from a text file.
  *
- * This function assumes that the only text in a file is requested number to 
- * read. In case of an error while reading from file the function will return 
+ * This function assumes that the only text in a file is requested number to
+ * read. In case of an error while reading from file the function will return
  * a value stored in defval argument.
  *
  * @param[in]      path           Path where a file is located.
  * @param[in]      defval         Default value to be returned in case of error.
  * @param[in]      name           Name of a file to be read.
  *
- * @return Value read from a file if successful, otherwise a value stored in 
+ * @return Value read from a file if successful, otherwise a value stored in
  *         defval argument.
  */
 uint64_t get_uint64(const char *path, uint64_t defval, const char *name);
@@ -103,7 +103,7 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name);
  *
  * This function reads a text file and return pointer to memory where the text
  * has been stored. The memory allocated by the function must be release as soon
- * as application does not require the content. Use free() function to give 
+ * as application does not require the content. Use free() function to give
  * allocated memory back to the system.
  *
  * @param[in]      path           Path where a file is located.
@@ -131,7 +131,7 @@ int put_text(const char *path, const char *name, const char *value);
 /**
  * @brief Writes an integer value to a text file.
  *
- * This function writes an integer value to a text file. If the file does not 
+ * This function writes an integer value to a text file. If the file does not
  * exist or the value is out of range the function returns -1 and errno variable
  * has additional error information.
  *
@@ -190,10 +190,10 @@ char * buf_read(const char *path);
 /**
  * @brief Gets major and minor of device.
  *
- * The function reads from text buffer the major and minor of block device. 
+ * The function reads from text buffer the major and minor of block device.
  *
  * @param[in]      buf            Pointer to text buffer to interpret.
- * @param[out]     did            Placeholder where major and minor will be 
+ * @param[out]     did            Placeholder where major and minor will be
  *                                stored.
  *
  * @return The function does not return a value.
@@ -217,7 +217,7 @@ int log_open(const char *path);
 /**
  * @brief Close a local log file.
  *
- * The function closes a local log file. If the file has not been opened the 
+ * The function closes a local log file. If the file has not been opened the
  * function does nothing.
  *
  * @return The function does not return a value.
@@ -230,7 +230,7 @@ void log_close(void);
  * The function logs a message at error level of verbosity.
  *
  * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of 
+ * @param[in]      ...            Additional arguments according to format of
  *                                a message.
  *
  * @return The function does not return a value.
@@ -243,7 +243,7 @@ void log_error(const char *buf, ...);
  * The function logs a message at debug level of verbosity.
  *
  * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of 
+ * @param[in]      ...            Additional arguments according to format of
  *                                a message.
  *
  * @return The function does not return a value.
@@ -256,7 +256,7 @@ void log_debug(const char *buf, ...);
  * The function logs a message at warning level of verbosity.
  *
  * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of 
+ * @param[in]      ...            Additional arguments according to format of
  *                                a message.
  *
  * @return The function does not return a value.
@@ -269,7 +269,7 @@ void log_warning(const char *buf, ...);
  * The function logs a message at info level of verbosity.
  *
  * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of 
+ * @param[in]      ...            Additional arguments according to format of
  *                                a message.
  *
  * @return The function does not return a value.
@@ -296,7 +296,7 @@ char *str_cpy(char *dest, const char *src, size_t size);
 
 /**
  * @brief Duplicates a text buffer.
- * 
+ *
  * This function duplicates a text buffer. It allocates a new memory block and
  * copies the content of source buffer to new location. If pointer to source
  * buffer is NULL the function will return NULL, too. The caller is required to
@@ -311,11 +311,11 @@ char *str_dup(const char *src);
 /**
  * @brief Concatenates text buffers.
  *
- * This function appends source buffer to destination buffer. It is similar to 
+ * This function appends source buffer to destination buffer. It is similar to
  * strncat() standard C function except it always returns null-terminated buffer.
- * Second difference is that function calculates itself the amount of free space 
- * in destination buffer. If source does not fit in dest then as many bytes are 
- * copied as can be fit in destination buffer minus 1 for null-character. Otherwise 
+ * Second difference is that function calculates itself the amount of free space
+ * in destination buffer. If source does not fit in dest then as many bytes are
+ * copied as can be fit in destination buffer minus 1 for null-character. Otherwise
  * the source is copied to destination including null-character.
  *
  * @param[in,out]  dest            Pointer to destination buffer.

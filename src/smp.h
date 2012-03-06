@@ -50,7 +50,7 @@ int scsi_libsas_write(struct block_device *device, enum ibpi_pattern ibpi);
  * @return Number of bytes written to device if successful or -1 in case of error
  *         and errno is set to appropriate error code.
  */
-int scsi_smputil_write(struct block_device *device, enum ibpi_pattern ibpi);
+int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi);
 
 /**
  * @brief Init smp and get phy index,

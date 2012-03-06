@@ -10,13 +10,13 @@
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  *
- * This program is distributed in the hope that it will be useful, but 
+ * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
@@ -37,8 +37,8 @@
  *                 Depending on implementation of enclosure management processor
  *                 appropriate LED is blinking or solid.
  * - ICA         - In a Critical Array, this means a RAID device is degraded and
- *                 there's no spare device available. 
- * - IFA         - In a Failed Array, this means a RAID device is damaged and 
+ *                 there's no spare device available.
+ * - IFA         - In a Failed Array, this means a RAID device is damaged and
  *                 cannot be recovered or rebuild.
  * - PFA         - Predict Failure Analysis state means that a block device will
  *                 fail soon, so it must be replaced with working one.
@@ -69,5 +69,7 @@ enum ibpi_pattern {
   IBPI_PATTERN_LOCATE,
   IBPI_PATTERN_LOCATE_OFF
 };
+
+extern const char *ibpi_str[];
 
 #endif /* _IBPI_H_INCLUDED_ */

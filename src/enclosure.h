@@ -26,7 +26,7 @@
 /**
  * @brief Enclosure device structure.
  *
- * This structure describes an enclosure device connected to one of 
+ * This structure describes an enclosure device connected to one of
  * SAS controllers existing in the system.
  */
 struct enclosure_device {
@@ -49,8 +49,8 @@ struct enclosure_device {
  * device. It reads the sysfs entries and populates structure fields.
  * The function uses libsas abstraction layer to extract required information.
  *
- * @param[in]      path           Path to an enclosure device in sysfs tree. 
- *                                The path begins with "/sys/class/enclosure/". 
+ * @param[in]      path           Path to an enclosure device in sysfs tree.
+ *                                The path begins with "/sys/class/enclosure/".
  *
  * @return Pointer to enclosure device structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means either the

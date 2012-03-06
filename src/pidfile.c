@@ -63,7 +63,7 @@ status_t pidfile_create(const char *name)
   sprintf(buf, "%d\n", getpid());
   count = write(fd, buf, strlen(buf));
   close(fd);
-  return (count < 0) ? 
+  return (count < 0) ?
     STATUS_FILE_WRITE_ERROR : STATUS_SUCCESS;
 }
 
@@ -81,10 +81,26 @@ int pidfile_remove(const char *name)
 }
 
 /**
+ * @brief Test whether process with given pid is still alive
+ *
+ * @return STATUS_SUCCESS if proces is alive and other error if not or
+ * if there is an error
+ */
+int ping_proc(pid_t pid)
+{
+  char buf[PATH_MAX];
+  sprintf(buf, "kill -n 10 %d 2>/dev/null", pid);
+  if (system(buf) == 0)
+    return STATUS_SUCCESS;
+  return STATUS_INVALID_PATH;
+}
+
+/**
  */
 status_t pidfile_check(const char *name, pid_t *pid)
 {
   char path[PATH_MAX], *p;
+  pid_t tp;
 
   str_cpy(path, "/var/run/", PATH_MAX);
   str_cat(path, name, PATH_MAX);
@@ -94,10 +110,11 @@ status_t pidfile_check(const char *name, pid_t *pid)
   if (p == NULL) {
     return STATUS_INVALID_PATH;
   }
+  tp = atoi(p);
   if (pid) {
-    *pid = atoi(p);
+    *pid = tp;
   }
   free(p);
-  return STATUS_SUCCESS;
+  return ping_proc(tp);
 }
 

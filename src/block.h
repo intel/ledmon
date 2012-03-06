@@ -42,7 +42,7 @@ typedef int (* send_message_t)(struct block_device *device, enum ibpi_pattern ib
 /**
  * @brief Describes a block device.
  *
- * This structure describes a block device. It does not describe virtual devices 
+ * This structure describes a block device. It does not describe virtual devices
  * or partitions on physical block devices.
  */
 struct block_device {
@@ -78,7 +78,7 @@ struct block_device {
 
   /**
    * The time stamp used to determine if the given block device still exist or
-   * it failed and the device is no longer available. Every time IBPI pattern 
+   * it failed and the device is no longer available. Every time IBPI pattern
    * is updated, the time-stamp is updated, too.
    */
   time_t timestamp;
@@ -98,12 +98,12 @@ struct block_device {
 /**
  * @brief Creates a block device structure.
  *
- * This function allocates memory for a new structure of block device. It reads 
+ * This function allocates memory for a new structure of block device. It reads
  * the sysfs entries and populates the structure fields. It performs all this
  * actions only if the block device is connected to the one of supported storage
  * controllers and the controller has enclosure management services enabled.
  *
- * @param[in]      cntrl_list     pointer to a list of supported controller 
+ * @param[in]      cntrl_list     pointer to a list of supported controller
  *                                devices.
  * @param[in]      sysfs_path     a path to block device in sysfs.
  *
@@ -141,6 +141,21 @@ void block_device_fini(struct block_device *device);
  *         returns the NULL pointer.
  */
 struct block_device * block_device_duplicate(struct block_device *device);
+
+/**
+ * @brief Determines a storage controller.
+ *
+ * This is the internal function of 'block device' module. The function gets
+ * a pointer to controller structure the device is connected to.
+ *
+ * @param[in]      cntrl_list     pointer to list of supported controllers.
+ * @param[in]      path           path to block device in sysfs tree.
+ *
+ * @return Pointer to controller structure if successful, otherwise the function
+ *         returns NULL pointer. The NULL pointer means that block devices is
+ *         connected to unsupported storage controller.
+ */
+struct cntrl_device *block_get_controller(void *cntrl_list, char *path);
 
 /**
  * The global timestamp variable. It is updated every time the sysfs is scanning

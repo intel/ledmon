@@ -84,7 +84,7 @@ struct raid_device {
   int degraded;
   enum raid_state array_state;
   enum raid_action sync_action;
-  enum raid_level level;  
+  enum raid_level level;
 };
 
 /**

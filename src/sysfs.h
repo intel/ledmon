@@ -73,6 +73,11 @@ status_t sysfs_scan(void);
 void *sysfs_get_enclosure_devices(void);
 
 /**
+ * The function returns list of controller devices present in the system.
+ */
+void *sysfs_get_cntrl_devices(void);
+
+/**
  * The function checks if the given storage controller is attached to enclosure
  * device(s).
  */

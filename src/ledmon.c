@@ -99,7 +99,7 @@ static int sleep_interval = DEFAULT_SLEEP_INTERVAL;
  * This is internal array with names of IBPI patterns. Logging routines use this
  * entries to translate enumeration type into the string.
  */
-static const char *ibpi_str[] = {
+const char *ibpi_str[] = {
   [IBPI_PATTERN_UNKNOWN]        = "None",
   [IBPI_PATTERN_NORMAL]         = "Off",
   [IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
@@ -437,6 +437,7 @@ static void _ledmon_setup_signals(void)
   sigaddset(&sigset, SIGHUP);
   sigaddset(&sigset, SIGTERM);
   sigaddset(&sigset, SIGPIPE);
+  sigaddset(&sigset, SIGUSR1);
   sigprocmask(SIG_BLOCK, &sigset, NULL);
 
   act.sa_handler = SIG_IGN;
@@ -446,6 +447,7 @@ static void _ledmon_setup_signals(void)
   sigaction(SIGPIPE, &act, NULL);
   act.sa_handler = _ledmon_sig_term;
   sigaction(SIGTERM, &act, NULL);
+  sigaction(SIGUSR1, &act, NULL);
 
   sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 }
@@ -499,7 +501,7 @@ static void _ledmon_wait(int seconds)
  */
 static int _compare(struct block_device *blk1, struct block_device *blk2)
 {
-  return (strcmp(blk1->cntrl_path, blk2->cntrl_path) == 0);
+  return (strcmp(blk1->sysfs_path, blk2->sysfs_path) == 0);
 }
 
 /**
@@ -540,14 +542,14 @@ static void _add_block(struct block_device *block)
       temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
     }
     if (ibpi != temp->ibpi) {
-      log_info("CHANGE %s: from '%s' to '%s'.", block->cntrl_path,
+      log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
           ibpi_str[ibpi], ibpi_str[temp->ibpi]);
     }
     temp->cntrl = block->cntrl;
   } else {
     temp = block_device_duplicate(block);
     if (temp != NULL) {
-      log_info("NEW %s: state '%s'.", temp->cntrl_path, ibpi_str[temp->ibpi]);
+      log_info("NEW %s: state '%s'.", temp->sysfs_path, ibpi_str[temp->ibpi]);
       list_put(block_list, temp, sizeof(struct block_device));
       free(temp);
     }
@@ -562,7 +564,8 @@ static void _add_block(struct block_device *block)
  * the time of last modification of block device structure. If the timestamp
  * is different then the current global timestamp this means the device is
  * missing due to hot-remove or hardware failure so it must be reported on
- * LEDs appropriately.
+ * LEDs appropriately. Note that controller device attached to this block
+ * device points to invalid pointer so it must be 'refreshed'.
  *
  * @param[in]    block            Pointer to block device structure.
  *
@@ -571,8 +574,10 @@ static void _add_block(struct block_device *block)
 static void _send_msg(struct block_device *block)
 {
   if (block->timestamp != timestamp) {
+    block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
+                                        block->cntrl_path);
     if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-      log_info("CHANGE %s: from '%s' to '%s'.", block->cntrl_path,
+      log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
           ibpi_str[block->ibpi], ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
       block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
     }

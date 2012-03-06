@@ -38,7 +38,7 @@
 /**
  * @brief Gets SAS address of an enclosure device.
  *
- * This is internal function of enclosure module. The function reads a 
+ * This is internal function of enclosure module. The function reads a
  * SAS address of an enclosure from sysfs attribute.
  *
  * @param[in]      path           Path to enclosure device in sysfs tree.
@@ -56,13 +56,13 @@ static uint64_t _get_sas_address(const char *path)
   }
   if ((s = strchr(p + 1, PATH_DELIM)) == NULL) {
     return 0;
-  }  
+  }
   *s = '\0';
 
   str_cpy(buf, p, s - p + 1);
   str_cat(tmp, "/sas_device", PATH_MAX);
   str_cat(tmp, buf, PATH_MAX);
-  
+
   return get_uint64(tmp, 0, "sas_address");
 }
 
@@ -86,7 +86,7 @@ struct enclosure_device *enclosure_device_init(const char *path)
 }
 
 /*
- * The function returns memory allocated for fields of enclosure structure to 
+ * The function returns memory allocated for fields of enclosure structure to
  * the system.
  */
 void enclosure_device_fini(struct enclosure_device *enclosure)

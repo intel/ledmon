@@ -135,6 +135,7 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num, 
 {
   struct raid_device *device = NULL;
   enum raid_state state;
+  const char *debug_dev;
 
   state = _get_array_state(path);
   if (state > RAID_STATE_CLEAR) {
@@ -149,6 +150,11 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num, 
       device->degraded = get_int(path, -1, "md/degraded");
       device->raid_disks = get_int(path, 0, "md/raid_disks");
       device->type = type;
+      debug_dev = strrchr(path, '/');
+      debug_dev = debug_dev ? debug_dev + 1 : path;
+      log_debug("(%s) path: %s, level=%d, state=%d, degraded=%d, disks=%d, type=%d",
+                __func__, debug_dev, device->level, state, device->degraded,
+                device->raid_disks, type);
     }
   }
   return device;
@@ -156,12 +162,12 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num, 
 
 /**
  */
-void raid_device_fini(struct raid_device *device) 
+void raid_device_fini(struct raid_device *device)
 {
   if (device) {
     if (device->sysfs_path) {
       free(device->sysfs_path);
-    }    
+    }
     /* free(device); */
   }
 }

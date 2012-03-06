@@ -48,6 +48,7 @@
 #include "scsi.h"
 #include "smp.h"
 #include "ahci.h"
+#include "dellssd.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
    device structure. See block.h for details. */
@@ -88,7 +89,9 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
   } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && !_is_directly_attached(path)) {
     result = scsi_libsas_write;
   } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(path)) {
-    result = scsi_smputil_write;
+    result = scsi_smp_write;
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
+    result = dellssd_write;
   }
   return result;
 }
@@ -114,6 +117,8 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
     result = scsi_get_slot_path(path, cntrl->sysfs_path);
   } else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
     result = ahci_get_port_path(path);
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
+    result = dellssd_get_path(path, cntrl->sysfs_path);
   }
   return result;
 }
@@ -149,7 +154,7 @@ static int _compare(struct cntrl_device *cntrl, const char *path)
  *         returns NULL pointer. The NULL pointer means that block devices is
  *         connected to unsupported storage controller.
  */
-static struct cntrl_device *_get_controller(void *cntrl_list, char *path)
+struct cntrl_device *block_get_controller(void *cntrl_list, char *path)
 {
   return list_first_that(cntrl_list, _compare, path);
 }
@@ -166,7 +171,7 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
   int cntrl_phy_index = -1;
 
   if (realpath(path, link)) {
-    if ((cntrl = _get_controller(cntrl_list, link)) == NULL) {
+    if ((cntrl = block_get_controller(cntrl_list, link)) == NULL) {
       return NULL;
     }
     if ((host = _get_host(link, cntrl)) == NULL) {

@@ -472,7 +472,12 @@ static int _is_failed_array(struct raid_device *raid)
  */
 static void _set_block_state(struct block_device *block, enum ibpi_pattern ibpi)
 {
-  if (block->ibpi < ibpi) { block->ibpi = ibpi; }
+  char *debug_dev = strrchr(block->sysfs_path, '/');
+  debug_dev = debug_dev ? debug_dev + 1 : block->sysfs_path;
+  log_debug("(%s): device: %s, state: %s", __func__, debug_dev, ibpi_str[ibpi]);
+  if (block->ibpi < ibpi) {
+    block->ibpi = ibpi;
+  }
 }
 
 /**
@@ -508,7 +513,6 @@ static void _determine(struct slave_device *device)
   } else if ((device->state & SLAVE_STATE_SPARE) != 0) {
     _set_block_state(device->block, IBPI_PATTERN_HOTSPARE);
   } else if ((device->state & SLAVE_STATE_IN_SYNC) != 0) {
-    _set_array_state(device->raid, device->block);
     switch (_is_failed_array(device->raid)) {
     case 0:
       _set_block_state(device->block, IBPI_PATTERN_DEGRADED);
@@ -517,8 +521,10 @@ static void _determine(struct slave_device *device)
       _set_block_state(device->block, IBPI_PATTERN_FAILED_ARRAY);
       break;
     }
+    _set_array_state(device->raid, device->block);
   }
 }
+
 
 /**
  */
@@ -660,6 +666,14 @@ status_t sysfs_scan(void)
 void *sysfs_get_enclosure_devices(void)
 {
   return list_head(enclo_list);
+}
+
+/*
+ * The function returns list of controller devices present in the system.
+ */
+void *sysfs_get_cntrl_devices(void)
+{
+  return list_head(cntrl_list);
 }
 
 /*

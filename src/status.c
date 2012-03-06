@@ -66,5 +66,5 @@ char *strstatus(status_t scode)
     _S_CODE(STATUS_ENCLO_LIST_ERROR);
   default:
     return "???";
-  }  
+  }
 }

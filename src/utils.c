@@ -431,9 +431,7 @@ void set_invocation_name(char *invocation_name)
 char *str_cpy(char *dest, const char *src, size_t size)
 {
   strncpy(dest, src, size - 1);
-  if (size < strlen(src)) {
-    dest[size - 1] = '\0';
-  }
+  dest[size - 1] = '\0';
   return dest;
 }
 

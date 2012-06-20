@@ -137,6 +137,7 @@ struct _host_type *alloc_host(int id, struct _host_type *next)
   if (host) {
     host->host_id = id;
     host->ibpi_state_buffer = NULL;
+    memset(host->bitstream, 0, sizeof(host->bitstream));
     host->next = next;
   }
   return host;

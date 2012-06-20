@@ -60,6 +60,10 @@ struct cntrl_device {
      */
     void *ibpi_state_buffer;
     /**
+     * outbound raw byte stream
+     */
+    unsigned char bitstream[4];
+    /**
      * host identifier for different hba instances
      */
     int host_id;

@@ -169,6 +169,8 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
   struct block_device *device = NULL;
   send_message_t send_fn = NULL;
   int cntrl_phy_index = -1;
+  int host_id = -1;
+  char *host_name;
 
   if (realpath(path, link)) {
     if ((cntrl = block_get_controller(cntrl_list, link)) == NULL) {
@@ -177,6 +179,10 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
     if ((host = _get_host(link, cntrl)) == NULL) {
       return NULL;
     }
+
+    host_name = get_path_component_rev(link, /* for hostN */ 6);
+    sscanf(host_name, "host%d", &host_id);
+    free(host_name);
 
     if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(link)) {
         cntrl_phy_index = isci_cntrl_init_smp(link, cntrl);
@@ -188,6 +194,8 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
     }
     device = malloc(sizeof(struct block_device));
     if (device) {
+      struct _host_type *hosts = cntrl->hosts;
+
       device->cntrl = cntrl;
       device->sysfs_path = strdup(link);
       device->cntrl_path = host;
@@ -195,6 +203,14 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
       device->send_fn = send_fn;
       device->timestamp = timestamp;
       device->phy_index = cntrl_phy_index;
+      device->host = NULL;
+      while (hosts) {
+        if (hosts->host_id == host_id) {
+          device->host = hosts;
+          break;
+        }
+        hosts = hosts->next;
+      }
     } else {
       free(host);
     }

@@ -62,7 +62,7 @@ struct gpio_tx_register_byte {
 
 struct gpio_tx_register_byte gpio_tx_table[4];
 
-#define INIT_IBPI(err, loc, act)  \
+#define INIT_IBPI(act, loc, err)  \
   { 	.error = err,               \
       .locate = loc,              \
       .activity = act             \

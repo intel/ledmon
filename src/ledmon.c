@@ -442,6 +442,7 @@ static void _ledmon_setup_signals(void)
 
   act.sa_handler = SIG_IGN;
   act.sa_flags = 0;
+  sigemptyset(&act.sa_mask);
   sigaction(SIGALRM, &act, NULL);
   sigaction(SIGHUP, &act, NULL);
   sigaction(SIGPIPE, &act, NULL);

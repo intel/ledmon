@@ -644,7 +644,7 @@ int main(int argc, char *argv[])
     log_debug("main(): setsid() failed (errno=%d).", errno);
     exit(EXIT_FAILURE);
   }
-  for (int i = getdtablesize(); i >= 0; --i) {
+  for (int i = getdtablesize() - 1; i >= 0; --i) {
     close(i);
   }
   int t = open("/dev/null", O_RDWR);

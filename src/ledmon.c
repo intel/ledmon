@@ -546,6 +546,7 @@ static void _add_block(struct block_device *block)
           ibpi_str[ibpi], ibpi_str[temp->ibpi]);
     }
     temp->cntrl = block->cntrl;
+    temp->host  = block->host;
   } else {
     temp = block_device_duplicate(block);
     if (temp != NULL) {

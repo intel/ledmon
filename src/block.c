@@ -254,6 +254,7 @@ struct block_device * block_device_duplicate(struct block_device *block)
       result->send_fn = block->send_fn;
       result->timestamp = block->timestamp;
       result->cntrl = block->cntrl;
+      result->host = block->host;
       result->phy_index = block->phy_index;
     }
   }

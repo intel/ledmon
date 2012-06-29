@@ -204,6 +204,7 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
       device->timestamp = timestamp;
       device->phy_index = cntrl_phy_index;
       device->host = NULL;
+      device->host_id = host_id;
       while (hosts) {
         if (hosts->host_id == host_id) {
           device->host = hosts;
@@ -255,6 +256,7 @@ struct block_device * block_device_duplicate(struct block_device *block)
       result->timestamp = block->timestamp;
       result->cntrl = block->cntrl;
       result->host = block->host;
+      result->host_id = block->host_id;
       result->phy_index = block->phy_index;
     }
   }

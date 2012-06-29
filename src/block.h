@@ -90,6 +90,8 @@ struct block_device {
 
   struct _host_type *host;
 
+  int host_id;
+
 	/**
    * The index of phy utilized by directly attached to controller block device.
    * It is meaningful if device is controlled by isci driver.

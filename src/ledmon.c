@@ -548,6 +548,7 @@ static void _add_block(struct block_device *block)
     }
     temp->cntrl = block->cntrl;
     temp->host  = block->host;
+    temp->host_id = block->host_id;
   } else {
     temp = block_device_duplicate(block);
     if (temp != NULL) {

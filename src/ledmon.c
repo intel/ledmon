@@ -567,8 +567,8 @@ static void _add_block(struct block_device *block)
  * the time of last modification of block device structure. If the timestamp
  * is different then the current global timestamp this means the device is
  * missing due to hot-remove or hardware failure so it must be reported on
- * LEDs appropriately. Note that controller device attached to this block
- * device points to invalid pointer so it must be 'refreshed'.
+ * LEDs appropriately. Note that controller device and host attached to this
+ * block device points to invalid pointer so it must be 'refreshed'.
  *
  * @param[in]    block            Pointer to block device structure.
  *
@@ -576,6 +576,7 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
+  struct _host_type *hosts;
   if (block->timestamp != timestamp) {
     block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
                                         block->cntrl_path);
@@ -584,6 +585,15 @@ static void _send_msg(struct block_device *block)
           ibpi_str[block->ibpi], ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
       block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
     }
+  }
+  /* update block->host if possible */
+  hosts = block->cntrl->hosts;
+  while (hosts) {
+    if (hosts->host_id == block->host_id) {
+      block->host = hosts;
+      break;
+    }
+    hosts = hosts->next;
   }
   block->send_fn(block, block->ibpi);
 }

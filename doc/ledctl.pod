@@ -25,16 +25,16 @@ B<ledctl> [I<OPTIONS>] I<pattern_name>=I<list_of_devices> ...
 
 =head1 DESCRIPTION
 
-The ledctl is user space application design to control LEDs associated with each
-slot in an enclosure or a drive bay. There are two types of system: 2-LEDs
-system (Activity LED, Status LED) and 3-LEDs system (Activity LED, Locate LED,
+The ledctl is an user space application designed to control LEDs associated with each
+slot in an enclosure or a drive bay. There are two types of systems: 2-LEDs
+systems (Activity LED, Status LED) and 3-LEDs systems (Activity LED, Locate LED,
 Fail LED). User must have root privileges to use this application.
 
 The ledctl application uses SGPIO and SES-2 protocol to control LEDs.
 The program implements IBPI patterns of SFF-8489 specification for SGPIO.
 Please note some enclosures do not stick close to SFF-8489 specification.
-It might happen that enclosure processor will accept an IBPI pattern but it will
-blink the LEDs not according to SFF-8489 specification or it has limited number
+It might happen that enclosure's processor will accept an IBPI pattern but it will
+blink the LEDs at variance with SFF-8489 specification or it has limited number
 of patterns supported.
 
 LED management (AHCI) and S<SAF-TE> protocols are not supported.
@@ -42,14 +42,14 @@ LED management (AHCI) and S<SAF-TE> protocols are not supported.
 The ledctl application has been verified to work with Intel(R) storage
 controllers (i.e. Intel(R) AHCI controller). The application might work with
 storage controllers of other vendors (especially SCSI/SAS
-controllers). However storage controllers of other vendors have not been
+controllers). However, storage controllers of other vendors have not been
 tested.
 
-The ledmon application has the highest priority when accessing LEDs then other
-programs. It means some patterns set by ledctl may have no effect
+The ledmon application has the highest priority when accessing LEDs.
+It means that some patterns set by ledctl may have no effect if ledmon is running
 (except Locate pattern).
 
-The ledctl application is part of Intel(R) Enclosure LED Utilities.
+The ledctl application is a part of Intel(R) Enclosure LED Utilities.
 
 =head2 Pattern Names
 
@@ -64,7 +64,7 @@ Turns Locate LED associated with the given device(s) or empty slot(s) on.
 
 =item B<locate_off>
 
-Only turns Locate LED off.
+Turns only Locate LED off.
 
 =item B<normal>
 
@@ -72,7 +72,7 @@ Turns Status LED, Failure LED and Locate LED off.
 
 =item B<off>
 
-Only turns Status LED and Failure LED off.
+Turns only Status LED and Failure LED off.
 
 =item B<ica> or B<degraded>
 
@@ -109,7 +109,7 @@ section bellow for details.
 
 A device is a path to file in /dev directory or in /sys/block directory.
 It may identify a block device, a RAID device or a container device.
-In case of RAID device or container device a state will be set for all
+In case of a RAID device or a container device a state will be set for all
 block devices associated, respectively.
 
 =head1 OPTIONS
@@ -128,7 +128,7 @@ file F</var/log/ledctl.log> is not used.
 
 =item B<--quiet>
 
-Turns off all messages send to C<stdout> or C<stderr> out. The messages
+Turns off all messages sent to C<stdout> or C<stderr> out. The messages
 will be still logged to local file and syslog facility.
 
 =item B<-h> or B<--help>
@@ -168,8 +168,7 @@ The following example illustrates how to locate a single block device.
 
     ledctl locate=/dev/sda
 
-The following example illustrates how to off Locate LED for the same block
-device.
+The following example illustrates how to turn Locate LED off for the same block device.
 
     ledctl locate_off=/dev/sda
 
@@ -179,13 +178,13 @@ uses both formats of device list.
 
      ledctl locate=/dev/md127 rebuild={ /sys/block/sd[a-b] }
 
-The following example illustrates how to off Status LED and Failure LED for
+The following example illustrates how to turn Status LED and Failure LED off for
 the given device(s).
 
      ledctl off={ /dev/sda /dev/sdb }
 
 The following example illustrates how to locate a three block devices. This
-example uses first format of device list.
+example uses the first format of device list.
 
      ledctl locate=/dev/sda,/dev/sdb,/dev/sdc
 

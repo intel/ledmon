@@ -26,10 +26,12 @@ B<ledctl> [I<OPTIONS>] I<pattern_name>=I<list_of_devices> ...
 =head1 DESCRIPTION
 
 The ledctl is an user space application designed to control LEDs associated with each
-slot in an enclosure or a drive bay. There are two types of systems: 2-LEDs
-systems (Activity LED, Status LED) and 3-LEDs systems (Activity LED, Locate LED,
-Fail LED). User must have root privileges to use this application.
+slot in an enclosure or a drive bay. The LEDs of devices listed in I<list_of_devices>
+are set to the given pattern I<pattern_name> and all other LEDs are turned off.
+User must have root privileges to use this application.
 
+There are two types of systems: 2-LEDs systems (Activity LED, Status LED)
+and 3-LEDs systems (Activity LED, Locate LED, Fail LED).
 The ledctl application uses SGPIO and SES-2 protocol to control LEDs.
 The program implements IBPI patterns of SFF-8489 specification for SGPIO.
 Please note some enclosures do not stick close to SFF-8489 specification.
@@ -111,6 +113,9 @@ A device is a path to file in /dev directory or in /sys/block directory.
 It may identify a block device, a RAID device or a container device.
 In case of a RAID device or a container device a state will be set for all
 block devices associated, respectively.
+
+The LEDs of devices listed in I<list_of_devices> are set to the given
+pattern I<pattern_name> and all other LEDs are turned off.
 
 =head1 OPTIONS
 

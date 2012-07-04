@@ -189,7 +189,10 @@ static void _ledctl_help(void)
   printf("--help\t\t\t\t  Displays this help text.\n");
   printf("--version\t\t\t  Displays version and license information.\n\n");
   printf("Refer to ledctl(8) man page for more detailed description.\n");
-  printf("Report bugs to: artur.wojcik@intel.com\n\n");
+	printf("Report bugs in the tracker 'Bugs' at " \
+		   "http://sourceforge.net/projects/ledmon\n");
+	printf("(direct link: http://sourceforge.net/tracker" \
+		   "/?group_id=393394&atid=1632895)\n\n");
 }
 
 /**

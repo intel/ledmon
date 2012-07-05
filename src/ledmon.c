@@ -590,13 +590,15 @@ static void _send_msg(struct block_device *block)
     }
   }
   /* update block->host if possible */
-  hosts = block->cntrl->hosts;
-  while (hosts) {
-    if (hosts->host_id == block->host_id) {
-      block->host = hosts;
-      break;
+  if (block->cntrl) {
+    hosts = block->cntrl->hosts;
+    while (hosts) {
+      if (hosts->host_id == block->host_id) {
+        block->host = hosts;
+        break;
+      }
+      hosts = hosts->next;
     }
-    hosts = hosts->next;
   }
   block->send_fn(block, block->ibpi);
 }

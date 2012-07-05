@@ -173,8 +173,10 @@ char *sas_get_slot_path(const char *path, const char *ctrl_path)
   if (strncmp(path, ctrl_path, ctrl_path_len) != 0)
     return NULL;
   host = get_path_component_rev(path, /* for hostN */ 6);
-  snprintf(host_path, sizeof(host_path), "%s/%s/bsg/sas_%s", ctrl_path, host, host);
-  free(host);
+  if (host) {
+    snprintf(host_path, sizeof(host_path), "%s/%s/bsg/sas_%s", ctrl_path, host, host);
+    free(host);
+  }
   return str_dup(host_path);
 }
 

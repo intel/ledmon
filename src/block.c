@@ -181,8 +181,10 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
     }
 
     host_name = get_path_component_rev(link, /* for hostN */ 6);
-    sscanf(host_name, "host%d", &host_id);
-    free(host_name);
+    if (host_name) {
+        sscanf(host_name, "host%d", &host_id);
+        free(host_name);
+    }
 
     if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(link)) {
         cntrl_phy_index = isci_cntrl_init_smp(link, cntrl);

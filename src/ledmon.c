@@ -55,6 +55,7 @@
 #include "version.h"
 #include "scsi.h"
 #include "ahci.h"
+#include "smp.h"
 
 /**
  * Default suspend time between sysfs scan operations, given in seconds.
@@ -73,7 +74,7 @@
  * Only devices which have enclosure management feature enabled are on the
  * list, other devices are ignored (except protocol is forced).
  */
-static void *block_list = NULL;
+static void *ledmon_block_list = NULL;
 
 /**
  * @brief Daemon process termination flag.
@@ -179,9 +180,9 @@ static struct option longopt[] = {
 static void _ledmon_fini(int __attribute__((unused)) status, void *progname)
 {
   sysfs_fini();
-  if (block_list) {
-    list_for_each(block_list, block_device_fini);
-    list_fini(block_list);
+  if (ledmon_block_list) {
+    list_for_each(ledmon_block_list, block_device_fini);
+    list_fini(ledmon_block_list);
   }
   log_close();
   pidfile_remove(progname);
@@ -503,16 +504,70 @@ static void _ledmon_wait(int seconds)
  *
  * @return 0 if the block devices do not match, otherwise function returns 1.
  */
-static int _compare(struct block_device *blk1, struct block_device *blk2)
+static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 {
-  return (strcmp(blk1->sysfs_path, blk2->sysfs_path) == 0);
+	int i = 0;
+
+	if (bd_old->host_id == -1) {
+		log_debug("Device %s : No host_id!",
+				strstr(bd_old->sysfs_path, "host"));
+		return 0;
+	}
+	if (bd_new->host_id == -1) {
+			log_debug("Device %s : No host_id!",
+					strstr(bd_new->sysfs_path, "host"));
+			return 0;
+	}
+	if (!bd_old->cntrl) {
+		log_debug("Device %s : No ctrl dev!",
+				strstr(bd_old->sysfs_path, "host"));
+		return 0;
+	}
+
+	if (bd_old->cntrl->cntrl_type != bd_new->cntrl->cntrl_type)
+		return 0;
+
+	switch (bd_old->cntrl->cntrl_type) {
+	case CNTRL_TYPE_AHCI:
+		/* Missing support for port multipliers. Compare just hostX. */
+		i = (bd_old->host_id == bd_new->host_id);
+		break;
+
+	case CNTRL_TYPE_SCSI:
+		/* Host and phy is not enough. They might be DA or EA. */
+		if (dev_directly_attached(bd_old->sysfs_path) &&
+				dev_directly_attached(bd_new->sysfs_path)) {
+			/* Just compare host & phy */
+			i = (bd_old->host_id == bd_new->host_id) &&
+					(bd_old->phy_index == bd_new->phy_index);
+
+			break;
+		}
+		if (!dev_directly_attached(bd_old->sysfs_path) &&
+				!dev_directly_attached(bd_new->sysfs_path)) {
+			/* Both expander attached */
+			i = (bd_old->host_id == bd_new->host_id) &&
+					(bd_old->phy_index == bd_new->phy_index);
+			i = i && (bd_old->encl_index == bd_new->encl_index);
+			break;
+		}
+		/* */
+		break;
+
+	case CNTRL_TYPE_DELLSSD:
+	default:
+		/* Just compare names */
+		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);
+		break;
+	}
+  return i;
 }
 
 /**
  * @brief Adds the block device to list.
  *
  * This is internal function of monitor service. The function adds a block
- * device to the block_list list or if the device is already on the list it
+ * device to the ledmon_block_list list or if the device is already on the list it
  * updates the IBPI state of the given device. The function updates timestamp
  * value which indicates the time of last structure modification.  The function
  * is design to be used as 'action' parameter of list_for_each() function.
@@ -526,7 +581,7 @@ static void _add_block(struct block_device *block)
 {
   struct block_device *temp;
 
-  temp = list_first_that(block_list, _compare, block);
+  temp = list_first_that(ledmon_block_list, _compare, block);
   if (temp) {
     enum ibpi_pattern ibpi = temp->ibpi;
     temp->timestamp = block->timestamp;
@@ -534,7 +589,8 @@ static void _add_block(struct block_device *block)
       temp->ibpi = IBPI_PATTERN_UNKNOWN;
     } else if (temp->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
       if (block->ibpi == IBPI_PATTERN_UNKNOWN) {
-        if ((temp->ibpi != IBPI_PATTERN_UNKNOWN) && (temp->ibpi != IBPI_PATTERN_NORMAL)) {
+        if ((temp->ibpi != IBPI_PATTERN_UNKNOWN) &&
+        		(temp->ibpi != IBPI_PATTERN_NORMAL)) {
           temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
         } else {
           temp->ibpi = IBPI_PATTERN_UNKNOWN;
@@ -545,18 +601,24 @@ static void _add_block(struct block_device *block)
     } else {
       temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
     }
+
     if (ibpi != temp->ibpi) {
       log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
           ibpi_str[ibpi], ibpi_str[temp->ibpi]);
     }
-    temp->cntrl = block->cntrl;
-    temp->host  = block->host;
-    temp->host_id = block->host_id;
+    /* Check if name of the device changed. It's possible for SCSI devices. */
+    if (strcmp(temp->sysfs_path, block->sysfs_path)) {
+    	log_info("NAME CHANGED %s to %s", strstr(temp->sysfs_path, "host"),
+    			strstr(block->sysfs_path, "host"));
+    	free(temp->sysfs_path);
+    	temp->sysfs_path = strdup(block->sysfs_path);
+    }
   } else {
-    temp = block_device_duplicate(block);
+	  /* Device not found, it's a new one! */
+	  temp = block_device_duplicate(block);
     if (temp != NULL) {
       log_info("NEW %s: state '%s'.", temp->sysfs_path, ibpi_str[temp->ibpi]);
-      list_put(block_list, temp, sizeof(struct block_device));
+      list_put(ledmon_block_list, temp, sizeof(struct block_device));
       free(temp);
     }
   }
@@ -579,28 +641,54 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
-  struct _host_type *hosts;
+  if (!block->cntrl) {
+	  log_debug("Missing cntrl for dev: %s. Not sending anything.",
+			  strstr(block->sysfs_path, "host"));
+	  return;
+  }
   if (block->timestamp != timestamp) {
-    block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
-                                        block->cntrl_path);
     if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
       log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
-          ibpi_str[block->ibpi], ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
+          ibpi_str[block->ibpi],
+          ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
       block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
-    }
-  }
-  /* update block->host if possible */
-  if (block->cntrl) {
-    hosts = block->cntrl->hosts;
-    while (hosts) {
-      if (hosts->host_id == block->host_id) {
-        block->host = hosts;
-        break;
-      }
-      hosts = hosts->next;
+    } else {
+    	log_debug("DETACHED DEV '%s' in failed state",
+    			strstr(block->sysfs_path, "host"));
     }
   }
   block->send_fn(block, block->ibpi);
+}
+
+static void _revalidate_dev(struct block_device *block)
+{
+	/* Bring back controller and host to the device. */
+	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
+			block->cntrl_path);
+	if (!block->cntrl) {
+		log_debug("Failed to get controller for dev: %s, ctrl path: %s",
+				block->sysfs_path, block->cntrl_path);
+		return;
+	}
+	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI &&
+			block->cntrl->isci_present) {
+		block->host = block_get_host(block->cntrl, block->host_id);
+		if (block->host) {
+			isci_cntrl_init_smp(block->sysfs_path, block->cntrl);
+		} else  {
+			log_debug("Failed to get host for dev: %s, hostId: %d",
+					block->sysfs_path, block->host_id);
+			/* If hosts failed for isci, invalidate cntrl*/
+			block->cntrl = NULL;
+		}
+	}
+	return;
+}
+static void _invalidate_dev(struct block_device *block)
+{
+	/* Those fields are valid only per 'session' - through single scan. */
+	  block->cntrl = NULL;
+	  block->host = NULL;
 }
 
 /**
@@ -616,8 +704,14 @@ static void _send_msg(struct block_device *block)
  */
 static void _ledmon_execute(void)
 {
-  sysfs_block_device_for_each(_add_block);
-  list_for_each(block_list, _send_msg);
+	/* Revalidate each device in the list. Bring back controller and host */
+	list_for_each(ledmon_block_list, _revalidate_dev);
+	/* Scan all devices and compare them against saved list */
+	sysfs_block_device_for_each(_add_block);
+	/* Send message to all devices in the list if needed. */
+	list_for_each(ledmon_block_list, _send_msg);
+	/* Invalidate each device in the list. Clear controller and host. */
+	list_for_each(ledmon_block_list, _invalidate_dev);
 }
 
 /**
@@ -640,6 +734,7 @@ int main(int argc, char *argv[])
   if (_cmdline_parse(argc, argv) != STATUS_SUCCESS) {
       return STATUS_CMDLINE_ERROR;
   }
+  verbose = VERB_ALL;
 
   if (pidfile_check(progname, NULL) == 0) {
     log_warning("daemon is running...");
@@ -681,7 +776,7 @@ int main(int argc, char *argv[])
   if (on_exit(_ledmon_fini, progname)) {
     exit(STATUS_ONEXIT_ERROR);
   }
-  if ((status = list_init(&block_list)) != STATUS_SUCCESS) {
+  if ((status = list_init(&ledmon_block_list)) != STATUS_SUCCESS) {
     log_debug("main(): list_init() failed (status=%s).", strstatus(status));
     exit(EXIT_FAILURE);
   }
@@ -702,5 +797,6 @@ int main(int argc, char *argv[])
     }
     _ledmon_wait(sleep_interval);
   }
+  log_info("Exiting");
   exit(EXIT_SUCCESS);
 }

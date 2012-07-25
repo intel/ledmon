@@ -334,4 +334,8 @@ char *truncate_path_component_rev(const char *path, int index);
  */
 char *get_path_component_rev(const char *path, int index);
 
+/**
+ * @brief Extracts the 'hostX' part from path.
+ */
+char *get_path_hostN(const char *path);
 #endif /* _UTILS_H_INCLUDED_ */

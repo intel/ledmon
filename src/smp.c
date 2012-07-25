@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #include <scsi/sg.h>
 #include <linux/bsg.h>
@@ -241,6 +242,8 @@ int set_raw_pattern(unsigned int dev_idx, unsigned char *data, const struct gpio
   int od_offset = dev_idx * 3;
   int rc = 0;
 
+  //log_info("%s(): called for dev_idx=%d\n", __func__, dev_idx);
+
   if (pattern->activity)
     rc += try_set_sas_gpio_gp_bit(od_offset + 0, data, GPIO_TX_GP1, 1);
   else
@@ -269,12 +272,13 @@ static int _open_smp_device(const char *filename)
   FILE *df;
   int hba_fd;
   int dmaj, dmin;
-
+  //log_info("%s() called: %s\n", __func__, filename);
   snprintf(buf, sizeof(buf), "%s/dev", filename);
   df = fopen(buf, "r");
   if (!df) {
     return -1;
   }
+  //log_info("%s(): device = %s\n", __func__, buf);
   if (fgets(buf, sizeof(buf), df) < 0) {
     fclose(df);
     return -1;
@@ -288,6 +292,7 @@ static int _open_smp_device(const char *filename)
   if (mknod(buf, S_IFCHR | S_IRUSR | S_IWUSR, makedev(dmaj, dmin)) < 0) {
     return -1;
   }
+  //log_info("%s(): opening : %s\n", __func__, buf);
   hba_fd = open(buf, O_RDWR);
   unlink(buf);
   if (hba_fd < 0)
@@ -455,7 +460,9 @@ static int _smp_write_gpio(const char *path, int smp_reg_type, int smp_reg_index
 
 struct gpio_tx_register_byte *get_bdev_ibpi_buffer(struct block_device *bdevice)
 {
-  return bdevice->host->ibpi_state_buffer;
+	if (bdevice && bdevice->host)
+		return bdevice->host->ibpi_state_buffer;
+	return NULL;
 }
 
 /**
@@ -470,6 +477,22 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
   }
   if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE)) {
     __set_errno_and_return(ERANGE);
+  }
+  if (!device->cntrl) {
+	  log_debug("No ctrl dev for '%s'", strstr(sysfs_path, "host"));
+	  __set_errno_and_return(ENODEV);
+  }
+  if (device->cntrl->cntrl_type != CNTRL_TYPE_SCSI) {
+	  log_debug("No SCSI ctrl dev '%s'", strstr(sysfs_path, "host"));
+	  __set_errno_and_return(EINVAL);
+  }
+  if (!device->cntrl->isci_present) {
+	  log_debug("No ISCI ctrl for '%s'", strstr(sysfs_path, "host"));
+	  __set_errno_and_return(ENODEV);
+  }
+  if (!device->host) {
+	  log_debug("No host for '%s'", strstr(sysfs_path, "host"));
+	  __set_errno_and_return(ENODEV);
   }
 
   if (!ibpi2sgpio[ibpi].support_mask) {
@@ -487,16 +510,14 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
 
   gpio_tx = get_bdev_ibpi_buffer(device);
   if (!gpio_tx) {
-    /* controller's host smp module must be re-initialized */
-    isci_cntrl_init_smp(device->sysfs_path, device->cntrl);
-    gpio_tx = get_bdev_ibpi_buffer(device);
-    if (!gpio_tx) {
-      __set_errno_and_return(EINVAL);
-    }
-  }
+	  log_debug("%s(): no IBPI buffer. Skipping.", __func__);
+	  __set_errno_and_return(ENODEV);
+   }
 
   /* update bit stream for this device */
-  set_raw_pattern(device->phy_index, &device->host->bitstream[0], &ibpi2sgpio[ibpi].pattern);
+  set_raw_pattern(device->phy_index,
+		  &device->host->bitstream[0],
+		  &ibpi2sgpio[ibpi].pattern);
 
   /* re-transmit the bitstream */
   return _smp_write_gpio(sysfs_path, GPIO_REG_TYPE_TX_GP, GPIO_TX_GP1, 1,
@@ -507,25 +528,27 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
  */
 void init_smp(const char *path, struct cntrl_device *device)
 {
-  struct _host_type *hosts = device->hosts;
+  struct _host_type *hosts;
   int i;
-
+  if (!device)
+	  return;
   if (!device->isci_present)
     return;
+
   for (hosts = device->hosts; hosts; hosts = hosts->next) {
     /* already initialized */
     if (hosts->ibpi_state_buffer) {
       continue;
     }
-
     hosts->ibpi_state_buffer = calloc(DEFAULT_ISCI_SUPPORTED_DEVS,
                                       sizeof (struct gpio_tx_register_byte));
-    if (!hosts->ibpi_state_buffer) {
+
+    if (!hosts->ibpi_state_buffer)
       continue;
-    }
 
     for (i = 0; i < DEFAULT_ISCI_SUPPORTED_DEVS; i++)
-      set_raw_pattern(i, &hosts->bitstream[0], &ibpi2sgpio[IBPI_PATTERN_ONESHOT_NORMAL].pattern);
+    	set_raw_pattern(i, &hosts->bitstream[0],
+    		  &ibpi2sgpio[IBPI_PATTERN_ONESHOT_NORMAL].pattern);
   }
 }
 
@@ -533,15 +556,53 @@ void init_smp(const char *path, struct cntrl_device *device)
  */
 int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 {
-  char *port_str;
+  char *path2 = strdup(path);
+  char *c;
   int host, port = 0;
-  if (!cntrl->isci_present)
-    return 0;
-  port_str = get_path_component_rev(path, /* for hostN */ 5);
-  if (!port_str)
-    return port;
-  sscanf(port_str, "port-%d:%d", &host, &port);
-  free(port_str);
+  struct dirent *de;
+  DIR *d;
+
+  if (!path2 || !cntrl) {
+	  return port;
+  }
+
+  if (!cntrl->isci_present) {
+	  free(path2);
+	  return port;
+  }
+
+  c = strstr(path2, "port-");
+  if (!c) {
+	  log_debug("%s() missing 'port' in path '%s'", __func__, path2);
+	  free (path2);
+	  return port;
+  }
+  c = strchr(c, '/');
+  *c = 0;
+
+  /* this should open port-XX:X directory
+   * FIXME: for enclosure it may be port-XX:Y:Z but it's a second occurrence */
+  d = opendir(path2);
+  if (!d) {
+	  log_debug("%s() Error dir open '%s', path ='%s'", __func__,
+			  path2, path);
+	  free(path2);
+	  return port;
+  }
+  while ( (de = readdir(d)) ) {
+  		if ((strcmp(de->d_name, ".") == 0) ||
+  				(strcmp(de->d_name, "..")) == 0) {
+  			continue;
+  		}
+  		if (strncmp(de->d_name,"phy-", strlen("phy-")) == 0) {
+  			/* Need link called "phy-XX:Y
+  			 * Y is real phy we need.
+  			 * This can also be found in phy_identifier file */
+  			sscanf(de->d_name, "phy-%d:%d", &host, &port);
+  			break;
+  		}
+  }
+  free(path2);
 
   init_smp(path, cntrl);
   return port;

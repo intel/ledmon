@@ -102,40 +102,36 @@ static int process_page1(struct ses_pages *sp)
 	/* How many enclosures is in the main enclosure? */
 	num_encl = sp->page1[1] + 1;
 	sp->page1_len = (sp->page1[2] << 8) + sp->page1[3] + 4;
-	if (debug) printf("Number of enclosures %d\n", num_encl);
 	/* Go to Enclosure Descriptor */
 	ed = sp->page1 + 8;
 	for (i=0; i < num_encl; i++, ed += len) {
 		if (ed + 3 > sp->page1 + sp->page1_len) {
-			printf("Error, response truncated at %d\n", i);
+			log_debug("SES: Error, response pare 1 truncated at %d\n", i);
 			return 1;
 		}
 		sum_headers += ed[2];
 		len = ed[3] + 4;
 		if (len < 40) {
-			printf("Response too short\n");
+			log_debug("SES: Response too short for page 1\n");
 			continue;
 		}
 	}
-	if (debug) printf("Number of type headers: %d\n", sum_headers);
+
 	sp->page1_types = ed;
 	sp->page1_types_len = sum_headers;
 
 	/* ed is on type descr header*/
 	for (i=0; i<sum_headers; i++, ed += 4) {
 		if (ed > sp->page1 + sp->page1_len) {
-			printf("Response truncated at %d\n", i);
+			log_debug("SES: Response page 1 truncated at %d\n", i);
 			return 1;
 		}
-		if (debug) printf("Element in type headers descriptor.\n");
-		if (debug) printf("Element type 0x%08x, num pos elem: 0x%08x\n", ed[0],ed[1]);
 		if (ed[0] == SES_DEVICE_SLOT ||
 				ed[0] == SES_ARRAY_DEVICE_SLOT) {
 			components += ed[1];
 		}
 	}
 	sp->components = components;
-	if (debug) printf("Components: %d\n",components);
 	return 0;
 }
 
@@ -295,7 +291,7 @@ static char* _get_dev_sg(const char *path)
 /* SYSFS_ENCL/<enclosure>/SCSI_GEN - path to sgX directory for enclosure. */
 #define SYSFS_ENCL "/sys/class/enclosure"
 #define SCSI_GEN "device/scsi_generic"
-static int get_enclosure_fd(const char *path, char *addr, int *idx)
+static int get_enclosure_fd(struct block_device *device, char *addr)
 {
 	DIR *d = NULL;
 	struct dirent *de = NULL;
@@ -303,7 +299,12 @@ static int get_enclosure_fd(const char *path, char *addr, int *idx)
 	int len;
 	char *dev = NULL;
 	int fd = -1;
-	/* */
+
+	/* There may be device path already filled */
+	if (device->encl_index != -1 && device->encl_dev[0] != 0) {
+		return open(device->encl_dev, O_RDWR);
+	}
+
 	d = opendir(SYSFS_ENCL);
 	if (!d) {
 		return -1;
@@ -327,14 +328,20 @@ static int get_enclosure_fd(const char *path, char *addr, int *idx)
 		if (!dev)
 			break;
 		fd = open(dev, O_RDWR);
-		if (fd == -1)
+		if (fd == -1) {
+			free(dev);
 			break;
-		if (is_addr_in_encl(fd, addr, idx))
+		}
+		if (is_addr_in_encl(fd, addr, &device->encl_index)) {
+			strcpy(device->encl_dev, dev);
+			free(dev);
 			break; /* HIT */
+		}
 		else {
 			close(fd);
 			fd = -1;
 		}
+		free(dev);
 	}
 	closedir(d);
 	return fd;
@@ -437,9 +444,6 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 	int i,j;
 	int slot=0;
 
-	if (debug)
-		printf("%s():  msg: %02x %02x %02x %02x\n", __func__,
-				info[3], info[2], info[1], info[0]);
 	memset(desc, 0, sp->page2_len - 8);
 
 	for (i=0; i<sp->page1_types_len; i++, types += 4) {
@@ -465,10 +469,8 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 
 int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 {
-	if (debug)
-		printf("%s()[in]: ibpi=%d, u = 0x %02x %02x %02x %02x\n",
-				__func__, ibpi, u[0], u[1], u[2], u[3]);
 	switch (ibpi) {
+	case IBPI_PATTERN_UNKNOWN:
 	case IBPI_PATTERN_ONESHOT_NORMAL:
 	case IBPI_PATTERN_NORMAL:
 		_clr_msg(u);
@@ -555,12 +557,8 @@ int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 		_set_fault(u);
 		break;
 	default:
-		if (debug) printf("%s(): hit default\n", __func__);
 		return 1;
 	}
-	if (debug)
-		printf("%s()[out]: ibpi=%d, u = 0x %02x %02x %02x %02x\n",
-				__func__, ibpi, u[0], u[1], u[2], u[3]);
 	return 0;
 }
 /* SAS_ADDR_PATH - path in sysfs where sas_address for disk can be found */
@@ -662,12 +660,36 @@ static char * _slot_find(const char *enclo_path, const char *device_path)
   return result;
 }
 
+int scsi_get_enclosure(struct block_device *device)
+{
+	char *addr;
+	int fd = -1;
+
+	if (!device || !device->sysfs_path)
+		return 0;
+
+	memset(device->encl_dev, 0, sizeof(device->encl_dev));
+	addr= get_drive_sas_addr(device->sysfs_path);
+	if (addr==NULL) {
+		return 0;
+	}
+
+	fd=get_enclosure_fd(device, addr);
+	if (fd != -1)  {
+		put_enclosure_fd(fd);
+	}
+	if (addr)
+		free(addr);
+
+	return 1;
+}
+
 /**
  */
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-  int fd=-1, idx=0;
-  char *addr;
+  int fd=-1;
+  char *addr=NULL;
 
   if (!device || !device->sysfs_path) {
 	  __set_errno_and_return(EINVAL);
@@ -676,21 +698,25 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
   if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT)) {
 	  __set_errno_and_return(ERANGE);
   }
-  if (debug)
-	  printf("%s(): Drive: '%s', pattern=%d\n", __func__,
-			  strrchr(device->sysfs_path,'/')+1, (int)ibpi);
 
-  /* Get disk sas address */
-  if ((addr=get_drive_sas_addr(device->sysfs_path))==NULL) {
-	  __set_errno_and_return(EINVAL);
+  /* failed drive is special. Disk may be not available.
+   * In other case re-read all
+   * */
+  if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
+	  device->encl_index = -1;
+	  memset(device->encl_dev, 0, sizeof(device->encl_dev));
+	  addr= get_drive_sas_addr(device->sysfs_path);
+	  if (addr==NULL) {
+		  __set_errno_and_return(EINVAL);
+	  }
   }
-
-  fd=get_enclosure_fd(device->sysfs_path,addr, &idx);
+  fd=get_enclosure_fd(device, addr);
   if (fd != -1) {
-	  ses_send_to_idx(fd,idx,ibpi);
+	  ses_send_to_idx(fd,device->encl_index, ibpi);
 	  put_enclosure_fd(fd);
   }
-  free(addr);
+  if (addr)
+	  free(addr);
   return 0;
 }
 
@@ -705,7 +731,7 @@ char *sas_get_slot_path(const char *path, const char *ctrl_path)
   if (strncmp(path, ctrl_path, ctrl_path_len) != 0) {
     return NULL;
   }
-  host = get_path_component_rev(path, /* for hostN */ 6);
+  host = get_path_hostN(path);
   if (host) {
     snprintf(host_path, sizeof(host_path), "%s/%s/bsg/sas_%s", ctrl_path, host, host);
     free(host);

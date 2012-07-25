@@ -59,7 +59,7 @@
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *block_list = NULL;
+static void *sysfs_block_list = NULL;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -184,7 +184,7 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
 
   char *t = rindex(path, '/');
   if (strncmp(t + 1, "dev-", 4) == 0) {
-    device = slave_device_init(path, block_list);
+    device = slave_device_init(path, sysfs_block_list);
     if (device) {
       device->raid = raid;
       list_put(slave_list, device, sizeof(struct slave_device));
@@ -234,7 +234,7 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 
   char *t = rindex(path, '/');
   if (strncmp(t + 1, "dev-", 4) == 0) {
-    device = slave_device_init(path, block_list);
+    device = slave_device_init(path, sysfs_block_list);
     if (device) {
       if (!_is_duplicate(device)) {
         device->raid = raid;
@@ -286,7 +286,7 @@ static void _block_add(const char *path)
 {
   void *device = block_device_init(cntrl_list, path);
   if (device) {
-    list_put(block_list, device, sizeof(struct block_device));
+    list_put(sysfs_block_list, device, sizeof(struct block_device));
     free(device);
   }
 }
@@ -530,14 +530,14 @@ static void _determine(struct slave_device *device)
  */
 status_t sysfs_init(void)
 {
-  block_list = NULL;
+  sysfs_block_list = NULL;
   volum_list = NULL;
   cntrl_list = NULL;
   slave_list = NULL;
   cntnr_list = NULL;
   enclo_list = NULL;
 
-  if (list_init(&block_list) != STATUS_SUCCESS) {
+  if (list_init(&sysfs_block_list) != STATUS_SUCCESS) {
     return STATUS_BLOCK_LIST_ERROR;
   }
   if (list_init(&volum_list) != STATUS_SUCCESS) {
@@ -562,9 +562,9 @@ status_t sysfs_init(void)
  */
 void sysfs_fini(void)
 {
-  if (block_list) {
-    list_for_each(block_list, block_device_fini);
-    list_fini(block_list);
+  if (sysfs_block_list) {
+    list_for_each(sysfs_block_list, block_device_fini);
+    list_fini(sysfs_block_list);
   }
   if (volum_list) {
     list_for_each(volum_list, raid_device_fini);
@@ -592,9 +592,9 @@ void sysfs_fini(void)
  */
 status_t sysfs_reset(void)
 {
-  if (block_list) {
-    list_for_each(block_list, block_device_fini);
-    list_delete(block_list);
+  if (sysfs_block_list) {
+    list_for_each(sysfs_block_list, block_device_fini);
+    list_delete(sysfs_block_list);
   }
   if (volum_list) {
     list_for_each(volum_list, raid_device_fini);
@@ -635,7 +635,7 @@ status_t sysfs_scan(void)
   if (_scan_cntrl() != STATUS_SUCCESS) {
     return STATUS_CNTRL_LIST_ERROR;
   }
-  if (block_list == NULL) {
+  if (sysfs_block_list == NULL) {
     return STATUS_NULL_POINTER;
   }
   if (_scan_block() != STATUS_SUCCESS) {
@@ -682,7 +682,7 @@ void *sysfs_get_cntrl_devices(void)
  */
 status_t __sysfs_block_device_for_each(action_t action, void *parm)
 {
-  return __list_for_each(block_list, action, parm);
+  return __list_for_each(sysfs_block_list, action, parm);
 }
 
 /*
@@ -691,7 +691,7 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm)
  */
 void *__sysfs_block_device_first_that(test_t test, void *parm)
 {
-  return __list_first_that(block_list, test, parm);
+  return __list_first_that(sysfs_block_list, test, parm);
 }
 
 /**

@@ -53,7 +53,7 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
 int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi);
 
 /**
- * @brief Init smp and get phy index,
+ * @brief Init smp and gets phy index,
  */
 int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl);
 

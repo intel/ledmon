@@ -22,6 +22,7 @@
 
 #include <config.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -57,7 +58,7 @@ time_t timestamp = 0;
 /**
  * @brief Determines if disk is attached directly or via expander
  */
-static int _is_directly_attached(const char *path)
+int dev_directly_attached(const char *path)
 {
   if (strstr(path, "/expander") == 0)
       return 1;
@@ -86,9 +87,9 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 
   if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
     result = ahci_sgpio_write;
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && !_is_directly_attached(path)) {
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && !dev_directly_attached(path)) {
     result = scsi_ses_write;
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(path)) {
+  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && dev_directly_attached(path)) {
     result = scsi_smp_write;
   } else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
     result = dellssd_write;
@@ -159,6 +160,22 @@ struct cntrl_device *block_get_controller(void *cntrl_list, char *path)
   return list_first_that(cntrl_list, _compare, path);
 }
 
+
+struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
+{
+	struct _host_type *hosts=NULL;
+
+	if (!cntrl)
+		return hosts;
+
+	hosts = cntrl->hosts;
+	while (hosts) {
+		if (hosts->host_id == host_id)
+			break;
+		hosts = hosts->next;
+	}
+	return hosts;
+}
 /*
  * Allocates a new block device structure. See block.h for details.
  */
@@ -168,7 +185,6 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
   char link[PATH_MAX], *host;
   struct block_device *device = NULL;
   send_message_t send_fn = NULL;
-  int cntrl_phy_index = -1;
   int host_id = -1;
   char *host_name;
 
@@ -180,21 +196,17 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
       return NULL;
     }
 
-    host_name = get_path_component_rev(link, /* for hostN */ 6);
+    host_name = get_path_hostN(link);
     if (host_name) {
         sscanf(host_name, "host%d", &host_id);
         free(host_name);
     }
 
-    if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(link)) {
-        cntrl_phy_index = isci_cntrl_init_smp(link, cntrl);
-    }
-
-    if ((send_fn = _get_send_fn(cntrl, host)) == NULL) {
+    if ((send_fn = _get_send_fn(cntrl, link)) == NULL) {
       free(host);
       return NULL;
     }
-    device = malloc(sizeof(struct block_device));
+    device = calloc(1, sizeof(*device));
     if (device) {
       struct _host_type *hosts = cntrl->hosts;
 
@@ -204,15 +216,26 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
       device->ibpi = IBPI_PATTERN_UNKNOWN;
       device->send_fn = send_fn;
       device->timestamp = timestamp;
-      device->phy_index = cntrl_phy_index;
       device->host = NULL;
       device->host_id = host_id;
+      device->encl_index = -1;
       while (hosts) {
         if (hosts->host_id == host_id) {
           device->host = hosts;
           break;
         }
         hosts = hosts->next;
+      }
+      if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+    	  if (dev_directly_attached(link)) {
+    		  device->phy_index = isci_cntrl_init_smp(link, cntrl);
+    	  } else {
+    		  device->phy_index = isci_cntrl_init_smp(link, cntrl);
+    		  if (!scsi_get_enclosure(device)) {
+    			  log_warning("Getting enclosure for device failed (%s)",
+    					  path);
+    		  }
+    	  }
       }
     } else {
       free(host);
@@ -227,12 +250,12 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
 void block_device_fini(struct block_device *device)
 {
   if (device) {
-    if (device->sysfs_path) {
+    if (device->sysfs_path)
       free(device->sysfs_path);
-    }
-    if (device->cntrl_path) {
+
+    if (device->cntrl_path)
       free(device->cntrl_path);
-    }
+
     /* free(device); */
   }
 }
@@ -245,7 +268,7 @@ struct block_device * block_device_duplicate(struct block_device *block)
   struct block_device *result = NULL;
 
   if (block) {
-    result = malloc(sizeof(struct block_device));
+    result = calloc(1, sizeof(*result));
     if (result) {
       result->sysfs_path = strdup(block->sysfs_path);
       result->cntrl_path = strdup(block->cntrl_path);
@@ -260,6 +283,8 @@ struct block_device * block_device_duplicate(struct block_device *block)
       result->host = block->host;
       result->host_id = block->host_id;
       result->phy_index = block->phy_index;
+      result->encl_index = block->encl_index;
+      strcpy(result->encl_dev, block->encl_dev);
     }
   }
   return result;

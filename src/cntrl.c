@@ -37,7 +37,10 @@
 #include "list.h"
 #include "cntrl.h"
 #include "utils.h"
+#include "ibpi.h"
 #include "sysfs.h"
+#include "block.h"
+#include "smp.h"
 
 enum int_cntrl_type {
   INT_CNTRL_TYPE_UNKNOWN = CNTRL_TYPE_UNKNOWN,
@@ -279,6 +282,7 @@ struct cntrl_device * cntrl_device_init(const char *path)
           device->isci_present = 1;
           device->hosts = _cntrl_get_hosts(path);
           type = CNTRL_TYPE_SCSI;
+          isci_cntrl_init_smp(path, device);
         } else {
           device->isci_present = 0;
           device->hosts = NULL;

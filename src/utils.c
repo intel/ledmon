@@ -456,6 +456,18 @@ char *str_cat(char *dest, const char *src, size_t size)
   }
   return dest;
 }
+char *get_path_hostN(const char *path)
+{
+	char *c, *s, *p=strdup(path);
+	if (!p)
+		return NULL;
+	c = strstr(p, "host");
+	s = strchr(c,'/');
+	*s = 0;
+	s = strdup(c);
+	free(p);
+	return s;
+}
 
 char *get_path_component_rev(const char *path, int index)
 {

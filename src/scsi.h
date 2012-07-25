@@ -64,4 +64,13 @@ char *sas_get_slot_path(const char *path, const char *ctrl_path);
  */
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
 
+/**
+ * @brief Fills encl_index and encl_dev.
+ *
+ * @param[in]      device        Path to block device.
+ *
+ * @return 1 on success, 0 otherwise.
+ * */
+int scsi_get_enclosure(struct block_device *device);
+
 #endif /* _SCSI_H_INCLUDED_ */

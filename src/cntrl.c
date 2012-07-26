@@ -37,10 +37,7 @@
 #include "list.h"
 #include "cntrl.h"
 #include "utils.h"
-#include "ibpi.h"
 #include "sysfs.h"
-#include "block.h"
-#include "smp.h"
 
 enum int_cntrl_type {
   INT_CNTRL_TYPE_UNKNOWN = CNTRL_TYPE_UNKNOWN,

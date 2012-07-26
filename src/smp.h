@@ -54,6 +54,14 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi);
 
 /**
  * @brief Init smp and gets phy index,
+ *
+ * @param[in]      path            Path to the device in sysfs. It can be NULL
+ *                                 to just initialize cntrl and not to get the
+ *                                 phy.
+ * @param[in]      cntrl           Controller device to be initialized.
+ *
+ * @return Phy index on success if path and cntrl weren't NULL
+ *         0 if error occurred or path was NULL.
  */
 int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl);
 

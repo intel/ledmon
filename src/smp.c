@@ -242,8 +242,6 @@ int set_raw_pattern(unsigned int dev_idx, unsigned char *data, const struct gpio
   int od_offset = dev_idx * 3;
   int rc = 0;
 
-  //log_info("%s(): called for dev_idx=%d\n", __func__, dev_idx);
-
   if (pattern->activity)
     rc += try_set_sas_gpio_gp_bit(od_offset + 0, data, GPIO_TX_GP1, 1);
   else
@@ -272,13 +270,11 @@ static int _open_smp_device(const char *filename)
   FILE *df;
   int hba_fd;
   int dmaj, dmin;
-  //log_info("%s() called: %s\n", __func__, filename);
   snprintf(buf, sizeof(buf), "%s/dev", filename);
   df = fopen(buf, "r");
   if (!df) {
     return -1;
   }
-  //log_info("%s(): device = %s\n", __func__, buf);
   if (fgets(buf, sizeof(buf), df) < 0) {
     fclose(df);
     return -1;
@@ -292,7 +288,6 @@ static int _open_smp_device(const char *filename)
   if (mknod(buf, S_IFCHR | S_IRUSR | S_IWUSR, makedev(dmaj, dmin)) < 0) {
     return -1;
   }
-  //log_info("%s(): opening : %s\n", __func__, buf);
   hba_fd = open(buf, O_RDWR);
   unlink(buf);
   if (hba_fd < 0)

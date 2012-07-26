@@ -734,7 +734,6 @@ int main(int argc, char *argv[])
   if (_cmdline_parse(argc, argv) != STATUS_SUCCESS) {
       return STATUS_CMDLINE_ERROR;
   }
-  verbose = VERB_ALL;
 
   if (pidfile_check(progname, NULL) == 0) {
     log_warning("daemon is running...");
@@ -797,6 +796,5 @@ int main(int argc, char *argv[])
     }
     _ledmon_wait(sleep_interval);
   }
-  log_info("Exiting");
   exit(EXIT_SUCCESS);
 }

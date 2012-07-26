@@ -458,13 +458,18 @@ char *str_cat(char *dest, const char *src, size_t size)
 }
 char *get_path_hostN(const char *path)
 {
-	char *c, *s, *p=strdup(path);
+	char *c=NULL, *s=NULL, *p=strdup(path);
 	if (!p)
 		return NULL;
 	c = strstr(p, "host");
+	if (!c)
+		goto end;
 	s = strchr(c,'/');
+	if (!s)
+		goto end;
 	*s = 0;
 	s = strdup(c);
+end:
 	free(p);
 	return s;
 }

@@ -97,7 +97,7 @@ static int process_page1(struct ses_pages *sp)
 	int len=0;
 	int sum_headers=0; /* Number of Type descriptor headers */
 	int i=0;
-	int components; /* Total number of components in enclosure */
+	int components=0; /* Total number of components in enclosure */
 
 	/* How many enclosures is in the main enclosure? */
 	num_encl = sp->page1[1] + 1;
@@ -271,7 +271,6 @@ static char* _get_dev_sg(const char *path)
 				(strcmp(de->d_name, "..")) == 0) {
 			continue;
 		}
-		ret = strdup(de->d_name);
 		break;
 		/* */
 	}
@@ -325,6 +324,7 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 		strcat(p, "/");
 		strcat(p, SCSI_GEN);
 		dev = _get_dev_sg(p);
+		free(p);
 		if (!dev)
 			break;
 		fd = open(dev, O_RDWR);

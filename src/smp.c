@@ -579,6 +579,10 @@ int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 		  return port;
 	  }
 	  c = strchr(c, '/');
+	  if (!c) {
+		  free(path2);
+		  return port;
+	  }
 	  *c = 0; /* And now path2 has only up to 'port-...' string. */
 
 	  /* this should open port-XX:X directory

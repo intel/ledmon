@@ -556,54 +556,64 @@ void init_smp(const char *path, struct cntrl_device *device)
  */
 int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 {
-  char *path2 = strdup(path);
+  char *path2 = NULL;
   char *c;
   int host, port = 0;
   struct dirent *de;
   DIR *d;
 
-  if (!path2 || !cntrl) {
+  if (!cntrl) {
 	  return port;
   }
 
   if (!cntrl->isci_present) {
+	  return port;
+  }
+
+  /* Other case - just init controller. */
+  if (path && strstr(path, "port-")) {
+	  path2 = strdup(path);
+	  if (!path2)
+		  return port;
+
+	  c = strstr(path2, "port-");
+	  if (!c) {
+		  /* Should not happen. */
+		  log_debug("%s() missing 'port' in path '%s'", __func__, path2);
+		  free (path2);
+		  return port;
+	  }
+	  c = strchr(c, '/');
+	  *c = 0; /* And now path2 has only up to 'port-...' string. */
+
+	  /* this should open port-XX:X directory
+	   * FIXME: for enclosure it may be port-XX:Y:Z but it's a second
+	   * occurrence
+	   *
+	   * We may try this on the missing device.
+	   * */
+	  d = opendir(path2);
+	  if (!d) {
+		  log_debug("%s() Error dir open '%s', path ='%s'", __func__,
+				  path2, path);
+		  free(path2);
+		  return port;
+	  }
+	  while ( (de = readdir(d)) ) {
+		  if ((strcmp(de->d_name, ".") == 0) ||
+				  (strcmp(de->d_name, "..")) == 0) {
+			  continue;
+		  }
+		  if (strncmp(de->d_name,"phy-", strlen("phy-")) == 0) {
+			  /* Need link called "phy-XX:Y
+			   * Y is real phy we need.
+			   * This can also be found in phy_identifier file */
+			  sscanf(de->d_name, "phy-%d:%d", &host, &port);
+			  break;
+		  }
+	  }
 	  free(path2);
-	  return port;
   }
-
-  c = strstr(path2, "port-");
-  if (!c) {
-	  log_debug("%s() missing 'port' in path '%s'", __func__, path2);
-	  free (path2);
-	  return port;
-  }
-  c = strchr(c, '/');
-  *c = 0;
-
-  /* this should open port-XX:X directory
-   * FIXME: for enclosure it may be port-XX:Y:Z but it's a second occurrence */
-  d = opendir(path2);
-  if (!d) {
-	  log_debug("%s() Error dir open '%s', path ='%s'", __func__,
-			  path2, path);
-	  free(path2);
-	  return port;
-  }
-  while ( (de = readdir(d)) ) {
-  		if ((strcmp(de->d_name, ".") == 0) ||
-  				(strcmp(de->d_name, "..")) == 0) {
-  			continue;
-  		}
-  		if (strncmp(de->d_name,"phy-", strlen("phy-")) == 0) {
-  			/* Need link called "phy-XX:Y
-  			 * Y is real phy we need.
-  			 * This can also be found in phy_identifier file */
-  			sscanf(de->d_name, "phy-%d:%d", &host, &port);
-  			break;
-  		}
-  }
-  free(path2);
-
   init_smp(path, cntrl);
   return port;
 }

@@ -282,7 +282,6 @@ struct cntrl_device * cntrl_device_init(const char *path)
           device->isci_present = 1;
           device->hosts = _cntrl_get_hosts(path);
           type = CNTRL_TYPE_SCSI;
-          isci_cntrl_init_smp(path, device);
         } else {
           device->isci_present = 0;
           device->hosts = NULL;

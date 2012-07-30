@@ -603,7 +603,7 @@ static void _add_block(struct block_device *block)
     }
 
     if (ibpi != temp->ibpi) {
-      log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
+      log_info("CHANGE %s: from '%s' to '%s'.", temp->sysfs_path,
           ibpi_str[ibpi], ibpi_str[temp->ibpi]);
     }
     /* Check if name of the device changed. It's possible for SCSI devices. */

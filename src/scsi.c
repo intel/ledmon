@@ -304,6 +304,12 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 		return open(device->encl_dev, O_RDWR);
 	}
 
+	if (!addr) {
+		/* when there is no enclosure device and device index then address
+		 * should not be NULL */
+		return -1;
+	}
+
 	d = opendir(SYSFS_ENCL);
 	if (!d) {
 		return -1;
@@ -681,7 +687,7 @@ int scsi_get_enclosure(struct block_device *device)
 	if (addr)
 		free(addr);
 
-	return 1;
+	return (fd == -1) ? 0 : 1;
 }
 
 /**
@@ -699,21 +705,30 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	  __set_errno_and_return(ERANGE);
   }
 
-  /* failed drive is special. Disk may be not available.
-   * In other case re-read all
+  /* Failed drive is special. Path in sysfs may be not available.
+   * In other case re-read address.
    * */
   if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-	  device->encl_index = -1;
-	  memset(device->encl_dev, 0, sizeof(device->encl_dev));
-	  addr= get_drive_sas_addr(device->sysfs_path);
+	  addr = get_drive_sas_addr(device->sysfs_path);
 	  if (addr==NULL) {
-		  __set_errno_and_return(EINVAL);
+		  /* Device maybe gone during scan. */
+		  log_warning("Detected inconsistency. Marking device '%s' as failed.",
+				  strstr(device->sysfs_path,"host"));
+		  ibpi = IBPI_PATTERN_FAILED_DRIVE;
+		  device->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+
+		  /* FIXME: at worst case we may lose all reference to this drive
+		   * and should remove it from list. No API for do that now.
+		   **/
 	  }
   }
   fd=get_enclosure_fd(device, addr);
   if (fd != -1) {
 	  ses_send_to_idx(fd,device->encl_index, ibpi);
 	  put_enclosure_fd(fd);
+  } else {
+	  log_warning("Unable to send %s message to %s. Device is missing?",
+			  ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
   }
   if (addr)
 	  free(addr);

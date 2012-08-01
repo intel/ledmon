@@ -493,12 +493,15 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
   if (!ibpi2sgpio[ibpi].support_mask) {
     char *c = strrchr(device->sysfs_path, '/');
     if (c++) {
-      log_warning("pattern not supported for device (/dev/%s)", c);
-      fprintf(stderr, "%s(): pattern not supported for device (/dev/%s)\n", __func__, c);
+      log_warning("pattern %s not supported for device (/dev/%s)",
+    		  ibpi_str[ibpi], c);
+      fprintf(stderr, "%s(): pattern %s not supported for device (/dev/%s)\n",
+    		  __func__, ibpi_str[ibpi], c);
     } else {
-      log_warning("pattern not supported for device %s", device->sysfs_path);
-      fprintf(stderr, "%s(): pattern not supported for device\n\t(%s)\n", __func__,
-              device->sysfs_path);
+      log_warning("pattern %s not supported for device %s",
+    		  ibpi_str[ibpi], device->sysfs_path);
+      fprintf(stderr, "%s(): pattern %s not supported for device\n\t(%s)\n",
+    		  __func__, ibpi_str[ibpi], device->sysfs_path);
     }
     __set_errno_and_return(ENOTSUP);
   }

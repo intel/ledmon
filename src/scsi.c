@@ -301,7 +301,21 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 
 	/* There may be device path already filled */
 	if (device->encl_index != -1 && device->encl_dev[0] != 0) {
-		return open(device->encl_dev, O_RDWR);
+		fd = open(device->encl_dev, O_RDWR);
+		if (fd == -1) {
+			/* Enclosure device may change during extensive disks
+			 * hotplugging */
+			device->encl_index = -1;
+			memset(device->encl_dev, 0, sizeof(device->encl_dev));
+
+			if (!addr) {
+				/* If there is no SAS address then there is no way to find
+				 * enclosure device that this drive 'was' in. */
+				return fd;
+			}
+		} else {
+			return fd;
+		}
 	}
 
 	if (!addr) {
@@ -727,6 +741,11 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	  ses_send_to_idx(fd,device->encl_index, ibpi);
 	  put_enclosure_fd(fd);
   } else {
+	  if (device->ibpi == IBPI_PATTERN_FAILED_DRIVE && (
+			  device->encl_index == -1 || device->encl_dev[0] == 0)) {
+		  block_list_restart();
+		  log_warning("Inconsistent state detected. Restarting...");
+	  }
 	  log_warning("Unable to send %s message to %s. Device is missing?",
 			  ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
   }

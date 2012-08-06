@@ -61,7 +61,7 @@ static const unsigned int ibpi2sgpio[] = {
   [IBPI_PATTERN_PFA]            = 0x01400000,
   [IBPI_PATTERN_FAILED_DRIVE]   = 0x00400000,
   [IBPI_PATTERN_LOCATE]         = 0x00080000,
-  [IBPI_PATTERN_LOCATE_OFF]     = 0x00080000
+  [IBPI_PATTERN_LOCATE_OFF]     = 0x00000000
 };
 
 /*

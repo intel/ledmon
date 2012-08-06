@@ -470,7 +470,7 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
   if (sysfs_path == NULL) {
     __set_errno_and_return(EINVAL);
   }
-  if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE)) {
+  if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
     __set_errno_and_return(ERANGE);
   }
   if (!device->cntrl) {

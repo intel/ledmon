@@ -293,19 +293,3 @@ struct block_device * block_device_duplicate(struct block_device *block)
   }
   return result;
 }
-
-static int __block_list_restart = 0;
-
-void block_list_restart(void)
-{
-	__block_list_restart = 1;
-}
-void block_list_clean(void)
-{
-	__block_list_restart = 0;
-}
-
-int block_list_needs_restart(void)
-{
-	return __block_list_restart;
-}

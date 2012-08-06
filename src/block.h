@@ -185,10 +185,4 @@ int dev_directly_attached(const char *path);
  */
 struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id);
 
-
-
-void block_list_restart(void);
-void block_list_clean(void);
-int block_list_needs_restart(void);
-
 #endif /* _BLOCK_H_INCLUDED_ */

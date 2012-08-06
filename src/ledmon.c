@@ -712,13 +712,6 @@ static void _ledmon_execute(void)
 	list_for_each(ledmon_block_list, _send_msg);
 	/* Invalidate each device in the list. Clear controller and host. */
 	list_for_each(ledmon_block_list, _invalidate_dev);
-
-	if (block_list_needs_restart()) {
-	    list_for_each(ledmon_block_list, block_device_fini);
-	    list_fini(ledmon_block_list);
-		list_init(&ledmon_block_list);
-		block_list_clean();
-	}
 }
 
 /**

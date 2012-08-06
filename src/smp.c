@@ -614,6 +614,7 @@ int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 			  break;
 		  }
 	  }
+	  closedir(d);
 	  free(path2);
   }
   init_smp(path, cntrl);

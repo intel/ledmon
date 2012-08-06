@@ -212,7 +212,7 @@ static unsigned int _ahci_em_messages(const char *path)
   struct dirent *de = NULL;
 
   /* old kernel (prior to 2.6.36) */
-  if (get_int(path, 0, "driver/module/parameters/ahci_em_messages") != 0);
+  if (get_int(path, 0, "driver/module/parameters/ahci_em_messages") != 0)
       return 1;
 
   if (!get_int("", 0, "sys/module/libahci/parameters/ahci_em_messages"))

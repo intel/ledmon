@@ -691,6 +691,22 @@ static void _invalidate_dev(struct block_device *block)
 	  block->host = NULL;
 }
 
+
+static void _check_block_dev(struct block_device *block, int *restart)
+{
+	/* Check SCSI device behind expander. */
+	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+		if (dev_directly_attached(block->sysfs_path) == 0) {
+			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
+					(block->encl_index == -1 || block->encl_dev[0] == 0)) {
+				(*restart)++;
+				log_debug("%s(): invalidating device: %s. No link to enclosure",
+						__func__, strstr(block->sysfs_path, "host"));
+			}
+		}
+	}
+	return;
+}
 /**
  * @brief Sets a list of block devices and sends LED control messages.
  *
@@ -704,14 +720,31 @@ static void _invalidate_dev(struct block_device *block)
  */
 static void _ledmon_execute(void)
 {
+	int restart=0; /* ledmon_block_list needs restart? */
+	status_t status = STATUS_SUCCESS;
+
 	/* Revalidate each device in the list. Bring back controller and host */
 	list_for_each(ledmon_block_list, _revalidate_dev);
 	/* Scan all devices and compare them against saved list */
 	sysfs_block_device_for_each(_add_block);
 	/* Send message to all devices in the list if needed. */
 	list_for_each(ledmon_block_list, _send_msg);
+	/* Check if there is any orphaned device. */
+	list_for_each_parm(ledmon_block_list, _check_block_dev, &restart);
 	/* Invalidate each device in the list. Clear controller and host. */
 	list_for_each(ledmon_block_list, _invalidate_dev);
+
+	if (restart) {
+		/* there is at least one detached element in the list. */
+		list_for_each(ledmon_block_list, block_device_fini);
+		list_fini(ledmon_block_list);
+		status = list_init(&ledmon_block_list);
+		if (status != STATUS_SUCCESS) {
+		    log_debug("%s(): list_init() failed (status=%s).", __func__,
+				strstatus(status));
+		    exit(EXIT_FAILURE);
+		}
+	}
 }
 
 /**

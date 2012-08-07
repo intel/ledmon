@@ -301,7 +301,21 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 
 	/* There may be device path already filled */
 	if (device->encl_index != -1 && device->encl_dev[0] != 0) {
-		return open(device->encl_dev, O_RDWR);
+		fd = open(device->encl_dev, O_RDWR);
+		if (fd == -1) {
+			/* Enclosure device may change during extensive disks
+			 * hotplugging */
+			device->encl_index = -1;
+			memset(device->encl_dev, 0, sizeof(device->encl_dev));
+
+			if (!addr) {
+				/* If there is no SAS address then there is no way to find
+				 * enclosure device that this drive 'was' in. */
+				return fd;
+			}
+		} else {
+			return fd;
+		}
 	}
 
 	if (!addr) {

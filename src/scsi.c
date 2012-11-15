@@ -436,11 +436,11 @@ static void print_page10(struct ses_pages *sp)
 			printf("\tDevice type: 0x%01x\n", ((sas[0] & 0x70) >> 4));
 			printf("\tSMP Initiator Port: 0x%01x\n", ((sas[2] & 2)>>1));
 			printf("\tSTP Initiator Port: 0x%01x\n", ((sas[2] & 4)>>2));
-			printf("\tSSP Initiator Port: 0x%01x\n", ((sas[2] & 8)>>4));
+			printf("\tSSP Initiator Port: 0x%01x\n", ((sas[2] & 8)>>3));
 			printf("\tSATA DEVICE: 0x%01x\n", (sas[3] & 1));
 			printf("\tSMP Target Port: 0x%01x\n", ((sas[3] & 2)>>1));
 			printf("\tSTP Target Port: 0x%01x\n", ((sas[3] & 4)>>2));
-			printf("\tSSP Target Port: 0x%01x\n", ((sas[3] & 8)>>4));
+			printf("\tSSP Target Port: 0x%01x\n", ((sas[3] & 8)>>3));
 			printf("\tSATA Port Selector: 0x%01x\n", ((sas[3] & 0X80)>>7));
 			printf("\tAttached SAS Address: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
 					sas[4], sas[5], sas[6], sas[7], sas[8], sas[9], sas[10], sas[11]);
@@ -597,7 +597,7 @@ static char* get_drive_end_dev(const char *path)
 	if (!s) {
 		return NULL;
 	}
-	p = calloc(s-c, sizeof(*p));
+	p = calloc(s-c+1, sizeof(*p));
 	if (!p)
 		return NULL;
 

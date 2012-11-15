@@ -353,7 +353,7 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 			break;
 		}
 		if (is_addr_in_encl(fd, addr, &device->encl_index)) {
-			strcpy(device->encl_dev, dev);
+			strncpy(device->encl_dev, dev, PATH_MAX);
 			free(dev);
 			break; /* HIT */
 		}
@@ -607,8 +607,9 @@ static char* get_drive_end_dev(const char *path)
 }
 static char* get_drive_sas_addr(const char *path)
 {
+#define ADDR_LEN 64
 	int len = strlen(path);
-	char *buff, *end_dev, addr[64] = {0};
+	char *buff, *end_dev, addr[ADDR_LEN] = {0};
 	int fd;
 
 	/* Make big buffer. */
@@ -631,7 +632,7 @@ static char* get_drive_sas_addr(const char *path)
 		free(buff);
 		return NULL;
 	}
-	if (read(fd, addr, 64) == 64) {
+	if (read(fd, addr, ADDR_LEN) == ADDR_LEN) {
 		/* The value should be 19.*/
 		free(end_dev);
 		free(buff);
@@ -639,7 +640,7 @@ static char* get_drive_sas_addr(const char *path)
 		return NULL;
 	}
 	close(fd);
-	len = strlen(addr);
+	len = strnlen(addr, ADDR_LEN);
 	if (len && addr[len-1] == '\n')
 		addr[len-1] = 0;
 	free(end_dev);

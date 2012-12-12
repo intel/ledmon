@@ -36,7 +36,7 @@
  * in makefile to reflect current version number.
  */
 #ifndef VERSION_MINOR
-#define VERSION_MINOR    40
+#define VERSION_MINOR    70
 #endif
 
 #endif /* _VERSION_H_INCLUDED_ */

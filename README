@@ -1,4 +1,4 @@
-This package contains the Enclosure LED Utilities, version 0.32
+This package contains the Enclosure LED Utilities, version 0.40
 
 Copyright (C) 2009,2011 Intel Corporation.
 
@@ -30,9 +30,7 @@ Set DESTDIR variable to uninstall the package from non-default location.
 --------------------------
 
 a. Enclosure LED Utilities is meant as a part of RHEL and SLES linux
-   distributions. For backplane enclosures attached directly to ISCI
-   controller full support is limited to kernels provided with dedicated
-   Driver Update Disk (DUD). which will be available in Q1 2012.
+   distributions. 
 
 b. For backplane enclosures attached to ISCI controller support is limited to
    Intel(R) Intelligent Backplane.

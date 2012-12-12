@@ -1,6 +1,6 @@
 #
 #  Intel(R) Enclosure LED Utilities
-#  Copyright (C) 2009,2011, Intel Corporation.
+#  Copyright (C) 2009-2012 Intel Corporation.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms and conditions of the GNU General Public License,
@@ -47,10 +47,10 @@ and which not. The ledmon application monitors all RAID devices and visualizes
 their state.
 
 The ledmon application has been verified to work with Intel(R) storage
-controllers (i.e. Intel(R) AHCI controller). The application might work with
-storage controllers of other vendors (especially SAS/SCSI
-controllers). However storage controllers of other vendors have not been
-tested.
+controllers (i.e. Intel(R) AHCI controller and Intel(R) SAS controller).
+The application might work with storage controllers of other vendors
+(especially SAS/SCSI controllers). However storage controllers of other
+vendors have not been tested.
 
 The ledmon application is part of Intel(R) Enclosure LED Utilities. Only
 single instance of the application is allowed.
@@ -113,7 +113,7 @@ instances.
 
 =head1 LICENSE
 
-Copyright (c) 2009 Intel Corporation.
+Copyright (c) 2009-2012 Intel Corporation.
 
 This program is distributed under the terms of the GNU General Public License
 as published by the Free Software Foundation. See the build-in help for details

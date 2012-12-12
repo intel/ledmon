@@ -1,6 +1,6 @@
 #
 #  Intel(R) Enclosure LED Utilities
-#  Copyright (C) 2009,2011, Intel Corporation.
+#  Copyright (C) 2009-2012 Intel Corporation.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms and conditions of the GNU General Public License,
@@ -42,10 +42,10 @@ of patterns supported.
 LED management (AHCI) and S<SAF-TE> protocols are not supported.
 
 The ledctl application has been verified to work with Intel(R) storage
-controllers (i.e. Intel(R) AHCI controller). The application might work with
-storage controllers of other vendors (especially SCSI/SAS
-controllers). However, storage controllers of other vendors have not been
-tested.
+controllers (i.e. Intel(R) AHCI controller and Intel(R) SAS controller).
+The application might work with storage controllers of other vendors
+(especially SCSI/SAS controllers). However, storage controllers of other
+vendors have not been tested.
 
 The ledmon application has the highest priority when accessing LEDs.
 It means that some patterns set by ledctl may have no effect if ledmon is running
@@ -99,6 +99,133 @@ Visualizes "Predicted Failure Analysis" pattern.
 =item B<failure> or B<disk_failed>
 
 Visualizes "Failure" pattern.
+
+=item B<ses_abort>
+
+SES-2 R/R ABORD
+
+=item B<ses_rebuild>
+
+SES-2 REBUILD/REMAP
+
+=item B<ses_ifa>
+
+SES-2 IN FAILED ARRAY
+
+=item B<ses_ica>
+
+SES-2 IN CRIT ARRAY
+
+=item B<ses_cons_check>
+
+SES-2 CONS CHECK
+
+=item B<ses_hotspare>
+
+SES-2 HOT SPARE
+
+=item B<ses_rsvd_dev>
+
+SES-2 RSVD DEVICE
+
+=item B<ses_ok>
+
+SES-2 OK
+
+=item B<ses_ident>
+
+SES-2 IDENT
+
+=item B<ses_rm>
+
+SES-2 REMOVE
+
+=item B<ses_insert>
+
+SES-2 INSERT
+
+=item B<ses_missing>
+
+SES-2 MISSING
+
+=item B<ses_dnr>
+
+SES-2 DO NOT REMOVE
+
+=item B<ses_active>
+
+SES-2 ACTIVE
+
+=item B<ses_enbale_bb>
+
+SES-2 ENABLE BYP B
+
+=item B<ses_enable_ba>
+
+SES-2 ENABLE BYP A
+
+=item B<ses_devoff>
+
+SES-2 DEVICE OFF
+
+=item B<ses_fault>
+
+SES-2 FAULT
+
+=back
+
+=head2 Patterns Translation
+
+When non SES-2 pattern is send to device in enclosure automatic
+translation is being done.
+
+=item B<locate>
+
+I<locate> is translated to I<ses_ident> 
+
+=item B<locate_off>
+
+I<locate_off> is translated to I<~ses_ident>
+
+=item B<normal>
+
+I<normal> is translated to I<ses_ok>
+
+=item B<off>
+
+I<off> is translated to I<ses_ok>
+
+=item B<degraded>
+
+I<degraded> is translated to I<ses_ica>
+
+=item B<rebuild>
+
+I<rebuild> is translated to I<ses_rebuild>
+
+=item B<rebuild_p>
+
+I<rebuild_p> is translated to I<ses_rebuild>
+
+=item B<failed>
+
+I<failed> is translated to I<ses_ifa>
+
+=item B<hotspare>
+
+I<hotspare> is translated to I<ses_hotspare>
+
+=item B<pfa>
+
+I<pfa> is translated to I<ses_rsvd_dev>
+
+=item B<failure>
+
+I<failure> is translated to I<ses_fault>
+
+=item B<disk_failed>
+
+I<disk_failed> is translated to I<ses_fault>
 
 =back
 
@@ -195,7 +322,7 @@ example uses the first format of device list.
 
 =head1 LICENSE
 
-Copyright (c) 2009 Intel Corporation.
+Copyright (c) 2009-2012 Intel Corporation.
 
 This program is distributed under the terms of the GNU General Public License
 as published by the Free Software Foundation. See the built-in help for

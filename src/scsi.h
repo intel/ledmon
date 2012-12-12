@@ -62,6 +62,6 @@ char *sas_get_slot_path(const char *path, const char *ctrl_path);
  * @return Number of characters written if successful or -1 in case of error
  *         and errno is set to appropriate error code.
  */
-int scsi_libsas_write(struct block_device *device, enum ibpi_pattern ibpi);
+int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
 
 #endif /* _SCSI_H_INCLUDED_ */

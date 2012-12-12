@@ -87,7 +87,7 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
   if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
     result = ahci_sgpio_write;
   } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && !_is_directly_attached(path)) {
-    result = scsi_libsas_write;
+    result = scsi_ses_write;
   } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && _is_directly_attached(path)) {
     result = scsi_smp_write;
   } else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {

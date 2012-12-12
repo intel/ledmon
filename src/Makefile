@@ -58,7 +58,7 @@ LEDCTL_OBJECTS=\
 CFLAGS=-O0 -g -Wall -std=c99
 DEFFLAGS=-D_DEBUG -D_GNU_SOURCE -D_BSD_SOURCE -DDMALLOC_DISABLE
 INCFLAGS=-I../config
-LDFLAGS=-O0 -g $(DEFFLAGS)
+LDFLAGS=-O0 -g $(DEFFLAGS) -lsgutils2
 
 SOURCES:=$(shell find -name "*.[cC]" -print)
 

@@ -67,7 +67,27 @@ enum ibpi_pattern {
   IBPI_PATTERN_PFA,
   IBPI_PATTERN_FAILED_DRIVE,
   IBPI_PATTERN_LOCATE,
-  IBPI_PATTERN_LOCATE_OFF
+  IBPI_PATTERN_LOCATE_OFF,
+  /* Below are SES-2 codes. Note that by default most IBPI messages are
+   * translated into SES when needed but SES codes can be added also. */
+  SES_REQ_ABORT,
+  SES_REQ_REBUILD,
+  SES_REQ_IFA,
+  SES_REQ_ICA,
+  SES_REQ_CONS_CHECK,
+  SES_REQ_HOSTSPARE,
+  SES_REQ_RSVD_DEV,
+  SES_REQ_OK,
+  SES_REQ_IDENT,
+  SES_REQ_RM,
+  SES_REQ_INS,
+  SES_REQ_MISSING,
+  SES_REQ_DNR,
+  SES_REQ_ACTIVE,
+  SES_REQ_EN_BB,
+  SES_REQ_EN_BA,
+  SES_REQ_DEV_OFF,
+  SES_REQ_FAULT
 };
 
 extern const char *ibpi_str[];

@@ -73,4 +73,4 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
  * */
 int scsi_get_enclosure(struct block_device *device);
 
-#endif /* _SCSI_H_INCLUDED_ */
+#endif				/* _SCSI_H_INCLUDED_ */

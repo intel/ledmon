@@ -51,31 +51,30 @@
 #include "utils.h"
 #include "ses.h"
 
-
 static int debug = 0;
 
 static void print_page10(struct ses_pages *);
 
-static void send_diag_slot(struct ses_pages *,
-		int, const unsigned char *, int);
+static void send_diag_slot(struct ses_pages *, int, const unsigned char *, int);
 
-static int ses_set_message(enum ibpi_pattern , unsigned char *);
+static int ses_set_message(enum ibpi_pattern, unsigned char *);
 
 static inline int get_page2(int fd, unsigned char *p2, int *len)
 {
 	int ret;
 	/* Get Enclosure Status */
 	ret = sg_ll_receive_diag(fd, 1, ENCL_CTRL_DIAG_STATUS,
-			p2, SES_ALLOC_BUFF, 0, debug);
+				 p2, SES_ALLOC_BUFF, 0, debug);
 	*len = (p2[2] << 8) + p2[3] + 4;
 	return ret;
 }
+
 static inline int get_page1(int fd, unsigned char *p1, int *len)
 {
 	int ret;
 	/* Get Enclosure Status */
 	ret = sg_ll_receive_diag(fd, 1, ENCL_CFG_DIAG_STATUS,
-			p1, SES_ALLOC_BUFF, 0, debug);
+				 p1, SES_ALLOC_BUFF, 0, debug);
 	*len = (p1[2] << 8) + p1[3] + 4;
 	return ret;
 }
@@ -85,28 +84,30 @@ static inline int get_page10(int fd, unsigned char *p10, int *len)
 	int ret;
 	/* Get Enclosure Status */
 	ret = sg_ll_receive_diag(fd, 1, ENCL_ADDITIONAL_EL_STATUS,
-			p10, SES_ALLOC_BUFF, 0, debug);
+				 p10, SES_ALLOC_BUFF, 0, debug);
 	*len = (p10[2] << 8) + p10[3] + 4;
 	return ret;
 }
 
 static int process_page1(struct ses_pages *sp)
 {
-	int num_encl; /* number of subenclosures */
-	unsigned char *ed; /* Enclosure Descriptor */
-	int len=0;
-	int sum_headers=0; /* Number of Type descriptor headers */
-	int i=0;
-	int components=0; /* Total number of components in enclosure */
+	int num_encl;		/* number of subenclosures */
+	unsigned char *ed;	/* Enclosure Descriptor */
+	int len = 0;
+	int sum_headers = 0;	/* Number of Type descriptor headers */
+	int i = 0;
+	int components = 0;	/* Total number of components in enclosure */
 
 	/* How many enclosures is in the main enclosure? */
 	num_encl = sp->page1[1] + 1;
 	sp->page1_len = (sp->page1[2] << 8) + sp->page1[3] + 4;
 	/* Go to Enclosure Descriptor */
 	ed = sp->page1 + 8;
-	for (i=0; i < num_encl; i++, ed += len) {
+	for (i = 0; i < num_encl; i++, ed += len) {
 		if (ed + 3 > sp->page1 + sp->page1_len) {
-			log_debug("SES: Error, response pare 1 truncated at %d\n", i);
+			log_debug
+			    ("SES: Error, response pare 1 truncated at %d\n",
+			     i);
 			return 1;
 		}
 		sum_headers += ed[2];
@@ -120,14 +121,13 @@ static int process_page1(struct ses_pages *sp)
 	sp->page1_types = ed;
 	sp->page1_types_len = sum_headers;
 
-	/* ed is on type descr header*/
-	for (i=0; i<sum_headers; i++, ed += 4) {
+	/* ed is on type descr header */
+	for (i = 0; i < sum_headers; i++, ed += 4) {
 		if (ed > sp->page1 + sp->page1_len) {
 			log_debug("SES: Response page 1 truncated at %d\n", i);
 			return 1;
 		}
-		if (ed[0] == SES_DEVICE_SLOT ||
-				ed[0] == SES_ARRAY_DEVICE_SLOT) {
+		if (ed[0] == SES_DEVICE_SLOT || ed[0] == SES_ARRAY_DEVICE_SLOT) {
 			components += ed[1];
 		}
 	}
@@ -152,11 +152,11 @@ static struct ses_pages *ses_init(void)
 		goto sp10;
 	return sp;
 
-sp10:
+ sp10:
 	free(sp->page2);
-sp2:
+ sp2:
 	free(sp->page1);
-sp1:
+ sp1:
 	free(sp);
 	return NULL;
 }
@@ -165,9 +165,12 @@ static void ses_free(struct ses_pages *sp)
 {
 	if (!sp)
 		return;
-	if (sp->page1) free(sp->page1);
-	if (sp->page2) free(sp->page2);
-	if (sp->page10) free(sp->page10);
+	if (sp->page1)
+		free(sp->page1);
+	if (sp->page2)
+		free(sp->page2);
+	if (sp->page10)
+		free(sp->page10);
 	memset(sp, 0, sizeof(*sp));
 	free(sp);
 }
@@ -176,70 +179,74 @@ static void dump_p10(unsigned char *p)
 {
 	int i;
 	printf("----------------------------------------------\n");
-	for(i=0; i<8; i++, p+=16) {
+	for (i = 0; i < 8; i++, p += 16) {
 		printf("%p: %02x %02x %02x %02x %02x %02x %02x "
-				"%02x %02x %02x %02x %02x %02x %02x %02x %02x\n", p,
-				p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
-				p[8], p[9], p[10], p[11], p[12], p[13], p[14],
-				p[15]);
+		       "%02x %02x %02x %02x %02x %02x %02x %02x %02x\n", p,
+		       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+		       p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 	}
 }
+
 /* Enclosure is already opened. */
 static int is_addr_in_encl(int fd, const char *addr, int *idx)
 {
-	/* Get page10 and read address. If it fits, return 1.*/
+	/* Get page10 and read address. If it fits, return 1. */
 	struct ses_pages *sp = ses_init();
 	unsigned char *add_desc = NULL, *types = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
-	int i, j, len=0;
+	int i, j, len = 0;
 	char addr_cmp[32];
 
 	if (!sp)
 		return 0;
-	/* Start processing*/
+	/* Start processing */
 	/* Read configuration. */
-	if (get_page1(fd,sp->page1,&sp->page1_len)) {
+	if (get_page1(fd, sp->page1, &sp->page1_len)) {
 		goto err;
 	}
 
 	if (process_page1(sp))
 		goto err;
 
-	/* Get Enclosure Status - needed?*/
-	if (get_page2(fd,sp->page2,&sp->page2_len)) {
+	/* Get Enclosure Status - needed? */
+	if (get_page2(fd, sp->page2, &sp->page2_len)) {
 		goto err;
 	}
 
 	/* Additional Element Status */
-	if (get_page10(fd,sp->page10,&sp->page10_len)) {
+	if (get_page10(fd, sp->page10, &sp->page10_len)) {
 		goto err;
 	}
 
-	if (debug) print_page10(sp);
+	if (debug)
+		print_page10(sp);
 
-	/* Check Page10 for address. Extract index.*/
+	/* Check Page10 for address. Extract index. */
 	ap = add_desc = sp->page10 + 8;
 	types = sp->page1_types;
-	for (i=0; i<sp->page1_types_len; i++, types +=4) {
+	for (i = 0; i < sp->page1_types_len; i++, types += 4) {
 		if (types[0] == SES_DEVICE_SLOT ||
-				types[0] == SES_ARRAY_DEVICE_SLOT) {
-			for (j=0; j<types[1]; j++, ap += len) {
-				if (debug) dump_p10(ap);
-				/* Get Additional Element Status Descriptor length (x-1)*/
+		    types[0] == SES_ARRAY_DEVICE_SLOT) {
+			for (j = 0; j < types[1]; j++, ap += len) {
+				if (debug)
+					dump_p10(ap);
+				/* Get Additional Element Status Descriptor length (x-1) */
 				len = ap[1] + 2;
 				if ((ap[0] & 0xf) != SCSI_PROTOCOL_SAS)
-					continue; /* need SAS PROTO*/
-				/* It is a SAS protocol, go on*/
-				if ((ap[0] & 0x10)) /* Check EIP */
+					continue;	/* need SAS PROTO */
+				/* It is a SAS protocol, go on */
+				if ((ap[0] & 0x10))	/* Check EIP */
 					addr_p = ap + 8;
 				else
 					addr_p = ap + 4;
 				/* Process only PHY 0 descriptor. */
-				sprintf(addr_cmp,"%02x%02x%02x%02x%02x%02x%02x%02x",
-						addr_p[12],addr_p[13],addr_p[14],addr_p[15],
-						addr_p[16],addr_p[17],addr_p[18],addr_p[19]);
+				sprintf(addr_cmp,
+					"%02x%02x%02x%02x%02x%02x%02x%02x",
+					addr_p[12], addr_p[13], addr_p[14],
+					addr_p[15], addr_p[16], addr_p[17],
+					addr_p[18], addr_p[19]);
 
-				if (!strcmp(addr+2, addr_cmp)) {
+				if (!strcmp(addr + 2, addr_cmp)) {
 					if (idx)
 						*idx = ap[3];
 					ses_free(sp);
@@ -248,15 +255,14 @@ static int is_addr_in_encl(int fd, const char *addr, int *idx)
 			}
 		}
 	}
-err:
+ err:
 	ses_free(sp);
 	return 0;
 }
 
-
-static char* _get_dev_sg(const char *path)
+static char *_get_dev_sg(const char *path)
 {
-	char *ret=NULL;
+	char *ret = NULL;
 	DIR *d;
 	struct dirent *de;
 
@@ -266,9 +272,9 @@ static char* _get_dev_sg(const char *path)
 	if (!d) {
 		return NULL;
 	}
-	while ( (de = readdir(d)) ) {
+	while ((de = readdir(d))) {
 		if ((strcmp(de->d_name, ".") == 0) ||
-				(strcmp(de->d_name, "..")) == 0) {
+		    (strcmp(de->d_name, "..")) == 0) {
 			continue;
 		}
 		break;
@@ -276,7 +282,7 @@ static char* _get_dev_sg(const char *path)
 	}
 	if (de) {
 		ret = calloc(strlen("/dev/") +
-				strlen(de->d_name) + 1, sizeof(*ret));
+			     strlen(de->d_name) + 1, sizeof(*ret));
 		if (ret) {
 			strcpy(ret, "/dev/");
 			strcat(ret, de->d_name);
@@ -285,7 +291,6 @@ static char* _get_dev_sg(const char *path)
 	closedir(d);
 	return ret;
 }
-
 
 /* SYSFS_ENCL/<enclosure>/SCSI_GEN - path to sgX directory for enclosure. */
 #define SYSFS_ENCL "/sys/class/enclosure"
@@ -328,19 +333,21 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 	if (!d) {
 		return -1;
 	}
-	while ( (de = readdir(d)) ) {
+	while ((de = readdir(d))) {
 		if ((strcmp(de->d_name, ".") == 0) ||
-				(strcmp(de->d_name, "..")) == 0) {
+		    (strcmp(de->d_name, "..")) == 0) {
 			continue;
 		}
 		/* */
-		len = strlen(SCSI_GEN) + strlen(SYSFS_ENCL) + strlen(de->d_name) + 4;
+		len =
+		    strlen(SCSI_GEN) + strlen(SYSFS_ENCL) + strlen(de->d_name) +
+		    4;
 		p = calloc(len, sizeof(*p));
 		if (!p)
 			break;
 		strcpy(p, SYSFS_ENCL);
-		strcat(p,"/");
-		strcat(p,de->d_name);
+		strcat(p, "/");
+		strcat(p, de->d_name);
 		strcat(p, "/");
 		strcat(p, SCSI_GEN);
 		dev = _get_dev_sg(p);
@@ -355,9 +362,8 @@ static int get_enclosure_fd(struct block_device *device, char *addr)
 		if (is_addr_in_encl(fd, addr, &device->encl_index)) {
 			strncpy(device->encl_dev, dev, PATH_MAX);
 			free(dev);
-			break; /* HIT */
-		}
-		else {
+			break;	/* HIT */
+		} else {
 			close(fd);
 			fd = -1;
 		}
@@ -374,16 +380,16 @@ static void put_enclosure_fd(int fd)
 
 static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
 {
-	unsigned char msg[4] = {0};
+	unsigned char msg[4] = { 0 };
 	struct ses_pages *sp;
 
 	sp = ses_init();
 	if (!sp)
 		return;
 
-	/* Start processing*/
+	/* Start processing */
 	/* Read configuration. */
-	if (get_page1(fd,sp->page1,&sp->page1_len)) {
+	if (get_page1(fd, sp->page1, &sp->page1_len)) {
 		goto err;
 	}
 
@@ -391,34 +397,35 @@ static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
 		goto err;
 
 	/* Get Enclosure Status */
-	if (get_page2(fd,sp->page2,&sp->page2_len)) {
+	if (get_page2(fd, sp->page2, &sp->page2_len)) {
 		goto err;
 	}
 
 	if (ses_set_message(ibpi, msg))
-			goto err; /* unknown message */
+		goto err;	/* unknown message */
 
 	send_diag_slot(sp, fd, msg, idx);
 
-err:
+ err:
 	ses_free(sp);
 	return;
 }
 
 static void print_page10(struct ses_pages *sp)
 {
-	unsigned char *ai =  sp->page10 + 8;
-	int i=0,len=0, eip=0;
+	unsigned char *ai = sp->page10 + 8;
+	int i = 0, len = 0, eip = 0;
 	unsigned char *sas = NULL;
 
 	while (ai < sp->page10 + sp->page10_len) {
-		printf("%s()[%d]: Inv: %d, EIP: %d, Proto: 0x%04x\n", __func__, i++,
-				((ai[0] & 0x80)>>7), ((ai[0] & 0x10)>>4), ai[0] & 0xf);
-		printf("\tDescriptor len (x-1): %d\n",ai[1]+1);
+		printf("%s()[%d]: Inv: %d, EIP: %d, Proto: 0x%04x\n", __func__,
+		       i++, ((ai[0] & 0x80) >> 7), ((ai[0] & 0x10) >> 4),
+		       ai[0] & 0xf);
+		printf("\tDescriptor len (x-1): %d\n", ai[1] + 1);
 		eip = ai[0] && 0x10;
 		if (eip)
 			printf("\tElement Index: %d\n", ai[3]);
-		len = ai[1]+2;
+		len = ai[1] + 2;
 		if ((ai[0] & 0xf) == SCSI_PROTOCOL_SAS) {
 			if (eip)
 				sas = ai + 4;
@@ -427,61 +434,73 @@ static void print_page10(struct ses_pages *sp)
 			printf("\tProtocol SAS:\n");
 			printf("\tNumber of phy descriptors: %d\n", sas[0]);
 			printf("\tNot all phys: %d, descriptor type: 0x%1x\n",
-					(sas[1] & 1), ((sas[1] & 0xc0) >> 6));
+			       (sas[1] & 1), ((sas[1] & 0xc0) >> 6));
 			if (eip) {
 				printf("\tDevice slot number: %d\n", sas[3]);
 				sas += 2;
 			}
 			sas += 2;
-			printf("\tDevice type: 0x%01x\n", ((sas[0] & 0x70) >> 4));
-			printf("\tSMP Initiator Port: 0x%01x\n", ((sas[2] & 2)>>1));
-			printf("\tSTP Initiator Port: 0x%01x\n", ((sas[2] & 4)>>2));
-			printf("\tSSP Initiator Port: 0x%01x\n", ((sas[2] & 8)>>3));
+			printf("\tDevice type: 0x%01x\n",
+			       ((sas[0] & 0x70) >> 4));
+			printf("\tSMP Initiator Port: 0x%01x\n",
+			       ((sas[2] & 2) >> 1));
+			printf("\tSTP Initiator Port: 0x%01x\n",
+			       ((sas[2] & 4) >> 2));
+			printf("\tSSP Initiator Port: 0x%01x\n",
+			       ((sas[2] & 8) >> 3));
 			printf("\tSATA DEVICE: 0x%01x\n", (sas[3] & 1));
-			printf("\tSMP Target Port: 0x%01x\n", ((sas[3] & 2)>>1));
-			printf("\tSTP Target Port: 0x%01x\n", ((sas[3] & 4)>>2));
-			printf("\tSSP Target Port: 0x%01x\n", ((sas[3] & 8)>>3));
-			printf("\tSATA Port Selector: 0x%01x\n", ((sas[3] & 0X80)>>7));
-			printf("\tAttached SAS Address: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-					sas[4], sas[5], sas[6], sas[7], sas[8], sas[9], sas[10], sas[11]);
-			printf("\tSAS Address: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-					sas[12], sas[13], sas[14], sas[15], sas[16], sas[17], sas[18], sas[19]);
+			printf("\tSMP Target Port: 0x%01x\n",
+			       ((sas[3] & 2) >> 1));
+			printf("\tSTP Target Port: 0x%01x\n",
+			       ((sas[3] & 4) >> 2));
+			printf("\tSSP Target Port: 0x%01x\n",
+			       ((sas[3] & 8) >> 3));
+			printf("\tSATA Port Selector: 0x%01x\n",
+			       ((sas[3] & 0X80) >> 7));
+			printf
+			    ("\tAttached SAS Address: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+			     sas[4], sas[5], sas[6], sas[7], sas[8], sas[9],
+			     sas[10], sas[11]);
+			printf
+			    ("\tSAS Address: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+			     sas[12], sas[13], sas[14], sas[15], sas[16],
+			     sas[17], sas[18], sas[19]);
 			printf("\tPHY Identified: 0x%01x\n", sas[20]);
 		} else
-			printf("\tProtocol not SAS: 0x%02x, skipping\n", (ai[0] & 0xf));
+			printf("\tProtocol not SAS: 0x%02x, skipping\n",
+			       (ai[0] & 0xf));
 		/* */
 		ai += len;
 	}
 	return;
 }
 
-
 static void send_diag_slot(struct ses_pages *sp, int fd,
-							const unsigned char *info, int idx)
+			   const unsigned char *info, int idx)
 {
 	unsigned char *types = sp->page1_types;
-	unsigned char *desc = sp->page2 + 8; /* Move do descriptors */
-	int i,j;
-	int slot=0;
+	unsigned char *desc = sp->page2 + 8;	/* Move do descriptors */
+	int i, j;
+	int slot = 0;
 
 	memset(desc, 0, sp->page2_len - 8);
 
-	for (i=0; i<sp->page1_types_len; i++, types += 4) {
+	for (i = 0; i < sp->page1_types_len; i++, types += 4) {
 		if (types[0] == 0x01 || types[0] == 0x17) {
-			desc += 4; /* At first, skip overall header. */
-			for(j=0; j<types[1]; j++, desc += 4) {
+			desc += 4;	/* At first, skip overall header. */
+			for (j = 0; j < types[1]; j++, desc += 4) {
 				if (slot++ == idx) {
 					memcpy(desc, info, 4);
-					desc[0] |= 0x80; /* set select */
-					desc[0] |= 0x40; /* keep PRDFAIL */
-					desc[0] &= 0xf0; /* clear reserved flags */
+					desc[0] |= 0x80;	/* set select */
+					desc[0] |= 0x40;	/* keep PRDFAIL */
+					desc[0] &= 0xf0;	/* clear reserved flags */
 					break;
 				}
 			}
 		}
 	}
 	if (sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-					sp->page2, sp->page2_len, 0, debug)) {
+			    sp->page2, sp->page2_len, 0, debug)) {
 		return;
 	}
 	return;
@@ -581,11 +600,12 @@ int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 	}
 	return 0;
 }
+
 /* SAS_ADDR_PATH - path in sysfs where sas_address for disk can be found */
 #define SAS_ADDR_PATH "/sys/class/sas_end_device/%s/" \
 						"device/sas_device/%s/sas_address"
 
-static char* get_drive_end_dev(const char *path)
+static char *get_drive_end_dev(const char *path)
 {
 	char *s, *c, *p;
 
@@ -597,19 +617,20 @@ static char* get_drive_end_dev(const char *path)
 	if (!s) {
 		return NULL;
 	}
-	p = calloc(s-c+1, sizeof(*p));
+	p = calloc(s - c + 1, sizeof(*p));
 	if (!p)
 		return NULL;
 
-	strncpy(p, c, s-c);
-	p[s-c] = 0;
+	strncpy(p, c, s - c);
+	p[s - c] = 0;
 	return p;
 }
-static char* get_drive_sas_addr(const char *path)
+
+static char *get_drive_sas_addr(const char *path)
 {
 #define ADDR_LEN 64
 	int len = strlen(path);
-	char *buff, *end_dev, addr[ADDR_LEN] = {0};
+	char *buff, *end_dev, addr[ADDR_LEN] = { 0 };
 	int fd;
 
 	/* Make big buffer. */
@@ -633,7 +654,7 @@ static char* get_drive_sas_addr(const char *path)
 		return NULL;
 	}
 	if (read(fd, addr, ADDR_LEN) == ADDR_LEN) {
-		/* The value should be 19.*/
+		/* The value should be 19. */
 		free(end_dev);
 		free(buff);
 		close(fd);
@@ -641,8 +662,8 @@ static char* get_drive_sas_addr(const char *path)
 	}
 	close(fd);
 	len = strnlen(addr, ADDR_LEN);
-	if (len && addr[len-1] == '\n')
-		addr[len-1] = 0;
+	if (len && addr[len - 1] == '\n')
+		addr[len - 1] = 0;
 	free(end_dev);
 	free(buff);
 	return strdup(addr);
@@ -652,33 +673,33 @@ static char* get_drive_sas_addr(const char *path)
  */
 static int _slot_match(const char *slot_path, const char *device_path)
 {
-  char temp[PATH_MAX], link[PATH_MAX];
+	char temp[PATH_MAX], link[PATH_MAX];
 
-  str_cpy(temp, slot_path, PATH_MAX);
-  str_cat(temp, "/device", PATH_MAX);
+	str_cpy(temp, slot_path, PATH_MAX);
+	str_cat(temp, "/device", PATH_MAX);
 
-  if (realpath(temp, link) == NULL)
-    return 0;
+	if (realpath(temp, link) == NULL)
+		return 0;
 
-  return  strncmp(link, device_path, strlen(link)) == 0;
+	return strncmp(link, device_path, strlen(link)) == 0;
 }
 
 /**
  */
-static char * _slot_find(const char *enclo_path, const char *device_path)
+static char *_slot_find(const char *enclo_path, const char *device_path)
 {
-  void *dir;
-  char *temp, *result = NULL;
+	void *dir;
+	char *temp, *result = NULL;
 
-  dir = scan_dir(enclo_path);
-  if (dir) {
-    temp = list_first_that(dir, _slot_match, device_path);
-    if (temp) {
-      result = strdup(temp);
-    }
-    list_fini(dir);
-  }
-  return result;
+	dir = scan_dir(enclo_path);
+	if (dir) {
+		temp = list_first_that(dir, _slot_match, device_path);
+		if (temp) {
+			result = strdup(temp);
+		}
+		list_fini(dir);
+	}
+	return result;
 }
 
 int scsi_get_enclosure(struct block_device *device)
@@ -690,13 +711,13 @@ int scsi_get_enclosure(struct block_device *device)
 		return 0;
 
 	memset(device->encl_dev, 0, sizeof(device->encl_dev));
-	addr= get_drive_sas_addr(device->sysfs_path);
-	if (addr==NULL) {
+	addr = get_drive_sas_addr(device->sysfs_path);
+	if (addr == NULL) {
 		return 0;
 	}
 
-	fd=get_enclosure_fd(device, addr);
-	if (fd != -1)  {
+	fd = get_enclosure_fd(device, addr);
+	if (fd != -1) {
 		put_enclosure_fd(fd);
 	}
 	if (addr)
@@ -709,92 +730,95 @@ int scsi_get_enclosure(struct block_device *device)
  */
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-  int fd=-1;
-  char *addr=NULL;
+	int fd = -1;
+	char *addr = NULL;
 
-  if (!device || !device->sysfs_path) {
-	  __set_errno_and_return(EINVAL);
-  }
+	if (!device || !device->sysfs_path) {
+		__set_errno_and_return(EINVAL);
+	}
 
-  if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT)) {
-	  __set_errno_and_return(ERANGE);
-  }
+	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT)) {
+		__set_errno_and_return(ERANGE);
+	}
 
-  /* Failed drive is special. Path in sysfs may be not available.
-   * In other case re-read address.
-   * */
-  if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-	  addr = get_drive_sas_addr(device->sysfs_path);
-	  if (addr==NULL) {
-		  /* Device maybe gone during scan. */
-		  log_warning("Detected inconsistency. Marking device '%s' as failed.",
-				  strstr(device->sysfs_path,"host"));
-		  ibpi = IBPI_PATTERN_FAILED_DRIVE;
-		  device->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+	/* Failed drive is special. Path in sysfs may be not available.
+	 * In other case re-read address.
+	 * */
+	if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
+		addr = get_drive_sas_addr(device->sysfs_path);
+		if (addr == NULL) {
+			/* Device maybe gone during scan. */
+			log_warning
+			    ("Detected inconsistency. Marking device '%s' as failed.",
+			     strstr(device->sysfs_path, "host"));
+			ibpi = IBPI_PATTERN_FAILED_DRIVE;
+			device->ibpi = IBPI_PATTERN_FAILED_DRIVE;
 
-		  /* FIXME: at worst case we may lose all reference to this drive
-		   * and should remove it from list. No API for do that now.
-		   **/
-	  }
-  }
-  fd=get_enclosure_fd(device, addr);
-  if (fd != -1) {
-	  ses_send_to_idx(fd,device->encl_index, ibpi);
-	  put_enclosure_fd(fd);
-  } else {
-	  log_warning("Unable to send %s message to %s. Device is missing?",
-			  ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
-  }
-  if (addr)
-	  free(addr);
-  return 0;
+			/* FIXME: at worst case we may lose all reference to this drive
+			 * and should remove it from list. No API for do that now.
+			 **/
+		}
+	}
+	fd = get_enclosure_fd(device, addr);
+	if (fd != -1) {
+		ses_send_to_idx(fd, device->encl_index, ibpi);
+		put_enclosure_fd(fd);
+	} else {
+		log_warning
+		    ("Unable to send %s message to %s. Device is missing?",
+		     ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
+	}
+	if (addr)
+		free(addr);
+	return 0;
 }
 
 /**
  */
 char *sas_get_slot_path(const char *path, const char *ctrl_path)
 {
-  char *host;
-  char host_path[PATH_MAX] = {0};
-  size_t ctrl_path_len = strlen(ctrl_path);
+	char *host;
+	char host_path[PATH_MAX] = { 0 };
+	size_t ctrl_path_len = strlen(ctrl_path);
 
-  if (strncmp(path, ctrl_path, ctrl_path_len) != 0) {
-    return NULL;
-  }
-  host = get_path_hostN(path);
-  if (host) {
-    snprintf(host_path, sizeof(host_path), "%s/%s/bsg/sas_%s", ctrl_path, host, host);
-    free(host);
-  }
-  return str_dup(host_path);
+	if (strncmp(path, ctrl_path, ctrl_path_len) != 0) {
+		return NULL;
+	}
+	host = get_path_hostN(path);
+	if (host) {
+		snprintf(host_path, sizeof(host_path), "%s/%s/bsg/sas_%s",
+			 ctrl_path, host, host);
+		free(host);
+	}
+	return str_dup(host_path);
 }
 
 /**
  */
 static char *_get_enc_slot_path(const char *path)
 {
-  struct enclosure_device *device;
-  char *result = NULL;
+	struct enclosure_device *device;
+	char *result = NULL;
 
-  device = sysfs_get_enclosure_devices();
-  while (device) {
-    if ((result = _slot_find(device->sysfs_path, path)) != NULL) {
-      break;
-    }
-    device = list_next(device);
-  }
-  return result;
+	device = sysfs_get_enclosure_devices();
+	while (device) {
+		if ((result = _slot_find(device->sysfs_path, path)) != NULL) {
+			break;
+		}
+		device = list_next(device);
+	}
+	return result;
 }
 
 /**
  */
 char *scsi_get_slot_path(const char *path, const char *ctrl_path)
 {
-  char *result = NULL;
+	char *result = NULL;
 
-  result = _get_enc_slot_path(path);
-  if (!result) {
-    result = sas_get_slot_path(path, ctrl_path);
-  }
-  return result;
+	result = _get_enc_slot_path(path);
+	if (!result) {
+		result = sas_get_slot_path(path, ctrl_path);
+	}
+	return result;
 }

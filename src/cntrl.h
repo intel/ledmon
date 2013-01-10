@@ -27,10 +27,10 @@
  * This enumeration type lists all supported storage controller types.
  */
 enum cntrl_type {
-  CNTRL_TYPE_UNKNOWN = 0,
-  CNTRL_TYPE_DELLSSD,
-  CNTRL_TYPE_SCSI,
-  CNTRL_TYPE_AHCI
+	CNTRL_TYPE_UNKNOWN = 0,
+	CNTRL_TYPE_DELLSSD,
+	CNTRL_TYPE_SCSI,
+	CNTRL_TYPE_AHCI
 };
 
 /**
@@ -42,36 +42,36 @@ struct cntrl_device {
   /**
    * Path to the device in sysfs tree.
    */
-  char *sysfs_path;
+	char *sysfs_path;
 
   /**
    * Type of storage controller device.
    */
-  enum cntrl_type cntrl_type;
+	enum cntrl_type cntrl_type;
 
   /**
    * Flag if scsi controller driver is "isci"
    */
-  int isci_present;
+	int isci_present;
 
-  struct _host_type {
+	struct _host_type {
     /**
      * ibpi state buffer for directly attached devices
      */
-    void *ibpi_state_buffer;
+		void *ibpi_state_buffer;
     /**
      * outbound raw byte stream
      */
-    unsigned char bitstream[4];
+		unsigned char bitstream[4];
     /**
      * host identifier for different hba instances
      */
-    int host_id;
+		int host_id;
     /**
      * pointer to next structure
      */
-    struct _host_type *next;
-  } *hosts;
+		struct _host_type *next;
+	} *hosts;
 };
 
 /**
@@ -87,7 +87,7 @@ struct cntrl_device {
  *         function returns NULL pointer. The NULL pointer means that controller
  *         device is not supported.
  */
-struct cntrl_device * cntrl_device_init(const char *path);
+struct cntrl_device *cntrl_device_init(const char *path);
 
 /**
  * @brief Releases a controller device structure.
@@ -103,4 +103,4 @@ struct cntrl_device * cntrl_device_init(const char *path);
  */
 void cntrl_device_fini(struct cntrl_device *device);
 
-#endif /* _CNTRL_H_INCLUDED_ */
+#endif				/* _CNTRL_H_INCLUDED_ */

@@ -50,18 +50,18 @@
  * uses this control number to issue SGPIO signals appropriately.
  */
 static const unsigned int ibpi2sgpio[] = {
-  [IBPI_PATTERN_UNKNOWN]        = 0x00000000,
-  [IBPI_PATTERN_ONESHOT_NORMAL] = 0x00000000,
-  [IBPI_PATTERN_NORMAL]         = 0x00000000,
-  [IBPI_PATTERN_DEGRADED]       = 0x00200000,
-  [IBPI_PATTERN_REBUILD]        = 0x00480000,
-  [IBPI_PATTERN_REBUILD_P]      = 0x00480000,
-  [IBPI_PATTERN_FAILED_ARRAY]   = 0x00280000,
-  [IBPI_PATTERN_HOTSPARE]       = 0x01800000,
-  [IBPI_PATTERN_PFA]            = 0x01400000,
-  [IBPI_PATTERN_FAILED_DRIVE]   = 0x00400000,
-  [IBPI_PATTERN_LOCATE]         = 0x00080000,
-  [IBPI_PATTERN_LOCATE_OFF]     = 0x00000000
+	[IBPI_PATTERN_UNKNOWN]        = 0x00000000,
+	[IBPI_PATTERN_ONESHOT_NORMAL] = 0x00000000,
+	[IBPI_PATTERN_NORMAL]         = 0x00000000,
+	[IBPI_PATTERN_DEGRADED]       = 0x00200000,
+	[IBPI_PATTERN_REBUILD]        = 0x00480000,
+	[IBPI_PATTERN_REBUILD_P]      = 0x00480000,
+	[IBPI_PATTERN_FAILED_ARRAY]   = 0x00280000,
+	[IBPI_PATTERN_HOTSPARE]       = 0x01800000,
+	[IBPI_PATTERN_PFA]            = 0x01400000,
+	[IBPI_PATTERN_FAILED_DRIVE]   = 0x00400000,
+	[IBPI_PATTERN_LOCATE]         = 0x00080000,
+	[IBPI_PATTERN_LOCATE_OFF]     = 0x00000000
 };
 
 /*
@@ -70,24 +70,24 @@ static const unsigned int ibpi2sgpio[] = {
  */
 int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-  char temp[WRITE_BUFFER_SIZE];
-  char path[PATH_MAX];
-  char *sysfs_path = device->cntrl_path;
+	char temp[WRITE_BUFFER_SIZE];
+	char path[PATH_MAX];
+	char *sysfs_path = device->cntrl_path;
 
-  if (sysfs_path == NULL) {
-    __set_errno_and_return(EINVAL);
-  }
-  if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
-    __set_errno_and_return(ERANGE);
-  }
+	if (sysfs_path == NULL) {
+		__set_errno_and_return(EINVAL);
+	}
+	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
+		__set_errno_and_return(ERANGE);
+	}
 
-  sprintf(temp, "%u", ibpi2sgpio[ibpi]);
+	sprintf(temp, "%u", ibpi2sgpio[ibpi]);
 
-  str_cpy(path, sysfs_path, PATH_MAX);
-  str_cat(path, "/em_message", PATH_MAX);
+	str_cpy(path, sysfs_path, PATH_MAX);
+	str_cat(path, "/em_message", PATH_MAX);
 
-  usleep(EM_MSG_WAIT);
-  return buf_write(path, temp) > 0;
+	usleep(EM_MSG_WAIT);
+	return buf_write(path, temp) > 0;
 }
 
 /*
@@ -95,21 +95,21 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
  */
 char *ahci_get_port_path(const char *path)
 {
-  char tmp[PATH_MAX], buf[BUFFER_MAX];
-  char *p, *s;
+	char tmp[PATH_MAX], buf[BUFFER_MAX];
+	char *p, *s;
 
-  str_cpy(tmp, path, PATH_MAX);
-  if ((p = strstr(tmp, "/target")) == NULL) {
-    return NULL;
-  }
-  *p = '\0';
-  if ((s = rindex(tmp, PATH_DELIM)) == NULL) {
-    return NULL;
-  }
+	str_cpy(tmp, path, PATH_MAX);
+	if ((p = strstr(tmp, "/target")) == NULL) {
+		return NULL;
+	}
+	*p = '\0';
+	if ((s = rindex(tmp, PATH_DELIM)) == NULL) {
+		return NULL;
+	}
 
-  str_cpy(buf, s, BUFFER_MAX);
-  str_cat(tmp, "/scsi_host", PATH_MAX);
-  str_cat(tmp, buf, PATH_MAX);
+	str_cpy(buf, s, BUFFER_MAX);
+	str_cat(tmp, "/scsi_host", PATH_MAX);
+	str_cat(tmp, buf, PATH_MAX);
 
-  return str_dup(tmp);
+	return str_dup(tmp);
 }

@@ -33,6 +33,6 @@ int pidfile_remove(const char *name);
 
 /**
  */
-status_t pidfile_check(const char *name, pid_t *pid);
+status_t pidfile_check(const char *name, pid_t * pid);
 
-#endif /* _PIDFILE_H_INCLUDED_ */
+#endif				/* _PIDFILE_H_INCLUDED_ */

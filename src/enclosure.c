@@ -47,23 +47,23 @@
  */
 static uint64_t _get_sas_address(const char *path)
 {
-  char tmp[PATH_MAX], buf[BUFFER_MAX];
-  char *p, *s;
+	char tmp[PATH_MAX], buf[BUFFER_MAX];
+	char *p, *s;
 
-  str_cpy(tmp, path, PATH_MAX);
-  if ((p = strstr(tmp, "/expander")) == NULL) {
-    return 0;
-  }
-  if ((s = strchr(p + 1, PATH_DELIM)) == NULL) {
-    return 0;
-  }
-  *s = '\0';
+	str_cpy(tmp, path, PATH_MAX);
+	if ((p = strstr(tmp, "/expander")) == NULL) {
+		return 0;
+	}
+	if ((s = strchr(p + 1, PATH_DELIM)) == NULL) {
+		return 0;
+	}
+	*s = '\0';
 
-  str_cpy(buf, p, s - p + 1);
-  str_cat(tmp, "/sas_device", PATH_MAX);
-  str_cat(tmp, buf, PATH_MAX);
+	str_cpy(buf, p, s - p + 1);
+	str_cat(tmp, "/sas_device", PATH_MAX);
+	str_cat(tmp, buf, PATH_MAX);
 
-  return get_uint64(tmp, 0, "sas_address");
+	return get_uint64(tmp, 0, "sas_address");
 }
 
 /*
@@ -72,17 +72,17 @@ static uint64_t _get_sas_address(const char *path)
  */
 struct enclosure_device *enclosure_device_init(const char *path)
 {
-  char temp[PATH_MAX];
-  struct enclosure_device *result = NULL;
+	char temp[PATH_MAX];
+	struct enclosure_device *result = NULL;
 
-  if (realpath(path, temp)) {
-    if ((result = malloc(sizeof(struct enclosure_device))) == NULL) {
-      return NULL;
-    }
-    result->sysfs_path = str_dup(temp);
-    result->sas_address = _get_sas_address(temp);
-  }
-  return result;
+	if (realpath(path, temp)) {
+		if ((result = malloc(sizeof(struct enclosure_device))) == NULL) {
+			return NULL;
+		}
+		result->sysfs_path = str_dup(temp);
+		result->sas_address = _get_sas_address(temp);
+	}
+	return result;
 }
 
 /*
@@ -91,10 +91,10 @@ struct enclosure_device *enclosure_device_init(const char *path)
  */
 void enclosure_device_fini(struct enclosure_device *enclosure)
 {
-  if (enclosure) {
-    if (enclosure->sysfs_path) {
-      free(enclosure->sysfs_path);
-    }
-    /* free(enclosure); */
-  }
+	if (enclosure) {
+		if (enclosure->sysfs_path) {
+			free(enclosure->sysfs_path);
+		}
+		/* free(enclosure); */
+	}
 }

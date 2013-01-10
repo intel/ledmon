@@ -39,5 +39,4 @@
 #define VERSION_MINOR    75
 #endif
 
-#endif /* _VERSION_H_INCLUDED_ */
-
+#endif				/* _VERSION_H_INCLUDED_ */

@@ -26,73 +26,74 @@
 /**
  */
 enum raid_state {
-  RAID_STATE_UNKNOWN = 0,
-  RAID_STATE_CLEAR,
-  RAID_STATE_INACTIVE,
-  RAID_STATE_SUSPENDED,
-  RAID_STATE_READONLY,
-  RAID_STATE_READ_AUTO,
-  RAID_STATE_CLEAN,
-  RAID_STATE_ACTIVE,
-  RAID_STATE_WRITE_PENDING,
-  RAID_STATE_ACTIVE_IDLE
+	RAID_STATE_UNKNOWN = 0,
+	RAID_STATE_CLEAR,
+	RAID_STATE_INACTIVE,
+	RAID_STATE_SUSPENDED,
+	RAID_STATE_READONLY,
+	RAID_STATE_READ_AUTO,
+	RAID_STATE_CLEAN,
+	RAID_STATE_ACTIVE,
+	RAID_STATE_WRITE_PENDING,
+	RAID_STATE_ACTIVE_IDLE
 };
 
 /**
  */
 enum raid_level {
-  RAID_LEVEL_UNKNOWN = 0,
-  RAID_LEVEL_0,
-  RAID_LEVEL_1,
-  RAID_LEVEL_10,
-  RAID_LEVEL_4,
-  RAID_LEVEL_5,
-  RAID_LEVEL_6,
-  RAID_LEVEL_FAULTY,
-  RAID_LEVEL_LINEAR
+	RAID_LEVEL_UNKNOWN = 0,
+	RAID_LEVEL_0,
+	RAID_LEVEL_1,
+	RAID_LEVEL_10,
+	RAID_LEVEL_4,
+	RAID_LEVEL_5,
+	RAID_LEVEL_6,
+	RAID_LEVEL_FAULTY,
+	RAID_LEVEL_LINEAR
 };
 
 /**
  */
 enum device_type {
-  DEVICE_TYPE_UNKNOWN = 0,
-  DEVICE_TYPE_VOLUME,
-  DEVICE_TYPE_CONTAINER
+	DEVICE_TYPE_UNKNOWN = 0,
+	DEVICE_TYPE_VOLUME,
+	DEVICE_TYPE_CONTAINER
 };
 
 /**
  */
 enum raid_action {
-  RAID_ACTION_UNKNOWN = 0,
-  RAID_ACTION_IDLE,
-  RAID_ACTION_RESHAPE,
-  RAID_ACTION_FROZEN,
-  RAID_ACTION_RESYNC,
-  RAID_ACTION_CHECK,
-  RAID_ACTION_RECOVER,
-  RAID_ACTION_REPAIR
+	RAID_ACTION_UNKNOWN = 0,
+	RAID_ACTION_IDLE,
+	RAID_ACTION_RESHAPE,
+	RAID_ACTION_FROZEN,
+	RAID_ACTION_RESYNC,
+	RAID_ACTION_CHECK,
+	RAID_ACTION_RECOVER,
+	RAID_ACTION_REPAIR
 };
 
 /**
  */
 struct raid_device {
-  enum device_type type;
-  int device_num;
-  char *sysfs_path;
-  int raid_disks;
-  void *slave_list;
-  int degraded;
-  enum raid_state array_state;
-  enum raid_action sync_action;
-  enum raid_level level;
+	enum device_type type;
+	int device_num;
+	char *sysfs_path;
+	int raid_disks;
+	void *slave_list;
+	int degraded;
+	enum raid_state array_state;
+	enum raid_action sync_action;
+	enum raid_level level;
 };
 
 /**
  */
-struct raid_device * raid_device_init(const char *path, unsigned int device_num, enum device_type type);
+struct raid_device *raid_device_init(const char *path, unsigned int device_num,
+				     enum device_type type);
 
 /**
  */
 void raid_device_fini(struct raid_device *device);
 
-#endif /* _RAID_H_INCLUDED_ */
+#endif				/* _RAID_H_INCLUDED_ */

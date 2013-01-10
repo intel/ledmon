@@ -122,23 +122,23 @@ static void *enclo_list = NULL;
  */
 static enum device_type _get_device_type(const char *path)
 {
-  enum device_type result = DEVICE_TYPE_UNKNOWN;
-  char *p = get_text(path, "md/metadata_version");
-  if (p != NULL) {
-    if (strlen(p) > 0) {
-      if (strncmp(p, "external:", 9) == 0) {
-        if (p[9] == '/') {
-          result = DEVICE_TYPE_VOLUME;
-        } else {
-          result = DEVICE_TYPE_CONTAINER;
-        }
-      } else {
-        result = DEVICE_TYPE_VOLUME;
-      }
-    }
-    free(p);
-  }
-  return result;
+	enum device_type result = DEVICE_TYPE_UNKNOWN;
+	char *p = get_text(path, "md/metadata_version");
+	if (p != NULL) {
+		if (strlen(p) > 0) {
+			if (strncmp(p, "external:", 9) == 0) {
+				if (p[9] == '/') {
+					result = DEVICE_TYPE_VOLUME;
+				} else {
+					result = DEVICE_TYPE_CONTAINER;
+				}
+			} else {
+				result = DEVICE_TYPE_VOLUME;
+			}
+		}
+		free(p);
+	}
+	return result;
 }
 
 /**
@@ -157,11 +157,11 @@ static enum device_type _get_device_type(const char *path)
  */
 static void _get_id(const char *path, struct device_id *d_id)
 {
-  char temp[PATH_MAX];
+	char temp[PATH_MAX];
 
-  str_cpy(temp, path, PATH_MAX);
-  str_cat(temp, "/dev", PATH_MAX);
-  get_id(temp, d_id);
+	str_cpy(temp, path, PATH_MAX);
+	str_cat(temp, "/dev", PATH_MAX);
+	get_id(temp, d_id);
 }
 
 /**
@@ -180,17 +180,18 @@ static void _get_id(const char *path, struct device_id *d_id)
  */
 static void _slave_vol_add(const char *path, struct raid_device *raid)
 {
-  struct slave_device *device;
+	struct slave_device *device;
 
-  char *t = rindex(path, '/');
-  if (strncmp(t + 1, "dev-", 4) == 0) {
-    device = slave_device_init(path, sysfs_block_list);
-    if (device) {
-      device->raid = raid;
-      list_put(slave_list, device, sizeof(struct slave_device));
-      free(device);
-    }
-  }
+	char *t = rindex(path, '/');
+	if (strncmp(t + 1, "dev-", 4) == 0) {
+		device = slave_device_init(path, sysfs_block_list);
+		if (device) {
+			device->raid = raid;
+			list_put(slave_list, device,
+				 sizeof(struct slave_device));
+			free(device);
+		}
+	}
 }
 
 /**
@@ -207,7 +208,7 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
  */
 static int _match(struct slave_device *s1, struct slave_device *s2)
 {
-  return (s1->block == s2->block);
+	return (s1->block == s2->block);
 }
 
 /**
@@ -223,440 +224,445 @@ static int _match(struct slave_device *s1, struct slave_device *s2)
  */
 static int _is_duplicate(struct slave_device *slave)
 {
-  return (list_first_that(slave_list, _match, slave) != NULL);
+	return (list_first_that(slave_list, _match, slave) != NULL);
 }
 
 /**
  */
 static void _slave_cnt_add(const char *path, struct raid_device *raid)
 {
-  struct slave_device *device;
+	struct slave_device *device;
 
-  char *t = rindex(path, '/');
-  if (strncmp(t + 1, "dev-", 4) == 0) {
-    device = slave_device_init(path, sysfs_block_list);
-    if (device) {
-      if (!_is_duplicate(device)) {
-        device->raid = raid;
-        device->state = SLAVE_STATE_IN_SYNC;
-        list_put(slave_list, device, sizeof(struct slave_device));
-      } else {
-        slave_device_fini(device);
-      }
-      free(device);
-    }
-  }
+	char *t = rindex(path, '/');
+	if (strncmp(t + 1, "dev-", 4) == 0) {
+		device = slave_device_init(path, sysfs_block_list);
+		if (device) {
+			if (!_is_duplicate(device)) {
+				device->raid = raid;
+				device->state = SLAVE_STATE_IN_SYNC;
+				list_put(slave_list, device,
+					 sizeof(struct slave_device));
+			} else {
+				slave_device_fini(device);
+			}
+			free(device);
+		}
+	}
 }
 
 /**
  */
 static void _link_volum(struct raid_device *device)
 {
-  char temp[PATH_MAX];
+	char temp[PATH_MAX];
 
-  str_cpy(temp, device->sysfs_path, PATH_MAX);
-  str_cat(temp, "/md", PATH_MAX);
+	str_cpy(temp, device->sysfs_path, PATH_MAX);
+	str_cat(temp, "/md", PATH_MAX);
 
-  void *dir = scan_dir(temp);
-  if (dir) {
-    list_for_each_parm(dir, _slave_vol_add, device);
-    list_fini(dir);
-  }
+	void *dir = scan_dir(temp);
+	if (dir) {
+		list_for_each_parm(dir, _slave_vol_add, device);
+		list_fini(dir);
+	}
 }
 
 /**
  */
 static void _link_cntnr(struct raid_device *device)
 {
-  char temp[PATH_MAX];
+	char temp[PATH_MAX];
 
-  str_cpy(temp, device->sysfs_path, PATH_MAX);
-  str_cat(temp, "/md", PATH_MAX);
+	str_cpy(temp, device->sysfs_path, PATH_MAX);
+	str_cat(temp, "/md", PATH_MAX);
 
-  void *dir = scan_dir(temp);
-  if (dir) {
-    list_for_each_parm(dir, _slave_cnt_add, device);
-    list_fini(dir);
-  }
+	void *dir = scan_dir(temp);
+	if (dir) {
+		list_for_each_parm(dir, _slave_cnt_add, device);
+		list_fini(dir);
+	}
 }
 
 /**
  */
 static void _block_add(const char *path)
 {
-  void *device = block_device_init(cntrl_list, path);
-  if (device) {
-    list_put(sysfs_block_list, device, sizeof(struct block_device));
-    free(device);
-  }
+	void *device = block_device_init(cntrl_list, path);
+	if (device) {
+		list_put(sysfs_block_list, device, sizeof(struct block_device));
+		free(device);
+	}
 }
 
 /**
  */
 static void _volum_add(const char *path, unsigned int device_num)
 {
-  void *device = raid_device_init(path, device_num, DEVICE_TYPE_VOLUME);
-  if (device) {
-    list_put(volum_list, device, sizeof(struct raid_device));
-    free(device);
-  }
+	void *device = raid_device_init(path, device_num, DEVICE_TYPE_VOLUME);
+	if (device) {
+		list_put(volum_list, device, sizeof(struct raid_device));
+		free(device);
+	}
 }
 
 /**
  */
 static void _cntnr_add(const char *path, unsigned int device_num)
 {
-  void *device = raid_device_init(path, device_num, DEVICE_TYPE_CONTAINER);
-  if (device) {
-    list_put(cntnr_list, device, sizeof(struct raid_device));
-    free(device);
-  }
+	void *device =
+	    raid_device_init(path, device_num, DEVICE_TYPE_CONTAINER);
+	if (device) {
+		list_put(cntnr_list, device, sizeof(struct raid_device));
+		free(device);
+	}
 }
 
 /**
  */
 static void _raid_add(const char *path)
 {
-  struct device_id device_id;
+	struct device_id device_id;
 
-  _get_id(path, &device_id);
-  if (device_id.major == 9) {
-    switch (_get_device_type(path)) {
-    case DEVICE_TYPE_VOLUME:
-      _volum_add(path, device_id.minor);
-      break;
-    case DEVICE_TYPE_CONTAINER:
-      _cntnr_add(path, device_id.minor);
-      break;
-    case DEVICE_TYPE_UNKNOWN:
-      break;
-    }
-  }
+	_get_id(path, &device_id);
+	if (device_id.major == 9) {
+		switch (_get_device_type(path)) {
+		case DEVICE_TYPE_VOLUME:
+			_volum_add(path, device_id.minor);
+			break;
+		case DEVICE_TYPE_CONTAINER:
+			_cntnr_add(path, device_id.minor);
+			break;
+		case DEVICE_TYPE_UNKNOWN:
+			break;
+		}
+	}
 }
 
 /**
  */
 static void _cntrl_add(const char *path)
 {
-  void *device = cntrl_device_init(path);
-  if (device) {
-    list_put(cntrl_list, device, sizeof(struct cntrl_device));
-    free(device);
-  }
+	void *device = cntrl_device_init(path);
+	if (device) {
+		list_put(cntrl_list, device, sizeof(struct cntrl_device));
+		free(device);
+	}
 }
 
 /**
  */
 static void _enclo_add(const char *path)
 {
-  void *device = enclosure_device_init(path);
-  if (device) {
-    list_put(enclo_list, device, sizeof(struct enclosure_device));
-    free(device);
-  }
+	void *device = enclosure_device_init(path);
+	if (device) {
+		list_put(enclo_list, device, sizeof(struct enclosure_device));
+		free(device);
+	}
 }
 
 /**
  */
 static void _check_raid(const char *path)
 {
-  char *t = strrchr(path, '/');
-  if (strncmp(t + 1, "md", 2) == 0) {
-    _raid_add(path);
-  }
+	char *t = strrchr(path, '/');
+	if (strncmp(t + 1, "md", 2) == 0) {
+		_raid_add(path);
+	}
 }
 
 /**
  */
 static void _check_cntrl(const char *path)
 {
-  char link[PATH_MAX];
-  if (realpath(path, link) != NULL) {
-    _cntrl_add(link);
-  }
+	char link[PATH_MAX];
+	if (realpath(path, link) != NULL) {
+		_cntrl_add(link);
+	}
 }
 
 /**
  */
 static void _check_enclo(const char *path)
 {
-  char link[PATH_MAX];
-  if (realpath(path, link) != NULL) {
-    _enclo_add(link);
-  }
+	char link[PATH_MAX];
+	if (realpath(path, link) != NULL) {
+		_enclo_add(link);
+	}
 }
 
 /**
  */
 static status_t _scan_block(void)
 {
-  void *dir = scan_dir(SYSFS_CLASS_BLOCK);
-  if (dir) {
-    list_for_each(dir, _block_add);
-    list_fini(dir);
-  }
-  return STATUS_SUCCESS;
+	void *dir = scan_dir(SYSFS_CLASS_BLOCK);
+	if (dir) {
+		list_for_each(dir, _block_add);
+		list_fini(dir);
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 static status_t _scan_raid(void)
 {
-  void *dir = scan_dir(SYSFS_CLASS_BLOCK);
-  if (dir) {
-    list_for_each(dir, _check_raid);
-    list_fini(dir);
-  }
-  return STATUS_SUCCESS;
+	void *dir = scan_dir(SYSFS_CLASS_BLOCK);
+	if (dir) {
+		list_for_each(dir, _check_raid);
+		list_fini(dir);
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 static status_t _scan_cntrl(void)
 {
-  void *dir = scan_dir(SYSFS_PCI_DEVICES);
-  if (dir) {
-    list_for_each(dir, _check_cntrl);
-    list_fini(dir);
-  }
-  return STATUS_SUCCESS;
+	void *dir = scan_dir(SYSFS_PCI_DEVICES);
+	if (dir) {
+		list_for_each(dir, _check_cntrl);
+		list_fini(dir);
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 static status_t _scan_slave(void)
 {
-  list_for_each(volum_list, _link_volum);
-  list_for_each(cntnr_list, _link_cntnr);
-  return STATUS_SUCCESS;
+	list_for_each(volum_list, _link_volum);
+	list_for_each(cntnr_list, _link_cntnr);
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 static status_t _scan_enclo(void)
 {
-  void *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
-  if (dir) {
-    list_for_each(dir, _check_enclo);
-    list_fini(dir);
-  }
-  return STATUS_SUCCESS;
+	void *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
+	if (dir) {
+		list_for_each(dir, _check_enclo);
+		list_fini(dir);
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 static int _is_failed_array(struct raid_device *raid)
 {
-  if (raid->degraded > 0) {
-    switch (raid->level) {
-    case RAID_LEVEL_1:
-    case RAID_LEVEL_10:
-      return (raid->degraded == raid->raid_disks);
-    case RAID_LEVEL_4:
-    case RAID_LEVEL_5:
-      return (raid->degraded > 1);
-    case RAID_LEVEL_6:
-      return (raid->degraded > 2);
-    case RAID_LEVEL_LINEAR:
-    case RAID_LEVEL_UNKNOWN:
-    case RAID_LEVEL_0:
-      break;
-    case RAID_LEVEL_FAULTY:
-      return 1;
-    }
-  }
-  return -1;
+	if (raid->degraded > 0) {
+		switch (raid->level) {
+		case RAID_LEVEL_1:
+		case RAID_LEVEL_10:
+			return (raid->degraded == raid->raid_disks);
+		case RAID_LEVEL_4:
+		case RAID_LEVEL_5:
+			return (raid->degraded > 1);
+		case RAID_LEVEL_6:
+			return (raid->degraded > 2);
+		case RAID_LEVEL_LINEAR:
+		case RAID_LEVEL_UNKNOWN:
+		case RAID_LEVEL_0:
+			break;
+		case RAID_LEVEL_FAULTY:
+			return 1;
+		}
+	}
+	return -1;
 }
 
 /**
  */
 static void _set_block_state(struct block_device *block, enum ibpi_pattern ibpi)
 {
-  char *debug_dev = strrchr(block->sysfs_path, '/');
-  debug_dev = debug_dev ? debug_dev + 1 : block->sysfs_path;
-  log_debug("(%s): device: %s, state: %s", __func__, debug_dev, ibpi_str[ibpi]);
-  if (block->ibpi < ibpi) {
-    block->ibpi = ibpi;
-  }
+	char *debug_dev = strrchr(block->sysfs_path, '/');
+	debug_dev = debug_dev ? debug_dev + 1 : block->sysfs_path;
+	log_debug("(%s): device: %s, state: %s", __func__, debug_dev,
+		  ibpi_str[ibpi]);
+	if (block->ibpi < ibpi) {
+		block->ibpi = ibpi;
+	}
 }
 
 /**
  */
-static void _set_array_state(struct raid_device *raid, struct block_device *block)
+static void _set_array_state(struct raid_device *raid,
+			     struct block_device *block)
 {
-  switch (raid->sync_action) {
-  case RAID_ACTION_UNKNOWN:
-  case RAID_ACTION_IDLE:
-  case RAID_ACTION_FROZEN:
-    _set_block_state(block, IBPI_PATTERN_NORMAL);
-    break;
-  case RAID_ACTION_CHECK:
-  case RAID_ACTION_RESHAPE:
-    _set_block_state(block, IBPI_PATTERN_REBUILD_P);
-    break;
-  case RAID_ACTION_RESYNC:
-  case RAID_ACTION_RECOVER:
-  case RAID_ACTION_REPAIR:
-    _set_block_state(block, IBPI_PATTERN_REBUILD);
-    break;
-  }
+	switch (raid->sync_action) {
+	case RAID_ACTION_UNKNOWN:
+	case RAID_ACTION_IDLE:
+	case RAID_ACTION_FROZEN:
+		_set_block_state(block, IBPI_PATTERN_NORMAL);
+		break;
+	case RAID_ACTION_CHECK:
+	case RAID_ACTION_RESHAPE:
+		_set_block_state(block, IBPI_PATTERN_REBUILD_P);
+		break;
+	case RAID_ACTION_RESYNC:
+	case RAID_ACTION_RECOVER:
+	case RAID_ACTION_REPAIR:
+		_set_block_state(block, IBPI_PATTERN_REBUILD);
+		break;
+	}
 }
 
 /**
  */
 static void _determine(struct slave_device *device)
 {
-  if ((device->state & (SLAVE_STATE_BLOCKED | SLAVE_STATE_WRITE_MOSTLY)) != 0) {
-    _set_block_state(device->block, IBPI_PATTERN_NORMAL);
-  } else if ((device->state & SLAVE_STATE_FAULTY) != 0) {
-    _set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);
-  } else if ((device->state & SLAVE_STATE_SPARE) != 0) {
-    _set_block_state(device->block, IBPI_PATTERN_HOTSPARE);
-  } else if ((device->state & SLAVE_STATE_IN_SYNC) != 0) {
-    switch (_is_failed_array(device->raid)) {
-    case 0:
-      _set_block_state(device->block, IBPI_PATTERN_DEGRADED);
-      break;
-    case 1:
-      _set_block_state(device->block, IBPI_PATTERN_FAILED_ARRAY);
-      break;
-    }
-    _set_array_state(device->raid, device->block);
-  }
+	if ((device->
+	     state & (SLAVE_STATE_BLOCKED | SLAVE_STATE_WRITE_MOSTLY)) != 0) {
+		_set_block_state(device->block, IBPI_PATTERN_NORMAL);
+	} else if ((device->state & SLAVE_STATE_FAULTY) != 0) {
+		_set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);
+	} else if ((device->state & SLAVE_STATE_SPARE) != 0) {
+		_set_block_state(device->block, IBPI_PATTERN_HOTSPARE);
+	} else if ((device->state & SLAVE_STATE_IN_SYNC) != 0) {
+		switch (_is_failed_array(device->raid)) {
+		case 0:
+			_set_block_state(device->block, IBPI_PATTERN_DEGRADED);
+			break;
+		case 1:
+			_set_block_state(device->block,
+					 IBPI_PATTERN_FAILED_ARRAY);
+			break;
+		}
+		_set_array_state(device->raid, device->block);
+	}
 }
-
 
 /**
  */
 status_t sysfs_init(void)
 {
-  sysfs_block_list = NULL;
-  volum_list = NULL;
-  cntrl_list = NULL;
-  slave_list = NULL;
-  cntnr_list = NULL;
-  enclo_list = NULL;
+	sysfs_block_list = NULL;
+	volum_list = NULL;
+	cntrl_list = NULL;
+	slave_list = NULL;
+	cntnr_list = NULL;
+	enclo_list = NULL;
 
-  if (list_init(&sysfs_block_list) != STATUS_SUCCESS) {
-    return STATUS_BLOCK_LIST_ERROR;
-  }
-  if (list_init(&volum_list) != STATUS_SUCCESS) {
-    return STATUS_VOLUM_LIST_ERROR;
-  }
-  if (list_init(&cntrl_list) != STATUS_SUCCESS) {
-    return STATUS_CNTRL_LIST_ERROR;
-  }
-  if (list_init(&slave_list) != STATUS_SUCCESS) {
-    return STATUS_SLAVE_LIST_ERROR;
-  }
-  if (list_init(&cntnr_list) != STATUS_SUCCESS) {
-    return STATUS_CNTNR_LIST_ERROR;
-  }
-  if (list_init(&enclo_list) != STATUS_SUCCESS) {
-    return STATUS_ENCLO_LIST_ERROR;
-  }
-  return STATUS_SUCCESS;
+	if (list_init(&sysfs_block_list) != STATUS_SUCCESS) {
+		return STATUS_BLOCK_LIST_ERROR;
+	}
+	if (list_init(&volum_list) != STATUS_SUCCESS) {
+		return STATUS_VOLUM_LIST_ERROR;
+	}
+	if (list_init(&cntrl_list) != STATUS_SUCCESS) {
+		return STATUS_CNTRL_LIST_ERROR;
+	}
+	if (list_init(&slave_list) != STATUS_SUCCESS) {
+		return STATUS_SLAVE_LIST_ERROR;
+	}
+	if (list_init(&cntnr_list) != STATUS_SUCCESS) {
+		return STATUS_CNTNR_LIST_ERROR;
+	}
+	if (list_init(&enclo_list) != STATUS_SUCCESS) {
+		return STATUS_ENCLO_LIST_ERROR;
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 void sysfs_fini(void)
 {
-  if (sysfs_block_list) {
-    list_for_each(sysfs_block_list, block_device_fini);
-    list_fini(sysfs_block_list);
-  }
-  if (volum_list) {
-    list_for_each(volum_list, raid_device_fini);
-    list_fini(volum_list);
-  }
-  if (cntrl_list) {
-    list_for_each(cntrl_list, cntrl_device_fini);
-    list_fini(cntrl_list);
-  }
-  if (slave_list) {
-    list_for_each(slave_list, slave_device_fini);
-    list_fini(slave_list);
-  }
-  if (cntnr_list) {
-    list_for_each(cntnr_list, raid_device_fini);
-    list_fini(cntnr_list);
-  }
-  if (enclo_list) {
-    list_for_each(enclo_list, enclosure_device_fini);
-    list_fini(enclo_list);
-  }
+	if (sysfs_block_list) {
+		list_for_each(sysfs_block_list, block_device_fini);
+		list_fini(sysfs_block_list);
+	}
+	if (volum_list) {
+		list_for_each(volum_list, raid_device_fini);
+		list_fini(volum_list);
+	}
+	if (cntrl_list) {
+		list_for_each(cntrl_list, cntrl_device_fini);
+		list_fini(cntrl_list);
+	}
+	if (slave_list) {
+		list_for_each(slave_list, slave_device_fini);
+		list_fini(slave_list);
+	}
+	if (cntnr_list) {
+		list_for_each(cntnr_list, raid_device_fini);
+		list_fini(cntnr_list);
+	}
+	if (enclo_list) {
+		list_for_each(enclo_list, enclosure_device_fini);
+		list_fini(enclo_list);
+	}
 }
 
 /**
  */
 status_t sysfs_reset(void)
 {
-  if (sysfs_block_list) {
-    list_for_each(sysfs_block_list, block_device_fini);
-    list_delete(sysfs_block_list);
-  }
-  if (volum_list) {
-    list_for_each(volum_list, raid_device_fini);
-    list_delete(volum_list);
-  }
-  if (cntrl_list) {
-    list_for_each(cntrl_list, cntrl_device_fini);
-    list_delete(cntrl_list);
-  }
-  if (slave_list) {
-    list_for_each(slave_list, slave_device_fini);
-    list_delete(slave_list);
-  }
-  if (cntnr_list) {
-    list_for_each(cntnr_list, raid_device_fini);
-    list_delete(cntnr_list);
-  }
-  if (enclo_list) {
-    list_for_each(enclo_list, enclosure_device_fini);
-    list_delete(enclo_list);
-  }
-  return STATUS_SUCCESS;
+	if (sysfs_block_list) {
+		list_for_each(sysfs_block_list, block_device_fini);
+		list_delete(sysfs_block_list);
+	}
+	if (volum_list) {
+		list_for_each(volum_list, raid_device_fini);
+		list_delete(volum_list);
+	}
+	if (cntrl_list) {
+		list_for_each(cntrl_list, cntrl_device_fini);
+		list_delete(cntrl_list);
+	}
+	if (slave_list) {
+		list_for_each(slave_list, slave_device_fini);
+		list_delete(slave_list);
+	}
+	if (cntnr_list) {
+		list_for_each(cntnr_list, raid_device_fini);
+		list_delete(cntnr_list);
+	}
+	if (enclo_list) {
+		list_for_each(enclo_list, enclosure_device_fini);
+		list_delete(enclo_list);
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
  */
 status_t sysfs_scan(void)
 {
-  if (enclo_list == NULL) {
-    return STATUS_NULL_POINTER;
-  }
-  if (_scan_enclo() != STATUS_SUCCESS) {
-    return STATUS_ENCLO_LIST_ERROR;
-  }
-  if (cntrl_list == NULL) {
-    return STATUS_NULL_POINTER;
-  }
-  if (_scan_cntrl() != STATUS_SUCCESS) {
-    return STATUS_CNTRL_LIST_ERROR;
-  }
-  if (sysfs_block_list == NULL) {
-    return STATUS_NULL_POINTER;
-  }
-  if (_scan_block() != STATUS_SUCCESS) {
-    return STATUS_BLOCK_LIST_ERROR;
-  }
-  if (volum_list == NULL) {
-    return STATUS_NULL_POINTER;
-  }
-  if (_scan_raid() != STATUS_SUCCESS) {
-    return STATUS_VOLUM_LIST_ERROR;
-  }
-  if (slave_list == NULL) {
-    return STATUS_NULL_POINTER;
-  }
-  if (_scan_slave() != STATUS_SUCCESS) {
-    return STATUS_SLAVE_LIST_ERROR;
-  }
-  if (enclo_list == NULL) {
-    return STATUS_NULL_POINTER;
-  }
-  return list_for_each(slave_list, _determine);
+	if (enclo_list == NULL) {
+		return STATUS_NULL_POINTER;
+	}
+	if (_scan_enclo() != STATUS_SUCCESS) {
+		return STATUS_ENCLO_LIST_ERROR;
+	}
+	if (cntrl_list == NULL) {
+		return STATUS_NULL_POINTER;
+	}
+	if (_scan_cntrl() != STATUS_SUCCESS) {
+		return STATUS_CNTRL_LIST_ERROR;
+	}
+	if (sysfs_block_list == NULL) {
+		return STATUS_NULL_POINTER;
+	}
+	if (_scan_block() != STATUS_SUCCESS) {
+		return STATUS_BLOCK_LIST_ERROR;
+	}
+	if (volum_list == NULL) {
+		return STATUS_NULL_POINTER;
+	}
+	if (_scan_raid() != STATUS_SUCCESS) {
+		return STATUS_VOLUM_LIST_ERROR;
+	}
+	if (slave_list == NULL) {
+		return STATUS_NULL_POINTER;
+	}
+	if (_scan_slave() != STATUS_SUCCESS) {
+		return STATUS_SLAVE_LIST_ERROR;
+	}
+	if (enclo_list == NULL) {
+		return STATUS_NULL_POINTER;
+	}
+	return list_for_each(slave_list, _determine);
 }
 
 /*
@@ -665,7 +671,7 @@ status_t sysfs_scan(void)
  */
 void *sysfs_get_enclosure_devices(void)
 {
-  return list_head(enclo_list);
+	return list_head(enclo_list);
 }
 
 /*
@@ -673,7 +679,7 @@ void *sysfs_get_enclosure_devices(void)
  */
 void *sysfs_get_cntrl_devices(void)
 {
-  return list_head(cntrl_list);
+	return list_head(cntrl_list);
 }
 
 /*
@@ -682,7 +688,7 @@ void *sysfs_get_cntrl_devices(void)
  */
 status_t __sysfs_block_device_for_each(action_t action, void *parm)
 {
-  return __list_for_each(sysfs_block_list, action, parm);
+	return __list_for_each(sysfs_block_list, action, parm);
 }
 
 /*
@@ -691,15 +697,15 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm)
  */
 void *__sysfs_block_device_first_that(test_t test, void *parm)
 {
-  return __list_first_that(sysfs_block_list, test, parm);
+	return __list_first_that(sysfs_block_list, test, parm);
 }
 
 /**
  */
 static int _enclo_match(struct enclosure_device *device, const char *path)
 {
-  return (device->sysfs_path != NULL) &&
-    (strncmp(device->sysfs_path, path, strlen(path)) == 0);
+	return (device->sysfs_path != NULL) &&
+	    (strncmp(device->sysfs_path, path, strlen(path)) == 0);
 }
 
 /*
@@ -708,7 +714,7 @@ static int _enclo_match(struct enclosure_device *device, const char *path)
  */
 int sysfs_enclosure_attached_to_cntrl(const char *path)
 {
-  return (list_first_that(enclo_list, _enclo_match, path) != NULL);
+	return (list_first_that(enclo_list, _enclo_match, path) != NULL);
 }
 
 /*
@@ -716,15 +722,15 @@ int sysfs_enclosure_attached_to_cntrl(const char *path)
  */
 int sysfs_isci_driver(const char *path)
 {
-  char buf[PATH_MAX];
-  char *link;
-  int found = 0;
-  str_cpy(buf, path, PATH_MAX);
-  str_cat(buf, "/driver", PATH_MAX);
+	char buf[PATH_MAX];
+	char *link;
+	int found = 0;
+	str_cpy(buf, path, PATH_MAX);
+	str_cat(buf, "/driver", PATH_MAX);
 
-  link = realpath(buf, NULL);
-  if (link && strstr(link, "/isci"))
-    found = 1;
-  free(link);
-  return found;
+	link = realpath(buf, NULL);
+	if (link && strstr(link, "/isci"))
+		found = 1;
+	free(link);
+	return found;
 }

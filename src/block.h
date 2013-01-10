@@ -37,7 +37,8 @@ struct block_device;
  *
  * @return 1 if successful, otherwise the function returns 0.
  */
-typedef int (* send_message_t)(struct block_device *device, enum ibpi_pattern ibpi);
+typedef int (*send_message_t) (struct block_device * device,
+			       enum ibpi_pattern ibpi);
 
 /**
  * @brief Describes a block device.
@@ -52,14 +53,14 @@ struct block_device {
    * may not exist in sysfs if connection to physical drive is lost. This filed
    * cannot have NULL pointer assigned.
    */
-  char *sysfs_path;
+	char *sysfs_path;
 
   /**
    * The pointer to a function which sends a message to driver in order to
    * control LEDs in an enclosure or DAS system - @see send_message_t for details.
    * This field cannot have NULL pointer assigned.
    */
-  send_message_t send_fn;
+	send_message_t send_fn;
 
   /**
    * Canonical path to block device where enclosure management fields are located.
@@ -68,42 +69,42 @@ struct block_device {
    * points to SES entry associated with the slot in an enclosure. This field cannot
    * have NULL pointer assign.
    */
-  char *cntrl_path;
+	char *cntrl_path;
 
   /**
    * The current state of block device. This is an IBPI pattern and it is used
    * to visualize the state of block device.
    */
-  enum ibpi_pattern ibpi;
+	enum ibpi_pattern ibpi;
 
   /**
    * The time stamp used to determine if the given block device still exist or
    * it failed and the device is no longer available. Every time IBPI pattern
    * is updated, the time-stamp is updated, too.
    */
-  time_t timestamp;
+	time_t timestamp;
 
   /**
    * The pointer to storage controller structure the device is connected to.
    */
-  struct cntrl_device *cntrl;
+	struct cntrl_device *cntrl;
 
-  struct _host_type *host;
+	struct _host_type *host;
 
-  int host_id;
+	int host_id;
 
 	/**
    * The index of phy utilized by directly attached to controller block device.
    * It is meaningful if device is controlled by isci driver.
    */
-  int phy_index;
+	int phy_index;
 
   /**
    * The index in Enclosure. This is what should be used when using SES-2.
    */
-  int encl_index;
+	int encl_index;
 
-  char encl_dev[PATH_MAX];
+	char encl_dev[PATH_MAX];
 };
 
 /**
@@ -121,7 +122,7 @@ struct block_device {
  * @return Pointer to block device structure if successful, otherwise the function
  *         returns the NULL pointer.
  */
-struct block_device * block_device_init(void *cntrl_list, const char *path);
+struct block_device *block_device_init(void *cntrl_list, const char *path);
 
 /**
  * @brief Releases a block device structure.
@@ -151,7 +152,7 @@ void block_device_fini(struct block_device *device);
  * @return Pointer to block device structure if successful, otherwise the function
  *         returns the NULL pointer.
  */
-struct block_device * block_device_duplicate(struct block_device *device);
+struct block_device *block_device_duplicate(struct block_device *device);
 
 /**
  * @brief Determines a storage controller.
@@ -185,4 +186,4 @@ int dev_directly_attached(const char *path);
  */
 struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id);
 
-#endif /* _BLOCK_H_INCLUDED_ */
+#endif				/* _BLOCK_H_INCLUDED_ */

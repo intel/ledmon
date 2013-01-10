@@ -29,13 +29,13 @@
  * function should return 0 if search should continue, otherwise it should
  * return 1.
  */
-typedef int (* test_t)(void *item, void *param);
+typedef int (*test_t) (void *item, void *param);
 
 /**
  * This data-type represents a prototype of action function. Action function is
  * used by list_for_each() function as 'action' parameter.
  */
-typedef void (* action_t)(void *item, void *param);
+typedef void (*action_t) (void *item, void *param);
 
 /**
  */
@@ -259,4 +259,4 @@ void *__list_last_that(void *ptr, test_t test, void *parm);
  */
 void *__list_first_that(void *ptr, test_t test, void *parm);
 
-#endif /* _LIST_H_INCLUDED_ */
+#endif				/* _LIST_H_INCLUDED_ */

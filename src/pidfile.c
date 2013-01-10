@@ -45,39 +45,38 @@
  */
 status_t pidfile_create(const char *name)
 {
-  char buf[PATH_MAX];
-  int fd, count;
+	char buf[PATH_MAX];
+	int fd, count;
 
-  str_cpy(buf, "/var/run/", PATH_MAX);
-  str_cat(buf, name, PATH_MAX);
-  str_cat(buf, ".pid", PATH_MAX);
+	str_cpy(buf, "/var/run/", PATH_MAX);
+	str_cat(buf, name, PATH_MAX);
+	str_cat(buf, ".pid", PATH_MAX);
 
-  fd = open(buf, O_WRONLY | O_CREAT, 0640);
-  if (fd < 0) {
-    return STATUS_FILE_OPEN_ERROR;
-  }
-  if (lockf(fd, F_TLOCK, 0) < 0) {
-    close(fd);
-    return STATUS_FILE_LOCK_ERROR;
-  }
-  sprintf(buf, "%d\n", getpid());
-  count = write(fd, buf, strlen(buf));
-  close(fd);
-  return (count < 0) ?
-    STATUS_FILE_WRITE_ERROR : STATUS_SUCCESS;
+	fd = open(buf, O_WRONLY | O_CREAT, 0640);
+	if (fd < 0) {
+		return STATUS_FILE_OPEN_ERROR;
+	}
+	if (lockf(fd, F_TLOCK, 0) < 0) {
+		close(fd);
+		return STATUS_FILE_LOCK_ERROR;
+	}
+	sprintf(buf, "%d\n", getpid());
+	count = write(fd, buf, strlen(buf));
+	close(fd);
+	return (count < 0) ? STATUS_FILE_WRITE_ERROR : STATUS_SUCCESS;
 }
 
 /**
  */
 int pidfile_remove(const char *name)
 {
-  char buf[PATH_MAX];
+	char buf[PATH_MAX];
 
-  str_cpy(buf, "/var/run/", PATH_MAX);
-  str_cat(buf, name, PATH_MAX);
-  str_cat(buf, ".pid", PATH_MAX);
+	str_cpy(buf, "/var/run/", PATH_MAX);
+	str_cat(buf, name, PATH_MAX);
+	str_cat(buf, ".pid", PATH_MAX);
 
-  return unlink(buf);
+	return unlink(buf);
 }
 
 /**
@@ -88,33 +87,32 @@ int pidfile_remove(const char *name)
  */
 int ping_proc(pid_t pid)
 {
-  char buf[PATH_MAX];
-  sprintf(buf, "kill -n 10 %d 2>/dev/null", pid);
-  if (system(buf) == 0)
-    return STATUS_SUCCESS;
-  return STATUS_INVALID_PATH;
+	char buf[PATH_MAX];
+	sprintf(buf, "kill -n 10 %d 2>/dev/null", pid);
+	if (system(buf) == 0)
+		return STATUS_SUCCESS;
+	return STATUS_INVALID_PATH;
 }
 
 /**
  */
-status_t pidfile_check(const char *name, pid_t *pid)
+status_t pidfile_check(const char *name, pid_t * pid)
 {
-  char path[PATH_MAX], *p;
-  pid_t tp;
+	char path[PATH_MAX], *p;
+	pid_t tp;
 
-  str_cpy(path, "/var/run/", PATH_MAX);
-  str_cat(path, name, PATH_MAX);
-  str_cat(path, ".pid", PATH_MAX);
+	str_cpy(path, "/var/run/", PATH_MAX);
+	str_cat(path, name, PATH_MAX);
+	str_cat(path, ".pid", PATH_MAX);
 
-  p = buf_read(path);
-  if (p == NULL) {
-    return STATUS_INVALID_PATH;
-  }
-  tp = atoi(p);
-  if (pid) {
-    *pid = tp;
-  }
-  free(p);
-  return ping_proc(tp);
+	p = buf_read(path);
+	if (p == NULL) {
+		return STATUS_INVALID_PATH;
+	}
+	tp = atoi(p);
+	if (pid) {
+		*pid = tp;
+	}
+	free(p);
+	return ping_proc(tp);
 }
-

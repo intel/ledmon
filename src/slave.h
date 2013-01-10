@@ -35,11 +35,11 @@
 /**
  */
 struct slave_device {
-  struct raid_device *raid;
-  unsigned int errors;
-  unsigned int slot;
-  struct block_device *block;
-  unsigned char state;
+	struct raid_device *raid;
+	unsigned int errors;
+	unsigned int slot;
+	struct block_device *block;
+	unsigned char state;
 };
 
 /**
@@ -50,4 +50,4 @@ struct slave_device *slave_device_init(const char *path, void *block_list);
  */
 void slave_device_fini(struct slave_device *device);
 
-#endif /* _SLAVE_H_INCLUDED_ */
+#endif				/* _SLAVE_H_INCLUDED_ */

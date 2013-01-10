@@ -42,106 +42,106 @@
  */
 static unsigned char _get_state(const char *path)
 {
-  char *p, *t, *s;
-  unsigned char result = SLAVE_STATE_UNKNOWN;
+	char *p, *t, *s;
+	unsigned char result = SLAVE_STATE_UNKNOWN;
 
-  s = p = get_text(path, "state");
-  if (p) {
-    while (s) {
-      t = strchr(s, ',');
-      if (t) {
-        *(t++) = '\0';
-      }
-      if (strcmp(s, "spare") == 0) {
-        result |= SLAVE_STATE_SPARE;
-      } else if (strcmp(s, "in_sync") == 0) {
-        result |= SLAVE_STATE_IN_SYNC;
-      } else if (strcmp(s, "faulty") == 0) {
-        result |= SLAVE_STATE_FAULTY;
-      } else if (strcmp(s, "write_mostly") == 0) {
-        result |= SLAVE_STATE_WRITE_MOSTLY;
-      } else if (strcmp(s, "blocked") == 0) {
-        result |= SLAVE_STATE_BLOCKED;
-      }
-      s = t;
-    }
-    free(p);
-  }
-  return result;
+	s = p = get_text(path, "state");
+	if (p) {
+		while (s) {
+			t = strchr(s, ',');
+			if (t) {
+				*(t++) = '\0';
+			}
+			if (strcmp(s, "spare") == 0) {
+				result |= SLAVE_STATE_SPARE;
+			} else if (strcmp(s, "in_sync") == 0) {
+				result |= SLAVE_STATE_IN_SYNC;
+			} else if (strcmp(s, "faulty") == 0) {
+				result |= SLAVE_STATE_FAULTY;
+			} else if (strcmp(s, "write_mostly") == 0) {
+				result |= SLAVE_STATE_WRITE_MOSTLY;
+			} else if (strcmp(s, "blocked") == 0) {
+				result |= SLAVE_STATE_BLOCKED;
+			}
+			s = t;
+		}
+		free(p);
+	}
+	return result;
 }
 
 /**
  */
 static unsigned int _get_errors(const char *path)
 {
-  return get_int(path, 0, "errors");
+	return get_int(path, 0, "errors");
 }
 
 /**
  */
 static unsigned int _get_slot(const char *path)
 {
-  unsigned int result = -1;
+	unsigned int result = -1;
 
-  char *p = get_text(path, "slot");
-  if (p) {
-    if (strcmp(p, "none") != 0) {
-      result = atoi(p);
-    }
-    free(p);
-  }
-  return result;
+	char *p = get_text(path, "slot");
+	if (p) {
+		if (strcmp(p, "none") != 0) {
+			result = atoi(p);
+		}
+		free(p);
+	}
+	return result;
 }
 
 /**
  */
 static int _compare(struct block_device *device, const char *path)
 {
-  return (strcmp(device->sysfs_path, path) == 0);
+	return (strcmp(device->sysfs_path, path) == 0);
 }
 
 /**
  */
 static struct block_device *_get_block(const char *path, void *block_list)
 {
-  char temp[PATH_MAX];
-  char link[PATH_MAX];
-  struct block_device *device = NULL;
+	char temp[PATH_MAX];
+	char link[PATH_MAX];
+	struct block_device *device = NULL;
 
-  str_cpy(temp, path, PATH_MAX);
-  str_cat(temp, "/block", PATH_MAX);
+	str_cpy(temp, path, PATH_MAX);
+	str_cat(temp, "/block", PATH_MAX);
 
-  if (realpath(temp, link)) {
-    device = list_first_that(block_list, _compare, link);
-  }
-  return device;
+	if (realpath(temp, link)) {
+		device = list_first_that(block_list, _compare, link);
+	}
+	return device;
 }
 
 /**
  */
-struct slave_device * slave_device_init(const char *path, void *block_list)
+struct slave_device *slave_device_init(const char *path, void *block_list)
 {
-  struct slave_device *device = NULL;
-  struct block_device *block;
+	struct slave_device *device = NULL;
+	struct block_device *block;
 
-  block = _get_block(path, block_list);
-  if (block) {
-    device = malloc(sizeof(struct slave_device));
-    if (device) {
-      device->raid = NULL;
-      device->state = _get_state(path);
-      device->slot = _get_slot(path);
-      device->errors = _get_errors(path);
-      device->block = block;
-    }
-  }
-  return device;
+	block = _get_block(path, block_list);
+	if (block) {
+		device = malloc(sizeof(struct slave_device));
+		if (device) {
+			device->raid = NULL;
+			device->state = _get_state(path);
+			device->slot = _get_slot(path);
+			device->errors = _get_errors(path);
+			device->block = block;
+		}
+	}
+	return device;
 }
 
 /**
  */
 void slave_device_fini(struct slave_device *device)
 {
-  (void)device;
-  /* Function reserved for future improvements. */
+	(void)device;
+	/* Function reserved for future improvements. */
 }

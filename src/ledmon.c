@@ -101,18 +101,18 @@ static int sleep_interval = DEFAULT_SLEEP_INTERVAL;
  * entries to translate enumeration type into the string.
  */
 const char *ibpi_str[] = {
-  [IBPI_PATTERN_UNKNOWN]        = "None",
-  [IBPI_PATTERN_NORMAL]         = "Off",
-  [IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
-  [IBPI_PATTERN_DEGRADED]       = "In a Critical Array",
-  [IBPI_PATTERN_REBUILD]        = "Rebuild",
-  [IBPI_PATTERN_REBUILD_P]      = "Rebuild Preferred",
-  [IBPI_PATTERN_FAILED_ARRAY]   = "In a Failed Array",
-  [IBPI_PATTERN_HOTSPARE]       = "Hotspare",
-  [IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",
-  [IBPI_PATTERN_FAILED_DRIVE]   = "Failure",
-  [IBPI_PATTERN_LOCATE]         = "Locate",
-  [IBPI_PATTERN_LOCATE_OFF]     = "Locate Off"
+	[IBPI_PATTERN_UNKNOWN]        = "None",
+	[IBPI_PATTERN_NORMAL]         = "Off",
+	[IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
+	[IBPI_PATTERN_DEGRADED]       = "In a Critical Array",
+	[IBPI_PATTERN_REBUILD]        = "Rebuild",
+	[IBPI_PATTERN_REBUILD_P]      = "Rebuild Preferred",
+	[IBPI_PATTERN_FAILED_ARRAY]   = "In a Failed Array",
+	[IBPI_PATTERN_HOTSPARE]       = "Hotspare",
+	[IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",
+	[IBPI_PATTERN_FAILED_DRIVE]   = "Failure",
+	[IBPI_PATTERN_LOCATE]         = "Locate",
+	[IBPI_PATTERN_LOCATE_OFF]     = "Locate Off"
 };
 
 /**
@@ -120,7 +120,7 @@ const char *ibpi_str[] = {
  * information about the version of monitor service.
  */
 static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d\n" \
-	"Copyright (C) 2009-2013 Intel Corporation.\n";
+			      "Copyright (C) 2009-2013 Intel Corporation.\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line
@@ -132,17 +132,17 @@ static char *shortopt = "t:c:hvl:";
  * Internal enumeration type. It is used to help parse command line arguments.
  */
 enum longopt {
-  OPT_ALL,
-  OPT_CONFIG,
-  OPT_DEBUG,
-  OPT_ERROR,
-  OPT_HELP,
-  OPT_INFO,
-  OPT_INTERVAL,
-  OPT_LOG,
-  OPT_QUIET,
-  OPT_VERSION,
-  OPT_WARNING
+	OPT_ALL,
+	OPT_CONFIG,
+	OPT_DEBUG,
+	OPT_ERROR,
+	OPT_HELP,
+	OPT_INFO,
+	OPT_INTERVAL,
+	OPT_LOG,
+	OPT_QUIET,
+	OPT_VERSION,
+	OPT_WARNING
 };
 
 /**
@@ -150,18 +150,18 @@ enum longopt {
  * long options.
  */
 static struct option longopt[] = {
-  [OPT_ALL]      = {"all", no_argument, NULL, '\0'},
-  [OPT_CONFIG]   = {"config", required_argument, NULL, 'c'},
-  [OPT_DEBUG]    = {"debug", no_argument, NULL, '\0'},
-  [OPT_ERROR]    = {"error", no_argument, NULL, '\0'},
-  [OPT_HELP]     = {"help", no_argument, NULL, 'h'},
-  [OPT_INFO]     = {"info", no_argument, NULL, '\0'},
-  [OPT_INTERVAL] = {"interval", required_argument, NULL, 't'},
-  [OPT_LOG]      = {"log", required_argument, NULL, 'l'},
-  [OPT_QUIET]    = {"quiet", no_argument, NULL, '\0'},
-  [OPT_VERSION]  = {"version", no_argument, NULL, 'v'},
-  [OPT_WARNING]  = {"warning", no_argument, NULL, '\0'},
-  {NULL, no_argument, NULL, '\0'}
+	[OPT_ALL]      = {"all", no_argument, NULL, '\0'},
+	[OPT_CONFIG]   = {"config", required_argument, NULL, 'c'},
+	[OPT_DEBUG]    = {"debug", no_argument, NULL, '\0'},
+	[OPT_ERROR]    = {"error", no_argument, NULL, '\0'},
+	[OPT_HELP]     = {"help", no_argument, NULL, 'h'},
+	[OPT_INFO]     = {"info", no_argument, NULL, '\0'},
+	[OPT_INTERVAL] = {"interval", required_argument, NULL, 't'},
+	[OPT_LOG]      = {"log", required_argument, NULL, 'l'},
+	[OPT_QUIET]    = {"quiet", no_argument, NULL, '\0'},
+	[OPT_VERSION]  = {"version", no_argument, NULL, 'v'},
+	[OPT_WARNING]  = {"warning", no_argument, NULL, '\0'},
+			 {NULL, no_argument, NULL, '\0'}
 };
 
 /**
@@ -177,15 +177,15 @@ static struct option longopt[] = {
  *
  * @return The function does not return a value.
  */
-static void _ledmon_fini(int __attribute__((unused)) status, void *progname)
+static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
 {
-  sysfs_fini();
-  if (ledmon_block_list) {
-    list_for_each(ledmon_block_list, block_device_fini);
-    list_fini(ledmon_block_list);
-  }
-  log_close();
-  pidfile_remove(progname);
+	sysfs_fini();
+	if (ledmon_block_list) {
+		list_for_each(ledmon_block_list, block_device_fini);
+		list_fini(ledmon_block_list);
+	}
+	log_close();
+	pidfile_remove(progname);
 }
 
 /**
@@ -206,11 +206,11 @@ static void _ledmon_fini(int __attribute__((unused)) status, void *progname)
  */
 static void _ledmon_status(int status, void *ignore)
 {
-  if (*((int *)ignore) != 0) {
-    log_info("exit status is %s.", strstatus(status));
-  } else if (status != STATUS_SUCCESS) {
-    log_error("parent exit status is %s.", strstatus(status));
-  }
+	if (*((int *)ignore) != 0) {
+		log_info("exit status is %s.", strstatus(status));
+	} else if (status != STATUS_SUCCESS) {
+		log_error("parent exit status is %s.", strstatus(status));
+	}
 }
 
 /**
@@ -224,10 +224,10 @@ static void _ledmon_status(int status, void *ignore)
  */
 static void _ledmon_version(void)
 {
-  printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR);
-  printf("\nThis is free software; see the source for copying conditions." \
-         " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS" \
-         " FOR A PARTICULAR PURPOSE.\n\n");
+	printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR);
+	printf("\nThis is free software; see the source for copying conditions."
+	       " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS"
+	       " FOR A PARTICULAR PURPOSE.\n\n");
 }
 
 /**
@@ -242,23 +242,25 @@ static void _ledmon_version(void)
  */
 static void _ledmon_help(void)
 {
-  printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR);
-  printf("\nUsage: %s [OPTIONS]\n\n", progname);
-  printf("Mandatory arguments for long options are mandatory for short " \
-    "options, too.\n\n");
-  printf("--interval=VALUE\t\t  Set time interval to VALUE seconds.\n" \
-         "\t\t\t\t  The smallest interval is 5 seconds.\n");
-  printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file " \
-         "(not yet\n\t\t\t\t  implemented).\n");
-  printf("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/" \
-         "ledmon.log global file.\n");
-  printf("--help\t\t\t\t  Displays this help text.\n");
-  printf("--version\t\t\t  Displays version and license information.\n\n");
-  printf("Refer to ledmon(8) man page for more detailed description.\n");
-	printf("Report bugs in the tracker 'Bugs' at " \
-		   "http://sourceforge.net/projects/ledmon\n");
-	printf("(direct link: http://sourceforge.net/tracker" \
-		   "/?group_id=393394&atid=1632895)\n\n");
+	printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR);
+	printf("\nUsage: %s [OPTIONS]\n\n", progname);
+	printf("Mandatory arguments for long options are mandatory for short "
+	       "options, too.\n\n");
+	printf("--interval=VALUE\t\t  Set time interval to VALUE seconds.\n"
+	       "\t\t\t\t  The smallest interval is 5 seconds.\n");
+	printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file "
+	       "(not yet\n\t\t\t\t  implemented).\n");
+	printf
+	    ("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/"
+	     "ledmon.log global file.\n");
+	printf("--help\t\t\t\t  Displays this help text.\n");
+	printf
+	    ("--version\t\t\t  Displays version and license information.\n\n");
+	printf("Refer to ledmon(8) man page for more detailed description.\n");
+	printf("Report bugs in the tracker 'Bugs' at "
+	       "http://sourceforge.net/projects/ledmon\n");
+	printf("(direct link: http://sourceforge.net/tracker"
+	       "/?group_id=393394&atid=1632895)\n\n");
 }
 
 /**
@@ -274,8 +276,8 @@ static void _ledmon_help(void)
  */
 static status_t _set_config_path(const char *path)
 {
-  (void)path;
-  return STATUS_SUCCESS;
+	(void)path;
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -296,17 +298,17 @@ static status_t _set_config_path(const char *path)
  */
 static status_t _set_log_path(const char *path)
 {
-  char temp[PATH_MAX];
+	char temp[PATH_MAX];
 
-  if (realpath(path, temp) == NULL) {
-    if ((errno != ENOENT) && (errno != ENOTDIR)) {
-      return STATUS_INVALID_PATH;
-    }
-  }
-  if (log_open(temp) < 0) {
-    return STATUS_FILE_OPEN_ERROR;
-  }
-  return STATUS_SUCCESS;
+	if (realpath(path, temp) == NULL) {
+		if ((errno != ENOENT) && (errno != ENOTDIR)) {
+			return STATUS_INVALID_PATH;
+		}
+	}
+	if (log_open(temp) < 0) {
+		return STATUS_FILE_OPEN_ERROR;
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -322,12 +324,12 @@ static status_t _set_log_path(const char *path)
  */
 static status_t _set_sleep_interval(const char *optarg)
 {
-  sleep_interval = atoi(optarg);
-  if (sleep_interval < MINIMUM_SLEEP_INTERVAL) {
-    log_warning("sleep interval too small... using default.");
-    sleep_interval = DEFAULT_SLEEP_INTERVAL;
-  }
-  return STATUS_SUCCESS;
+	sleep_interval = atoi(optarg);
+	if (sleep_interval < MINIMUM_SLEEP_INTERVAL) {
+		log_warning("sleep interval too small... using default.");
+		sleep_interval = DEFAULT_SLEEP_INTERVAL;
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -343,65 +345,65 @@ static status_t _set_sleep_interval(const char *optarg)
  */
 static status_t _cmdline_parse(int argc, char *argv[])
 {
-  int opt, opt_index = -1;
-  status_t status = STATUS_SUCCESS;
+	int opt, opt_index = -1;
+	status_t status = STATUS_SUCCESS;
 
-  do {
-    opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
-    if (opt == -1) {
-      break;
-    }
-    switch (opt) {
-    case 0:
-      switch (opt_index) {
-      case OPT_ALL:
-        verbose = VERB_ALL;
-        break;
-      case OPT_DEBUG:
-        verbose = VERB_DEBUG;
-        break;
-      case OPT_ERROR:
-        verbose = VERB_ERROR;
-        break;
-      case OPT_INFO:
-        verbose = VERB_INFO;
-        break;
-      case OPT_QUIET:
-        verbose = VERB_QUIET;
-        break;
-      case OPT_WARNING:
-        verbose = VERB_WARN;
-        break;
-      }
-      break;
-    case 'l':
-      status = _set_log_path(optarg);
-      break;
-    case 't':
-      status = _set_sleep_interval(optarg);
-      break;
-    case 'c':
-      status = _set_config_path(optarg);
-      break;
-    case 'v':
-      _ledmon_version();
-      exit(EXIT_SUCCESS);
-    case 'h':
-      _ledmon_help();
-      exit(EXIT_SUCCESS);
-    case ':':
-    case '?':
-    default:
-      log_debug("[opt='%c', opt_index=%d]", opt, opt_index);
-      break;
-    }
-    opt_index = -1;
-    if (status != STATUS_SUCCESS) {
-      return status;
-    }
-  } while (1);
+	do {
+		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
+		if (opt == -1) {
+			break;
+		}
+		switch (opt) {
+		case 0:
+			switch (opt_index) {
+			case OPT_ALL:
+				verbose = VERB_ALL;
+				break;
+			case OPT_DEBUG:
+				verbose = VERB_DEBUG;
+				break;
+			case OPT_ERROR:
+				verbose = VERB_ERROR;
+				break;
+			case OPT_INFO:
+				verbose = VERB_INFO;
+				break;
+			case OPT_QUIET:
+				verbose = VERB_QUIET;
+				break;
+			case OPT_WARNING:
+				verbose = VERB_WARN;
+				break;
+			}
+			break;
+		case 'l':
+			status = _set_log_path(optarg);
+			break;
+		case 't':
+			status = _set_sleep_interval(optarg);
+			break;
+		case 'c':
+			status = _set_config_path(optarg);
+			break;
+		case 'v':
+			_ledmon_version();
+			exit(EXIT_SUCCESS);
+		case 'h':
+			_ledmon_help();
+			exit(EXIT_SUCCESS);
+		case ':':
+		case '?':
+		default:
+			log_debug("[opt='%c', opt_index=%d]", opt, opt_index);
+			break;
+		}
+		opt_index = -1;
+		if (status != STATUS_SUCCESS) {
+			return status;
+		}
+	} while (1);
 
-  return STATUS_SUCCESS;
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -415,10 +417,10 @@ static status_t _cmdline_parse(int argc, char *argv[])
  */
 static void _ledmon_sig_term(int signum)
 {
-  if (signum == SIGTERM) {
-    log_info("SIGTERM caught - terminating daemon process.");
-    terminate = 1;
-  }
+	if (signum == SIGTERM) {
+		log_info("SIGTERM caught - terminating daemon process.");
+		terminate = 1;
+	}
 }
 
 /**
@@ -433,28 +435,28 @@ static void _ledmon_sig_term(int signum)
  */
 static void _ledmon_setup_signals(void)
 {
-  struct sigaction act;
-  sigset_t sigset;
+	struct sigaction act;
+	sigset_t sigset;
 
-  sigemptyset(&sigset);
-  sigaddset(&sigset, SIGALRM);
-  sigaddset(&sigset, SIGHUP);
-  sigaddset(&sigset, SIGTERM);
-  sigaddset(&sigset, SIGPIPE);
-  sigaddset(&sigset, SIGUSR1);
-  sigprocmask(SIG_BLOCK, &sigset, NULL);
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGALRM);
+	sigaddset(&sigset, SIGHUP);
+	sigaddset(&sigset, SIGTERM);
+	sigaddset(&sigset, SIGPIPE);
+	sigaddset(&sigset, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &sigset, NULL);
 
-  act.sa_handler = SIG_IGN;
-  act.sa_flags = 0;
-  sigemptyset(&act.sa_mask);
-  sigaction(SIGALRM, &act, NULL);
-  sigaction(SIGHUP, &act, NULL);
-  sigaction(SIGPIPE, &act, NULL);
-  act.sa_handler = _ledmon_sig_term;
-  sigaction(SIGTERM, &act, NULL);
-  sigaction(SIGUSR1, &act, NULL);
+	act.sa_handler = SIG_IGN;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGALRM, &act, NULL);
+	sigaction(SIGHUP, &act, NULL);
+	sigaction(SIGPIPE, &act, NULL);
+	act.sa_handler = _ledmon_sig_term;
+	sigaction(SIGTERM, &act, NULL);
+	sigaction(SIGUSR1, &act, NULL);
 
-  sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 }
 
 /**
@@ -471,29 +473,29 @@ static void _ledmon_setup_signals(void)
  */
 static void _ledmon_wait(int seconds)
 {
-  fd_set rd;
-  int fd;
-  struct timespec timeout;
-  sigset_t sigset;
+	fd_set rd;
+	int fd;
+	struct timespec timeout;
+	sigset_t sigset;
 
-  sigprocmask(SIG_UNBLOCK, NULL, &sigset);
-  sigdelset(&sigset, SIGTERM);
-  timeout.tv_nsec = 0;
-  timeout.tv_sec = seconds;
-  FD_ZERO(&rd);
-  fd = open("/proc/mdstat", O_RDONLY);
-  if (fd) {
-    FD_SET(fd, &rd);
-  }
-  pselect(fd + 1, NULL, NULL, &rd, &timeout, &sigset);
-  if (fd >= 0) {
-    close(fd);
-  }
+	sigprocmask(SIG_UNBLOCK, NULL, &sigset);
+	sigdelset(&sigset, SIGTERM);
+	timeout.tv_nsec = 0;
+	timeout.tv_sec = seconds;
+	FD_ZERO(&rd);
+	fd = open("/proc/mdstat", O_RDONLY);
+	if (fd) {
+		FD_SET(fd, &rd);
+	}
+	pselect(fd + 1, NULL, NULL, &rd, &timeout, &sigset);
+	if (fd >= 0) {
+		close(fd);
+	}
 }
 
 static int is_dellssd(struct block_device *bd)
 {
-  return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
+	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
 }
 
 /**
@@ -515,17 +517,17 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 
 	if (!is_dellssd(bd_old) && bd_old->host_id == -1) {
 		log_debug("Device %s : No host_id!",
-				strstr(bd_old->sysfs_path, "host"));
+			  strstr(bd_old->sysfs_path, "host"));
 		return 0;
 	}
 	if (!is_dellssd(bd_new) && bd_new->host_id == -1) {
-			log_debug("Device %s : No host_id!",
-					strstr(bd_new->sysfs_path, "host"));
-			return 0;
+		log_debug("Device %s : No host_id!",
+			  strstr(bd_new->sysfs_path, "host"));
+		return 0;
 	}
 	if (!bd_old->cntrl) {
 		log_debug("Device %s : No ctrl dev!",
-				strstr(bd_old->sysfs_path, "host"));
+			  strstr(bd_old->sysfs_path, "host"));
 		return 0;
 	}
 
@@ -541,18 +543,18 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 	case CNTRL_TYPE_SCSI:
 		/* Host and phy is not enough. They might be DA or EA. */
 		if (dev_directly_attached(bd_old->sysfs_path) &&
-				dev_directly_attached(bd_new->sysfs_path)) {
+		    dev_directly_attached(bd_new->sysfs_path)) {
 			/* Just compare host & phy */
 			i = (bd_old->host_id == bd_new->host_id) &&
-					(bd_old->phy_index == bd_new->phy_index);
+			    (bd_old->phy_index == bd_new->phy_index);
 
 			break;
 		}
 		if (!dev_directly_attached(bd_old->sysfs_path) &&
-				!dev_directly_attached(bd_new->sysfs_path)) {
+		    !dev_directly_attached(bd_new->sysfs_path)) {
 			/* Both expander attached */
 			i = (bd_old->host_id == bd_new->host_id) &&
-					(bd_old->phy_index == bd_new->phy_index);
+			    (bd_old->phy_index == bd_new->phy_index);
 			i = i && (bd_old->encl_index == bd_new->encl_index);
 			break;
 		}
@@ -565,7 +567,7 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);
 		break;
 	}
-  return i;
+	return i;
 }
 
 /**
@@ -584,49 +586,54 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
  */
 static void _add_block(struct block_device *block)
 {
-  struct block_device *temp;
+	struct block_device *temp;
 
-  temp = list_first_that(ledmon_block_list, _compare, block);
-  if (temp) {
-    enum ibpi_pattern ibpi = temp->ibpi;
-    temp->timestamp = block->timestamp;
-    if (temp->ibpi == IBPI_PATTERN_ONESHOT_NORMAL) {
-      temp->ibpi = IBPI_PATTERN_UNKNOWN;
-    } else if (temp->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-      if (block->ibpi == IBPI_PATTERN_UNKNOWN) {
-        if ((temp->ibpi != IBPI_PATTERN_UNKNOWN) &&
-        		(temp->ibpi != IBPI_PATTERN_NORMAL)) {
-          temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
-        } else {
-          temp->ibpi = IBPI_PATTERN_UNKNOWN;
-        }
-      } else {
-        temp->ibpi = block->ibpi;
-      }
-    } else {
-      temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
-    }
+	temp = list_first_that(ledmon_block_list, _compare, block);
+	if (temp) {
+		enum ibpi_pattern ibpi = temp->ibpi;
+		temp->timestamp = block->timestamp;
+		if (temp->ibpi == IBPI_PATTERN_ONESHOT_NORMAL) {
+			temp->ibpi = IBPI_PATTERN_UNKNOWN;
+		} else if (temp->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
+			if (block->ibpi == IBPI_PATTERN_UNKNOWN) {
+				if ((temp->ibpi != IBPI_PATTERN_UNKNOWN) &&
+				    (temp->ibpi != IBPI_PATTERN_NORMAL)) {
+					temp->ibpi =
+					    IBPI_PATTERN_ONESHOT_NORMAL;
+				} else {
+					temp->ibpi = IBPI_PATTERN_UNKNOWN;
+				}
+			} else {
+				temp->ibpi = block->ibpi;
+			}
+		} else {
+			temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
+		}
 
-    if (ibpi != temp->ibpi) {
-      log_info("CHANGE %s: from '%s' to '%s'.", temp->sysfs_path,
-          ibpi_str[ibpi], ibpi_str[temp->ibpi]);
-    }
-    /* Check if name of the device changed. It's possible for SCSI devices. */
-    if (strcmp(temp->sysfs_path, block->sysfs_path)) {
-    	log_info("NAME CHANGED %s to %s", strstr(temp->sysfs_path, "host"),
-    			strstr(block->sysfs_path, "host"));
-    	free(temp->sysfs_path);
-    	temp->sysfs_path = strdup(block->sysfs_path);
-    }
-  } else {
-	  /* Device not found, it's a new one! */
-	  temp = block_device_duplicate(block);
-    if (temp != NULL) {
-      log_info("NEW %s: state '%s'.", temp->sysfs_path, ibpi_str[temp->ibpi]);
-      list_put(ledmon_block_list, temp, sizeof(struct block_device));
-      free(temp);
-    }
-  }
+		if (ibpi != temp->ibpi) {
+			log_info("CHANGE %s: from '%s' to '%s'.",
+				 temp->sysfs_path, ibpi_str[ibpi],
+				 ibpi_str[temp->ibpi]);
+		}
+		/* Check if name of the device changed. It's possible for SCSI devices. */
+		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
+			log_info("NAME CHANGED %s to %s",
+				 strstr(temp->sysfs_path, "host"),
+				 strstr(block->sysfs_path, "host"));
+			free(temp->sysfs_path);
+			temp->sysfs_path = strdup(block->sysfs_path);
+		}
+	} else {
+		/* Device not found, it's a new one! */
+		temp = block_device_duplicate(block);
+		if (temp != NULL) {
+			log_info("NEW %s: state '%s'.", temp->sysfs_path,
+				 ibpi_str[temp->ibpi]);
+			list_put(ledmon_block_list, temp,
+				 sizeof(struct block_device));
+			free(temp);
+		}
+	}
 }
 
 /**
@@ -646,56 +653,56 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
-  if (!block->cntrl) {
-	  log_debug("Missing cntrl for dev: %s. Not sending anything.",
+	if (!block->cntrl) {
+		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
-	  return;
-  }
-  if (block->timestamp != timestamp) {
-    if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-      log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
-          ibpi_str[block->ibpi],
-          ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
-      block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
-    } else {
-    	log_debug("DETACHED DEV '%s' in failed state",
-    			strstr(block->sysfs_path, "host"));
-    }
-  }
-  block->send_fn(block, block->ibpi);
+		return;
+	}
+	if (block->timestamp != timestamp) {
+		if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
+			log_info("CHANGE %s: from '%s' to '%s'.",
+				 block->sysfs_path, ibpi_str[block->ibpi],
+				 ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
+			block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+		} else {
+			log_debug("DETACHED DEV '%s' in failed state",
+				  strstr(block->sysfs_path, "host"));
+		}
+	}
+	block->send_fn(block, block->ibpi);
 }
 
 static void _revalidate_dev(struct block_device *block)
 {
 	/* Bring back controller and host to the device. */
 	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
-			block->cntrl_path);
+					    block->cntrl_path);
 	if (!block->cntrl) {
 		log_debug("Failed to get controller for dev: %s, ctrl path: %s",
-				block->sysfs_path, block->cntrl_path);
+			  block->sysfs_path, block->cntrl_path);
 		return;
 	}
 	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI &&
-			block->cntrl->isci_present) {
+	    block->cntrl->isci_present) {
 		block->host = block_get_host(block->cntrl, block->host_id);
 		if (block->host) {
 			isci_cntrl_init_smp(NULL, block->cntrl);
-		} else  {
+		} else {
 			log_debug("Failed to get host for dev: %s, hostId: %d",
-					block->sysfs_path, block->host_id);
-			/* If hosts failed for isci, invalidate cntrl*/
+				  block->sysfs_path, block->host_id);
+			/* If hosts failed for isci, invalidate cntrl */
 			block->cntrl = NULL;
 		}
 	}
 	return;
 }
+
 static void _invalidate_dev(struct block_device *block)
 {
 	/* Those fields are valid only per 'session' - through single scan. */
-	  block->cntrl = NULL;
-	  block->host = NULL;
+	block->cntrl = NULL;
+	block->host = NULL;
 }
-
 
 static void _check_block_dev(struct block_device *block, int *restart)
 {
@@ -703,15 +710,19 @@ static void _check_block_dev(struct block_device *block, int *restart)
 	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
 		if (dev_directly_attached(block->sysfs_path) == 0) {
 			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
-					(block->encl_index == -1 || block->encl_dev[0] == 0)) {
+			    (block->encl_index == -1
+			     || block->encl_dev[0] == 0)) {
 				(*restart)++;
-				log_debug("%s(): invalidating device: %s. No link to enclosure",
-						__func__, strstr(block->sysfs_path, "host"));
+				log_debug
+				    ("%s(): invalidating device: %s. No link to enclosure",
+				     __func__, strstr(block->sysfs_path,
+						      "host"));
 			}
 		}
 	}
 	return;
 }
+
 /**
  * @brief Sets a list of block devices and sends LED control messages.
  *
@@ -725,7 +736,7 @@ static void _check_block_dev(struct block_device *block, int *restart)
  */
 static void _ledmon_execute(void)
 {
-	int restart=0; /* ledmon_block_list needs restart? */
+	int restart = 0;	/* ledmon_block_list needs restart? */
 	status_t status = STATUS_SUCCESS;
 
 	/* Revalidate each device in the list. Bring back controller and host */
@@ -745,9 +756,9 @@ static void _ledmon_execute(void)
 		list_fini(ledmon_block_list);
 		status = list_init(&ledmon_block_list);
 		if (status != STATUS_SUCCESS) {
-		    log_debug("%s(): list_init() failed (status=%s).", __func__,
-				strstatus(status));
-		    exit(EXIT_FAILURE);
+			log_debug("%s(): list_init() failed (status=%s).",
+				  __func__, strstatus(status));
+			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -756,83 +767,88 @@ static void _ledmon_execute(void)
  */
 int main(int argc, char *argv[])
 {
-  status_t status = STATUS_SUCCESS;
+	status_t status = STATUS_SUCCESS;
 
-  set_invocation_name(argv[0]);
-  openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
+	set_invocation_name(argv[0]);
+	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
-  if (getuid() != 0) {
-    log_error("Only root can run this application.");
-    return STATUS_NOT_A_PRIVILEGED_USER;
-  }
+	if (getuid() != 0) {
+		log_error("Only root can run this application.");
+		return STATUS_NOT_A_PRIVILEGED_USER;
+	}
 
-  if (on_exit(_ledmon_status, &terminate)) {
-    return STATUS_ONEXIT_ERROR;
-  }
-  if (_cmdline_parse(argc, argv) != STATUS_SUCCESS) {
-      return STATUS_CMDLINE_ERROR;
-  }
+	if (on_exit(_ledmon_status, &terminate)) {
+		return STATUS_ONEXIT_ERROR;
+	}
+	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS) {
+		return STATUS_CMDLINE_ERROR;
+	}
 
-  if (pidfile_check(progname, NULL) == 0) {
-    log_warning("daemon is running...");
-    return STATUS_LEDMON_RUNNING;
-  }
+	if (pidfile_check(progname, NULL) == 0) {
+		log_warning("daemon is running...");
+		return STATUS_LEDMON_RUNNING;
+	}
 
-  pid_t pid = fork();
-  if (pid < 0) {
-    log_debug("main(): fork() failed (errno=%d).", errno);
-    exit(EXIT_FAILURE);
-  }
-  if (pid > 0) {
-    exit(EXIT_SUCCESS);
-  }
+	pid_t pid = fork();
+	if (pid < 0) {
+		log_debug("main(): fork() failed (errno=%d).", errno);
+		exit(EXIT_FAILURE);
+	}
+	if (pid > 0) {
+		exit(EXIT_SUCCESS);
+	}
 
-  pid_t sid = setsid();
-  if (sid < 0) {
-    log_debug("main(): setsid() failed (errno=%d).", errno);
-    exit(EXIT_FAILURE);
-  }
-  for (int i = getdtablesize() - 1; i >= 0; --i) {
-    close(i);
-  }
-  int t = open("/dev/null", O_RDWR);
-  dup(t);
-  dup(t);
-  umask(027);
+	pid_t sid = setsid();
+	if (sid < 0) {
+		log_debug("main(): setsid() failed (errno=%d).", errno);
+		exit(EXIT_FAILURE);
+	}
+	for (int i = getdtablesize() - 1; i >= 0; --i) {
+		close(i);
+	}
+	int t = open("/dev/null", O_RDWR);
+	dup(t);
+	dup(t);
+	umask(027);
 
-  if (chdir("/") < 0) {
-    log_debug("main(): chdir() failed (errno=%d).", errno);
-    exit(EXIT_FAILURE);
-  }
-  if (pidfile_create(progname)) {
-    log_debug("main(): pidfile_creat() failed.");
-    exit(EXIT_FAILURE);
-  }
-  _ledmon_setup_signals();
+	if (chdir("/") < 0) {
+		log_debug("main(): chdir() failed (errno=%d).", errno);
+		exit(EXIT_FAILURE);
+	}
+	if (pidfile_create(progname)) {
+		log_debug("main(): pidfile_creat() failed.");
+		exit(EXIT_FAILURE);
+	}
+	_ledmon_setup_signals();
 
-  if (on_exit(_ledmon_fini, progname)) {
-    exit(STATUS_ONEXIT_ERROR);
-  }
-  if ((status = list_init(&ledmon_block_list)) != STATUS_SUCCESS) {
-    log_debug("main(): list_init() failed (status=%s).", strstatus(status));
-    exit(EXIT_FAILURE);
-  }
-  if ((status = sysfs_init()) != STATUS_SUCCESS) {
-    log_debug("main(): sysfs_init() failed (status=%s).", strstatus(status));
-    exit(EXIT_FAILURE);
-  }
-  log_info("monitor service has been started...");
-  while (terminate == 0) {
-    timestamp = time(NULL);
-    if ((status = sysfs_scan()) != STATUS_SUCCESS) {
-      log_debug("main(): sysfs_scan() failed (status=%s).", strstatus(status));
-    } else {
-      _ledmon_execute();
-      if ((status = sysfs_reset()) != STATUS_SUCCESS) {
-        log_debug("main(): sysfs_reset() failed (status=%s).", strstatus(status));
-      }
-    }
-    _ledmon_wait(sleep_interval);
-  }
-  exit(EXIT_SUCCESS);
+	if (on_exit(_ledmon_fini, progname)) {
+		exit(STATUS_ONEXIT_ERROR);
+	}
+	if ((status = list_init(&ledmon_block_list)) != STATUS_SUCCESS) {
+		log_debug("main(): list_init() failed (status=%s).",
+			  strstatus(status));
+		exit(EXIT_FAILURE);
+	}
+	if ((status = sysfs_init()) != STATUS_SUCCESS) {
+		log_debug("main(): sysfs_init() failed (status=%s).",
+			  strstatus(status));
+		exit(EXIT_FAILURE);
+	}
+	log_info("monitor service has been started...");
+	while (terminate == 0) {
+		timestamp = time(NULL);
+		if ((status = sysfs_scan()) != STATUS_SUCCESS) {
+			log_debug("main(): sysfs_scan() failed (status=%s).",
+				  strstatus(status));
+		} else {
+			_ledmon_execute();
+			if ((status = sysfs_reset()) != STATUS_SUCCESS) {
+				log_debug
+				    ("main(): sysfs_reset() failed (status=%s).",
+				     strstatus(status));
+			}
+		}
+		_ledmon_wait(sleep_interval);
+	}
+	exit(EXIT_SUCCESS);
 }

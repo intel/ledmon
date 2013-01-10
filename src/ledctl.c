@@ -57,8 +57,8 @@
  * _determine() function to figure the correct pattern out.
  */
 struct ibpi_state {
-  enum ibpi_pattern ibpi;
-  void *block_list;
+	enum ibpi_pattern ibpi;
+	void *block_list;
 };
 
 /**
@@ -77,26 +77,26 @@ static void *ibpi_list = NULL;
  * this entries to translate enumeration type values into the string.
  */
 const char *ibpi_str[] = {
-  [IBPI_PATTERN_UNKNOWN]        = "",
-  [IBPI_PATTERN_NORMAL]         = "NORMAL",
-  [IBPI_PATTERN_ONESHOT_NORMAL] = "",
-  [IBPI_PATTERN_DEGRADED]       = "ICA",
-  [IBPI_PATTERN_REBUILD]        = "REBUILD",
-  [IBPI_PATTERN_REBUILD_P]      = "REBUILD",
-  [IBPI_PATTERN_FAILED_ARRAY]   = "IFA",
-  [IBPI_PATTERN_HOTSPARE]       = "HOTSPARE",
-  [IBPI_PATTERN_PFA]            = "PFA",
-  [IBPI_PATTERN_FAILED_DRIVE]   = "FAILURE",
-  [IBPI_PATTERN_LOCATE]         = "LOCATE",
-  [IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF"
+	[IBPI_PATTERN_UNKNOWN]        = "",
+	[IBPI_PATTERN_NORMAL]         = "NORMAL",
+	[IBPI_PATTERN_ONESHOT_NORMAL] = "",
+	[IBPI_PATTERN_DEGRADED]       = "ICA",
+	[IBPI_PATTERN_REBUILD]        = "REBUILD",
+	[IBPI_PATTERN_REBUILD_P]      = "REBUILD",
+	[IBPI_PATTERN_FAILED_ARRAY]   = "IFA",
+	[IBPI_PATTERN_HOTSPARE]       = "HOTSPARE",
+	[IBPI_PATTERN_PFA]            = "PFA",
+	[IBPI_PATTERN_FAILED_DRIVE]   = "FAILURE",
+	[IBPI_PATTERN_LOCATE]         = "LOCATE",
+	[IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF"
 };
 
 /**
  * Internal variable of ledctl utility. It is the pattern used to print out
  * information about the version of ledctl utility.
  */
-static char *ledctl_version = "Intel(R) Enclosure LED Control Application " \
-  "%d.%d\nCopyright (C) 2009-2013 Intel Corporation.\n";
+static char *ledctl_version = "Intel(R) Enclosure LED Control Application "
+    "%d.%d\nCopyright (C) 2009-2013 Intel Corporation.\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line
@@ -108,10 +108,10 @@ static char *shortopt = "c:hvl:";
  * Internal enumeration type. It is used to help parse command line arguments.
  */
 enum longopt {
-  OPT_CONFIG,
-  OPT_HELP,
-  OPT_LOG,
-  OPT_VERSION
+	OPT_CONFIG,
+	OPT_HELP,
+	OPT_LOG,
+	OPT_VERSION
 };
 
 /**
@@ -119,11 +119,11 @@ enum longopt {
  * long options.
  */
 static struct option longopt[] = {
-  [OPT_CONFIG]  = {"config", required_argument, NULL, 'c'},
-  [OPT_HELP]    = {"help", no_argument, NULL, 'h'},
-  [OPT_LOG]     = {"log", required_argument, NULL, 'l'},
-  [OPT_VERSION] = {"version", no_argument, NULL, 'v'},
-  {NULL, no_argument, NULL, '\0'}
+	[OPT_CONFIG]  = {"config", required_argument, NULL, 'c'},
+	[OPT_HELP]    = {"help", no_argument, NULL, 'h'},
+	[OPT_LOG]     = {"log", required_argument, NULL, 'l'},
+	[OPT_VERSION] = {"version", no_argument, NULL, 'v'},
+			{NULL, no_argument, NULL, '\0'}
 };
 
 /**
@@ -138,15 +138,15 @@ static struct option longopt[] = {
  *
  * @return The function does not return a value.
  */
-static void _ledctl_fini(int __attribute__((unused)) status,
-                         void * __attribute__((unused)) ignore)
+static void _ledctl_fini(int __attribute__ ((unused)) status,
+			 void * __attribute__ ((unused)) ignore)
 {
-  sysfs_fini();
+	sysfs_fini();
 
-  if (ibpi_list) {
-    list_fini(ibpi_list);
-  }
-  log_close();
+	if (ibpi_list) {
+		list_fini(ibpi_list);
+	}
+	log_close();
 }
 
 /**
@@ -160,10 +160,10 @@ static void _ledctl_fini(int __attribute__((unused)) status,
  */
 static void _ledctl_version(void)
 {
-  printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
-  printf("\nThis is free software; see the source for copying conditions." \
-         " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS" \
-         " FOR A PARTICULAR PURPOSE.\n\n");
+	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
+	printf("\nThis is free software; see the source for copying conditions."
+	       " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS"
+	       " FOR A PARTICULAR PURPOSE.\n\n");
 }
 
 /**
@@ -178,38 +178,39 @@ static void _ledctl_version(void)
  */
 static void _ledctl_help(void)
 {
-  printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
-  printf("\nUsage: %s [OPTIONS] pattern=list_of_devices ...\n\n", progname);
-  printf("Mandatory arguments for long options are mandatory for short " \
-    "options, too.\n\n");
-  printf("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/" \
-         "ledctl.log global file.\n");
-  printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file " \
-         "(not yet\n\t\t\t\t  implemented).\n");
-  printf("--help\t\t\t\t  Displays this help text.\n");
-  printf("--version\t\t\t  Displays version and license information.\n\n");
-  printf("Patterns:\n"
-		  "\tCommon patterns are: \n"
-		  "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n"""
-		  "\t\trebuild_p, failed_array, hotspare, pfa, failure,\n"
-		  "\t\tdisk_failed\n"
-		  "\tSES-2 only patterns:\n"
-		  "\t\tses_abort, ses_rebuild, ses_ifa, ses_ica, ses_cons_check,\n"
-		  "\t\tses_hotspare, ses_rsvd_dev, ses_ok, ses_ident, ses_rm,\n"
-		  "\t\tses_insert, ses_missing, ses_dnr, ses_active,\n"
-		  "\t\tses_enbale_bb, ses_enable_ba, ses_devoff, ses_fault\n"
-		  "\tAutomatic translation form IBPI into SES-2:\n"
-		  "\t\tlocate=ses_ident, locate_off=~ses_ident,\n"
-		  "\t\tnormal=ses_ok, off=ses_ok, degraded=ses_ica,\n"
-		  "\t\trebuild=ses_rebuild rebuild_p=ses_rebuild,\n"
-		  "\t\tfailed_array=ses_ifa, hotspare=ses_hotspare \n"
-		  "\t\tpfa=ses_rsvd_dev, failure=ses_fault,\n"
-		  "\t\tdisk_failed=ses_fault \n");
- 	printf("Refer to ledctl(8) man page for more detailed description.\n");
-	printf("Report bugs in the tracker 'Bugs' at " \
-		   "http://sourceforge.net/projects/ledmon\n");
-	printf("(direct link: http://sourceforge.net/tracker" \
-		   "/?group_id=393394&atid=1632895)\n\n");
+	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
+	printf("\nUsage: %s [OPTIONS] pattern=list_of_devices ...\n\n",
+	       progname);
+	printf("Mandatory arguments for long options are mandatory for short "
+	       "options, too.\n\n");
+	printf
+	    ("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/"
+	     "ledctl.log global file.\n");
+	printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file "
+	       "(not yet\n\t\t\t\t  implemented).\n");
+	printf("--help\t\t\t\t  Displays this help text.\n");
+	printf
+	    ("--version\t\t\t  Displays version and license information.\n\n");
+	printf("Patterns:\n" "\tCommon patterns are: \n"
+	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""
+	       "\t\trebuild_p, failed_array, hotspare, pfa, failure,\n"
+	       "\t\tdisk_failed\n" "\tSES-2 only patterns:\n"
+	       "\t\tses_abort, ses_rebuild, ses_ifa, ses_ica, ses_cons_check,\n"
+	       "\t\tses_hotspare, ses_rsvd_dev, ses_ok, ses_ident, ses_rm,\n"
+	       "\t\tses_insert, ses_missing, ses_dnr, ses_active,\n"
+	       "\t\tses_enbale_bb, ses_enable_ba, ses_devoff, ses_fault\n"
+	       "\tAutomatic translation form IBPI into SES-2:\n"
+	       "\t\tlocate=ses_ident, locate_off=~ses_ident,\n"
+	       "\t\tnormal=ses_ok, off=ses_ok, degraded=ses_ica,\n"
+	       "\t\trebuild=ses_rebuild rebuild_p=ses_rebuild,\n"
+	       "\t\tfailed_array=ses_ifa, hotspare=ses_hotspare \n"
+	       "\t\tpfa=ses_rsvd_dev, failure=ses_fault,\n"
+	       "\t\tdisk_failed=ses_fault \n");
+	printf("Refer to ledctl(8) man page for more detailed description.\n");
+	printf("Report bugs in the tracker 'Bugs' at "
+	       "http://sourceforge.net/projects/ledmon\n");
+	printf("(direct link: http://sourceforge.net/tracker"
+	       "/?group_id=393394&atid=1632895)\n\n");
 }
 
 /**
@@ -227,13 +228,13 @@ static void _ledctl_help(void)
  */
 static void *_ibpi_state_init(enum ibpi_pattern ibpi)
 {
-  struct ibpi_state state;
+	struct ibpi_state state;
 
-  if (list_init(&state.block_list) != STATUS_SUCCESS) {
-    return NULL;
-  }
-  state.ibpi = ibpi;
-  return list_put(ibpi_list, &state, sizeof(struct ibpi_state));
+	if (list_init(&state.block_list) != STATUS_SUCCESS) {
+		return NULL;
+	}
+	state.ibpi = ibpi;
+	return list_put(ibpi_list, &state, sizeof(struct ibpi_state));
 }
 
 /**
@@ -250,7 +251,8 @@ static void *_ibpi_state_init(enum ibpi_pattern ibpi)
  */
 static void _set_state(struct block_device **block, enum ibpi_pattern ibpi)
 {
-  if ((*block)->ibpi < ibpi) (*block)->ibpi = ibpi;
+	if ((*block)->ibpi < ibpi)
+		(*block)->ibpi = ibpi;
 }
 
 /**
@@ -267,12 +269,13 @@ static void _set_state(struct block_device **block, enum ibpi_pattern ibpi)
  */
 static void _determine(struct ibpi_state *state)
 {
-  if (list_is_empty(state->block_list) == 0) {
-    list_for_each_parm(state->block_list, _set_state, state->ibpi);
-  } else {
-    log_warning("IBPI %s: missing block device(s)... pattern ignored.",
-      ibpi_str[state->ibpi]);
-  }
+	if (list_is_empty(state->block_list) == 0) {
+		list_for_each_parm(state->block_list, _set_state, state->ibpi);
+	} else {
+		log_warning
+		    ("IBPI %s: missing block device(s)... pattern ignored.",
+		     ibpi_str[state->ibpi]);
+	}
 }
 
 /**
@@ -292,11 +295,11 @@ static void _determine(struct ibpi_state *state)
  */
 static status_t _ibpi_state_determine(void *ibpi_list)
 {
-  if (list_is_empty(ibpi_list) == 0) {
-    return list_for_each(ibpi_list, _determine);
-  }
-  log_error("missing operand(s)... run %s --help for details.", progname);
-  return STATUS_LIST_EMPTY;
+	if (list_is_empty(ibpi_list) == 0) {
+		return list_for_each(ibpi_list, _determine);
+	}
+	log_error("missing operand(s)... run %s --help for details.", progname);
+	return STATUS_LIST_EMPTY;
 }
 
 /**
@@ -313,7 +316,7 @@ static status_t _ibpi_state_determine(void *ibpi_list)
  */
 static int _ibpi_find(struct ibpi_state *state, enum ibpi_pattern ibpi)
 {
-  return (state->ibpi == ibpi);
+	return (state->ibpi == ibpi);
 }
 
 /**
@@ -329,8 +332,8 @@ static int _ibpi_find(struct ibpi_state *state, enum ibpi_pattern ibpi)
  */
 static status_t _set_config_path(const char *path)
 {
-  (void)path;
-  return STATUS_SUCCESS;
+	(void)path;
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -346,17 +349,17 @@ static status_t _set_config_path(const char *path)
  */
 static status_t _set_log_path(const char *path)
 {
-  char temp[PATH_MAX];
+	char temp[PATH_MAX];
 
-  if (realpath(path, temp) == NULL) {
-    if ((errno != ENOENT) && (errno != ENOTDIR)) {
-      return STATUS_INVALID_PATH;
-    }
-  }
-  if (log_open(temp) < 0) {
-    return STATUS_FILE_OPEN_ERROR;
-  }
-  return STATUS_SUCCESS;
+	if (realpath(path, temp) == NULL) {
+		if ((errno != ENOENT) && (errno != ENOTDIR)) {
+			return STATUS_INVALID_PATH;
+		}
+	}
+	if (log_open(temp) < 0) {
+		return STATUS_FILE_OPEN_ERROR;
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -379,78 +382,78 @@ static status_t _set_log_path(const char *path)
  */
 static struct ibpi_state *_ibpi_state_get(const char *name)
 {
-  struct ibpi_state *state = NULL;
-  enum ibpi_pattern ibpi;
+	struct ibpi_state *state = NULL;
+	enum ibpi_pattern ibpi;
 
-  if (strcmp(name, "locate") == 0) {
-    ibpi = IBPI_PATTERN_LOCATE;
-  } else if (strcmp(name, "locate_off") == 0) {
-    ibpi = IBPI_PATTERN_LOCATE_OFF;
-  } else if (strcmp(name, "normal") == 0) {
-    ibpi = IBPI_PATTERN_NORMAL;
-  } else if (strcmp(name, "off") == 0) {
-    ibpi = IBPI_PATTERN_NORMAL;
-  } else if ((strcmp(name, "ica") == 0) ||
-             (strcmp(name, "degraded") == 0)) {
-    ibpi = IBPI_PATTERN_DEGRADED;
-  } else if (strcmp(name, "rebuild") == 0) {
-    ibpi = IBPI_PATTERN_REBUILD;
-  } else if (strcmp(name, "rebuild_p") == 0) {
-    ibpi = IBPI_PATTERN_REBUILD_P;
-  } else if ((strcmp(name, "ifa") == 0) ||
-             (strcmp(name, "failed_array") == 0)) {
-    ibpi = IBPI_PATTERN_FAILED_ARRAY;
-  } else if (strcmp(name, "hotspare") == 0) {
-    ibpi = IBPI_PATTERN_HOTSPARE;
-  } else if (strcmp(name, "pfa") == 0) {
-    ibpi = IBPI_PATTERN_PFA;
-  } else if ((strcmp(name, "failure") == 0) ||
-             (strcmp(name, "disk_failed") == 0)) {
-    ibpi = IBPI_PATTERN_FAILED_DRIVE;
-  } else if (strcmp(name, "ses_abort") == 0) {
-	  ibpi = SES_REQ_ABORT;
-  } else if (strcmp(name, "ses_rebuild") == 0) {
-	  ibpi = SES_REQ_REBUILD;
-  } else if (strcmp(name, "ses_ifa") == 0) {
-	  ibpi = SES_REQ_IFA;
-  } else if (strcmp(name, "ses_ica") == 0) {
-	  ibpi = SES_REQ_ICA;
-  } else if (strcmp(name, "ses_cons_check") == 0) {
-	  ibpi = SES_REQ_CONS_CHECK;
-  } else if (strcmp(name, "ses_hotspare") == 0) {
-	  ibpi = SES_REQ_HOSTSPARE;
-  } else if (strcmp(name, "ses_rsvd_dev") == 0) {
-	  ibpi = SES_REQ_RSVD_DEV;
-  } else if (strcmp(name, "ses_ok") == 0) {
-	  ibpi = SES_REQ_OK;
-  } else if (strcmp(name, "ses_ident") == 0) {
-	  ibpi = SES_REQ_IDENT;
-  } else if (strcmp(name, "ses_rm") == 0) {
-	  ibpi = SES_REQ_RM;
-  } else if (strcmp(name, "ses_insert") == 0) {
-	  ibpi = SES_REQ_INS;
-  } else if (strcmp(name, "ses_missing") == 0) {
-	  ibpi = SES_REQ_MISSING;
-  } else if (strcmp(name, "ses_dnr") == 0) {
-	  ibpi = SES_REQ_DNR;
-  } else if (strcmp(name, "ses_active") == 0) {
-	  ibpi = SES_REQ_ACTIVE;
-  } else if (strcmp(name, "ses_enbale_bb") == 0) {
-	  ibpi = SES_REQ_EN_BB;
-  } else if (strcmp(name, "ses_enable_ba") == 0) {
-	  ibpi = SES_REQ_EN_BA;
-  } else if (strcmp(name, "ses_devoff") == 0) {
-	  ibpi = SES_REQ_DEV_OFF;
-  } else if (strcmp(name, "ses_fault") == 0) {
-	  ibpi = SES_REQ_FAULT;
-  } else {
-    return NULL;
-  }
-  state = list_first_that(ibpi_list, _ibpi_find, ibpi);
-  if (state == NULL) {
-    state = _ibpi_state_init(ibpi);
-  }
-  return state;
+	if (strcmp(name, "locate") == 0) {
+		ibpi = IBPI_PATTERN_LOCATE;
+	} else if (strcmp(name, "locate_off") == 0) {
+		ibpi = IBPI_PATTERN_LOCATE_OFF;
+	} else if (strcmp(name, "normal") == 0) {
+		ibpi = IBPI_PATTERN_NORMAL;
+	} else if (strcmp(name, "off") == 0) {
+		ibpi = IBPI_PATTERN_NORMAL;
+	} else if ((strcmp(name, "ica") == 0) ||
+		   (strcmp(name, "degraded") == 0)) {
+		ibpi = IBPI_PATTERN_DEGRADED;
+	} else if (strcmp(name, "rebuild") == 0) {
+		ibpi = IBPI_PATTERN_REBUILD;
+	} else if (strcmp(name, "rebuild_p") == 0) {
+		ibpi = IBPI_PATTERN_REBUILD_P;
+	} else if ((strcmp(name, "ifa") == 0) ||
+		   (strcmp(name, "failed_array") == 0)) {
+		ibpi = IBPI_PATTERN_FAILED_ARRAY;
+	} else if (strcmp(name, "hotspare") == 0) {
+		ibpi = IBPI_PATTERN_HOTSPARE;
+	} else if (strcmp(name, "pfa") == 0) {
+		ibpi = IBPI_PATTERN_PFA;
+	} else if ((strcmp(name, "failure") == 0) ||
+		   (strcmp(name, "disk_failed") == 0)) {
+		ibpi = IBPI_PATTERN_FAILED_DRIVE;
+	} else if (strcmp(name, "ses_abort") == 0) {
+		ibpi = SES_REQ_ABORT;
+	} else if (strcmp(name, "ses_rebuild") == 0) {
+		ibpi = SES_REQ_REBUILD;
+	} else if (strcmp(name, "ses_ifa") == 0) {
+		ibpi = SES_REQ_IFA;
+	} else if (strcmp(name, "ses_ica") == 0) {
+		ibpi = SES_REQ_ICA;
+	} else if (strcmp(name, "ses_cons_check") == 0) {
+		ibpi = SES_REQ_CONS_CHECK;
+	} else if (strcmp(name, "ses_hotspare") == 0) {
+		ibpi = SES_REQ_HOSTSPARE;
+	} else if (strcmp(name, "ses_rsvd_dev") == 0) {
+		ibpi = SES_REQ_RSVD_DEV;
+	} else if (strcmp(name, "ses_ok") == 0) {
+		ibpi = SES_REQ_OK;
+	} else if (strcmp(name, "ses_ident") == 0) {
+		ibpi = SES_REQ_IDENT;
+	} else if (strcmp(name, "ses_rm") == 0) {
+		ibpi = SES_REQ_RM;
+	} else if (strcmp(name, "ses_insert") == 0) {
+		ibpi = SES_REQ_INS;
+	} else if (strcmp(name, "ses_missing") == 0) {
+		ibpi = SES_REQ_MISSING;
+	} else if (strcmp(name, "ses_dnr") == 0) {
+		ibpi = SES_REQ_DNR;
+	} else if (strcmp(name, "ses_active") == 0) {
+		ibpi = SES_REQ_ACTIVE;
+	} else if (strcmp(name, "ses_enbale_bb") == 0) {
+		ibpi = SES_REQ_EN_BB;
+	} else if (strcmp(name, "ses_enable_ba") == 0) {
+		ibpi = SES_REQ_EN_BA;
+	} else if (strcmp(name, "ses_devoff") == 0) {
+		ibpi = SES_REQ_DEV_OFF;
+	} else if (strcmp(name, "ses_fault") == 0) {
+		ibpi = SES_REQ_FAULT;
+	} else {
+		return NULL;
+	}
+	state = list_first_that(ibpi_list, _ibpi_find, ibpi);
+	if (state == NULL) {
+		state = _ibpi_state_init(ibpi);
+	}
+	return state;
 }
 
 /**
@@ -467,7 +470,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
  */
 static int _block_device_search(struct block_device *block, const char *path)
 {
-  return (strcmp(block->sysfs_path, path) == 0);
+	return (strcmp(block->sysfs_path, path) == 0);
 }
 
 /**
@@ -487,39 +490,40 @@ static int _block_device_search(struct block_device *block, const char *path)
  */
 static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 {
-  struct stat st;
-  char temp[PATH_MAX], path[PATH_MAX];
-  void *blk1, *blk2;
+	struct stat st;
+	char temp[PATH_MAX], path[PATH_MAX];
+	void *blk1, *blk2;
 
-  if ((realpath(name, temp) == NULL) && (errno != ENOTDIR)) {
-    return STATUS_INVALID_PATH;
-  }
-  if (strstr(temp, "/dev/") != NULL) {
-    if (stat(temp, &st) < 0) {
-      return STATUS_STAT_ERROR;
-    }
-    sprintf(temp, "/sys/dev/block/%d:%d", major(st.st_rdev), minor(st.st_rdev));
-    if ((realpath(temp, path) == NULL) && (errno != ENOTDIR)) {
-      return STATUS_INVALID_PATH;
-    }
-  } else {
-    str_cpy(path, temp, PATH_MAX);
-  }
-  blk1 = sysfs_block_device_first_that(_block_device_search, path);
-  if (blk1 == NULL) {
-    log_error("%s: device not supported", name);
-    return STATUS_NOT_SUPPORTED;
-  }
-  blk2 = list_first_that(state->block_list, _block_device_search, path);
-  if (blk2 == NULL) {
-    if (list_put(state->block_list, &blk1, sizeof(void *)) == NULL) {
-      return STATUS_OUT_OF_MEMORY;
-    }
-  } else {
-    log_info("%s: %s: device already on the list.",
-        ibpi_str[state->ibpi], path);
-  }
-  return STATUS_SUCCESS;
+	if ((realpath(name, temp) == NULL) && (errno != ENOTDIR)) {
+		return STATUS_INVALID_PATH;
+	}
+	if (strstr(temp, "/dev/") != NULL) {
+		if (stat(temp, &st) < 0) {
+			return STATUS_STAT_ERROR;
+		}
+		sprintf(temp, "/sys/dev/block/%d:%d", major(st.st_rdev),
+			minor(st.st_rdev));
+		if ((realpath(temp, path) == NULL) && (errno != ENOTDIR)) {
+			return STATUS_INVALID_PATH;
+		}
+	} else {
+		str_cpy(path, temp, PATH_MAX);
+	}
+	blk1 = sysfs_block_device_first_that(_block_device_search, path);
+	if (blk1 == NULL) {
+		log_error("%s: device not supported", name);
+		return STATUS_NOT_SUPPORTED;
+	}
+	blk2 = list_first_that(state->block_list, _block_device_search, path);
+	if (blk2 == NULL) {
+		if (list_put(state->block_list, &blk1, sizeof(void *)) == NULL) {
+			return STATUS_OUT_OF_MEMORY;
+		}
+	} else {
+		log_info("%s: %s: device already on the list.",
+			 ibpi_str[state->ibpi], path);
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -539,33 +543,35 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
  */
 static status_t _cmdline_ibpi_parse(int argc, char *argv[])
 {
-  while (optind < argc) {
-    struct ibpi_state *state = NULL;
-    char *p = argv[optind++], *t;
-    if (*(t = strchrnul(p, '=')) != '\0') {
-      *(t++) = '\0';
-      if ((state = _ibpi_state_get(p)) != NULL) {
-        if (*t == '{') {
-          while ((t = argv[optind++]) != NULL) {
-            if (*t == '}') break;
-            _ibpi_state_add_block(state, t);
-          }
-        } else {
-          while (*(p = t) != '\0') {
-            if (*(t = strchrnul(p, ',')) != '\0') {
-              *(t++) = '\0';
-            }
-            _ibpi_state_add_block(state, p);
-          }
-        }
-      }
-    }
-    if (state == NULL) {
-      log_error("%s - unknown pattern name.", p);
-      exit(STATUS_INVALID_STATE);
-    }
-  }
-  return STATUS_SUCCESS;
+	while (optind < argc) {
+		struct ibpi_state *state = NULL;
+		char *p = argv[optind++], *t;
+		if (*(t = strchrnul(p, '=')) != '\0') {
+			*(t++) = '\0';
+			if ((state = _ibpi_state_get(p)) != NULL) {
+				if (*t == '{') {
+					while ((t = argv[optind++]) != NULL) {
+						if (*t == '}')
+							break;
+						_ibpi_state_add_block(state, t);
+					}
+				} else {
+					while (*(p = t) != '\0') {
+						if (*(t = strchrnul(p, ',')) !=
+						    '\0') {
+							*(t++) = '\0';
+						}
+						_ibpi_state_add_block(state, p);
+					}
+				}
+			}
+		}
+		if (state == NULL) {
+			log_error("%s - unknown pattern name.", p);
+			exit(STATUS_INVALID_STATE);
+		}
+	}
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -582,40 +588,40 @@ static status_t _cmdline_ibpi_parse(int argc, char *argv[])
  */
 static status_t _cmdline_parse(int argc, char *argv[])
 {
-  int opt, opt_index = -1;
-  status_t status = STATUS_SUCCESS;
+	int opt, opt_index = -1;
+	status_t status = STATUS_SUCCESS;
 
-  do {
-    opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
-    if (opt == -1) {
-      break;
-    }
-    switch (opt) {
-    case 'v':
-      _ledctl_version();
-      exit(EXIT_SUCCESS);
-    case 'h':
-      _ledctl_help();
-      exit(EXIT_SUCCESS);
-    case 'c':
-      status = _set_config_path(optarg);
-      break;
-    case 'l':
-      status = _set_log_path(optarg);
-      break;
-    case ':':
-    case '?':
-    default:
-      log_debug("[opt='%c', opt_index=%d]", opt, opt_index);
-      break;
-    }
-    opt_index = -1;
-    if (status != STATUS_SUCCESS) {
-      return status;
-    }
-  } while (1);
+	do {
+		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
+		if (opt == -1) {
+			break;
+		}
+		switch (opt) {
+		case 'v':
+			_ledctl_version();
+			exit(EXIT_SUCCESS);
+		case 'h':
+			_ledctl_help();
+			exit(EXIT_SUCCESS);
+		case 'c':
+			status = _set_config_path(optarg);
+			break;
+		case 'l':
+			status = _set_log_path(optarg);
+			break;
+		case ':':
+		case '?':
+		default:
+			log_debug("[opt='%c', opt_index=%d]", opt, opt_index);
+			break;
+		}
+		opt_index = -1;
+		if (status != STATUS_SUCCESS) {
+			return status;
+		}
+	} while (1);
 
-  return STATUS_SUCCESS;
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -653,10 +659,10 @@ static void _send_cntrl_message(struct block_device *device)
  */
 static status_t _ledctl_execute(void *ibpi_list)
 {
-  if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS) {
-    return STATUS_IBPI_DETERMINE_ERROR;
-  }
-  return sysfs_block_device_for_each(_send_cntrl_message);
+	if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS) {
+		return STATUS_IBPI_DETERMINE_ERROR;
+	}
+	return sysfs_block_device_for_each(_send_cntrl_message);
 }
 
 /**
@@ -677,37 +683,41 @@ static status_t _ledctl_execute(void *ibpi_list)
  */
 int main(int argc, char *argv[])
 {
-  status_t status;
+	status_t status;
 
-  set_invocation_name(argv[0]);
-  openlog(progname, LOG_PERROR, LOG_USER);
+	set_invocation_name(argv[0]);
+	openlog(progname, LOG_PERROR, LOG_USER);
 
-  if (getuid() != 0) {
-    log_error("Only root can run this application.");
-    return STATUS_NOT_A_PRIVILEGED_USER;
-  }
+	if (getuid() != 0) {
+		log_error("Only root can run this application.");
+		return STATUS_NOT_A_PRIVILEGED_USER;
+	}
 
-  if (on_exit(_ledctl_fini, progname)) {
-    exit(STATUS_ONEXIT_ERROR);
-  }
-  if (_cmdline_parse(argc, argv)) {
-    exit(STATUS_CMDLINE_ERROR);
-  }
-  if ((status = list_init(&ibpi_list)) != STATUS_SUCCESS) {
-    log_debug("main(): list_init() failed (status=%s).", strstatus(status));
-    exit(STATUS_LIST_INIT_ERROR);
-  }
-  if ((status = sysfs_init()) != STATUS_SUCCESS) {
-    log_debug("main(): sysfs_init() failed (status=%s).", strstatus(status));
-    exit(STATUS_SYSFS_INIT_ERROR);
-  }
-  if ((status = sysfs_scan()) != STATUS_SUCCESS) {
-    log_debug("main(): sysfs_scan() failed (status=%s).", strstatus(status));
-    exit(STATUS_SYSFS_SCAN_ERROR);
-  }
-  if ((status = _cmdline_ibpi_parse(argc, argv)) != STATUS_SUCCESS) {
-    log_debug("main(): _ibpi_parse() failed (status=%s).", strstatus(status));
-    exit(STATUS_INVALID_STATE);
-  }
-  return _ledctl_execute(ibpi_list);
+	if (on_exit(_ledctl_fini, progname)) {
+		exit(STATUS_ONEXIT_ERROR);
+	}
+	if (_cmdline_parse(argc, argv)) {
+		exit(STATUS_CMDLINE_ERROR);
+	}
+	if ((status = list_init(&ibpi_list)) != STATUS_SUCCESS) {
+		log_debug("main(): list_init() failed (status=%s).",
+			  strstatus(status));
+		exit(STATUS_LIST_INIT_ERROR);
+	}
+	if ((status = sysfs_init()) != STATUS_SUCCESS) {
+		log_debug("main(): sysfs_init() failed (status=%s).",
+			  strstatus(status));
+		exit(STATUS_SYSFS_INIT_ERROR);
+	}
+	if ((status = sysfs_scan()) != STATUS_SUCCESS) {
+		log_debug("main(): sysfs_scan() failed (status=%s).",
+			  strstatus(status));
+		exit(STATUS_SYSFS_SCAN_ERROR);
+	}
+	if ((status = _cmdline_ibpi_parse(argc, argv)) != STATUS_SUCCESS) {
+		log_debug("main(): _ibpi_parse() failed (status=%s).",
+			  strstatus(status));
+		exit(STATUS_INVALID_STATE);
+	}
+	return _ledctl_execute(ibpi_list);
 }

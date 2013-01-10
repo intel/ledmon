@@ -64,4 +64,4 @@
  */
 #define END_LINE_STR        "\n"
 
-#endif /* _CONFIG_H_INCLUDED_ */
+#endif				/* _CONFIG_H_INCLUDED_ */

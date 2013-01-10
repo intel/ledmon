@@ -34,12 +34,12 @@ struct enclosure_device {
    * Path to an enclosure device in sysfs tree. This is controller base
    * canonical path.
    */
-  char *sysfs_path;
+	char *sysfs_path;
 
   /**
    * SAS address as identifier of an enclosure.
    */
-  uint64_t sas_address;
+	uint64_t sas_address;
 };
 
 /**
@@ -72,4 +72,4 @@ struct enclosure_device *enclosure_device_init(const char *path);
  */
 void enclosure_device_fini(struct enclosure_device *enclosure);
 
-#endif /* _ENCLOSURE_H_INCLUDED_ */
+#endif				/* _ENCLOSURE_H_INCLUDED_ */

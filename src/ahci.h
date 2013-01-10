@@ -51,4 +51,4 @@ char *ahci_get_port_path(const char *path);
  */
 int ahci_sgpio_write(struct block_device *path, enum ibpi_pattern ibpi);
 
-#endif /* _AHCI_H_INCLUDED_ */
+#endif				/* _AHCI_H_INCLUDED_ */

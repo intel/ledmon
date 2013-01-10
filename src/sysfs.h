@@ -110,4 +110,4 @@ void *__sysfs_block_device_first_that(test_t action, void *parm);
  */
 int sysfs_isci_driver(const char *path);
 
-#endif /* _SYSFS_H_INCLUDED_ */
+#endif				/* _SYSFS_H_INCLUDED_ */

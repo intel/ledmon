@@ -38,12 +38,12 @@
  * Verbose level for messages out from application.
  */
 enum verbose_level {
-  VERB_QUIET = 0,
-  VERB_ERROR,
-  VERB_WARN,
-  VERB_INFO,
-  VERB_DEBUG,
-  VERB_ALL
+	VERB_QUIET = 0,
+	VERB_ERROR,
+	VERB_WARN,
+	VERB_INFO,
+	VERB_DEBUG,
+	VERB_ALL
 };
 
 /**
@@ -56,7 +56,7 @@ extern enum verbose_level verbose;
  * attributes of device.
  */
 struct device_id {
-  int major, minor;
+	int major, minor;
 };
 
 /**
@@ -155,7 +155,7 @@ int put_int(const char *path, const char *name, int value);
  * @return List containing content of the given directory. Each element on the
  *         list is canonical path.
  */
-void * scan_dir(const char *path);
+void *scan_dir(const char *path);
 
 /**
  * @brief Writes a text to file.
@@ -185,7 +185,7 @@ int buf_write(const char *path, const char *buf);
  *
  * @return Pointer to memory block if successful, otherwise NULL pointer.
  */
-char * buf_read(const char *path);
+char *buf_read(const char *path);
 
 /**
  * @brief Gets major and minor of device.
@@ -338,4 +338,5 @@ char *get_path_component_rev(const char *path, int index);
  * @brief Extracts the 'hostX' part from path.
  */
 char *get_path_hostN(const char *path);
-#endif /* _UTILS_H_INCLUDED_ */
+
+#endif				/* _UTILS_H_INCLUDED_ */

@@ -60,9 +60,9 @@ time_t timestamp = 0;
  */
 int dev_directly_attached(const char *path)
 {
-  if (strstr(path, "/expander") == 0)
-      return 1;
-  return 0;
+	if (strstr(path, "/expander") == 0)
+		return 1;
+	return 0;
 }
 
 /**
@@ -83,18 +83,20 @@ int dev_directly_attached(const char *path)
  */
 static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 {
-  send_message_t result = NULL;
+	send_message_t result = NULL;
 
-  if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
-    result = ahci_sgpio_write;
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && !dev_directly_attached(path)) {
-    result = scsi_ses_write;
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && dev_directly_attached(path)) {
-    result = scsi_smp_write;
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
-    result = dellssd_write;
-  }
-  return result;
+	if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
+		result = ahci_sgpio_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
+		   && !dev_directly_attached(path)) {
+		result = scsi_ses_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
+		   && dev_directly_attached(path)) {
+		result = scsi_smp_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
+		result = dellssd_write;
+	}
+	return result;
 }
 
 /**
@@ -112,16 +114,16 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
  */
 static char *_get_host(char *path, struct cntrl_device *cntrl)
 {
-  char *result = NULL;
+	char *result = NULL;
 
-  if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
-    result = scsi_get_slot_path(path, cntrl->sysfs_path);
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
-    result = ahci_get_port_path(path);
-  } else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
-    result = dellssd_get_path(path, cntrl->sysfs_path);
-  }
-  return result;
+	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+		result = scsi_get_slot_path(path, cntrl->sysfs_path);
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
+		result = ahci_get_port_path(path);
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
+		result = dellssd_get_path(path, cntrl->sysfs_path);
+	}
+	return result;
 }
 
 /**
@@ -139,7 +141,8 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
  */
 static int _compare(struct cntrl_device *cntrl, const char *path)
 {
-  return (strncmp(cntrl->sysfs_path, path, strlen(cntrl->sysfs_path)) == 0);
+	return (strncmp(cntrl->sysfs_path, path, strlen(cntrl->sysfs_path)) ==
+		0);
 }
 
 /**
@@ -157,13 +160,12 @@ static int _compare(struct cntrl_device *cntrl, const char *path)
  */
 struct cntrl_device *block_get_controller(void *cntrl_list, char *path)
 {
-  return list_first_that(cntrl_list, _compare, path);
+	return list_first_that(cntrl_list, _compare, path);
 }
-
 
 struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 {
-	struct _host_type *hosts=NULL;
+	struct _host_type *hosts = NULL;
 
 	if (!cntrl)
 		return hosts;
@@ -176,76 +178,80 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 	}
 	return hosts;
 }
+
 /*
  * Allocates a new block device structure. See block.h for details.
  */
-struct block_device * block_device_init(void *cntrl_list, const char *path)
+struct block_device *block_device_init(void *cntrl_list, const char *path)
 {
-  struct cntrl_device *cntrl;
-  char link[PATH_MAX], *host;
-  struct block_device *device = NULL;
-  send_message_t send_fn = NULL;
-  int host_id = -1;
-  char *host_name;
+	struct cntrl_device *cntrl;
+	char link[PATH_MAX], *host;
+	struct block_device *device = NULL;
+	send_message_t send_fn = NULL;
+	int host_id = -1;
+	char *host_name;
 
-  if (realpath(path, link)) {
-    if ((cntrl = block_get_controller(cntrl_list, link)) == NULL) {
-      return NULL;
-    }
-    if ((host = _get_host(link, cntrl)) == NULL) {
-      return NULL;
-    }
+	if (realpath(path, link)) {
+		if ((cntrl = block_get_controller(cntrl_list, link)) == NULL) {
+			return NULL;
+		}
+		if ((host = _get_host(link, cntrl)) == NULL) {
+			return NULL;
+		}
 
-    host_name = get_path_hostN(link);
-    if (host_name) {
-        sscanf(host_name, "host%d", &host_id);
-        free(host_name);
-    }
+		host_name = get_path_hostN(link);
+		if (host_name) {
+			sscanf(host_name, "host%d", &host_id);
+			free(host_name);
+		}
 
-    if ((send_fn = _get_send_fn(cntrl, link)) == NULL) {
-      free(host);
-      return NULL;
-    }
-    device = calloc(1, sizeof(*device));
-    if (device) {
-      struct _host_type *hosts = cntrl->hosts;
+		if ((send_fn = _get_send_fn(cntrl, link)) == NULL) {
+			free(host);
+			return NULL;
+		}
+		device = calloc(1, sizeof(*device));
+		if (device) {
+			struct _host_type *hosts = cntrl->hosts;
 
-      device->cntrl = cntrl;
-      device->sysfs_path = strdup(link);
-      device->cntrl_path = host;
-      device->ibpi = IBPI_PATTERN_UNKNOWN;
-      device->send_fn = send_fn;
-      device->timestamp = timestamp;
-      device->host = NULL;
-      device->host_id = host_id;
-      device->encl_index = -1;
-      while (hosts) {
-        if (hosts->host_id == host_id) {
-          device->host = hosts;
-          break;
-        }
-        hosts = hosts->next;
-      }
-      if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
-    	  if (dev_directly_attached(link)) {
-    		  device->phy_index = isci_cntrl_init_smp(link, cntrl);
-    	  } else {
-    		  device->phy_index = isci_cntrl_init_smp(link, cntrl);
-    		  if (scsi_get_enclosure(device) == 0) {
-    			  log_warning("Device initialization failed for '%s'",
-    					  path);
-    			  free(device->sysfs_path);
-    			  free(device->cntrl_path);
-    			  free(device);
-    			  device = NULL;
-    		  }
-    	  }
-      }
-    } else {
-      free(host);
-    }
-  }
-  return device;
+			device->cntrl = cntrl;
+			device->sysfs_path = strdup(link);
+			device->cntrl_path = host;
+			device->ibpi = IBPI_PATTERN_UNKNOWN;
+			device->send_fn = send_fn;
+			device->timestamp = timestamp;
+			device->host = NULL;
+			device->host_id = host_id;
+			device->encl_index = -1;
+			while (hosts) {
+				if (hosts->host_id == host_id) {
+					device->host = hosts;
+					break;
+				}
+				hosts = hosts->next;
+			}
+			if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+				if (dev_directly_attached(link)) {
+					device->phy_index =
+					    isci_cntrl_init_smp(link, cntrl);
+				} else {
+					device->phy_index =
+					    isci_cntrl_init_smp(link, cntrl);
+					if (scsi_get_enclosure(device) == 0) {
+						log_warning
+						    ("Device initialization failed for '%s'",
+						     path);
+						free(device->sysfs_path);
+						free(device->cntrl_path);
+						free(device);
+						device = NULL;
+					}
+				}
+			}
+		} else {
+			free(host);
+		}
+	}
+	return device;
 }
 
 /**
@@ -253,43 +259,43 @@ struct block_device * block_device_init(void *cntrl_list, const char *path)
  */
 void block_device_fini(struct block_device *device)
 {
-  if (device) {
-    if (device->sysfs_path)
-      free(device->sysfs_path);
+	if (device) {
+		if (device->sysfs_path)
+			free(device->sysfs_path);
 
-    if (device->cntrl_path)
-      free(device->cntrl_path);
+		if (device->cntrl_path)
+			free(device->cntrl_path);
 
-    /* free(device); */
-  }
+		/* free(device); */
+	}
 }
 
 /*
  * Duplicates a block device structure. See block.h for details.
  */
-struct block_device * block_device_duplicate(struct block_device *block)
+struct block_device *block_device_duplicate(struct block_device *block)
 {
-  struct block_device *result = NULL;
+	struct block_device *result = NULL;
 
-  if (block) {
-    result = calloc(1, sizeof(*result));
-    if (result) {
-      result->sysfs_path = strdup(block->sysfs_path);
-      result->cntrl_path = strdup(block->cntrl_path);
-      if (block->ibpi != IBPI_PATTERN_UNKNOWN) {
-        result->ibpi = block->ibpi;
-      } else {
-        result->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
-      }
-      result->send_fn = block->send_fn;
-      result->timestamp = block->timestamp;
-      result->cntrl = block->cntrl;
-      result->host = block->host;
-      result->host_id = block->host_id;
-      result->phy_index = block->phy_index;
-      result->encl_index = block->encl_index;
-      strcpy(result->encl_dev, block->encl_dev);
-    }
-  }
-  return result;
+	if (block) {
+		result = calloc(1, sizeof(*result));
+		if (result) {
+			result->sysfs_path = strdup(block->sysfs_path);
+			result->cntrl_path = strdup(block->cntrl_path);
+			if (block->ibpi != IBPI_PATTERN_UNKNOWN) {
+				result->ibpi = block->ibpi;
+			} else {
+				result->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
+			}
+			result->send_fn = block->send_fn;
+			result->timestamp = block->timestamp;
+			result->cntrl = block->cntrl;
+			result->host = block->host;
+			result->host_id = block->host_id;
+			result->phy_index = block->phy_index;
+			result->encl_index = block->encl_index;
+			strcpy(result->encl_dev, block->encl_dev);
+		}
+	}
+	return result;
 }

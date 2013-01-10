@@ -65,4 +65,4 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi);
  */
 int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl);
 
-#endif /* _SCSI_H_INCLUDED_ */
+#endif				/* _SCSI_H_INCLUDED_ */

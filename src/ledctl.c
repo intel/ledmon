@@ -3,7 +3,7 @@
 
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2012 Intel Corporation.
+ * Copyright (C) 2009-2013 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -96,7 +96,7 @@ const char *ibpi_str[] = {
  * information about the version of ledctl utility.
  */
 static char *ledctl_version = "Intel(R) Enclosure LED Control Application " \
-  "%d.%d\nCopyright (C) 2009-2012 Intel Corporation.\n";
+  "%d.%d\nCopyright (C) 2009-2013 Intel Corporation.\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line

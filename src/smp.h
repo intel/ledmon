@@ -1,6 +1,3 @@
-/* -*- mode: c; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* ex: set tabstop=2 softtabstop=2 shiftwidth=2 expandtab: */
-
 /*
  * Intel(R) Enclosure LED Utilities
  * Copyright (C) 2011-2013 Intel Corporation.

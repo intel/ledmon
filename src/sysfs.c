@@ -235,7 +235,6 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 		if (device) {
 			if (!_is_duplicate(device)) {
 				device->raid = raid;
-				device->state = SLAVE_STATE_IN_SYNC;
 				list_put(slave_list, device,
 					 sizeof(struct slave_device));
 			} else {
@@ -492,9 +491,10 @@ static void _set_array_state(struct raid_device *raid,
 		_set_block_state(block, IBPI_PATTERN_REBUILD_P);
 		break;
 	case RAID_ACTION_RESYNC:
-	case RAID_ACTION_RECOVER:
 	case RAID_ACTION_REPAIR:
 		_set_block_state(block, IBPI_PATTERN_REBUILD);
+		break;
+	case RAID_ACTION_RECOVER:
 		break;
 	}
 }
@@ -509,7 +509,10 @@ static void _determine(struct slave_device *device)
 	} else if ((device->state & SLAVE_STATE_FAULTY) != 0) {
 		_set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);
 	} else if ((device->state & SLAVE_STATE_SPARE) != 0) {
-		_set_block_state(device->block, IBPI_PATTERN_HOTSPARE);
+		if (_is_failed_array(device->raid) == 0)
+			_set_block_state(device->block, IBPI_PATTERN_REBUILD);
+		else
+			_set_block_state(device->block, IBPI_PATTERN_HOTSPARE);
 	} else if ((device->state & SLAVE_STATE_IN_SYNC) != 0) {
 		switch (_is_failed_array(device->raid)) {
 		case 0:

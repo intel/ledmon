@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -36,37 +36,37 @@ enum cntrl_type {
  * This structure describes a storage controller device existing in the system.
  */
 struct cntrl_device {
-  /**
-   * Path to the device in sysfs tree.
-   */
+	/**
+	* Path to the device in sysfs tree.
+	*/
 	char *sysfs_path;
 
-  /**
-   * Type of storage controller device.
-   */
+	/**
+	 * Type of storage controller device.
+	 */
 	enum cntrl_type cntrl_type;
 
-  /**
-   * Flag if scsi controller driver is "isci"
-   */
+	/**
+	 * Flag if scsi controller driver is "isci"
+	 */
 	int isci_present;
 
 	struct _host_type {
-    /**
-     * ibpi state buffer for directly attached devices
-     */
+		/**
+		 * ibpi state buffer for directly attached devices
+		 */
 		void *ibpi_state_buffer;
-    /**
-     * outbound raw byte stream
-     */
+		/**
+		 * outbound raw byte stream
+		 */
 		unsigned char bitstream[4];
-    /**
-     * host identifier for different hba instances
-     */
+		/**
+		 * host identifier for different hba instances
+		 */
 		int host_id;
-    /**
-     * pointer to next structure
-     */
+		/**
+		 * pointer to next structure
+		 */
 		struct _host_type *next;
 	} *hosts;
 };
@@ -75,8 +75,8 @@ struct cntrl_device {
  * @brief Allocates a new controller device structure.
  *
  * This function allocates memory for a new structure of storage controller
- * device. It reads the sysfs entries and populates structure fields. The function
- * registers only supported storage controllers.
+ * device. It reads the sysfs entries and populates structure fields.
+ * The function registers only supported storage controllers.
  *
  * @param[in]      path           path to storage controller in sysfs tree.
  *

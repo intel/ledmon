@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -87,7 +87,7 @@ status_t sysfs_block_device_scan(void **block_list);
 /**
  */
 #define sysfs_block_device_for_each(__action) \
-    __sysfs_block_device_for_each((action_t)(__action), (void *)0)
+	__sysfs_block_device_for_each((action_t)(__action), (void *)0)
 
 /**
  */
@@ -96,7 +96,7 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm);
 /**
  */
 #define sysfs_block_device_first_that(__test, __parm) \
-    __sysfs_block_device_first_that((test_t)(__test), (void *)(__parm))
+	__sysfs_block_device_first_that((test_t)(__test), (void *)(__parm))
 
 /**
  */

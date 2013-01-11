@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -58,27 +58,23 @@ struct list {
 
 /**
  */
-#define _Type(_ptr) \
-  *(((enum type *)(_ptr)) - 1)
+#define _Type(_ptr) (*(((enum type *)(_ptr)) - 1))
 
 /**
  */
 #ifdef _DEBUG
-#define Check(_ptr, _type) \
-  assert(_Type(_ptr) == (_type))
+#define Check(_ptr, _type) assert(_Type(_ptr) == (_type))
 #else				/* _DEBUG */
 #define Check(_item, _type)
 #endif				/* _DEBUG */
 
 /**
  */
-#define _Node(_ptr) \
-  (((struct node *)(_ptr)) - 1)
+#define _Node(_ptr) (((struct node *)(_ptr)) - 1)
 
 /**
  */
-#define _List(_ptr) \
-  (((struct list *)(_ptr)) - 1)
+#define _List(_ptr) (((struct list *)(_ptr)) - 1)
 
 /**
  */
@@ -134,19 +130,16 @@ static status_t _remove(struct node *node)
 	struct list *list;
 
 	list = node->list;
-	if (list == NULL) {
+	if (list == NULL)
 		return STATUS_INVALID_NODE;
-	}
-	if (node->prev) {
+	if (node->prev)
 		node->prev->next = node->next;
-	} else {
+	else
 		list->head = node->next;
-	}
-	if (node->next) {
+	if (node->next)
 		node->next->prev = node->prev;
-	} else {
+	else
 		list->tail = node->prev;
-	}
 	node->list = NULL;
 	node->next = NULL;
 	node->prev = NULL;
@@ -213,9 +206,8 @@ static void _put_before(struct node *node, struct node *elem)
 	t = node->prev;
 	node->prev = elem;
 	elem->prev = t;
-	if (t != NULL) {
+	if (t != NULL)
 		t->next = elem;
-	}
 	elem->next = node;
 	elem->list = node->list;
 }
@@ -229,9 +221,8 @@ static void _put_after(struct node *node, struct node *elem)
 	t = node->next;
 	node->next = elem;
 	elem->next = t;
-	if (t != NULL) {
+	if (t != NULL)
 		t->prev = elem;
-	}
 	elem->prev = node;
 	elem->list = node->list;
 }
@@ -240,9 +231,9 @@ static void _put_after(struct node *node, struct node *elem)
  */
 static void _put_front(struct list *list, struct node *elem)
 {
-	if (list->head == NULL) {
+	if (list->head == NULL)
 		list->tail = elem;
-	} else {
+	else {
 		elem->next = list->head;
 		list->head->prev = elem;
 	}
@@ -254,9 +245,9 @@ static void _put_front(struct list *list, struct node *elem)
  */
 static void _put_back(struct list *list, struct node *elem)
 {
-	if (list->tail == NULL) {
+	if (list->tail == NULL)
 		list->head = elem;
-	} else {
+	else {
 		elem->prev = list->tail;
 		list->tail->next = elem;
 	}
@@ -297,9 +288,8 @@ status_t list_init(void **ptr)
 	struct list *t;
 
 	t = malloc(sizeof(struct list));
-	if (t == NULL) {
+	if (t == NULL)
 		return STATUS_OUT_OF_MEMORY;
-	}
 	t->head = NULL;
 	t->tail = NULL;
 	t->type = TYPE_LIST;
@@ -323,9 +313,8 @@ status_t list_fini(void *ptr)
  */
 status_t list_remove(void *ptr)
 {
-	if (ptr == NULL) {
+	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	}
 	Check(ptr, TYPE_NODE);
 	return _remove(_Node(ptr));
 }
@@ -337,7 +326,8 @@ void *list_add(void *ptr, void *data, size_t size)
 	void *result = NULL;
 
 	if (ptr && data && (size > 0)) {
-		if ((result = _new(data, size)) != NULL) {
+		result = _new(data, size);
+		if (result != NULL) {
 			switch (_Type(ptr)) {
 			case TYPE_LIST:
 				_put_front(_List(ptr), result);
@@ -360,7 +350,8 @@ void *list_put(void *ptr, void *data, size_t size)
 	void *result = NULL;
 
 	if (ptr && data && (size > 0)) {
-		if ((result = _new(data, size)) != NULL) {
+		result = _new(data, size);
+		if (result != NULL) {
 			switch (_Type(ptr)) {
 			case TYPE_LIST:
 				_put_back(_List(ptr), result);
@@ -382,9 +373,8 @@ void *list_next(void *ptr)
 {
 	if (ptr) {
 		struct node *node = _next(ptr);
-		if (node) {
+		if (node)
 			return node + 1;
-		}
 	}
 	return NULL;
 }
@@ -395,9 +385,8 @@ void *list_prev(void *ptr)
 {
 	if (ptr) {
 		struct node *node = _prev(ptr);
-		if (node) {
+		if (node)
 			return node + 1;
-		}
 	}
 	return NULL;
 }
@@ -408,9 +397,8 @@ void *list_head(void *ptr)
 {
 	if (ptr) {
 		struct node *node = _head(ptr);
-		if (node) {
+		if (node)
 			return node + 1;
-		}
 	}
 	return NULL;
 }
@@ -421,9 +409,8 @@ void *list_tail(void *ptr)
 {
 	if (ptr) {
 		struct node *node = _tail(ptr);
-		if (node) {
+		if (node)
 			return node + 1;
-		}
 	}
 	return NULL;
 }
@@ -432,9 +419,8 @@ void *list_tail(void *ptr)
  */
 status_t list_delete(void *ptr)
 {
-	if (ptr == NULL) {
+	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	}
 	switch (_Type(ptr)) {
 	case TYPE_NODE:
 		_delete(_Node(ptr));
@@ -450,9 +436,8 @@ status_t list_delete(void *ptr)
  */
 int list_is_empty(void *ptr)
 {
-	if (ptr == NULL) {
+	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	}
 	Check(ptr, TYPE_LIST);
 	return (_List(ptr)->head == NULL);
 }
@@ -479,9 +464,8 @@ void *__list_first_that(void *ptr, test_t test, void *parm)
 
 	void *node = list_head(ptr);
 	while (node) {
-		if (test(node, parm)) {
+		if (test(node, parm))
 			break;
-		}
 		node = list_next(node);
 	}
 	return node;
@@ -495,9 +479,8 @@ void *__list_last_that(void *ptr, test_t test, void *parm)
 
 	void *node = list_tail(ptr);
 	while (node) {
-		if (test(node, parm)) {
+		if (test(node, parm))
 			break;
-		}
 		node = list_prev(node);
 	}
 	return node;

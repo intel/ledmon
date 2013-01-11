@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -49,7 +49,7 @@
 #include "utils.h"
 #include "smp.h"
 
-#define GPIO_TX_GP1			0x01
+#define GPIO_TX_GP1	0x01
 
 struct gpio_tx_register_byte {
 	unsigned char activity:3;
@@ -60,10 +60,10 @@ struct gpio_tx_register_byte {
 struct gpio_tx_register_byte gpio_tx_table[4];
 
 #define INIT_IBPI(act, loc, err)  \
-  { 	.error = err,               \
-      .locate = loc,              \
-      .activity = act             \
-  }
+	{	.error = err,     \
+		.locate = loc,    \
+		.activity = act   \
+	}
 
 static const struct gpio_rx_table {
 	struct gpio_tx_register_byte pattern;
@@ -285,9 +285,8 @@ static int _open_smp_device(const char *filename)
 	int dmaj, dmin;
 	snprintf(buf, sizeof(buf), "%s/dev", filename);
 	df = fopen(buf, "r");
-	if (!df) {
+	if (!df)
 		return -1;
-	}
 	if (fgets(buf, sizeof(buf), df) < 0) {
 		fclose(df);
 		return -1;
@@ -299,14 +298,12 @@ static int _open_smp_device(const char *filename)
 	fclose(df);
 	snprintf(buf, sizeof(buf), "/var/tmp/led.%d.%d.%d", dmaj, dmin,
 		 getpid());
-	if (mknod(buf, S_IFCHR | S_IRUSR | S_IWUSR, makedev(dmaj, dmin)) < 0) {
+	if (mknod(buf, S_IFCHR | S_IRUSR | S_IWUSR, makedev(dmaj, dmin)) < 0)
 		return -1;
-	}
 	hba_fd = open(buf, O_RDWR);
 	unlink(buf);
-	if (hba_fd < 0) {
+	if (hba_fd < 0)
 		return -1;
-	}
 	return hba_fd;
 }
 
@@ -356,7 +353,7 @@ static int _close_smp_device(int fd)
    @brief use sg protocol in order to send data directly to hba driver
  */
 static int _send_smp_frame(int hba, void *data, size_t data_size,
-			   void *response, size_t * response_size)
+			   void *response, size_t *response_size)
 {
 	struct sg_io_v4 sg_frame;
 	uint8_t request_buf[SCSI_MAX_CDB_LENGTH];
@@ -379,9 +376,8 @@ static int _send_smp_frame(int hba, void *data, size_t data_size,
 
 	sg_frame.timeout = SG_RESPONSE_TIMEOUT;
 	/* send ioctl */
-	if (ioctl(hba, SG_IO, &sg_frame) < 0) {
+	if (ioctl(hba, SG_IO, &sg_frame) < 0)
 		return -1;
-	}
 
 	/* return status */
 	if (sg_frame.driver_status)
@@ -399,7 +395,7 @@ static int _send_smp_frame(int hba, void *data, size_t data_size,
 /* 1024 bytes for data, 4 for crc */
 #define MAX_SMP_FRAME_DATA 1024
 #define MAX_SMP_FRAME_LEN (sizeof(struct smp_write_request_frame_header) + \
-                           MAX_SMP_FRAME_DATA + SMP_FRAME_CRC_LEN)
+				MAX_SMP_FRAME_DATA + SMP_FRAME_CRC_LEN)
 
 /**
    @brief prepare full smp frame ready to send to hba
@@ -459,18 +455,18 @@ static int _smp_write_gpio(const char *path, int smp_reg_type,
 	return status;
 }
 
-#define BLINK_GEN_1HZ									8
-#define BLINK_GEN_2HZ									4
-#define BLINK_GEN_4HZ									2
+#define BLINK_GEN_1HZ				8
+#define BLINK_GEN_2HZ				4
+#define BLINK_GEN_4HZ				2
 #define DEFAULT_FORCED_ACTIVITY_OFF		1
 #define DEFAULT_MAXIMUM_ACTIVITY_ON		2
-#define DEFAULT_STRETCH_ACTIVITY_OFF	0
+#define DEFAULT_STRETCH_ACTIVITY_OFF		0
 #define DEFAULT_STRETCH_ACTIVITY_ON		0
 
 #define DEFAULT_ISCI_SUPPORTED_DEVS		4
 
 /* one data chunk is 32bit long */
-#define SMP_DATA_CHUNKS								1
+#define SMP_DATA_CHUNKS				1
 
 struct gpio_tx_register_byte *get_bdev_ibpi_buffer(struct block_device *bdevice)
 {
@@ -486,12 +482,10 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
 	const char *sysfs_path = device->cntrl_path;
 	struct gpio_tx_register_byte *gpio_tx;
 
-	if (sysfs_path == NULL) {
+	if (sysfs_path == NULL)
 		__set_errno_and_return(EINVAL);
-	}
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
+	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
-	}
 	if (!device->cntrl) {
 		log_debug("No ctrl dev for '%s'", strstr(sysfs_path, "host"));
 		__set_errno_and_return(ENODEV);
@@ -556,12 +550,12 @@ void init_smp(const char *path, struct cntrl_device *device)
 
 	for (hosts = device->hosts; hosts; hosts = hosts->next) {
 		/* already initialized */
-		if (hosts->ibpi_state_buffer) {
+		if (hosts->ibpi_state_buffer)
 			continue;
-		}
-		hosts->ibpi_state_buffer = calloc(DEFAULT_ISCI_SUPPORTED_DEVS,
-						  sizeof(struct
-							 gpio_tx_register_byte));
+		hosts->ibpi_state_buffer =
+				calloc(DEFAULT_ISCI_SUPPORTED_DEVS,
+					sizeof(struct
+					gpio_tx_register_byte));
 
 		if (!hosts->ibpi_state_buffer)
 			continue;
@@ -583,13 +577,11 @@ int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 	struct dirent *de;
 	DIR *d;
 
-	if (!cntrl) {
+	if (!cntrl)
 		return port;
-	}
 
-	if (!cntrl->isci_present) {
+	if (!cntrl->isci_present)
 		return port;
-	}
 
 	/* Other case - just init controller. */
 	if (path && strstr(path, "port-")) {
@@ -610,7 +602,8 @@ int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 			free(path2);
 			return port;
 		}
-		*c = 0;		/* And now path2 has only up to 'port-...' string. */
+		*c = 0;
+		/* And now path2 has only up to 'port-...' string. */
 
 		/* this should open port-XX:X directory
 		 * FIXME: for enclosure it may be port-XX:Y:Z but it's a second
@@ -633,7 +626,8 @@ int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 			if (strncmp(de->d_name, "phy-", strlen("phy-")) == 0) {
 				/* Need link called "phy-XX:Y
 				 * Y is real phy we need.
-				 * This can also be found in phy_identifier file */
+				 * This can also be found
+				 * in phy_identifier file */
 				sscanf(de->d_name, "phy-%d:%d", &host, &port);
 				break;
 			}

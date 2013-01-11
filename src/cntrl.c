@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -112,18 +112,14 @@ static enum int_cntrl_type _get_type(const char *path)
 {
 	enum int_cntrl_type type = CNTRL_TYPE_UNKNOWN;
 
-	if (_is_dellssd_cntrl(path)) {
+	if (_is_dellssd_cntrl(path))
 		type = CNTRL_TYPE_DELLSSD;
-	}
-	if (_is_scsi_cntrl(path)) {
+	if (_is_scsi_cntrl(path))
 		type = CNTRL_TYPE_SCSI;
-	}
-	if (_is_isci_cntrl(path)) {
+	if (_is_isci_cntrl(path))
 		type = INT_CNTRL_TYPE_ISCI;
-	}
-	if (_is_ahci_cntrl(path)) {
+	if (_is_ahci_cntrl(path))
 		type = CNTRL_TYPE_AHCI;
-	}
 	return type;
 }
 
@@ -215,14 +211,12 @@ static unsigned int _ahci_em_messages(const char *path)
 	if (!get_int("", 0, "sys/module/libahci/parameters/ahci_em_messages"))
 		return 0;
 
-	if (snprintf(buf, sizeof(buf), "%s/%s", path, "driver") < 0) {
+	if (snprintf(buf, sizeof(buf), "%s/%s", path, "driver") < 0)
 		return 0;
-	}
 
 	link = realpath(buf, NULL);
-	if (!link) {
+	if (!link)
 		return 0;
-	}
 
 	name = strrchr(link, '/');
 	if (!name++) {
@@ -230,13 +224,13 @@ static unsigned int _ahci_em_messages(const char *path)
 		return 0;
 	}
 
-	/* name contain controller name (ie. ahci), so check if libahci holds this driver */
+	/* name contain controller name (ie. ahci),*/
+	/* so check if libahci holds this driver   */
 	dh = opendir("/sys/module/libahci/holders");
 	if (dh) {
 		while ((de = readdir(dh))) {
-			if (!strcmp(de->d_name, name)) {
+			if (!strcmp(de->d_name, name))
 				break;
-			}
 		}
 		closedir(dh);
 	}
@@ -285,8 +279,8 @@ struct cntrl_device *cntrl_device_init(const char *path)
 			}
 		} else {
 			log_error
-			    ("controller discovery: %s - enclosure management not "
-			     "supported.", path);
+			    ("controller discovery: %s - enclosure " \
+			     "management not supported.", path);
 		}
 	}
 	return device;

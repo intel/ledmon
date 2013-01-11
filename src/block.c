@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -67,16 +67,18 @@ int dev_directly_attached(const char *path)
  *
  * This is the internal function of 'block device' module. The function tries to
  * determine a LED management protocol based on controller type and the given
- * path to block device in sysfs tree. First it checks whether to use the default
- * send function. If not it tries to read the content of em_message_type field
- * from sysfs tree and determines the LED control protocol.
+ * path to block device in sysfs tree. First it checks whether to use
+ * the default send function. If not it tries to read the content
+ * of em_message_type field from sysfs tree and determines
+ * the LED control protocol.
  *
  * @param[in]    cntrl            type of a controller a device is connected to.
  * @param[in]    path             path to a block device in sysfs tree.
  *
  * @return Pointer to send message function if successful, otherwise the function
  *         returns the NULL pointer and it means either the controller does not
- *         support enclosure management or LED control protocol is not supported.
+ *         support enclosure management or LED control protocol
+ *         is not supported.
  */
 static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 {
@@ -113,13 +115,12 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 {
 	char *result = NULL;
 
-	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI)
 		result = scsi_get_slot_path(path, cntrl->sysfs_path);
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
+	else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI)
 		result = ahci_get_port_path(path);
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
+	else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD)
 		result = dellssd_get_path(path, cntrl->sysfs_path);
-	}
 	return result;
 }
 
@@ -189,20 +190,19 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 	char *host_name;
 
 	if (realpath(path, link)) {
-		if ((cntrl = block_get_controller(cntrl_list, link)) == NULL) {
+		cntrl = block_get_controller(cntrl_list, link);
+		if (cntrl == NULL)
 			return NULL;
-		}
-		if ((host = _get_host(link, cntrl)) == NULL) {
+		host = _get_host(link, cntrl);
+		if (host == NULL)
 			return NULL;
-		}
-
 		host_name = get_path_hostN(link);
 		if (host_name) {
 			sscanf(host_name, "host%d", &host_id);
 			free(host_name);
 		}
-
-		if ((send_fn = _get_send_fn(cntrl, link)) == NULL) {
+		send_fn = _get_send_fn(cntrl, link);
+		if (send_fn  == NULL) {
 			free(host);
 			return NULL;
 		}
@@ -227,16 +227,17 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 				hosts = hosts->next;
 			}
 			if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
-				if (dev_directly_attached(link)) {
+				if (dev_directly_attached(link))
 					device->phy_index =
 					    isci_cntrl_init_smp(link, cntrl);
-				} else {
+				else {
 					device->phy_index =
 					    isci_cntrl_init_smp(link, cntrl);
 					if (scsi_get_enclosure(device) == 0) {
-						log_warning
-						    ("Device initialization failed for '%s'",
-						     path);
+						log_warning("Device " \
+							    "initialization " \
+							    "failed for '%s'",
+									path);
 						free(device->sysfs_path);
 						free(device->cntrl_path);
 						free(device);
@@ -244,9 +245,8 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 					}
 				}
 			}
-		} else {
+		} else
 			free(host);
-		}
 	}
 	return device;
 }
@@ -279,11 +279,10 @@ struct block_device *block_device_duplicate(struct block_device *block)
 		if (result) {
 			result->sysfs_path = strdup(block->sysfs_path);
 			result->cntrl_path = strdup(block->cntrl_path);
-			if (block->ibpi != IBPI_PATTERN_UNKNOWN) {
+			if (block->ibpi != IBPI_PATTERN_UNKNOWN)
 				result->ibpi = block->ibpi;
-			} else {
+			else
 				result->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
-			}
 			result->send_fn = block->send_fn;
 			result->timestamp = block->timestamp;
 			result->cntrl = block->cntrl;

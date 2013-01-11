@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -71,12 +71,10 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	char path[PATH_MAX];
 	char *sysfs_path = device->cntrl_path;
 
-	if (sysfs_path == NULL) {
+	if (sysfs_path == NULL)
 		__set_errno_and_return(EINVAL);
-	}
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
+	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
-	}
 
 	sprintf(temp, "%u", ibpi2sgpio[ibpi]);
 
@@ -96,13 +94,13 @@ char *ahci_get_port_path(const char *path)
 	char *p, *s;
 
 	str_cpy(tmp, path, PATH_MAX);
-	if ((p = strstr(tmp, "/target")) == NULL) {
+	p = strstr(tmp, "/target");
+	if (p == NULL)
 		return NULL;
-	}
 	*p = '\0';
-	if ((s = rindex(tmp, PATH_DELIM)) == NULL) {
+	s = rindex(tmp, PATH_DELIM);
+	if (s == NULL)
 		return NULL;
-	}
 
 	str_cpy(buf, s, BUFFER_MAX);
 	str_cat(tmp, "/scsi_host", PATH_MAX);

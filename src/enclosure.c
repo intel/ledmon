@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -48,12 +48,12 @@ static uint64_t _get_sas_address(const char *path)
 	char *p, *s;
 
 	str_cpy(tmp, path, PATH_MAX);
-	if ((p = strstr(tmp, "/expander")) == NULL) {
+	p = strstr(tmp, "/expander");
+	if (p == NULL)
 		return 0;
-	}
-	if ((s = strchr(p + 1, PATH_DELIM)) == NULL) {
+	s = strchr(p + 1, PATH_DELIM);
+	if (s == NULL)
 		return 0;
-	}
 	*s = '\0';
 
 	str_cpy(buf, p, s - p + 1);
@@ -73,9 +73,9 @@ struct enclosure_device *enclosure_device_init(const char *path)
 	struct enclosure_device *result = NULL;
 
 	if (realpath(path, temp)) {
-		if ((result = malloc(sizeof(struct enclosure_device))) == NULL) {
+		result = malloc(sizeof(struct enclosure_device));
+		if (result == NULL)
 			return NULL;
-		}
 		result->sysfs_path = str_dup(temp);
 		result->sas_address = _get_sas_address(temp);
 	}
@@ -89,9 +89,8 @@ struct enclosure_device *enclosure_device_init(const char *path)
 void enclosure_device_fini(struct enclosure_device *enclosure)
 {
 	if (enclosure) {
-		if (enclosure->sysfs_path) {
+		if (enclosure->sysfs_path)
 			free(enclosure->sysfs_path);
-		}
 		/* free(enclosure); */
 	}
 }

@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -34,7 +34,7 @@ struct block_device;
  *
  * @return 1 if successful, otherwise the function returns 0.
  */
-typedef int (*send_message_t) (struct block_device * device,
+typedef int (*send_message_t) (struct block_device *device,
 			       enum ibpi_pattern ibpi);
 
 /**
@@ -44,61 +44,61 @@ typedef int (*send_message_t) (struct block_device * device,
  * or partitions on physical block devices.
  */
 struct block_device {
-  /**
-   * Real path in sysfs tree. This means i.e. if /sys/block/sda is symbolic link
-   * then the link will be read and path stored in sysfs_path field. This path
-   * may not exist in sysfs if connection to physical drive is lost. This filed
-   * cannot have NULL pointer assigned.
-   */
+/**
+ * Real path in sysfs tree. This means i.e. if /sys/block/sda is symbolic link
+ * then the link will be read and path stored in sysfs_path field. This path
+ * may not exist in sysfs if connection to physical drive is lost. This filed
+ * cannot have NULL pointer assigned.
+ */
 	char *sysfs_path;
 
-  /**
-   * The pointer to a function which sends a message to driver in order to
-   * control LEDs in an enclosure or DAS system - @see send_message_t for details.
-   * This field cannot have NULL pointer assigned.
-   */
+/**
+ * The pointer to a function which sends a message to driver in order to
+ * control LEDs in an enclosure or DAS system - @see send_message_t for details.
+ * This field cannot have NULL pointer assigned.
+ */
 	send_message_t send_fn;
 
-  /**
-   * Canonical path to block device where enclosure management fields are located.
-   * This path is always accessible even if the connection to physical device is lost.
-   * In case of AHCI controller it points to SATA phy. In case of SAS this path
-   * points to SES entry associated with the slot in an enclosure. This field cannot
-   * have NULL pointer assign.
-   */
+/**
+ * Canonical path to block device where enclosure management fields are located.
+ * This path is always accessible even if the connection to physical device
+ * is lost. In case of AHCI controller it points to SATA phy. In case of SAS
+ * this path points to SES entry associated with the slot in an enclosure.
+ * This field cannot have NULL pointer assign.
+ */
 	char *cntrl_path;
 
-  /**
-   * The current state of block device. This is an IBPI pattern and it is used
-   * to visualize the state of block device.
-   */
+/**
+ * The current state of block device. This is an IBPI pattern and it is used
+ * to visualize the state of block device.
+ */
 	enum ibpi_pattern ibpi;
 
-  /**
-   * The time stamp used to determine if the given block device still exist or
-   * it failed and the device is no longer available. Every time IBPI pattern
-   * is updated, the time-stamp is updated, too.
-   */
+/**
+ * The time stamp used to determine if the given block device still exist or
+ * it failed and the device is no longer available. Every time IBPI pattern
+ * is updated, the time-stamp is updated, too.
+ */
 	time_t timestamp;
 
-  /**
-   * The pointer to storage controller structure the device is connected to.
-   */
+/**
+ * The pointer to storage controller structure the device is connected to.
+ */
 	struct cntrl_device *cntrl;
 
 	struct _host_type *host;
 
 	int host_id;
 
-	/**
-   * The index of phy utilized by directly attached to controller block device.
-   * It is meaningful if device is controlled by isci driver.
-   */
+/**
+ * The index of phy utilized by directly attached to controller block device.
+ * It is meaningful if device is controlled by isci driver.
+ */
 	int phy_index;
 
-  /**
-   * The index in Enclosure. This is what should be used when using SES-2.
-   */
+/**
+ * The index in Enclosure. This is what should be used when using SES-2.
+ */
 	int encl_index;
 
 	char encl_dev[PATH_MAX];
@@ -124,11 +124,12 @@ struct block_device *block_device_init(void *cntrl_list, const char *path);
 /**
  * @brief Releases a block device structure.
  *
- * This function releases memory allocated for block device structure. To be more
- * specific it only frees memory allocated for the structure fields. It is due to
- * the way list is implemented for the purpose of this utility. If one would like
- * release block device structure not stored as a list node it must call free()
- * explicitly just after function block_device_fini() is called.
+ * This function releases memory allocated for block device structure.
+ * To be more specific it only frees memory allocated for the structure fields.
+ * It is due to the way list is implemented for the purpose of this utility.
+ * If one would like release block device structure not stored as a list node
+ * it must call free() explicitly just after function block_device_fini()
+ * is called.
  *
  * @param[in]      device         pointer to block device structure.
  *

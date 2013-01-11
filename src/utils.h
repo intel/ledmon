@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -175,8 +175,8 @@ int buf_write(const char *path, const char *buf);
  * allocated. The function determines a size of the file and allocates required
  * amount of memory. User is required to free allocated memory as soon as
  * application does not require the content. Use free() function to give memory
- * back to the system pool. The function replaces last end-of-line character with
- * '\0' character.
+ * back to the system pool. The function replaces last end-of-line character
+ * with '\0' character.
  *
  * @param[in]      path           Path and name of file to read.
  *
@@ -309,11 +309,12 @@ char *str_dup(const char *src);
  * @brief Concatenates text buffers.
  *
  * This function appends source buffer to destination buffer. It is similar to
- * strncat() standard C function except it always returns null-terminated buffer.
- * Second difference is that function calculates itself the amount of free space
- * in destination buffer. If source does not fit in dest then as many bytes are
- * copied as can be fit in destination buffer minus 1 for null-character. Otherwise
- * the source is copied to destination including null-character.
+ * strncat() standard C function except it always returns null-terminated
+ * buffer. Second difference is that function calculates itself the amount
+ * of free space in destination buffer. If source does not fit in dest
+ * then as many bytes are copied as can be fit in destination buffer minus 1
+ * for null-character. Otherwise the source is copied to destination
+ * including null-character.
  *
  * @param[in,out]  dest            Pointer to destination buffer.
  * @param[in]      src             Pointer to source buffer.

@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -124,11 +124,10 @@ static enum device_type _get_device_type(const char *path)
 	if (p != NULL) {
 		if (strlen(p) > 0) {
 			if (strncmp(p, "external:", 9) == 0) {
-				if (p[9] == '/') {
+				if (p[9] == '/')
 					result = DEVICE_TYPE_VOLUME;
-				} else {
+				else
 					result = DEVICE_TYPE_CONTAINER;
-				}
 			} else {
 				result = DEVICE_TYPE_VOLUME;
 			}
@@ -361,9 +360,8 @@ static void _enclo_add(const char *path)
 static void _check_raid(const char *path)
 {
 	char *t = strrchr(path, '/');
-	if (strncmp(t + 1, "md", 2) == 0) {
+	if (strncmp(t + 1, "md", 2) == 0)
 		_raid_add(path);
-	}
 }
 
 /**
@@ -371,9 +369,8 @@ static void _check_raid(const char *path)
 static void _check_cntrl(const char *path)
 {
 	char link[PATH_MAX];
-	if (realpath(path, link) != NULL) {
+	if (realpath(path, link) != NULL)
 		_cntrl_add(link);
-	}
 }
 
 /**
@@ -381,9 +378,8 @@ static void _check_cntrl(const char *path)
 static void _check_enclo(const char *path)
 {
 	char link[PATH_MAX];
-	if (realpath(path, link) != NULL) {
+	if (realpath(path, link) != NULL)
 		_enclo_add(link);
-	}
 }
 
 /**
@@ -476,9 +472,8 @@ static void _set_block_state(struct block_device *block, enum ibpi_pattern ibpi)
 	debug_dev = debug_dev ? debug_dev + 1 : block->sysfs_path;
 	log_debug("(%s): device: %s, state: %s", __func__, debug_dev,
 		  ibpi_str[ibpi]);
-	if (block->ibpi < ibpi) {
+	if (block->ibpi < ibpi)
 		block->ibpi = ibpi;
-	}
 }
 
 /**
@@ -540,24 +535,24 @@ status_t sysfs_init(void)
 	cntnr_list = NULL;
 	enclo_list = NULL;
 
-	if (list_init(&sysfs_block_list) != STATUS_SUCCESS) {
+	if (list_init(&sysfs_block_list) != STATUS_SUCCESS)
 		return STATUS_BLOCK_LIST_ERROR;
-	}
-	if (list_init(&volum_list) != STATUS_SUCCESS) {
+
+	if (list_init(&volum_list) != STATUS_SUCCESS)
 		return STATUS_VOLUM_LIST_ERROR;
-	}
-	if (list_init(&cntrl_list) != STATUS_SUCCESS) {
+
+	if (list_init(&cntrl_list) != STATUS_SUCCESS)
 		return STATUS_CNTRL_LIST_ERROR;
-	}
-	if (list_init(&slave_list) != STATUS_SUCCESS) {
+
+	if (list_init(&slave_list) != STATUS_SUCCESS)
 		return STATUS_SLAVE_LIST_ERROR;
-	}
-	if (list_init(&cntnr_list) != STATUS_SUCCESS) {
+
+	if (list_init(&cntnr_list) != STATUS_SUCCESS)
 		return STATUS_CNTNR_LIST_ERROR;
-	}
-	if (list_init(&enclo_list) != STATUS_SUCCESS) {
+
+	if (list_init(&enclo_list) != STATUS_SUCCESS)
 		return STATUS_ENCLO_LIST_ERROR;
-	}
+
 	return STATUS_SUCCESS;
 }
 
@@ -626,39 +621,39 @@ status_t sysfs_reset(void)
  */
 status_t sysfs_scan(void)
 {
-	if (enclo_list == NULL) {
+	if (enclo_list == NULL)
 		return STATUS_NULL_POINTER;
-	}
-	if (_scan_enclo() != STATUS_SUCCESS) {
+
+	if (_scan_enclo() != STATUS_SUCCESS)
 		return STATUS_ENCLO_LIST_ERROR;
-	}
-	if (cntrl_list == NULL) {
+
+	if (cntrl_list == NULL)
 		return STATUS_NULL_POINTER;
-	}
-	if (_scan_cntrl() != STATUS_SUCCESS) {
+
+	if (_scan_cntrl() != STATUS_SUCCESS)
 		return STATUS_CNTRL_LIST_ERROR;
-	}
-	if (sysfs_block_list == NULL) {
+
+	if (sysfs_block_list == NULL)
 		return STATUS_NULL_POINTER;
-	}
-	if (_scan_block() != STATUS_SUCCESS) {
+
+	if (_scan_block() != STATUS_SUCCESS)
 		return STATUS_BLOCK_LIST_ERROR;
-	}
-	if (volum_list == NULL) {
+
+	if (volum_list == NULL)
 		return STATUS_NULL_POINTER;
-	}
-	if (_scan_raid() != STATUS_SUCCESS) {
+
+	if (_scan_raid() != STATUS_SUCCESS)
 		return STATUS_VOLUM_LIST_ERROR;
-	}
-	if (slave_list == NULL) {
+
+	if (slave_list == NULL)
 		return STATUS_NULL_POINTER;
-	}
-	if (_scan_slave() != STATUS_SUCCESS) {
+
+	if (_scan_slave() != STATUS_SUCCESS)
 		return STATUS_SLAVE_LIST_ERROR;
-	}
-	if (enclo_list == NULL) {
+
+	if (enclo_list == NULL)
 		return STATUS_NULL_POINTER;
-	}
+
 	return list_for_each(slave_list, _determine);
 }
 

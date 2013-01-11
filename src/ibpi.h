@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -27,12 +27,12 @@
  *
  * - NORMAL      - either drive is present or missing, activity LED does not
  *                 matter. The rest of the LEDs are off.
- * - FAIL        - a block device has failed or is missing. Failure LED is active
- *                 and the behavior is depended on implementation of enclosure
- *                 management processor.
- * - REBUILD(_P) - this means a RAID device is recovering or rebuilding its data.
- *                 Depending on implementation of enclosure management processor
- *                 appropriate LED is blinking or solid.
+ * - FAIL        - a block device has failed or is missing. Failure LED is
+ *                 active and the behavior is depended on implementation
+ *                 of enclosure management processor.
+ * - REBUILD(_P) - this means a RAID device is recovering or rebuilding
+ *                 its data. Depending on implementation of enclosure
+ *                 management processor appropriate LED is blinking or solid.
  * - ICA         - In a Critical Array, this means a RAID device is degraded and
  *                 there's no spare device available.
  * - IFA         - In a Failed Array, this means a RAID device is damaged and
@@ -50,7 +50,8 @@
  *                 know anything about existing patterns set, so it will off all
  *                 the LEDs just in case of any problem in the future. The state
  *                 is set, when a RAID device disappears, too. Oneshot means
- *                 as soon application applies the state it will change to UNKNOWN.
+ *                 as soon application applies the state it will change
+ *                 to UNKNOWN.
  */
 enum ibpi_pattern {
 	IBPI_PATTERN_UNKNOWN = 0,

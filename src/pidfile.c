@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -50,9 +50,8 @@ status_t pidfile_create(const char *name)
 	str_cat(buf, ".pid", PATH_MAX);
 
 	fd = open(buf, O_WRONLY | O_CREAT, 0640);
-	if (fd < 0) {
+	if (fd < 0)
 		return STATUS_FILE_OPEN_ERROR;
-	}
 	if (lockf(fd, F_TLOCK, 0) < 0) {
 		close(fd);
 		return STATUS_FILE_LOCK_ERROR;
@@ -93,7 +92,7 @@ int ping_proc(pid_t pid)
 
 /**
  */
-status_t pidfile_check(const char *name, pid_t * pid)
+status_t pidfile_check(const char *name, pid_t *pid)
 {
 	char path[PATH_MAX], *p;
 	pid_t tp;
@@ -103,13 +102,11 @@ status_t pidfile_check(const char *name, pid_t * pid)
 	str_cat(path, ".pid", PATH_MAX);
 
 	p = buf_read(path);
-	if (p == NULL) {
+	if (p == NULL)
 		return STATUS_INVALID_PATH;
-	}
 	tp = atoi(p);
-	if (pid) {
+	if (pid)
 		*pid = tp;
-	}
 	free(p);
 	return ping_proc(tp);
 }

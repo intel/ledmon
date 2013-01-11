@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -100,7 +100,8 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name)
 }
 
 /*
- * Function returns integer value read from a text file. See utils.h for details.
+ * Function returns integer value read from a text file.
+ * See utils.h for details.
  */
 int get_int(const char *path, int defval, const char *name)
 {
@@ -120,9 +121,8 @@ void *scan_dir(const char *path)
 	void *result;
 	char temp[PATH_MAX];
 
-	if (list_init(&result) != STATUS_SUCCESS) {
+	if (list_init(&result) != STATUS_SUCCESS)
 		return NULL;
-	}
 	DIR *dir = opendir(path);
 	if (dir) {
 		while ((dirent = readdir(dir)) != NULL) {
@@ -158,12 +158,10 @@ int buf_write(const char *path, const char *buf)
 {
 	int fd, size = -1;
 
-	if (path == NULL) {
+	if (path == NULL)
 		__set_errno_and_return(EINVAL);
-	}
-	if ((buf == NULL) || (strlen(buf) == 0)) {
+	if ((buf == NULL) || (strlen(buf) == 0))
 		__set_errno_and_return(ENODATA);
-	}
 	fd = open(path, O_WRONLY);
 	if (fd >= 0) {
 		size = write(fd, buf, strlen(buf));
@@ -180,27 +178,23 @@ char *buf_read(const char *path)
 	int fd, size;
 	char *buf, *t;
 
-	if (stat(path, &st) < 0) {
+	if (stat(path, &st) < 0)
 		return NULL;
-	}
 	if (st.st_size == 0) {
-		if (!_is_virtual(st.st_dev)) {
+		if (!_is_virtual(st.st_dev))
 			return NULL;
-		}
 		st.st_size = st.st_blksize;
 	}
-	if (_is_virtual(st.st_dev)) {
+	if (_is_virtual(st.st_dev))
 		st.st_size = st.st_blksize;
-	}
 	t = buf = malloc(st.st_size);
 	if (buf) {
 		fd = open(path, O_RDONLY);
 		if (fd >= 0) {
 			size = read(fd, buf, st.st_size);
 			close(fd);
-			if (size > 0) {
+			if (size > 0)
 				t = strchrnul(buf, '\n');
-			}
 		}
 		*t = '\0';
 	}
@@ -248,16 +242,13 @@ static int _mkdir(const char *path)
 	char *t = realpath(path, temp);
 	while (t) {
 		t = strchr(t + 1, PATH_DELIM);
-		if (t) {
+		if (t)
 			*t = '\0';
-		}
 		status = mkdir(temp, 0640);
-		if (t) {
+		if (t)
 			*t = PATH_DELIM;
-		}
-		if ((status < 0) && (errno != EEXIST)) {
+		if ((status < 0) && (errno != EEXIST))
 			break;
-		}
 		status = 0;
 	}
 	return status;
@@ -267,21 +258,18 @@ static int _mkdir(const char *path)
  */
 int log_open(const char *path)
 {
-	if (s_log) {
+	if (s_log)
 		log_close();
-	}
 	char *t = rindex(path, PATH_DELIM);
-	if (t) {
+	if (t)
 		*t = '\0';
-	}
 	int status = _mkdir(path);
-	if (t) {
+	if (t)
 		*t = PATH_DELIM;
-	}
 	if (status == 0) {
-		if ((s_log = fopen(path, "a")) == NULL) {
+		s_log = fopen(path, "a");
+		if (s_log == NULL)
 			return -1;
-		}
 	}
 	return status;
 }
@@ -313,9 +301,8 @@ void log_debug(const char *buf, ...)
 {
 	va_list vl;
 
-	if (s_log == NULL) {
+	if (s_log == NULL)
 		_log_open_default();
-	}
 	if (s_log && (verbose >= VERB_DEBUG)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_DEBUG);
@@ -336,9 +323,8 @@ void log_error(const char *buf, ...)
 {
 	va_list vl;
 
-	if (s_log == NULL) {
+	if (s_log == NULL)
 		_log_open_default();
-	}
 	if (s_log && (verbose >= VERB_ERROR)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_ERROR);
@@ -359,9 +345,8 @@ void log_warning(const char *buf, ...)
 {
 	va_list vl;
 
-	if (s_log == NULL) {
+	if (s_log == NULL)
 		_log_open_default();
-	}
 	if (s_log && (verbose >= VERB_WARN)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_WARNING);
@@ -382,9 +367,8 @@ void log_info(const char *buf, ...)
 {
 	va_list vl;
 
-	if (s_log == NULL) {
+	if (s_log == NULL)
 		_log_open_default();
-	}
 	if (s_log && (verbose >= VERB_INFO)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_INFO);
@@ -405,8 +389,8 @@ void log_info(const char *buf, ...)
  * This is internal function of monitor service. It is used to extract the name
  * of executable file from command line argument.
  *
- * @param[in]     invocation_name - the pointer to command line argument with the
- *                                  invocation name.
+ * @param[in]     invocation_name - the pointer to command line argument
+ *                                  with the invocation name.
  *
  * @return The function does not return a value.
  */
@@ -417,11 +401,10 @@ void set_invocation_name(char *invocation_name)
 	progname = program_invocation_short_name;
 #else
 	char *t = rindex(invocation_name, PATH_DELIM);
-	if (t) {
+	if (t)
 		progname = t + 1;
-	} else {
+	else
 		progname = invocation_name;
-	}
 #endif				/* program_invocation_short_name */
 }
 
@@ -438,9 +421,8 @@ char *str_cpy(char *dest, const char *src, size_t size)
  */
 char *str_dup(const char *src)
 {
-	if (src && (strlen(src) > 0)) {
+	if (src && (strlen(src) > 0))
 		return strdup(src);
-	}
 	return NULL;
 }
 
@@ -450,9 +432,8 @@ char *str_cat(char *dest, const char *src, size_t size)
 {
 	int t = strlen(dest);
 	strncat(dest, src, size - t);
-	if (t + strlen(src) >= size) {
+	if (t + strlen(src) >= size)
 		dest[size - 1] = '\0';
-	}
 	return dest;
 }
 
@@ -480,9 +461,8 @@ char *get_path_component_rev(const char *path, int index)
 	char *c = NULL, *p = strdup(path);
 	char *result = NULL;
 	for (i = 0; i <= index; i++) {
-		if (c) {
+		if (c)
 			*c = '\0';
-		}
 		c = strrchr(p, '/');
 	}
 	if (c)
@@ -499,9 +479,8 @@ char *truncate_path_component_rev(const char *path, int index)
 		return NULL;
 
 	for (i = 0; i <= index; i++) {
-		if (c) {
+		if (c)
 			*c = '\0';
-		}
 		c = strrchr(p, '/');
 	}
 	c = strdup(p);

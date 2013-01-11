@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -85,13 +85,17 @@ static int ipmi_open()
 {
 	int fd;
 
-	if ((fd = open("/dev/ipmi0", O_RDWR)) >= 0)
+	fd = open("/dev/ipmi0", O_RDWR);
+	if (fd >= 0)
 		return fd;
-	if ((fd = open("/dev/ipmidev/0", O_RDWR)) >= 0)
+	fd = open("/dev/ipmidev/0", O_RDWR);
+	if (fd >= 0)
 		return fd;
-	if ((fd = open("/dev/ipmidev0", O_RDWR)) >= 0)
+	fd = open("/dev/ipmidev0", O_RDWR);
+	if (fd >= 0)
 		return fd;
-	if ((fd = open("/dev/bmc", O_RDWR)) >= 0)
+	fd = open("/dev/bmc", O_RDWR);
+	if (fd >= 0)
 		return fd;
 	return -1;
 }
@@ -110,7 +114,8 @@ ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	int fd, rc;
 	uint8_t tresp[resplen + 1];
 
-	if ((fd = ipmi_open()) < 0)
+	fd = ipmi_open();
+	if (fd < 0)
 		return -1;
 
 	memset(&req, 0, sizeof(req));
@@ -166,9 +171,8 @@ ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 		perror("recv");
 		goto end;
 	}
-	if (rcv.msg.data[0]) {
+	if (rcv.msg.data[0])
 		printf("IPMI Error: %.2x\n", rcv.msg.data[0]);
-	}
 	rc = 0;
 	*rlen = rcv.msg.data_len - 1;
 	memcpy(resp, rcv.msg.data + 1, *rlen);
@@ -190,14 +194,14 @@ static int ipmi_setled(int b, int d, int f, int state)
 	/* Get mapping of BDF to bay:slot */
 	memset(data, 0, sizeof(data));
 	memset(rdata, 0, sizeof(rdata));
-	data[0] = 0x01;		// get
-	data[1] = DELL_OEM_STORAGE_GETDRVMAP;	// storage map
-	data[2] = 0x06;		// length lsb
-	data[3] = 0x00;		// length msb
-	data[4] = 0x00;		// offset lsb
-	data[5] = 0x00;		// offset msb
-	data[6] = b;		// bus
-	data[7] = devfn;	// devfn
+	data[0] = 0x01;				/* get         */
+	data[1] = DELL_OEM_STORAGE_GETDRVMAP;	/* storage map */
+	data[2] = 0x06;				/* length lsb  */
+	data[3] = 0x00;				/* length msb  */
+	data[4] = 0x00;				/* offset lsb  */
+	data[5] = 0x00;				/* offset msb  */
+	data[6] = b;				/* bus         */
+	data[7] = devfn;			/* devfn       */
 
 	rc = ipmicmd(BMC_SA, 0, DELL_OEM_NETFN, DELL_OEM_STORAGE_CMD, 8, data,
 		     20, &rlen, rdata);
@@ -205,25 +209,24 @@ static int ipmi_setled(int b, int d, int f, int state)
 		bay = rdata[7];
 		slot = rdata[8];
 	}
-	if (bay == 0xFF || slot == 0xFF) {
+	if (bay == 0xFF || slot == 0xFF)
 		return 0;
-	}
 
 	/* Set Bay:Slot to Mask */
 	memset(data, 0, sizeof(data));
 	memset(rdata, 0, sizeof(rdata));
-	data[0] = 0x00;		// set
-	data[1] = DELL_OEM_STORAGE_SETDRVSTATUS;	// set drive status
-	data[2] = 0x0e;		// length lsb
-	data[3] = 0x00;		// length msb
-	data[4] = 0x00;		// offset lsb
-	data[5] = 0x00;		// offset msb
-	data[6] = 0x0e;		// length lsb
-	data[7] = 0x00;		// length msb
-	data[8] = bay;		// bayid
-	data[9] = slot;		// slotid
-	data[10] = state & 0xff;	// state LSB
-	data[11] = state >> 8;	// state MSB;
+	data[0] = 0x00;					/* set              */
+	data[1] = DELL_OEM_STORAGE_SETDRVSTATUS;	/* set drive status */
+	data[2] = 0x0e;					/* length lsb       */
+	data[3] = 0x00;					/* length msb       */
+	data[4] = 0x00;					/* offset lsb       */
+	data[5] = 0x00;					/* offset msb       */
+	data[6] = 0x0e;					/* length lsb       */
+	data[7] = 0x00;					/* length msb       */
+	data[8] = bay;					/* bayid            */
+	data[9] = slot;					/* slotid           */
+	data[10] = state & 0xff;			/* state LSB        */
+	data[11] = state >> 8;				/* state MSB        */
 
 	rc = ipmicmd(BMC_SA, 0, DELL_OEM_NETFN, DELL_OEM_STORAGE_CMD, 20, data,
 		     20, &rlen, rdata);
@@ -240,16 +243,14 @@ int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	int mask, bus, dev, fun;
 	char *t;
 
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
+	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
-	}
 	mask = ibpi2ssd[ibpi];
 	t = strrchr(device->cntrl_path, '/');
 	if (t != NULL) {
 		/* Extract PCI bus:device.function */
-		if (sscanf(t + 1, "%*x:%x:%x.%x", &bus, &dev, &fun) == 3) {
+		if (sscanf(t + 1, "%*x:%x:%x.%x", &bus, &dev, &fun) == 3)
 			ipmi_setled(bus, dev, fun, mask);
-		}
 	}
 	return 0;
 }

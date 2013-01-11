@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -116,7 +116,7 @@ const char *ibpi_str[] = {
  * Internal variable of monitor service. It is the pattern used to print out
  * information about the version of monitor service.
  */
-static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d\n" \
+static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d\n"
 			      "Copyright (C) 2009-2013 Intel Corporation.\n";
 
 /**
@@ -203,11 +203,10 @@ static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
  */
 static void _ledmon_status(int status, void *ignore)
 {
-	if (*((int *)ignore) != 0) {
+	if (*((int *)ignore) != 0)
 		log_info("exit status is %s.", strstatus(status));
-	} else if (status != STATUS_SUCCESS) {
+	else if (status != STATUS_SUCCESS)
 		log_error("parent exit status is %s.", strstatus(status));
-	}
 }
 
 /**
@@ -264,8 +263,8 @@ static void _ledmon_help(void)
  * @brief Sets the path to configuration file.
  *
  * This is internal function of monitor service. This function sets the path and
- * name of configuration file. The function is checking whether the given path is
- * valid or it is invalid and should be ignored.
+ * name of configuration file. The function is checking whether the given path
+ * is valid or it is invalid and should be ignored.
  *
  * @param[in]      path           the new location and name of config file.
  *
@@ -298,13 +297,11 @@ static status_t _set_log_path(const char *path)
 	char temp[PATH_MAX];
 
 	if (realpath(path, temp) == NULL) {
-		if ((errno != ENOENT) && (errno != ENOTDIR)) {
+		if ((errno != ENOENT) && (errno != ENOTDIR))
 			return STATUS_INVALID_PATH;
-		}
 	}
-	if (log_open(temp) < 0) {
+	if (log_open(temp) < 0)
 		return STATUS_FILE_OPEN_ERROR;
-	}
 	return STATUS_SUCCESS;
 }
 
@@ -347,9 +344,8 @@ static status_t _cmdline_parse(int argc, char *argv[])
 
 	do {
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
-		if (opt == -1) {
+		if (opt == -1)
 			break;
-		}
 		switch (opt) {
 		case 0:
 			switch (opt_index) {
@@ -395,9 +391,8 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			break;
 		}
 		opt_index = -1;
-		if (status != STATUS_SUCCESS) {
+		if (status != STATUS_SUCCESS)
 			return status;
-		}
 	} while (1);
 
 	return STATUS_SUCCESS;
@@ -481,13 +476,11 @@ static void _ledmon_wait(int seconds)
 	timeout.tv_sec = seconds;
 	FD_ZERO(&rd);
 	fd = open("/proc/mdstat", O_RDONLY);
-	if (fd) {
+	if (fd)
 		FD_SET(fd, &rd);
-	}
 	pselect(fd + 1, NULL, NULL, &rd, &timeout, &sigset);
-	if (fd >= 0) {
+	if (fd >= 0)
 		close(fd);
-	}
 }
 
 static int is_dellssd(struct block_device *bd)
@@ -571,8 +564,8 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
  * @brief Adds the block device to list.
  *
  * This is internal function of monitor service. The function adds a block
- * device to the ledmon_block_list list or if the device is already on the list it
- * updates the IBPI state of the given device. The function updates timestamp
+ * device to the ledmon_block_list list or if the device is already on the list
+ * it updates the IBPI state of the given device. The function updates timestamp
  * value which indicates the time of last structure modification.  The function
  * is design to be used as 'action' parameter of list_for_each() function.
  * Each change of state is logged to the file and to the syslog.
@@ -612,7 +605,8 @@ static void _add_block(struct block_device *block)
 				 temp->sysfs_path, ibpi_str[ibpi],
 				 ibpi_str[temp->ibpi]);
 		}
-		/* Check if name of the device changed. It's possible for SCSI devices. */
+		/* Check if name of the device changed.*/
+		/* It's possible for SCSI devices.     */
 		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
 			log_info("NAME CHANGED %s to %s",
 				 strstr(temp->sysfs_path, "host"),
@@ -710,10 +704,9 @@ static void _check_block_dev(struct block_device *block, int *restart)
 			    (block->encl_index == -1
 			     || block->encl_dev[0] == 0)) {
 				(*restart)++;
-				log_debug
-				    ("%s(): invalidating device: %s. No link to enclosure",
-				     __func__, strstr(block->sysfs_path,
-						      "host"));
+				log_debug("%s(): invalidating device: %s. "
+					"No link to enclosure", __func__,
+					strstr(block->sysfs_path, "host"));
 			}
 		}
 	}
@@ -774,12 +767,10 @@ int main(int argc, char *argv[])
 		return STATUS_NOT_A_PRIVILEGED_USER;
 	}
 
-	if (on_exit(_ledmon_status, &terminate)) {
+	if (on_exit(_ledmon_status, &terminate))
 		return STATUS_ONEXIT_ERROR;
-	}
-	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS) {
+	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
-	}
 
 	if (pidfile_check(progname, NULL) == 0) {
 		log_warning("daemon is running...");
@@ -791,18 +782,16 @@ int main(int argc, char *argv[])
 		log_debug("main(): fork() failed (errno=%d).", errno);
 		exit(EXIT_FAILURE);
 	}
-	if (pid > 0) {
+	if (pid > 0)
 		exit(EXIT_SUCCESS);
-	}
 
 	pid_t sid = setsid();
 	if (sid < 0) {
 		log_debug("main(): setsid() failed (errno=%d).", errno);
 		exit(EXIT_FAILURE);
 	}
-	for (int i = getdtablesize() - 1; i >= 0; --i) {
+	for (int i = getdtablesize() - 1; i >= 0; --i)
 		close(i);
-	}
 	int t = open("/dev/null", O_RDWR);
 	dup(t);
 	dup(t);
@@ -818,15 +807,16 @@ int main(int argc, char *argv[])
 	}
 	_ledmon_setup_signals();
 
-	if (on_exit(_ledmon_fini, progname)) {
+	if (on_exit(_ledmon_fini, progname))
 		exit(STATUS_ONEXIT_ERROR);
-	}
-	if ((status = list_init(&ledmon_block_list)) != STATUS_SUCCESS) {
+	status = list_init(&ledmon_block_list);
+	if (status != STATUS_SUCCESS) {
 		log_debug("main(): list_init() failed (status=%s).",
 			  strstatus(status));
 		exit(EXIT_FAILURE);
 	}
-	if ((status = sysfs_init()) != STATUS_SUCCESS) {
+	status = sysfs_init();
+	if (status != STATUS_SUCCESS) {
 		log_debug("main(): sysfs_init() failed (status=%s).",
 			  strstatus(status));
 		exit(EXIT_FAILURE);
@@ -834,15 +824,16 @@ int main(int argc, char *argv[])
 	log_info("monitor service has been started...");
 	while (terminate == 0) {
 		timestamp = time(NULL);
-		if ((status = sysfs_scan()) != STATUS_SUCCESS) {
+		status = sysfs_scan();
+		if (status != STATUS_SUCCESS) {
 			log_debug("main(): sysfs_scan() failed (status=%s).",
 				  strstatus(status));
 		} else {
 			_ledmon_execute();
-			if ((status = sysfs_reset()) != STATUS_SUCCESS) {
-				log_debug
-				    ("main(): sysfs_reset() failed (status=%s).",
-				     strstatus(status));
+			status = sysfs_reset();
+			if (status != STATUS_SUCCESS) {
+				log_debug("main(): sysfs_reset() failed "
+					  "(status=%s).", strstatus(status));
 			}
 		}
 		_ledmon_wait(sleep_interval);

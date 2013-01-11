@@ -12,7 +12,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 
+ * this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
@@ -46,20 +46,18 @@ static unsigned char _get_state(const char *path)
 	if (p) {
 		while (s) {
 			t = strchr(s, ',');
-			if (t) {
+			if (t)
 				*(t++) = '\0';
-			}
-			if (strcmp(s, "spare") == 0) {
+			if (strcmp(s, "spare") == 0)
 				result |= SLAVE_STATE_SPARE;
-			} else if (strcmp(s, "in_sync") == 0) {
+			else if (strcmp(s, "in_sync") == 0)
 				result |= SLAVE_STATE_IN_SYNC;
-			} else if (strcmp(s, "faulty") == 0) {
+			else if (strcmp(s, "faulty") == 0)
 				result |= SLAVE_STATE_FAULTY;
-			} else if (strcmp(s, "write_mostly") == 0) {
+			else if (strcmp(s, "write_mostly") == 0)
 				result |= SLAVE_STATE_WRITE_MOSTLY;
-			} else if (strcmp(s, "blocked") == 0) {
+			else if (strcmp(s, "blocked") == 0)
 				result |= SLAVE_STATE_BLOCKED;
-			}
 			s = t;
 		}
 		free(p);
@@ -82,9 +80,8 @@ static unsigned int _get_slot(const char *path)
 
 	char *p = get_text(path, "slot");
 	if (p) {
-		if (strcmp(p, "none") != 0) {
+		if (strcmp(p, "none") != 0)
 			result = atoi(p);
-		}
 		free(p);
 	}
 	return result;
@@ -108,9 +105,8 @@ static struct block_device *_get_block(const char *path, void *block_list)
 	str_cpy(temp, path, PATH_MAX);
 	str_cat(temp, "/block", PATH_MAX);
 
-	if (realpath(temp, link)) {
+	if (realpath(temp, link))
 		device = list_first_that(block_list, _compare, link);
-	}
 	return device;
 }
 

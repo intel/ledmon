@@ -38,6 +38,15 @@ typedef int (*send_message_t) (struct block_device *device,
 			       enum ibpi_pattern ibpi);
 
 /**
+ * @brief Pointer to a flush buffer function.
+ *
+ * @param[in]    device           pointer to a block device
+ *
+ * @return 1 if successful, otherwise the function returns 0.
+ */
+typedef int (*flush_message_t) (struct block_device *device);
+
+/**
  * @brief Describes a block device.
  *
  * This structure describes a block device. It does not describe virtual devices
@@ -60,6 +69,11 @@ struct block_device {
 	send_message_t send_fn;
 
 /**
+ * The pointer to a function which flush buffers filled by send_fn.
+ */
+	flush_message_t flush_fn;
+
+/**
  * Canonical path to block device where enclosure management fields are located.
  * This path is always accessible even if the connection to physical device
  * is lost. In case of AHCI controller it points to SATA phy. In case of SAS
@@ -73,6 +87,11 @@ struct block_device {
  * to visualize the state of block device.
  */
 	enum ibpi_pattern ibpi;
+
+/**
+ * The previous state of block device.
+ */
+	enum ibpi_pattern ibpi_prev;
 
 /**
  * The time stamp used to determine if the given block device still exist or

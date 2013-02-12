@@ -661,6 +661,14 @@ static void _send_msg(struct block_device *block)
 		}
 	}
 	block->send_fn(block, block->ibpi);
+	block->ibpi_prev = block->ibpi;
+}
+
+static void _flush_msg(struct block_device *block)
+{
+	if (!block->cntrl)
+		return;
+	block->flush_fn(block);
 }
 
 static void _revalidate_dev(struct block_device *block)
@@ -735,6 +743,8 @@ static void _ledmon_execute(void)
 	sysfs_block_device_for_each(_add_block);
 	/* Send message to all devices in the list if needed. */
 	list_for_each(ledmon_block_list, _send_msg);
+	/* Flush unsent messages from internal buffers. */
+	list_for_each(ledmon_block_list, _flush_msg);
 	/* Check if there is any orphaned device. */
 	list_for_each_parm(ledmon_block_list, _check_block_dev, &restart);
 	/* Invalidate each device in the list. Clear controller and host. */

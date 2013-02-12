@@ -243,6 +243,10 @@ int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	int mask, bus, dev, fun;
 	char *t;
 
+	/* write only if state has changed */
+	if (ibpi == device->ibpi_prev)
+		return 1;
+
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 	mask = ibpi2ssd[ibpi];

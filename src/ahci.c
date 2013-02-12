@@ -71,6 +71,10 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	char path[PATH_MAX];
 	char *sysfs_path = device->cntrl_path;
 
+	/* write only if state has changed */
+	if (ibpi == device->ibpi_prev)
+		return 1;
+
 	if (sysfs_path == NULL)
 		__set_errno_and_return(EINVAL);
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))

@@ -55,6 +55,7 @@
  */
 enum ibpi_pattern {
 	IBPI_PATTERN_UNKNOWN = 0,
+	IBPI_PATTERN_NONE,	/* used only to initialize ibpi_prev */
 	IBPI_PATTERN_NORMAL,
 	IBPI_PATTERN_ONESHOT_NORMAL,
 	IBPI_PATTERN_DEGRADED,

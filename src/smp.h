@@ -36,18 +36,28 @@
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
 
 /**
+ * @brief Write message to outbound raw byte stream buffer.
+ *
+ * @param[in]      device         Path to a smp device in sysfs.
+ * @param[in]      ibpi           IBPI pattern to visualize.
+ *
+ * @return 1 if successful or -1 in case of error
+ *         and errno is set to appropriate error code.
+ */
+int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi);
+
+/**
  * @brief Sends message to SMP device.
  *
  * This function triggers gpio order to control LEDs of
  * the given component.
  *
  * @param[in]      device         Path to a smp device in sysfs.
- * @param[in]      ibpi           IBPI pattern to visualize.
  *
  * @return Number of bytes written to device if successful or -1 in case of error
  *         and errno is set to appropriate error code.
  */
-int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi);
+int scsi_smp_write_buffer(struct block_device *device);
 
 /**
  * @brief Init smp and gets phy index,

@@ -722,6 +722,10 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	int fd = -1;
 	char *addr = NULL;
 
+	/* write only if state has changed */
+	if (ibpi == device->ibpi_prev)
+		return 1;
+
 	if (!device || !device->sysfs_path)
 		__set_errno_and_return(EINVAL);
 

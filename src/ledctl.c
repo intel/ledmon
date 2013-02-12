@@ -629,6 +629,7 @@ static void _send_cntrl_message(struct block_device *device)
 	if (device->ibpi == IBPI_PATTERN_UNKNOWN)
 		device->ibpi = IBPI_PATTERN_NORMAL;
 	device->send_fn(device, device->ibpi);
+	device->flush_fn(device);
 }
 
 /**

@@ -91,10 +91,26 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 		result = scsi_ses_write;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
 		   && dev_directly_attached(path)) {
-		result = scsi_smp_write;
+		result = scsi_smp_fill_buffer;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
 		result = dellssd_write;
 	}
+	return result;
+}
+
+static int do_not_flush(struct block_device *device)
+{
+	return 1;
+}
+
+static flush_message_t _get_flush_fn(struct cntrl_device *cntrl, const char *path)
+{
+	flush_message_t result = NULL;
+
+	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && dev_directly_attached(path))
+		result = scsi_smp_write_buffer;
+	else
+		result = do_not_flush;
 	return result;
 }
 
@@ -186,6 +202,7 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 	char link[PATH_MAX], *host;
 	struct block_device *device = NULL;
 	send_message_t send_fn = NULL;
+	flush_message_t flush_fn = NULL;
 	int host_id = -1;
 	char *host_name;
 
@@ -201,6 +218,7 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 			sscanf(host_name, "host%d", &host_id);
 			free(host_name);
 		}
+		flush_fn = _get_flush_fn(cntrl, link);
 		send_fn = _get_send_fn(cntrl, link);
 		if (send_fn  == NULL) {
 			free(host);
@@ -214,7 +232,9 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 			device->sysfs_path = strdup(link);
 			device->cntrl_path = host;
 			device->ibpi = IBPI_PATTERN_UNKNOWN;
+			device->ibpi_prev = IBPI_PATTERN_NONE;
 			device->send_fn = send_fn;
+			device->flush_fn = flush_fn;
 			device->timestamp = timestamp;
 			device->host = NULL;
 			device->host_id = host_id;
@@ -283,7 +303,9 @@ struct block_device *block_device_duplicate(struct block_device *block)
 				result->ibpi = block->ibpi;
 			else
 				result->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
+			result->ibpi_prev = block->ibpi_prev;
 			result->send_fn = block->send_fn;
+			result->flush_fn = block->flush_fn;
 			result->timestamp = block->timestamp;
 			result->cntrl = block->cntrl;
 			result->host = block->host;

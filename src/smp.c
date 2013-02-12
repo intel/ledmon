@@ -477,7 +477,7 @@ struct gpio_tx_register_byte *get_bdev_ibpi_buffer(struct block_device *bdevice)
 
 /**
  */
-int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
+int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	const char *sysfs_path = device->cntrl_path;
 	struct gpio_tx_register_byte *gpio_tx;
@@ -532,9 +532,32 @@ int scsi_smp_write(struct block_device *device, enum ibpi_pattern ibpi)
 	set_raw_pattern(device->phy_index,
 			&device->host->bitstream[0], &ibpi2sgpio[ibpi].pattern);
 
-	/* re-transmit the bitstream */
-	return _smp_write_gpio(sysfs_path, GPIO_REG_TYPE_TX_GP, GPIO_TX_GP1, 1,
-			       &device->host->bitstream[0], SMP_DATA_CHUNKS);
+	/* write only if state has changed */
+	if (ibpi != device->ibpi_prev)
+		device->host->flush = 1;
+
+	return 1;
+}
+
+int scsi_smp_write_buffer(struct block_device *device)
+{
+	const char *sysfs_path = device->cntrl_path;
+
+	if (sysfs_path == NULL)
+		__set_errno_and_return(EINVAL);
+	if (!device->host)
+		__set_errno_and_return(ENODEV);
+
+	if (device->host->flush) {
+		device->host->flush = 0;
+		/* re-transmit the bitstream */
+		return _smp_write_gpio(sysfs_path,
+		                       GPIO_REG_TYPE_TX_GP,
+		                       GPIO_TX_GP1, 1,
+		                       &device->host->bitstream[0],
+		                       SMP_DATA_CHUNKS);
+	} else
+		return 1;
 }
 
 /**
@@ -564,6 +587,7 @@ void init_smp(const char *path, struct cntrl_device *device)
 			set_raw_pattern(i, &hosts->bitstream[0],
 					&ibpi2sgpio
 					[IBPI_PATTERN_ONESHOT_NORMAL].pattern);
+		hosts->flush = 0;
 	}
 }
 

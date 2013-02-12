@@ -61,6 +61,10 @@ struct cntrl_device {
 		 */
 		unsigned char bitstream[4];
 		/**
+		 * bitstream's flush flag
+		 */
+		int flush;
+		/**
 		 * host identifier for different hba instances
 		 */
 		int host_id;

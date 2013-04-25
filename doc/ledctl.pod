@@ -258,11 +258,6 @@ global configuration file and user configuration file has no effect.
 Sets a path to local log file. If this option is specified the global log
 file F</var/log/ledctl.log> is not used.
 
-=item B<--quiet>
-
-Turns off all messages sent to C<stdout> or C<stderr> out. The messages
-will be still logged to local file and syslog facility.
-
 =item B<-h> or B<--help>
 
 Prints this text out and exits.

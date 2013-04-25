@@ -179,13 +179,13 @@ static void _ledctl_help(void)
 	printf("Mandatory arguments for long options are mandatory for" \
 	       " short options, too.\n\n");
 	printf
-	    ("--log=PATH\t\t\t  Use local log file instead\n" \
+	    ("--log=PATH,\t-l PATH\t\t  Use local log file instead\n" \
 	     "\t\t\t\t  /var/log/ledctl.log global file.\n");
-	printf("--config=PATH,  -c PATH\t\t  Use alternate configuration" \
+	printf("--config=PATH,\t-c PATH\t\t  Use alternate configuration" \
 	       " file (not yet\n\t\t\t\t  implemented).\n");
-	printf("--help\t\t\t\t  Displays this help text.\n");
+	printf("--help,\t\t-h\t\t  Displays this help text.\n");
 	printf
-	    ("--version\t\t\t  Displays version and license information.\n\n");
+	    ("--version,\t-v\t\t  Displays version and license information.\n\n");
 	printf("Patterns:\n"
 	       "\tCommon patterns are:\n"
 	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""

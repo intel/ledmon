@@ -225,19 +225,22 @@ static unsigned int _ahci_em_messages(const char *path)
 		return 0;
 	}
 
-	/* name contain controller name (ie. ahci),*/
-	/* so check if libahci holds this driver   */
+	/* check if the directory /sys/module/libahci/holders exists */
 	dh = opendir("/sys/module/libahci/holders");
 	if (dh) {
+		/* name contain controller name (ie. ahci),*/
+		/* so check if libahci holds this driver   */
 		while ((de = readdir(dh))) {
 			if (!strcmp(de->d_name, name))
 				break;
 		}
 		closedir(dh);
+		free(link);
+		return de ? 1 : 0;
+	} else {
+		free(link);
+		return 1;
 	}
-
-	free(link);
-	return de ? 1 : 0;
 }
 
 /*

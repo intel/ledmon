@@ -656,6 +656,8 @@ static char *get_drive_sas_addr(const char *path)
 	len = strnlen(addr, ADDR_LEN);
 	if (len && addr[len - 1] == '\n')
 		addr[len - 1] = 0;
+	else /* make sure that addr is null-terminated */
+		addr[len < ADDR_LEN ? len : ADDR_LEN - 1] = 0;
 	free(end_dev);
 	free(buff);
 	return strdup(addr);

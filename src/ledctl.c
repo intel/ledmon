@@ -203,10 +203,8 @@ static void _ledctl_help(void)
 	       "\t\tpfa=ses_rsvd_dev, failure=ses_fault,\n"
 	       "\t\tdisk_failed=ses_fault\n");
 	printf("Refer to ledctl(8) man page for more detailed description.\n");
-	printf("Report bugs in the tracker 'Bugs' at " \
-	       "http://sourceforge.net/projects/ledmon\n");
-	printf("(direct link: http://sourceforge.net/tracker" \
-	       "/?group_id=393394&atid=1632895)\n\n");
+	printf("Bugs should be reported at: " \
+	       "http://sourceforge.net/p/ledmon/bugs \n");
 }
 
 /**

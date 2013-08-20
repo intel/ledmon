@@ -253,10 +253,8 @@ static void _ledmon_help(void)
 	printf
 	    ("--version\t\t\t  Displays version and license information.\n\n");
 	printf("Refer to ledmon(8) man page for more detailed description.\n");
-	printf("Report bugs in the tracker 'Bugs' at "
-	       "http://sourceforge.net/projects/ledmon\n");
-	printf("(direct link: http://sourceforge.net/tracker"
-	       "/?group_id=393394&atid=1632895)\n\n");
+	printf("Bugs should be reported at: "
+	       "http://sourceforge.net/p/ledmon/bugs \n");
 }
 
 /**

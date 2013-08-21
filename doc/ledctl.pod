@@ -179,6 +179,8 @@ SES-2 FAULT
 When non SES-2 pattern is send to device in enclosure automatic
 translation is being done.
 
+=over 8
+
 =item B<locate>
 
 I<locate> is translated to I<ses_ident> 

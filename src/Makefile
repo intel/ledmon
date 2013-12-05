@@ -55,10 +55,16 @@ LEDCTL_OBJECTS=\
 	$(OUTDIR)/ledctl.o	\
 	$(OBJECTS)
 
-CFLAGS=-O0 -g -Wall
+CXFLAGS=-O0 -g
+CWFLAGS=-Wall
+CFLAGS=$(CXFLAGS) $(CWFLAGS)
+
 DEFFLAGS=-D_DEBUG -D_GNU_SOURCE -D_BSD_SOURCE -DDMALLOC_DISABLE
-INCFLAGS=-I../config
-LDFLAGS=-O0 -g $(DEFFLAGS) -lsgutils2
+CPPFLAGS=$(DEFFLAGS)
+ALL_CPPFLAGS=$(CPPFLAGS) -I../config
+
+LDFLAGS=$(CXFLAGS)
+LDLIBS=-lsgutils2
 
 SOURCES:=$(shell find -name "*.[cC]" -print)
 
@@ -71,7 +77,7 @@ ledctl: $(OUTDIR)/.depend $(LEDCTL_OBJECTS)
 	$(CC) $(LDFLAGS) $(LDLIBS) $(LEDCTL_OBJECTS) -o $@
 
 $(OUTDIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(DEFFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(ALL_CPPFLAGS) -c $< -o $@
 
 all: $(OUTDIR)/.depend ledmon ledctl
 
@@ -93,7 +99,7 @@ mrproper: clean
 
 $(OUTDIR)/.depend: $(SOURCES)
 	mkdir -p $(OUTDIR)
-	$(CC) $(CFLAGS) $(DEFFLAGS) $(INCFLAGS) -M $^ | sed 's/^[a-z,0-9]/$(subst /,\/,$(OUTDIR))\/&/' > $(OUTDIR)/.depend
+	$(CC) $(CFLAGS) $(ALL_CPPFLAGS) -M $^ | sed 's/^[a-z,0-9]/$(subst /,\/,$(OUTDIR))\/&/' > $(OUTDIR)/.depend
 
 ifeq ($(filter install uninstall depend clean mrproper,$(MAKECMDGOALS)),)
     -include $(OUTDIR)/.depend

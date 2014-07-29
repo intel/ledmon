@@ -86,6 +86,23 @@ char *get_text(const char *path, const char *name)
 }
 
 /*
+ * Function returns integer value (1 or 0) based on a boolean value ('Y' or 'N')
+ * read from a text file. See utils.h for details.
+ */
+int get_bool(const char *path, int defval, const char *name)
+{
+	char *p = get_text(path, name);
+	if (p) {
+		if (*p == 'Y')
+			defval = 1;
+		else if (*p == 'N')
+			defval = 0;
+		free(p);
+	}
+	return defval;
+}
+
+/*
  * Function returns 64-bit unsigned integer value read from a text file. See
  * utils.h for details.
  */

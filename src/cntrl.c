@@ -216,8 +216,11 @@ static unsigned int _ahci_em_messages(const char *path)
 	if (get_int(path, 0, "driver/module/parameters/ahci_em_messages") != 0)
 		return 1;
 
-	if (!get_int("", 0, "sys/module/libahci/parameters/ahci_em_messages"))
-		return 0;
+	/* parameter type changed from int to bool since kernel v3.13 */
+	if (!get_int("", 0, "sys/module/libahci/parameters/ahci_em_messages")) {
+		if (!get_bool("", 0, "sys/module/libahci/parameters/ahci_em_messages"))
+			return 0;
+	}
 
 	if (snprintf(buf, sizeof(buf), "%s/%s", path, "driver") < 0)
 		return 0;

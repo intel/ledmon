@@ -111,6 +111,23 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name);
 char *get_text(const char *path, const char *name);
 
 /**
+ * @brief Reads boolean value from a text file.
+ *
+ * This function assumes that the only text in a file is the requested value to
+ * read. The recognized boolean values are in the format 'Y' for True and 'N'
+ * for False. In case of an error while reading from file the function will
+ * return a value stored in defval argument.
+ *
+ * @param[in]      path           Path where a file is located.
+ * @param[in]      defval         Default value to be returned in case of error.
+ * @param[in]      name           Name of a file to be read.
+ *
+ * @return Value read from a file if successful, otherwise a value stored in
+ *         defval argument. 1 is returned for True, 0 for False.
+ */
+int get_bool(const char *path, int defval, const char *name);
+
+/**
  * @brief Writes a text to file.
  *
  * This function writes a text to a file and return the number of bytes written.

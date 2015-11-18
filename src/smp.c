@@ -51,36 +51,37 @@
 
 #define GPIO_TX_GP1	0x01
 
-struct gpio_tx_register_byte {
-	unsigned char activity:3;
-	unsigned char locate:2;
-	unsigned char error:3;
-} __attribute__ ((__packed__));
-
-struct gpio_tx_register_byte gpio_tx_table[4];
-
 #define INIT_IBPI(act, loc, err)  \
 	{	.error = err,     \
 		.locate = loc,    \
 		.activity = act   \
 	}
 
+#define LED_OFF	0
+#define LED_ON	1
+#define LED_4HZ	2
+#define LED_I4HZ	3
+#define LED_SOF	4
+#define LED_EOF	5
+#define LED_2HZ	6
+#define LED_I2HZ	7
+
 static const struct gpio_rx_table {
 	struct gpio_tx_register_byte pattern;
 	int support_mask;
 } ibpi2sgpio[] = {
-	[IBPI_PATTERN_UNKNOWN]        = { INIT_IBPI(0,0,0), 1 }, /* OK */
-	[IBPI_PATTERN_ONESHOT_NORMAL] = { INIT_IBPI(0,0,0), 1 }, /* OK */
-	[IBPI_PATTERN_NORMAL]         = { INIT_IBPI(0,0,0), 1 }, /* OK */
-	[IBPI_PATTERN_DEGRADED]       = { INIT_IBPI(0,0,0), 0 }, /* NO */
-	[IBPI_PATTERN_REBUILD]        = { INIT_IBPI(0,1,1), 1 }, /* OK */
-	[IBPI_PATTERN_REBUILD_P]      = { INIT_IBPI(0,0,0), 0 }, /* NO */
-	[IBPI_PATTERN_FAILED_ARRAY]   = { INIT_IBPI(0,0,0), 0 }, /* NO */
-	[IBPI_PATTERN_HOTSPARE]       = { INIT_IBPI(0,0,0), 0 }, /* NO */
-	[IBPI_PATTERN_PFA]            = { INIT_IBPI(0,0,0), 0 }, /* NO */
-	[IBPI_PATTERN_FAILED_DRIVE]   = { INIT_IBPI(0,0,1), 1 }, /* OK */
-	[IBPI_PATTERN_LOCATE]         = { INIT_IBPI(0,1,0), 1 }, /* OK */
-	[IBPI_PATTERN_LOCATE_OFF]     = { INIT_IBPI(0,0,0), 1 }  /* OK */
+	[IBPI_PATTERN_UNKNOWN]        = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }, /* OK */
+	[IBPI_PATTERN_ONESHOT_NORMAL] = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }, /* OK */
+	[IBPI_PATTERN_NORMAL]         = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }, /* OK */
+	[IBPI_PATTERN_DEGRADED]       = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 0 }, /* NO */
+	[IBPI_PATTERN_REBUILD]        = { INIT_IBPI(LED_SOF,LED_ON,LED_ON), 1 }, /* OK */
+	[IBPI_PATTERN_REBUILD_P]      = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 0 }, /* NO */
+	[IBPI_PATTERN_FAILED_ARRAY]   = { INIT_IBPI(LED_SOF,LED_4HZ,LED_OFF), 0 }, /* NO */
+	[IBPI_PATTERN_HOTSPARE]       = { INIT_IBPI(LED_SOF,LED_OFF,LED_4HZ), 0 }, /* NO */
+	[IBPI_PATTERN_PFA]            = { INIT_IBPI(LED_SOF,LED_OFF,LED_2HZ), 0 }, /* NO */
+	[IBPI_PATTERN_FAILED_DRIVE]   = { INIT_IBPI(LED_SOF,LED_OFF,LED_ON), 1 }, /* OK */
+	[IBPI_PATTERN_LOCATE]         = { INIT_IBPI(LED_SOF,LED_ON,LED_OFF), 1 }, /* OK */
+	[IBPI_PATTERN_LOCATE_OFF]     = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }  /* OK */
 };
 
 struct smp_read_response_frame_header {
@@ -244,7 +245,7 @@ int set_raw_pattern(unsigned int dev_idx, unsigned char *data,
 	int od_offset = dev_idx * 3;
 	int rc = 0;
 
-	if (pattern->activity)
+	if (pattern->activity == LED_ON)
 		rc +=
 		    try_set_sas_gpio_gp_bit(od_offset + 0, data, GPIO_TX_GP1,
 					    1);
@@ -253,7 +254,7 @@ int set_raw_pattern(unsigned int dev_idx, unsigned char *data,
 		    try_clear_sas_gpio_gp_bit(od_offset + 0, data, GPIO_TX_GP1,
 					      1);
 
-	if (pattern->locate)
+	if (pattern->locate == LED_ON)
 		rc +=
 		    try_set_sas_gpio_gp_bit(od_offset + 1, data, GPIO_TX_GP1,
 					    1);
@@ -262,7 +263,7 @@ int set_raw_pattern(unsigned int dev_idx, unsigned char *data,
 		    try_clear_sas_gpio_gp_bit(od_offset + 1, data, GPIO_TX_GP1,
 					      1);
 
-	if (pattern->error)
+	if (pattern->error == LED_ON)
 		rc +=
 		    try_set_sas_gpio_gp_bit(od_offset + 2, data, GPIO_TX_GP1,
 					    1);
@@ -314,40 +315,6 @@ static int _close_smp_device(int fd)
 {
 	return close(fd);
 }
-
-/* smp constants */
-#define SMP_FRAME_TYPE_REQ	0x40
-#define SMP_FRAME_TYPE_RESP	0x41
-
-#define SMP_FUNC_GPIO_READ	0x02
-#define SMP_FUNC_GPIO_WRITE	0x82
-
-#define SMP_FRAME_CRC_LEN		sizeof(uint32_t)
-#define SMP_DATA_CHUNK_SIZE	sizeof(uint32_t)
-
-/* gpio constants */
-/* gpio register types */
-#define GPIO_REG_TYPE_CFG		0x00
-#define GPIO_REG_TYPE_RX		0x01
-#define GPIO_REG_TYPE_RX_GP	0x02
-#define GPIO_REG_TYPE_TX		0x03
-#define GPIO_REG_TYPE_TX_GP	0x04
-
-/* gpio register indexes */
-#define GPIO_REG_IND_CFG_0	0x00
-#define GPIO_REG_IND_CFG_1	0x01
-
-#define GPIO_REG_IND_RX_0		0x00
-#define GPIO_REG_IND_RX_1		0x01
-
-#define GPIO_REG_IND_TX_0		0x00
-#define GPIO_REG_IND_TX_1		0x01
-
-#define SG_RESPONSE_TIMEOUT (5 * 1000)	/* 1000 as miliseconds multiplier */
-#define SCSI_MAX_CDB_LENGTH	0x10
-
-#define GPIO_STATUS_OK			0x00
-#define GPIO_STATUS_FAILURE 0x80
 
 /**
    @brief use sg protocol in order to send data directly to hba driver
@@ -437,7 +404,7 @@ static int _start_smp_write_gpio(int hba,
 /**
    @brief prepare smp frame header
  */
-static int _smp_write_gpio(const char *path, int smp_reg_type,
+int smp_write_gpio(const char *path, int smp_reg_type,
 			   int smp_reg_index, int smp_reg_count, void *data,
 			   size_t len)
 {
@@ -462,8 +429,6 @@ static int _smp_write_gpio(const char *path, int smp_reg_type,
 #define DEFAULT_MAXIMUM_ACTIVITY_ON		2
 #define DEFAULT_STRETCH_ACTIVITY_OFF		0
 #define DEFAULT_STRETCH_ACTIVITY_ON		0
-
-#define DEFAULT_ISCI_SUPPORTED_DEVS		4
 
 /* one data chunk is 32bit long */
 #define SMP_DATA_CHUNKS				1
@@ -494,16 +459,12 @@ int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 		log_debug("No SCSI ctrl dev '%s'", strstr(sysfs_path, "host"));
 		__set_errno_and_return(EINVAL);
 	}
-	if (!device->cntrl->isci_present) {
-		log_debug("No ISCI ctrl for '%s'", strstr(sysfs_path, "host"));
-		__set_errno_and_return(ENODEV);
-	}
 	if (!device->host) {
 		log_debug("No host for '%s'", strstr(sysfs_path, "host"));
 		__set_errno_and_return(ENODEV);
 	}
 
-	if (!ibpi2sgpio[ibpi].support_mask) {
+	if (device->cntrl->isci_present && !ibpi2sgpio[ibpi].support_mask) {
 		char *c = strrchr(device->sysfs_path, '/');
 		if (c++) {
 			log_debug
@@ -528,9 +489,14 @@ int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 		__set_errno_and_return(ENODEV);
 	}
 
-	/* update bit stream for this device */
-	set_raw_pattern(device->phy_index,
+	if (device->cntrl->isci_present) {
+		/* update bit stream for this device */
+		set_raw_pattern(device->phy_index,
 			&device->host->bitstream[0], &ibpi2sgpio[ibpi].pattern);
+	} else {
+		device->host->ibpi_state_buffer[device->phy_index] =
+			ibpi2sgpio[ibpi].pattern;
+	}
 
 	/* write only if state has changed */
 	if (ibpi != device->ibpi_prev)
@@ -551,24 +517,30 @@ int scsi_smp_write_buffer(struct block_device *device)
 	if (device->host->flush) {
 		device->host->flush = 0;
 		/* re-transmit the bitstream */
-		return _smp_write_gpio(sysfs_path,
-		                       GPIO_REG_TYPE_TX_GP,
-		                       GPIO_TX_GP1, 1,
-		                       &device->host->bitstream[0],
-		                       SMP_DATA_CHUNKS);
+		if (device->cntrl->isci_present) {
+			return smp_write_gpio(sysfs_path,
+					       GPIO_REG_TYPE_TX_GP,
+					       GPIO_TX_GP1, 1,
+					       &device->host->bitstream[0],
+					       SMP_DATA_CHUNKS);
+		} else {
+			return smp_write_gpio(sysfs_path,
+					       GPIO_REG_TYPE_TX,
+					       0, (device->host->ports+3)/4,
+					       device->host->ibpi_state_buffer,
+					       (device->host->ports+3)/4);
+		}
 	} else
 		return 1;
 }
 
 /**
  */
-void init_smp(const char *path, struct cntrl_device *device)
+static void init_smp(const char *path, struct cntrl_device *device)
 {
 	struct _host_type *hosts;
 	int i;
 	if (!device)
-		return;
-	if (!device->isci_present)
 		return;
 
 	for (hosts = device->hosts; hosts; hosts = hosts->next) {
@@ -576,14 +548,14 @@ void init_smp(const char *path, struct cntrl_device *device)
 		if (hosts->ibpi_state_buffer)
 			continue;
 		hosts->ibpi_state_buffer =
-				calloc(DEFAULT_ISCI_SUPPORTED_DEVS,
+				calloc(hosts->ports,
 					sizeof(struct
 					gpio_tx_register_byte));
 
 		if (!hosts->ibpi_state_buffer)
 			continue;
 
-		for (i = 0; i < DEFAULT_ISCI_SUPPORTED_DEVS; i++)
+		for (i = 0; i < hosts->ports; i++)
 			set_raw_pattern(i, &hosts->bitstream[0],
 					&ibpi2sgpio
 					[IBPI_PATTERN_ONESHOT_NORMAL].pattern);
@@ -593,7 +565,7 @@ void init_smp(const char *path, struct cntrl_device *device)
 
 /**
  */
-int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
+int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 {
 	char *path2 = NULL;
 	char *c;
@@ -602,9 +574,6 @@ int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 	DIR *d;
 
 	if (!cntrl)
-		return port;
-
-	if (!cntrl->isci_present)
 		return port;
 
 	/* Other case - just init controller. */

@@ -20,6 +20,8 @@
 #ifndef _CNTRL_H_INCLUDED_
 #define _CNTRL_H_INCLUDED_
 
+#include "smp.h"
+
 /**
  * This enumeration type lists all supported storage controller types.
  */
@@ -55,7 +57,7 @@ struct cntrl_device {
 		/**
 		 * ibpi state buffer for directly attached devices
 		 */
-		void *ibpi_state_buffer;
+		struct gpio_tx_register_byte *ibpi_state_buffer;
 		/**
 		 * outbound raw byte stream
 		 */
@@ -68,6 +70,10 @@ struct cntrl_device {
 		 * host identifier for different hba instances
 		 */
 		int host_id;
+		/**
+		 * number of total phy ports
+		 */
+		int ports;
 		/**
 		 * pointer to next structure
 		 */

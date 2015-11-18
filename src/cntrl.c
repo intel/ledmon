@@ -35,25 +35,13 @@
 #include "cntrl.h"
 #include "utils.h"
 #include "sysfs.h"
-
-enum int_cntrl_type {
-	INT_CNTRL_TYPE_UNKNOWN = CNTRL_TYPE_UNKNOWN,
-	INT_CNTRL_TYPE_SCSI    = CNTRL_TYPE_SCSI,
-	INT_CNTRL_TYPE_AHCI    = CNTRL_TYPE_AHCI,
-	INT_CNTRL_TYPE_ISCI    = CNTRL_TYPE_AHCI + 1,
-	INT_CNTRL_TYPE_DELLSSD = CNTRL_TYPE_DELLSSD,
-};
+#include "smp.h"
 
 /**
  */
-static int _is_scsi_cntrl(const char *path)
+static int _is_storage_controller(const char *path)
 {
-	uint64_t class;
-
-	if (sysfs_enclosure_attached_to_cntrl(path) == 0)
-		return 0;
-
-	class = get_uint64(path, 0, "class");
+	uint64_t class = get_uint64(path, 0, "class");
 	return (class & 0xff0000L) == 0x010000L;
 }
 
@@ -61,13 +49,7 @@ static int _is_scsi_cntrl(const char *path)
  */
 static int _is_isci_cntrl(const char *path)
 {
-	uint64_t class;
-
-	if (sysfs_isci_driver(path) == 0)
-		return 0;
-
-	class = get_uint64(path, 0, "class");
-	return (class & 0xff0000L) == 0x010000L;
+	return sysfs_isci_driver(path);
 }
 
 /**
@@ -103,6 +85,40 @@ static int _is_dellssd_cntrl(const char *path)
 }
 
 /**
+ */
+static int _is_smp_cntrl(const char *path)
+{
+	int result = 0;
+	void *dir = scan_dir(path);
+	char *p;
+	char host_path[PATH_MAX] = { 0 };
+	char *host;
+	if (dir) {
+		host = list_head(dir);
+		while (host) {
+			p = strrchr(host, '/');
+			if (!p++)
+				break;
+			if (strncmp(p, "host", strlen("host")) == 0) {
+				snprintf(host_path, sizeof(host_path),
+					"%s/%s/bsg/sas_%s", path, p, p);
+				result = smp_write_gpio(host_path,
+					GPIO_REG_TYPE_TX,
+					0,
+					0,
+					"",
+					0) == 0;
+			}
+			host = list_next(host);
+		}
+		list_fini(dir);
+	}
+
+	return result;
+}
+
+
+/**
  * @brief Determines the type of controller.
  *
  * This is internal function of 'controller device' module. The function
@@ -115,18 +131,20 @@ static int _is_dellssd_cntrl(const char *path)
  *         CNTRL_TYPE_UNKNOWN this means a controller device is not
  *         supported.
  */
-static enum int_cntrl_type _get_type(const char *path)
+static enum cntrl_type _get_type(const char *path)
 {
-	enum int_cntrl_type type = CNTRL_TYPE_UNKNOWN;
+	enum cntrl_type type = CNTRL_TYPE_UNKNOWN;
 
-	if (_is_dellssd_cntrl(path))
+	if (_is_dellssd_cntrl(path)) {
 		type = CNTRL_TYPE_DELLSSD;
-	if (_is_scsi_cntrl(path))
-		type = CNTRL_TYPE_SCSI;
-	if (_is_isci_cntrl(path))
-		type = INT_CNTRL_TYPE_ISCI;
-	if (_is_ahci_cntrl(path))
-		type = CNTRL_TYPE_AHCI;
+	} else if (_is_storage_controller(path)) {
+		if (_is_ahci_cntrl(path))
+			type = CNTRL_TYPE_AHCI;
+		else if (_is_isci_cntrl(path)
+				|| sysfs_enclosure_attached_to_cntrl(path)
+				|| _is_smp_cntrl(path))
+			type = CNTRL_TYPE_SCSI;
+	}
 	return type;
 }
 
@@ -139,6 +157,7 @@ struct _host_type *alloc_host(int id, struct _host_type *next)
 		host->ibpi_state_buffer = NULL;
 		memset(host->bitstream, 0, sizeof(host->bitstream));
 		host->flush = 0;
+		host->ports = 0;
 		host->next = next;
 	}
 	return host;
@@ -161,6 +180,8 @@ void _find_host(const char *path, struct _host_type **hosts)
 	char *p;
 	int index = -1;
 	struct _host_type *th;
+	DIR *d;
+	struct dirent *de;
 
 	p = strrchr(path, '/');
 	if (!p++)
@@ -170,6 +191,21 @@ void _find_host(const char *path, struct _host_type **hosts)
 		th = alloc_host(index, (*hosts) ? (*hosts) : NULL);
 		if (!th)
 			return;
+
+		d = opendir(path);
+		if(!d) {
+			free(th);
+			return;
+		}
+
+		while ((de = readdir(d))) {
+			if (strncmp(de->d_name, "phy-", strlen("phy-")) == 0) {
+				th->ports++;
+			}
+		}
+
+		closedir(d);
+
 		*hosts = th;
 	}
 }
@@ -260,18 +296,17 @@ static unsigned int _ahci_em_messages(const char *path)
 struct cntrl_device *cntrl_device_init(const char *path)
 {
 	unsigned int em_enabled;
-	enum int_cntrl_type type;
+	enum cntrl_type type;
 	struct cntrl_device *device = NULL;
 
 	type = _get_type(path);
-	if (type != INT_CNTRL_TYPE_UNKNOWN) {
+	if (type != CNTRL_TYPE_UNKNOWN) {
 		switch (type) {
-		case INT_CNTRL_TYPE_DELLSSD:
-		case INT_CNTRL_TYPE_ISCI:
-		case INT_CNTRL_TYPE_SCSI:
+		case CNTRL_TYPE_DELLSSD:
+		case CNTRL_TYPE_SCSI:
 			em_enabled = 1;
 			break;
-		case INT_CNTRL_TYPE_AHCI:
+		case CNTRL_TYPE_AHCI:
 			em_enabled = _ahci_em_messages(path);
 			break;
 		default:
@@ -280,15 +315,14 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		if (em_enabled) {
 			device = malloc(sizeof(struct cntrl_device));
 			if (device) {
-				if (type == INT_CNTRL_TYPE_ISCI) {
-					device->isci_present = 1;
+				if (type == CNTRL_TYPE_SCSI) {
+					device->isci_present = _is_isci_cntrl(path);
 					device->hosts = _cntrl_get_hosts(path);
-					type = CNTRL_TYPE_SCSI;
 				} else {
 					device->isci_present = 0;
 					device->hosts = NULL;
 				}
-				device->cntrl_type = (enum cntrl_type)type;
+				device->cntrl_type = type;
 				device->sysfs_path = strdup(path);
 			}
 		} else {

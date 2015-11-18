@@ -247,22 +247,15 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 				hosts = hosts->next;
 			}
 			if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
-				if (dev_directly_attached(link))
-					device->phy_index =
-					    isci_cntrl_init_smp(link, cntrl);
-				else {
-					device->phy_index =
-					    isci_cntrl_init_smp(link, cntrl);
-					if (scsi_get_enclosure(device) == 0) {
-						log_warning("Device " \
-							    "initialization " \
-							    "failed for '%s'",
-									path);
-						free(device->sysfs_path);
-						free(device->cntrl_path);
-						free(device);
-						device = NULL;
-					}
+				device->phy_index = cntrl_init_smp(link, cntrl);
+				if (!dev_directly_attached(link)
+						&& !scsi_get_enclosure(device)) {
+					log_warning("Device initialization failed for '%s'",
+							path);
+					free(device->sysfs_path);
+					free(device->cntrl_path);
+					free(device);
+					device = NULL;
 				}
 			}
 		} else

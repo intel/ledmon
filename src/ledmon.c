@@ -679,15 +679,15 @@ static void _revalidate_dev(struct block_device *block)
 			  block->sysfs_path, block->cntrl_path);
 		return;
 	}
-	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI &&
-	    block->cntrl->isci_present) {
+	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
 		block->host = block_get_host(block->cntrl, block->host_id);
 		if (block->host) {
-			isci_cntrl_init_smp(NULL, block->cntrl);
+			if (dev_directly_attached(block->sysfs_path))
+				cntrl_init_smp(NULL, block->cntrl);
 		} else {
 			log_debug("Failed to get host for dev: %s, hostId: %d",
 				  block->sysfs_path, block->host_id);
-			/* If hosts failed for isci, invalidate cntrl */
+			/* If failed, invalidate cntrl */
 			block->cntrl = NULL;
 		}
 	}

@@ -17,8 +17,51 @@
  *
  */
 
+#include "ibpi.h"
+#include "block.h"
+
 #ifndef _SMP_H_INCLUDED
 #define _SMP_H_INCLUDED
+
+/* smp constants */
+#define SMP_FRAME_TYPE_REQ	0x40
+#define SMP_FRAME_TYPE_RESP	0x41
+
+#define SMP_FUNC_GPIO_READ	0x02
+#define SMP_FUNC_GPIO_WRITE	0x82
+
+#define SMP_FRAME_CRC_LEN		sizeof(uint32_t)
+#define SMP_DATA_CHUNK_SIZE	sizeof(uint32_t)
+
+/* gpio constants */
+/* gpio register types */
+#define GPIO_REG_TYPE_CFG		0x00
+#define GPIO_REG_TYPE_RX		0x01
+#define GPIO_REG_TYPE_RX_GP	0x02
+#define GPIO_REG_TYPE_TX		0x03
+#define GPIO_REG_TYPE_TX_GP	0x04
+
+/* gpio register indexes */
+#define GPIO_REG_IND_CFG_0	0x00
+#define GPIO_REG_IND_CFG_1	0x01
+
+#define GPIO_REG_IND_RX_0		0x00
+#define GPIO_REG_IND_RX_1		0x01
+
+#define GPIO_REG_IND_TX_0		0x00
+#define GPIO_REG_IND_TX_1		0x01
+
+#define SG_RESPONSE_TIMEOUT (5 * 1000)	/* 1000 as miliseconds multiplier */
+#define SCSI_MAX_CDB_LENGTH	0x10
+
+#define GPIO_STATUS_OK			0x00
+#define GPIO_STATUS_FAILURE 0x80
+
+struct gpio_tx_register_byte {
+	unsigned char error:3;
+	unsigned char locate:2;
+	unsigned char activity:3;
+} __attribute__ ((__packed__));
 
 /**
  * @brief Sends message to SES processor of an enclosure.
@@ -70,6 +113,27 @@ int scsi_smp_write_buffer(struct block_device *device);
  * @return Phy index on success if path and cntrl weren't NULL
  *         0 if error occurred or path was NULL.
  */
-int isci_cntrl_init_smp(const char *path, struct cntrl_device *cntrl);
+int cntrl_init_smp(const char *path, struct cntrl_device *cntrl);
+
+/**
+ * @brief Write GPIO data
+ *
+ * @param[in]      path            Path to the device in sysfs.
+ *                                 phy.
+ *
+ * @param[in]      smp_reg_type    GPIO register type
+ *
+ * @param[in]      smp_reg_index   GPIO register index
+ *
+ * @param[in]      smp_reg_count   GPIO register count
+ *
+ * @param[in]      data            Data to be written
+ *
+ * @return written register count
+ *         <0 if error occurred
+ */
+int smp_write_gpio(const char *path, int smp_reg_type,
+			   int smp_reg_index, int smp_reg_count, void *data,
+			   size_t len);
 
 #endif				/* _SCSI_H_INCLUDED_ */

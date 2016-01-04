@@ -328,10 +328,10 @@ void log_debug(const char *buf, ...)
 		va_end(vl);
 		fprintf(s_log, "\n");
 		fflush(s_log);
+		va_start(vl, buf);
+		vsyslog(LOG_DEBUG, buf, vl);
+		va_end(vl);
 	}
-	va_start(vl, buf);
-	vsyslog(LOG_DEBUG, buf, vl);
-	va_end(vl);
 }
 
 /**
@@ -350,10 +350,10 @@ void log_error(const char *buf, ...)
 		va_end(vl);
 		fprintf(s_log, END_LINE_STR);
 		fflush(s_log);
+		va_start(vl, buf);
+		vsyslog(LOG_ERR, buf, vl);
+		va_end(vl);
 	}
-	va_start(vl, buf);
-	vsyslog(LOG_ERR, buf, vl);
-	va_end(vl);
 }
 
 /**
@@ -372,10 +372,10 @@ void log_warning(const char *buf, ...)
 		va_end(vl);
 		fprintf(s_log, END_LINE_STR);
 		fflush(s_log);
+		va_start(vl, buf);
+		vsyslog(LOG_WARNING, buf, vl);
+		va_end(vl);
 	}
-	va_start(vl, buf);
-	vsyslog(LOG_WARNING, buf, vl);
-	va_end(vl);
 }
 
 /**
@@ -394,10 +394,10 @@ void log_info(const char *buf, ...)
 		va_end(vl);
 		fprintf(s_log, END_LINE_STR);
 		fflush(s_log);
+		va_start(vl, buf);
+		vsyslog(LOG_INFO, buf, vl);
+		va_end(vl);
 	}
-	va_start(vl, buf);
-	vsyslog(LOG_INFO, buf, vl);
-	va_end(vl);
 }
 
 /**

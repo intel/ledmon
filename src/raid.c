@@ -141,7 +141,6 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num,
 			device->sync_action = _get_sync_action(path);
 			device->array_state = state;
 			device->level = _get_level(path);
-			device->slave_list = NULL;
 			device->degraded = get_int(path, -1, "md/degraded");
 			device->raid_disks = get_int(path, 0, "md/raid_disks");
 			device->type = type;

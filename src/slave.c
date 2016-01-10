@@ -100,13 +100,26 @@ static struct block_device *_get_block(const char *path, void *block_list)
 {
 	char temp[PATH_MAX];
 	char link[PATH_MAX];
+	char *ptr;
 	struct block_device *device = NULL;
 
 	str_cpy(temp, path, PATH_MAX);
 	str_cat(temp, "/block", PATH_MAX);
 
-	if (realpath(temp, link))
-		device = list_first_that(block_list, _compare, link);
+	if (realpath(temp, link)) {
+		ptr = strrchr(link, '/');
+		if (ptr && link < ptr - strlen("/block")) {
+			/* translate partition to master block dev */
+			if(strncmp(
+				ptr - strlen("/block"),
+				"/block",
+				strlen("/block"))) {
+
+				*ptr = '\0';
+			}
+			device = list_first_that(block_list, _compare, link);
+		}
+	}
 	return device;
 }
 

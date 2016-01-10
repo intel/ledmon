@@ -595,7 +595,7 @@ static void _add_block(struct block_device *block)
 				temp->ibpi = block->ibpi;
 			}
 		} else {
-			temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
+			temp->ibpi = block->ibpi;
 		}
 
 		if (ibpi != temp->ibpi) {

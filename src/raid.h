@@ -77,7 +77,6 @@ struct raid_device {
 	int device_num;
 	char *sysfs_path;
 	int raid_disks;
-	void *slave_list;
 	int degraded;
 	enum raid_state array_state;
 	enum raid_action sync_action;

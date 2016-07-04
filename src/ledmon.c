@@ -486,6 +486,11 @@ static int is_dellssd(struct block_device *bd)
 	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
 }
 
+static int is_vmd(struct block_device *bd)
+{
+	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD);
+}
+
 /**
  * @brief Checks the presence of block device.
  *
@@ -503,12 +508,12 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 {
 	int i = 0;
 
-	if (!is_dellssd(bd_old) && bd_old->host_id == -1) {
+	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {
 		log_debug("Device %s : No host_id!",
 			  strstr(bd_old->sysfs_path, "host"));
 		return 0;
 	}
-	if (!is_dellssd(bd_new) && bd_new->host_id == -1) {
+	if (!is_dellssd(bd_new) && !is_vmd(bd_new) && bd_new->host_id == -1) {
 		log_debug("Device %s : No host_id!",
 			  strstr(bd_new->sysfs_path, "host"));
 		return 0;
@@ -550,6 +555,7 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 		break;
 
 	case CNTRL_TYPE_DELLSSD:
+	case CNTRL_TYPE_VMD:
 	default:
 		/* Just compare names */
 		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);

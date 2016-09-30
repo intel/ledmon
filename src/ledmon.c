@@ -709,6 +709,10 @@ static void _invalidate_dev(struct block_device *block)
 
 static void _check_block_dev(struct block_device *block, int *restart)
 {
+	if (block->cntrl == NULL) {
+		(*restart)++;
+		return;
+	}
 	/* Check SCSI device behind expander. */
 	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
 		if (dev_directly_attached(block->sysfs_path) == 0) {

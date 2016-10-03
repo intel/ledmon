@@ -38,6 +38,8 @@
 #define ATTENTION_REBUILD    0b0101 /* Attention On, Power On */
 #define ATTENTION_FAILURE    0b1101 /* Attention Off, Power On */
 
+#define SYSFS_PCIEHP         "/sys/module/pciehp"
+
 static int _pci_slot_search(struct pci_slot *slot, const char *address)
 {
 	return (strcmp(slot->address, address) == 0);
@@ -89,9 +91,11 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	char *pci_port;
 	char attention_path[PATH_MAX];
+	char module_path[PATH_MAX], real_module_path[PATH_MAX];
 	char buf[WRITE_BUFFER_SIZE];
 	uint16_t val;
 	struct pci_slot *slot;
+	void *dir;
 
 	pci_port = get_slot_from_syspath(device->sysfs_path);
 	if (!pci_port)
@@ -101,6 +105,16 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if (slot == NULL) {
 		log_debug("PCI hotplug slot not found for %s\n", device->sysfs_path);
 		__set_errno_and_return(ENODEV);
+	}
+
+	// check if slot is managed by pciehp driver
+	snprintf(module_path, PATH_MAX, "%s/module", slot->sysfs_path);
+	dir = scan_dir(module_path);
+	if (dir) {
+		list_fini(dir);
+		realpath(module_path, real_module_path);
+		if (strcmp(real_module_path, SYSFS_PCIEHP) != 0)
+			__set_errno_and_return(EINVAL);
 	}
 
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))

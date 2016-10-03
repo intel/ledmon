@@ -42,7 +42,8 @@ OBJECTS=\
 	$(OUTDIR)/sysfs.o	\
 	$(OUTDIR)/smp.o		\
 	$(OUTDIR)/dellssd.o	\
-	$(OUTDIR)/utils.o
+	$(OUTDIR)/utils.o	\
+	$(OUTDIR)/pci_slot.o
 
 # Build components of ledmon application.
 LEDMON_OBJECTS=\

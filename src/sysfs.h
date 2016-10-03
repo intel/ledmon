@@ -100,7 +100,16 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm);
 
 /**
  */
+#define sysfs_pci_slot_first_that(__test, __parm) \
+	__sysfs_pci_slot_first_that((test_t)(__test), (void *)(__parm))
+
+/**
+ */
 void *__sysfs_block_device_first_that(test_t action, void *parm);
+
+/**
+ */
+void *__sysfs_pci_slot_first_that(test_t action, void *parm);
 
 /*
  * This function checks if driver type is isci.

@@ -41,12 +41,14 @@
 #include "raid.h"
 #include "enclosure.h"
 #include "cntrl.h"
+#include "pci_slot.h"
 
 /**
  */
 #define SYSFS_CLASS_BLOCK       "/sys/block"
 #define SYSFS_CLASS_ENCLOSURE   "/sys/class/enclosure"
 #define SYSFS_PCI_DEVICES       "/sys/bus/pci/devices"
+#define SYSFS_PCI_SLOTS         "/sys/bus/pci/slots"
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -104,6 +106,16 @@ static void *cntnr_list = NULL;
  * pointer to list of enclosures registered in the system.
  */
 static void *enclo_list = NULL;
+
+/**
+ * This is internal variable global to sysfs module only. The variable holds
+ * pointer to list of PCI slots registered in the system. Use sysfs_init()
+ * function to initialize the variable. Use sysfs_scan() function to populate
+ * the list. Use sysfs_reset() function to delete the content of the list.
+ * Use sysfs_fini() function to delete the content of the list and release
+ * memory allocated for the list.
+ */
+static void *slots_list = NULL;
 
 /**
  * @brief Determine device type.
@@ -356,6 +368,17 @@ static void _enclo_add(const char *path)
 
 /**
  */
+static void _slots_add(const char *path)
+{
+	void *device = pci_slot_init(path);
+	if (device) {
+		list_put(slots_list, device, sizeof(struct pci_slot));
+		free(device);
+	}
+}
+
+/**
+ */
 static void _check_raid(const char *path)
 {
 	char *t = strrchr(path, '/');
@@ -379,6 +402,13 @@ static void _check_enclo(const char *path)
 	char link[PATH_MAX];
 	if (realpath(path, link) != NULL)
 		_enclo_add(link);
+}
+
+/**
+ */
+static void _check_slots(const char *path)
+{
+	_slots_add(path);
 }
 
 /**
@@ -433,6 +463,18 @@ static status_t _scan_enclo(void)
 	void *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
 	if (dir) {
 		list_for_each(dir, _check_enclo);
+		list_fini(dir);
+	}
+	return STATUS_SUCCESS;
+}
+
+/**
+ */
+static status_t _scan_slots(void)
+{
+	void *dir = scan_dir(SYSFS_PCI_SLOTS);
+	if (dir) {
+		list_for_each(dir, _check_slots);
 		list_fini(dir);
 	}
 	return STATUS_SUCCESS;
@@ -537,6 +579,7 @@ status_t sysfs_init(void)
 	slave_list = NULL;
 	cntnr_list = NULL;
 	enclo_list = NULL;
+	slots_list = NULL;
 
 	if (list_init(&sysfs_block_list) != STATUS_SUCCESS)
 		return STATUS_BLOCK_LIST_ERROR;
@@ -555,6 +598,9 @@ status_t sysfs_init(void)
 
 	if (list_init(&enclo_list) != STATUS_SUCCESS)
 		return STATUS_ENCLO_LIST_ERROR;
+
+	if (list_init(&slots_list) != STATUS_SUCCESS)
+		return STATUS_SLOTS_LIST_ERROR;
 
 	return STATUS_SUCCESS;
 }
@@ -586,6 +632,10 @@ void sysfs_fini(void)
 	if (enclo_list) {
 		list_for_each(enclo_list, enclosure_device_fini);
 		list_fini(enclo_list);
+	}
+	if (slots_list) {
+		list_for_each(slots_list, pci_slot_fini);
+		list_fini(slots_list);
 	}
 }
 
@@ -654,8 +704,11 @@ status_t sysfs_scan(void)
 	if (_scan_slave() != STATUS_SUCCESS)
 		return STATUS_SLAVE_LIST_ERROR;
 
-	if (enclo_list == NULL)
+	if (slots_list == NULL)
 		return STATUS_NULL_POINTER;
+
+	if (_scan_slots() != STATUS_SUCCESS)
+		return STATUS_ENCLO_LIST_ERROR;
 
 	return list_for_each(slave_list, _determine);
 }
@@ -693,6 +746,15 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm)
 void *__sysfs_block_device_first_that(test_t test, void *parm)
 {
 	return __list_first_that(sysfs_block_list, test, parm);
+}
+
+/*
+ * The function is looking for PCI hotplug slot according to criteria defined
+ * by 'test' function. See sysfs.h for details.
+ */
+void *__sysfs_pci_slot_first_that(test_t test, void *parm)
+{
+	return __list_first_that(slots_list, test, parm);
 }
 
 /**

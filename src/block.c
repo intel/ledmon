@@ -47,6 +47,7 @@
 #include "smp.h"
 #include "ahci.h"
 #include "dellssd.h"
+#include "vmdssd.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
    device structure. See block.h for details. */
@@ -94,6 +95,8 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 		result = scsi_smp_fill_buffer;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
 		result = dellssd_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
+		result = vmdssd_write;
 	}
 	return result;
 }
@@ -137,6 +140,8 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 		result = ahci_get_port_path(path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD)
 		result = dellssd_get_path(path, cntrl->sysfs_path);
+	else if (cntrl->cntrl_type == CNTRL_TYPE_VMD)
+		result = vmdssd_get_path(path, cntrl->sysfs_path);
 	return result;
 }
 

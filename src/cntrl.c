@@ -196,10 +196,10 @@ static enum cntrl_type _get_type(const char *path)
 {
 	enum cntrl_type type = CNTRL_TYPE_UNKNOWN;
 
-	if (_is_dellssd_cntrl(path)) {
-		type = CNTRL_TYPE_DELLSSD;
-	} else if (_is_vmd_cntrl(path)) {
+	if (_is_vmd_cntrl(path)) {
 		type = CNTRL_TYPE_VMD;
+	} else if (_is_dellssd_cntrl(path)) {
+		type = CNTRL_TYPE_DELLSSD;
 	} else if (_is_storage_controller(path)) {
 		if (_is_ahci_cntrl(path))
 			type = CNTRL_TYPE_AHCI;

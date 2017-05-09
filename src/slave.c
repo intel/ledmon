@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <sys/stat.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -100,27 +102,26 @@ static struct block_device *_get_block(const char *path, void *block_list)
 {
 	char temp[PATH_MAX];
 	char link[PATH_MAX];
-	char *ptr;
-	struct block_device *device = NULL;
 
 	str_cpy(temp, path, PATH_MAX);
 	str_cat(temp, "/block", PATH_MAX);
 
-	if (realpath(temp, link)) {
-		ptr = strrchr(link, '/');
-		if (ptr && link < ptr - strlen("/block")) {
-			/* translate partition to master block dev */
-			if(strncmp(
-				ptr - strlen("/block"),
-				"/block",
-				strlen("/block"))) {
+	if (!realpath(temp, link))
+		return NULL;
 
+	/* translate partition to master block dev */
+	if (snprintf(temp, PATH_MAX, "%s/partition", link) > 0) {
+		struct stat sb;
+		char *ptr;
+
+		if (stat(temp, &sb) == 0 && S_ISREG(sb.st_mode)) {
+			ptr = strrchr(link, '/');
+			if (ptr)
 				*ptr = '\0';
-			}
-			device = list_first_that(block_list, _compare, link);
 		}
 	}
-	return device;
+
+	return list_first_that(block_list, _compare, link);
 }
 
 /**

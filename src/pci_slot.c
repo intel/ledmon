@@ -47,6 +47,12 @@ struct pci_slot *pci_slot_init(const char *path)
 	result->address = get_text(path, "address");
 	result->attention = get_int(path, -1, "attention");
 
+	if (result->attention == -1) {
+		pci_slot_fini(result);
+		free(result);
+		return NULL;
+	}
+
 	return result;
 }
 

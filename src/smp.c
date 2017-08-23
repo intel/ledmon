@@ -494,7 +494,12 @@ int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 		set_raw_pattern(device->phy_index,
 			&device->host->bitstream[0], &ibpi2sgpio[ibpi].pattern);
 	} else {
-		device->host->ibpi_state_buffer[device->phy_index] =
+		/*
+		 * GPIO_TX[n] register has the highest numbered drive of the
+		 * four in the first byte and the lowest numbered drive in the
+		 * fourth byte. See SFF-8485 Rev. 0.7 Table 24.
+		 */
+		gpio_tx[device->phy_index + 3 - (device->phy_index % 4) * 2] =
 			ibpi2sgpio[ibpi].pattern;
 	}
 

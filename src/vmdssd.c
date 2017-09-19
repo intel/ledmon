@@ -34,9 +34,9 @@
 #include "pci_slot.h"
 
 #define ATTENTION_OFF        0b1111 /* Attention Off, Power Off */
-#define ATTENTION_LOCATE     0b0111 /* Attention On, Power Off */
+#define ATTENTION_LOCATE     0b0111 /* Attention Off, Power On */
 #define ATTENTION_REBUILD    0b0101 /* Attention On, Power On */
-#define ATTENTION_FAILURE    0b1101 /* Attention Off, Power On */
+#define ATTENTION_FAILURE    0b1101 /* Attention On, Power Off */
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 

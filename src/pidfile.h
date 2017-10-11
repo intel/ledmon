@@ -20,6 +20,10 @@
 #ifndef _PIDFILE_H_INCLUDED_
 #define _PIDFILE_H_INCLUDED_
 
+#include <unistd.h>
+
+#include "status.h"
+
 /**
  */
 status_t pidfile_create(const char *name);

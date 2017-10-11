@@ -17,42 +17,42 @@
  *
  */
 
-#include <config.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <syslog.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <time.h>
-#include <signal.h>
-#include <stdio.h>
 #include <errno.h>
-#include <string.h>
+#include <fcntl.h>
 #include <getopt.h>
+#include <limits.h>
+#include <signal.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/select.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
-#include "ibpi.h"
-#include "pidfile.h"
-#include "list.h"
-#include "utils.h"
-#include "sysfs.h"
-#include "block.h"
-#include "slave.h"
-#include "raid.h"
-#include "cntrl.h"
-#include "version.h"
-#include "scsi.h"
 #include "ahci.h"
+#include "block.h"
+#include "cntrl.h"
+#include "config.h"
+#include "ibpi.h"
+#include "list.h"
+#include "pidfile.h"
+#include "raid.h"
+#include "scsi.h"
+#include "slave.h"
 #include "smp.h"
+#include "status.h"
+#include "sysfs.h"
+#include "utils.h"
+#include "version.h"
 
 /**
  * Default suspend time between sysfs scan operations, given in seconds.

@@ -17,16 +17,14 @@
  *
  */
 
-#include <config.h>
-
-#include <limits.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <fcntl.h>
+#include <unistd.h>
 
 #include <sys/ioctl.h>
 #include <linux/ipmi.h>
@@ -35,19 +33,19 @@
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
-#include "ibpi.h"
-#include "utils.h"
-#include "list.h"
-#include "sysfs.h"
-#include "block.h"
-#include "slave.h"
-#include "raid.h"
-#include "cntrl.h"
-#include "scsi.h"
-#include "smp.h"
 #include "ahci.h"
+#include "cntrl.h"
+#include "config.h"
 #include "dellssd.h"
+#include "ibpi.h"
+#include "list.h"
+#include "raid.h"
+#include "scsi.h"
+#include "slave.h"
+#include "smp.h"
+#include "status.h"
+#include "sysfs.h"
+#include "utils.h"
 
 #define BP_PRESENT       (1L << 0)
 #define BP_ONLINE        (1L << 1)

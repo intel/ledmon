@@ -20,6 +20,9 @@
 #ifndef _SLAVE_H_INCLUDED_
 #define _SLAVE_H_INCLUDED_
 
+#include "block.h"
+#include "raid.h"
+
 /**
  */
 #define SLAVE_STATE_UNKNOWN      0x00

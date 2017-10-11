@@ -20,6 +20,9 @@
 #ifndef _AHCI_H_INCLUDED_
 #define _AHCI_H_INCLUDED_
 
+#include "block.h"
+#include "ibpi.h"
+
 /**
  * @brief Gets sysfs path to SATA port.
  *

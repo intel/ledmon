@@ -17,11 +17,9 @@
  *
  */
 
-#include <config.h>
-
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -29,6 +27,7 @@
 #include <dmalloc.h>
 #endif
 
+#include "config.h"
 #include "pci_slot.h"
 #include "utils.h"
 

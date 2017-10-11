@@ -17,31 +17,30 @@
  *
  */
 
-#include <config.h>
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 #include <fcntl.h>
-#include <string.h>
+#include <limits.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
+#include "block.h"
+#include "cntrl.h"
+#include "config.h"
+#include "enclosure.h"
 #include "ibpi.h"
 #include "list.h"
-#include "utils.h"
-#include "sysfs.h"
-#include "block.h"
-#include "slave.h"
-#include "raid.h"
-#include "enclosure.h"
-#include "cntrl.h"
 #include "pci_slot.h"
+#include "raid.h"
+#include "slave.h"
+#include "sysfs.h"
+#include "utils.h"
 
 /**
  */

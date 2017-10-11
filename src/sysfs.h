@@ -20,6 +20,8 @@
 #ifndef _SYSFS_H_INCLUDED_
 #define _SYSFS_H_INCLUDED_
 
+#include "status.h"
+
 /**
  * @brief Initializes sysfs module.
  *

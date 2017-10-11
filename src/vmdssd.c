@@ -15,23 +15,20 @@
  *
  */
 
-#include <config.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <errno.h>
-#include <limits.h>
-
-#include "status.h"
+#include "config.h"
 #include "list.h"
-#include "utils.h"
-#include "ibpi.h"
-#include "block.h"
-#include "vmdssd.h"
-#include "sysfs.h"
 #include "pci_slot.h"
+#include "status.h"
+#include "sysfs.h"
+#include "utils.h"
+#include "vmdssd.h"
 
 #define ATTENTION_OFF        0b1111 /* Attention Off, Power Off */
 #define ATTENTION_LOCATE     0b0111 /* Attention Off, Power On */

@@ -17,25 +17,24 @@
  *
  */
 
-#include <config.h>
 #include <limits.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
+#include "config.h"
 #include "ibpi.h"
-#include "utils.h"
 #include "list.h"
-#include "sysfs.h"
-#include "block.h"
 #include "slave.h"
+#include "status.h"
+#include "sysfs.h"
+#include "utils.h"
 
 /**
  */

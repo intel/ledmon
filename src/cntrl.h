@@ -20,8 +20,6 @@
 #ifndef _CNTRL_H_INCLUDED_
 #define _CNTRL_H_INCLUDED_
 
-#include "smp.h"
-
 /**
  * This enumeration type lists all supported storage controller types.
  */

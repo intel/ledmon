@@ -20,6 +20,8 @@
 #ifndef _ENCLOSURE_H_INCLUDED_
 #define _ENCLOSURE_H_INCLUDED_
 
+#include <stdint.h>
+
 /**
  * @brief Enclosure device structure.
  *

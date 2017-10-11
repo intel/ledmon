@@ -17,30 +17,29 @@
  *
  */
 
-#include <config.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 #include <ctype.h>
-#include <string.h>
-#include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <syslog.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
-#include <time.h>
-#include <sys/time.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
+#include "config.h"
 #include "list.h"
+#include "status.h"
 #include "utils.h"
 
 /**

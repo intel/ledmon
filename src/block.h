@@ -20,6 +20,10 @@
 #ifndef _BLOCK_H_INCLUDED_
 #define _BLOCK_H_INCLUDED_
 
+#include "cntrl.h"
+#include "ibpi.h"
+#include "time.h"
+
 struct block_device;
 
 /**

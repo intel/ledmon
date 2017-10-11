@@ -17,23 +17,20 @@
  *
  */
 
-#include <config.h>
-
-#include <unistd.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "ibpi.h"
-#include "block.h"
 #include "ahci.h"
+#include "config.h"
 #include "utils.h"
 
 /**

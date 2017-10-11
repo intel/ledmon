@@ -20,6 +20,9 @@
 #ifndef _SCSI_H_INCLUDED
 #define _SCSI_H_INCLUDED
 
+#include "block.h"
+#include "ibpi.h"
+
 /**
  * @brief Gets a path to slot of an enclosure.
  *

@@ -17,20 +17,17 @@
  *
  */
 
-#include <config.h>
-#include <stdlib.h>
+#include <assert.h>
 #include <stdint.h>
-#include <string.h>
-#include <assert.h>
-#include <sys/types.h>
 #include <stdio.h>
-#include <assert.h>
+#include <string.h>
+#include <sys/types.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
+#include "config.h"
 #include "list.h"
 #include "version.h"
 

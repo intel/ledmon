@@ -17,5 +17,7 @@
  *
  */
 
+#include "block.h"
+
 int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi);
 char *dellssd_get_path(const char *path, const char *cntrl_path);

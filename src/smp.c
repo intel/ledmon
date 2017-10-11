@@ -17,37 +17,36 @@
  *
  */
 
-#include <config.h>
 
-#include <limits.h>
+#include <dirent.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <linux/bsg.h>
+#include <scsi/sg.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-
-#include <scsi/sg.h>
-#include <linux/bsg.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "ibpi.h"
-#include "status.h"
-#include "list.h"
 #include "block.h"
 #include "cntrl.h"
-#include "scsi.h"
+#include "config.h"
 #include "enclosure.h"
+#include "ibpi.h"
+#include "list.h"
+#include "scsi.h"
+#include "smp.h"
+#include "status.h"
 #include "sysfs.h"
 #include "utils.h"
-#include "smp.h"
 
 #define GPIO_TX_GP1	0x01
 

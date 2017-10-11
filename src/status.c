@@ -17,8 +17,7 @@
  *
  */
 
-#include <config.h>
-
+#include "config.h"
 #include "status.h"
 
 /**

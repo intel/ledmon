@@ -17,36 +17,32 @@
  *
  */
 
-#include <config.h>
-
+#include <dirent.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <time.h>
-#include <limits.h>
 #include <string.h>
-#include <stdint.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
-#include "ibpi.h"
-#include "utils.h"
-#include "list.h"
-#include "sysfs.h"
-#include "block.h"
-#include "slave.h"
-#include "raid.h"
-#include "cntrl.h"
-#include "scsi.h"
-#include "smp.h"
 #include "ahci.h"
+#include "block.h"
+#include "config.h"
 #include "dellssd.h"
+#include "list.h"
+#include "raid.h"
+#include "scsi.h"
+#include "slave.h"
+#include "smp.h"
+#include "status.h"
+#include "sysfs.h"
+#include "utils.h"
 #include "vmdssd.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block

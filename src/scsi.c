@@ -17,18 +17,16 @@
  *
  */
 
-#include <config.h>
-
-#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <errno.h>
-#include <unistd.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -37,16 +35,15 @@
 #include <scsi/sg_lib.h>
 #include <scsi/sg_cmds_extra.h>
 
-#include "ibpi.h"
-#include "status.h"
-#include "list.h"
-#include "block.h"
 #include "cntrl.h"
-#include "scsi.h"
+#include "config.h"
 #include "enclosure.h"
+#include "list.h"
+#include "scsi.h"
+#include "ses.h"
+#include "status.h"
 #include "sysfs.h"
 #include "utils.h"
-#include "ses.h"
 
 static int debug = 0;
 

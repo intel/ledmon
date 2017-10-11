@@ -17,35 +17,35 @@
  *
  */
 
-#include <config.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <limits.h>
 #include <ctype.h>
-#include <string.h>
-#include <time.h>
-#include <getopt.h>
-#include <syslog.h>
-#include <stdlib.h>
 #include <errno.h>
+#include <getopt.h>
+#include <limits.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "status.h"
-#include "list.h"
-#include "cntrl.h"
-#include "sysfs.h"
-#include "ibpi.h"
+#include "ahci.h"
 #include "block.h"
+#include "cntrl.h"
+#include "config.h"
+#include "ibpi.h"
+#include "list.h"
+#include "scsi.h"
+#include "status.h"
+#include "sysfs.h"
 #include "utils.h"
 #include "version.h"
-#include "scsi.h"
-#include "ahci.h"
 
 /**
  * @brief An IBPI state structure.

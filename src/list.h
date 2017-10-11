@@ -20,6 +20,10 @@
 #ifndef _LIST_H_INCLUDED_
 #define _LIST_H_INCLUDED_
 
+#include <stdlib.h>
+
+#include "status.h"
+
 /**
  * This data-type represents a prototype of test function. Test function is used
  * by list_first_that() and list_last_that() functions as 'test' parameter. The

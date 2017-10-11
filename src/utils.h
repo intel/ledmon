@@ -20,6 +20,9 @@
 #ifndef _UTILS_H_INCLUDED_
 #define _UTILS_H_INCLUDED_
 
+#include "stdlib.h"
+#include "stdint.h"
+
 /**
  * Maximum number of bytes in temporary buffer. It is used for local variables.
  */

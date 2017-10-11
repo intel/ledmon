@@ -44,7 +44,8 @@ OBJECTS=\
 	$(OUTDIR)/dellssd.o	\
 	$(OUTDIR)/utils.o	\
 	$(OUTDIR)/pci_slot.o	\
-	$(OUTDIR)/vmdssd.o
+        $(OUTDIR)/vmdssd.o      \
+        $(OUTDIR)/udev.o
 
 # Build components of ledmon application.
 LEDMON_OBJECTS=\
@@ -66,7 +67,7 @@ CPPFLAGS=$(DEFFLAGS)
 ALL_CPPFLAGS=$(CPPFLAGS) -I../config
 
 LDFLAGS=$(CXFLAGS)
-LDLIBS=-lsgutils2
+LDLIBS=-lsgutils2 -ludev
 
 SOURCES:=$(shell find -name "*.[cC]" -print)
 

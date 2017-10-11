@@ -52,6 +52,10 @@
  *                 is set, when a RAID device disappears, too. Oneshot means
  *                 as soon application applies the state it will change
  *                 to UNKNOWN.
+ * - ADDED         this state means that device previously known to ledmon is
+ *                 restored. This state will be changed to ONESHOT_NORMAL.
+ * - REMOVED       this state means that device was removed from system. It
+ *                 will be changed to ADDED after restoring device to system.
  */
 enum ibpi_pattern {
 	IBPI_PATTERN_UNKNOWN = 0,
@@ -67,6 +71,8 @@ enum ibpi_pattern {
 	IBPI_PATTERN_FAILED_DRIVE,
 	IBPI_PATTERN_LOCATE,
 	IBPI_PATTERN_LOCATE_OFF,
+	IBPI_PATTERN_ADDED,
+	IBPI_PATTERN_REMOVED,
 	/* Below are SES-2 codes. Note that by default most IBPI messages are
 	 * translated into SES when needed but SES codes can be added also. */
 	SES_REQ_ABORT,

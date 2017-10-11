@@ -85,7 +85,9 @@ const char *ibpi_str[] = {
 	[IBPI_PATTERN_PFA]            = "PFA",
 	[IBPI_PATTERN_FAILED_DRIVE]   = "FAILURE",
 	[IBPI_PATTERN_LOCATE]         = "LOCATE",
-	[IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF"
+	[IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF",
+	[IBPI_PATTERN_ADDED]          = "ADDED",
+	[IBPI_PATTERN_REMOVED]        = "REMOVED"
 };
 
 /**

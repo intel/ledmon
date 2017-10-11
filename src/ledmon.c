@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -51,6 +52,7 @@
 #include "smp.h"
 #include "status.h"
 #include "sysfs.h"
+#include "udev.h"
 #include "utils.h"
 #include "version.h"
 
@@ -109,7 +111,9 @@ const char *ibpi_str[] = {
 	[IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",
 	[IBPI_PATTERN_FAILED_DRIVE]   = "Failure",
 	[IBPI_PATTERN_LOCATE]         = "Locate",
-	[IBPI_PATTERN_LOCATE_OFF]     = "Locate Off"
+	[IBPI_PATTERN_LOCATE_OFF]     = "Locate Off",
+	[IBPI_PATTERN_ADDED]          = "Added",
+	[IBPI_PATTERN_REMOVED]        = "Removed"
 };
 
 /**
@@ -463,8 +467,8 @@ static void _ledmon_setup_signals(void)
  */
 static void _ledmon_wait(int seconds)
 {
-	fd_set rd;
-	int fd;
+	int fd, udev_fd, max_fd;
+	fd_set rdfds, exfds;
 	struct timespec timeout;
 	sigset_t sigset;
 
@@ -472,11 +476,26 @@ static void _ledmon_wait(int seconds)
 	sigdelset(&sigset, SIGTERM);
 	timeout.tv_nsec = 0;
 	timeout.tv_sec = seconds;
-	FD_ZERO(&rd);
+
+	FD_ZERO(&rdfds);
+	FD_ZERO(&exfds);
+
 	fd = open("/proc/mdstat", O_RDONLY);
-	if (fd)
-		FD_SET(fd, &rd);
-	pselect(fd + 1, NULL, NULL, &rd, &timeout, &sigset);
+	if (fd >= 0)
+		FD_SET(fd, &exfds);
+
+	udev_fd = get_udev_monitor();
+	if (udev_fd >= 0)
+		FD_SET(udev_fd, &rdfds);
+
+	max_fd = MAX(fd, udev_fd);
+	while (pselect(max_fd + 1, &rdfds, NULL, &exfds, &timeout, &sigset) > 0) {
+		/* ignore 'change' udev event */
+		if (!FD_ISSET(udev_fd, &rdfds) ||
+		    handle_udev_event(ledmon_block_list) <= 0)
+			break;
+	}
+
 	if (fd >= 0)
 		close(fd);
 }
@@ -586,7 +605,9 @@ static void _add_block(struct block_device *block)
 	if (temp) {
 		enum ibpi_pattern ibpi = temp->ibpi;
 		temp->timestamp = block->timestamp;
-		if (temp->ibpi == IBPI_PATTERN_ONESHOT_NORMAL) {
+		if (temp->ibpi == IBPI_PATTERN_ADDED) {
+			temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
+		} else if (temp->ibpi == IBPI_PATTERN_ONESHOT_NORMAL) {
 			temp->ibpi = IBPI_PATTERN_UNKNOWN;
 		} else if (temp->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
 			if (block->ibpi == IBPI_PATTERN_UNKNOWN) {
@@ -653,7 +674,8 @@ static void _send_msg(struct block_device *block)
 			  strstr(block->sysfs_path, "host"));
 		return;
 	}
-	if (block->timestamp != timestamp) {
+	if (block->timestamp != timestamp ||
+	    block->ibpi == IBPI_PATTERN_REMOVED) {
 		if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
 			log_info("CHANGE %s: from '%s' to '%s'.",
 				 block->sysfs_path, ibpi_str[block->ibpi],
@@ -857,5 +879,6 @@ int main(int argc, char *argv[])
 		}
 		_ledmon_wait(sleep_interval);
 	}
+	stop_udev_monitor();
 	exit(EXIT_SUCCESS);
 }

@@ -55,6 +55,7 @@
 #include "udev.h"
 #include "utils.h"
 #include "version.h"
+#include "vmdssd.h"
 
 /**
  * Default suspend time between sysfs scan operations, given in seconds.
@@ -507,7 +508,8 @@ static int is_dellssd(struct block_device *bd)
 
 static int is_vmd(struct block_device *bd)
 {
-	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD);
+	return ((bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD) ||
+		 bd->pci_slot);
 }
 
 /**
@@ -526,6 +528,7 @@ static int is_vmd(struct block_device *bd)
 static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 {
 	int i = 0;
+	enum cntrl_type cntrl = CNTRL_TYPE_UNKNOWN;
 
 	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {
 		log_debug("Device %s : No host_id!",
@@ -538,15 +541,21 @@ static int _compare(struct block_device *bd_old, struct block_device *bd_new)
 		return 0;
 	}
 	if (!bd_old->cntrl) {
-		log_debug("Device %s : No ctrl dev!",
-			  strstr(bd_old->sysfs_path, "host"));
-		return 0;
+		if (bd_old->pci_slot) {
+			cntrl = CNTRL_TYPE_VMD;
+		} else {
+			log_debug("Device %s : No ctrl dev!",
+				  strstr(bd_old->sysfs_path, "host"));
+			return 0;
+		}
+	} else {
+		cntrl = bd_old->cntrl->cntrl_type;
 	}
 
-	if (bd_old->cntrl->cntrl_type != bd_new->cntrl->cntrl_type)
+	if (cntrl != bd_new->cntrl->cntrl_type)
 		return 0;
 
-	switch (bd_old->cntrl->cntrl_type) {
+	switch (cntrl) {
 	case CNTRL_TYPE_AHCI:
 		/* Missing support for port multipliers. Compare just hostX. */
 		i = (bd_old->host_id == bd_new->host_id);
@@ -669,7 +678,7 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
-	if (!block->cntrl) {
+	if (!block->cntrl && !block->pci_slot) {
 		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
 		return;
@@ -682,8 +691,9 @@ static void _send_msg(struct block_device *block)
 				 ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
 			block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
 		} else {
+			char *host = strstr(block->sysfs_path, "host");
 			log_debug("DETACHED DEV '%s' in failed state",
-				  strstr(block->sysfs_path, "host"));
+				  host ? host : block->sysfs_path);
 		}
 	}
 	block->send_fn(block, block->ibpi);
@@ -703,8 +713,11 @@ static void _revalidate_dev(struct block_device *block)
 	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
 					    block->cntrl_path);
 	if (!block->cntrl) {
-		log_debug("Failed to get controller for dev: %s, ctrl path: %s",
-			  block->sysfs_path, block->cntrl_path);
+		/* It could be removed VMD drive */
+		block->pci_slot = vmdssd_find_pci_slot(block->sysfs_path);
+		if (!block->pci_slot)
+			log_debug("Failed to get controller for dev: %s, ctrl path: %s",
+				  block->sysfs_path, block->cntrl_path);
 		return;
 	}
 	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
@@ -727,12 +740,14 @@ static void _invalidate_dev(struct block_device *block)
 	/* Those fields are valid only per 'session' - through single scan. */
 	block->cntrl = NULL;
 	block->host = NULL;
+	block->pci_slot = NULL;
 }
 
 static void _check_block_dev(struct block_device *block, int *restart)
 {
-	if (block->cntrl == NULL) {
-		(*restart)++;
+	if (!block->cntrl) {
+		if  (!block->pci_slot)
+			(*restart)++;
 		return;
 	}
 	/* Check SCSI device behind expander. */

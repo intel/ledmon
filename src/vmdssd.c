@@ -84,38 +84,66 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
 	}
 }
 
-int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+static int check_slot_module(const char *slot_path)
 {
-	char *pci_port;
-	char attention_path[PATH_MAX];
 	char module_path[PATH_MAX], real_module_path[PATH_MAX];
-	char buf[WRITE_BUFFER_SIZE];
-	uint16_t val;
-	struct pci_slot *slot;
 	void *dir;
 
-	pci_port = get_slot_from_syspath(device->sysfs_path);
-	if (!pci_port)
-		__set_errno_and_return(ENODEV);
-
-	slot = sysfs_pci_slot_first_that(_pci_slot_search, pci_port);
-	if (slot == NULL) {
-		log_debug("PCI hotplug slot not found for %s\n", device->sysfs_path);
-		__set_errno_and_return(ENODEV);
-	}
-
 	// check if slot is managed by pciehp driver
-	snprintf(module_path, PATH_MAX, "%s/module", slot->sysfs_path);
+	snprintf(module_path, PATH_MAX, "%s/module", slot_path);
 	dir = scan_dir(module_path);
 	if (dir) {
 		list_fini(dir);
 		realpath(module_path, real_module_path);
 		if (strcmp(real_module_path, SYSFS_PCIEHP) != 0)
 			__set_errno_and_return(EINVAL);
+	} else {
+		__set_errno_and_return(ENOENT);
 	}
+
+	return 0;
+}
+
+struct pci_slot *vmdssd_find_pci_slot(char *device_path)
+{
+	char *pci_addr;
+	struct pci_slot *slot;
+
+	pci_addr = get_slot_from_syspath(device_path);
+	if (!pci_addr)
+		return NULL;
+
+	slot = sysfs_pci_slot_first_that(_pci_slot_search, pci_addr);
+	if (slot == NULL || check_slot_module(slot->sysfs_path) < 0)
+		return NULL;
+
+	return slot;
+}
+
+int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+{
+	char attention_path[PATH_MAX];
+	char buf[WRITE_BUFFER_SIZE];
+	uint16_t val;
+	struct pci_slot *slot;
+	char *short_name = strrchr(device->sysfs_path, '/');
+
+	if (short_name)
+		short_name++;
+	else
+		short_name = device->sysfs_path;
 
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
+
+	slot = vmdssd_find_pci_slot(device->sysfs_path);
+	if (!slot) {
+		log_debug("PCI hotplug slot not found for %s\n", short_name);
+		__set_errno_and_return(ENODEV);
+	}
+
+	log_debug("%s before: 0x%x\n", short_name,
+		  get_int(slot->sysfs_path, 0, "attention"));
 
 	get_ctrl(ibpi, &val);
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
@@ -125,8 +153,8 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 		return -1;
 	}
 
-	log_debug("%s before: 0x%x ", device->sysfs_path, slot->attention);
-	log_debug("after: 0x%x\n", get_int(slot->sysfs_path, 0, "attention"));
+	log_debug("%s after: 0x%x\n", short_name,
+		  get_int(slot->sysfs_path, 0, "attention"));
 
 	return 0;
 }

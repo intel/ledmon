@@ -231,6 +231,7 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 
 			device->cntrl = cntrl;
 			device->sysfs_path = strdup(link);
+			device->pci_slot = vmdssd_find_pci_slot(device->sysfs_path);
 			device->cntrl_path = host;
 			device->ibpi = IBPI_PATTERN_UNKNOWN;
 			device->ibpi_prev = IBPI_PATTERN_NONE;
@@ -302,6 +303,7 @@ struct block_device *block_device_duplicate(struct block_device *block)
 			result->flush_fn = block->flush_fn;
 			result->timestamp = block->timestamp;
 			result->cntrl = block->cntrl;
+			result->pci_slot = block->pci_slot;
 			result->host = block->host;
 			result->host_id = block->host_id;
 			result->phy_index = block->phy_index;

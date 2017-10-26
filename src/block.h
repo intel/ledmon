@@ -213,4 +213,20 @@ int dev_directly_attached(const char *path);
  */
 struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id);
 
+
+/**
+ * @brief Checks the presence of block device.
+ *
+ * This is internal function of monitor service. The function is checking
+ * whether block device is already on the list or it is missing from the list.
+ * The function is design to be used as 'test' parameter for list_find_first()
+ * function.
+ *
+ * @param[in]    blk1            - an element from a list to compare to.
+ * @param[in]    blk2            - a block device being searched.
+ *
+ * @return 0 if the block devices do not match, otherwise function returns 1.
+ */
+int block_compare(struct block_device *bd_old, struct block_device *bd_new);
+
 #endif				/* _BLOCK_H_INCLUDED_ */

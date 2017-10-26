@@ -160,6 +160,17 @@ static int _compare(struct cntrl_device *cntrl, const char *path)
 		0);
 }
 
+static int is_dellssd(struct block_device *bd)
+{
+	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
+}
+
+static int is_vmd(struct block_device *bd)
+{
+	return ((bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD) ||
+		 bd->pci_slot);
+}
+
 /**
  * @brief Determines a storage controller.
  *
@@ -312,4 +323,71 @@ struct block_device *block_device_duplicate(struct block_device *block)
 		}
 	}
 	return result;
+}
+
+int block_compare(struct block_device *bd_old, struct block_device *bd_new)
+{
+	int i = 0;
+	enum cntrl_type cntrl = CNTRL_TYPE_UNKNOWN;
+
+	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {
+		log_debug("Device %s : No host_id!",
+			  strstr(bd_old->sysfs_path, "host"));
+		return 0;
+	}
+	if (!is_dellssd(bd_new) && !is_vmd(bd_new) && bd_new->host_id == -1) {
+		log_debug("Device %s : No host_id!",
+			  strstr(bd_new->sysfs_path, "host"));
+		return 0;
+	}
+	if (!bd_old->cntrl) {
+		if (bd_old->pci_slot) {
+			cntrl = CNTRL_TYPE_VMD;
+		} else {
+			log_debug("Device %s : No ctrl dev!",
+				  strstr(bd_old->sysfs_path, "host"));
+			return 0;
+		}
+	} else {
+		cntrl = bd_old->cntrl->cntrl_type;
+	}
+
+	if (cntrl != bd_new->cntrl->cntrl_type)
+		return 0;
+
+	switch (cntrl) {
+	case CNTRL_TYPE_AHCI:
+		/* Missing support for port multipliers. Compare just hostX. */
+		i = (bd_old->host_id == bd_new->host_id);
+		break;
+
+	case CNTRL_TYPE_SCSI:
+		/* Host and phy is not enough. They might be DA or EA. */
+		if (dev_directly_attached(bd_old->sysfs_path) &&
+		    dev_directly_attached(bd_new->sysfs_path)) {
+			/* Just compare host & phy */
+			i = (bd_old->host_id == bd_new->host_id) &&
+			    (bd_old->phy_index == bd_new->phy_index);
+
+			break;
+		}
+		if (!dev_directly_attached(bd_old->sysfs_path) &&
+		    !dev_directly_attached(bd_new->sysfs_path)) {
+			/* Both expander attached */
+			i = (bd_old->host_id == bd_new->host_id) &&
+			    (bd_old->phy_index == bd_new->phy_index);
+			i = i && (bd_old->encl_index == bd_new->encl_index);
+			break;
+		}
+		/* */
+		break;
+
+	case CNTRL_TYPE_DELLSSD:
+	case CNTRL_TYPE_VMD:
+	default:
+		/* Just compare names */
+		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);
+		break;
+	}
+	return i;
 }

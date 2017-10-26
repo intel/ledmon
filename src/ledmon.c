@@ -501,97 +501,6 @@ static void _ledmon_wait(int seconds)
 		close(fd);
 }
 
-static int is_dellssd(struct block_device *bd)
-{
-	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
-}
-
-static int is_vmd(struct block_device *bd)
-{
-	return ((bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD) ||
-		 bd->pci_slot);
-}
-
-/**
- * @brief Checks the presence of block device.
- *
- * This is internal function of monitor service. The function is checking
- * whether block device is already on the list or it is missing from the list.
- * The function is design to be used as 'test' parameter for list_find_first()
- * function.
- *
- * @param[in]    blk1            - an element from a list to compare to.
- * @param[in]    blk2            - a block device being searched.
- *
- * @return 0 if the block devices do not match, otherwise function returns 1.
- */
-static int _compare(struct block_device *bd_old, struct block_device *bd_new)
-{
-	int i = 0;
-	enum cntrl_type cntrl = CNTRL_TYPE_UNKNOWN;
-
-	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {
-		log_debug("Device %s : No host_id!",
-			  strstr(bd_old->sysfs_path, "host"));
-		return 0;
-	}
-	if (!is_dellssd(bd_new) && !is_vmd(bd_new) && bd_new->host_id == -1) {
-		log_debug("Device %s : No host_id!",
-			  strstr(bd_new->sysfs_path, "host"));
-		return 0;
-	}
-	if (!bd_old->cntrl) {
-		if (bd_old->pci_slot) {
-			cntrl = CNTRL_TYPE_VMD;
-		} else {
-			log_debug("Device %s : No ctrl dev!",
-				  strstr(bd_old->sysfs_path, "host"));
-			return 0;
-		}
-	} else {
-		cntrl = bd_old->cntrl->cntrl_type;
-	}
-
-	if (cntrl != bd_new->cntrl->cntrl_type)
-		return 0;
-
-	switch (cntrl) {
-	case CNTRL_TYPE_AHCI:
-		/* Missing support for port multipliers. Compare just hostX. */
-		i = (bd_old->host_id == bd_new->host_id);
-		break;
-
-	case CNTRL_TYPE_SCSI:
-		/* Host and phy is not enough. They might be DA or EA. */
-		if (dev_directly_attached(bd_old->sysfs_path) &&
-		    dev_directly_attached(bd_new->sysfs_path)) {
-			/* Just compare host & phy */
-			i = (bd_old->host_id == bd_new->host_id) &&
-			    (bd_old->phy_index == bd_new->phy_index);
-
-			break;
-		}
-		if (!dev_directly_attached(bd_old->sysfs_path) &&
-		    !dev_directly_attached(bd_new->sysfs_path)) {
-			/* Both expander attached */
-			i = (bd_old->host_id == bd_new->host_id) &&
-			    (bd_old->phy_index == bd_new->phy_index);
-			i = i && (bd_old->encl_index == bd_new->encl_index);
-			break;
-		}
-		/* */
-		break;
-
-	case CNTRL_TYPE_DELLSSD:
-	case CNTRL_TYPE_VMD:
-	default:
-		/* Just compare names */
-		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);
-		break;
-	}
-	return i;
-}
-
 /**
  * @brief Adds the block device to list.
  *
@@ -610,7 +519,7 @@ static void _add_block(struct block_device *block)
 {
 	struct block_device *temp;
 
-	temp = list_first_that(ledmon_block_list, _compare, block);
+	temp = list_first_that(ledmon_block_list, block_compare, block);
 	if (temp) {
 		enum ibpi_pattern ibpi = temp->ibpi;
 		temp->timestamp = block->timestamp;

@@ -26,6 +26,7 @@
 #include "ibpi.h"
 #include "list.h"
 #include "status.h"
+#include "sysfs.h"
 #include "udev.h"
 #include "utils.h"
 
@@ -36,7 +37,22 @@ static int _compare(struct block_device *bd, const char *syspath)
 	if (!bd || !syspath)
 		return 0;
 
-	return (strcmp(bd->sysfs_path, syspath) == 0);
+	if (strcmp(bd->sysfs_path, syspath) == 0) {
+		return 1;
+	} else {
+		void *cntrl_list;
+		struct block_device *bd_new;
+
+		cntrl_list = sysfs_get_cntrl_devices();
+		if (!cntrl_list)
+			return 0;
+
+		bd_new = block_device_init(cntrl_list, syspath);
+		if (!bd_new)
+			return 0;
+
+		return block_compare(bd, bd_new);
+	}
 }
 
 static int create_udev_monitor(void)
@@ -110,8 +126,10 @@ int handle_udev_event(void *ledmon_block_list)
 			return 0;
 		}
 		if (strncmp(action, "add", 3) == 0) {
+			log_debug("ADDED %s", block->sysfs_path);
 			block->ibpi = IBPI_PATTERN_ADDED;
 		} else if (strncmp(action, "remove", 6) == 0) {
+			log_debug("REMOVED %s", block->sysfs_path);
 			block->ibpi = IBPI_PATTERN_REMOVED;
 		} else {
 			/* not interesting event */

@@ -549,11 +549,9 @@ static void _add_block(struct block_device *block)
 				 ibpi_str[temp->ibpi]);
 		}
 		/* Check if name of the device changed.*/
-		/* It's possible for SCSI devices.     */
 		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
 			log_info("NAME CHANGED %s to %s",
-				 strstr(temp->sysfs_path, "host"),
-				 strstr(block->sysfs_path, "host"));
+				 temp->sysfs_path, block->sysfs_path);
 			free(temp->sysfs_path);
 			temp->sysfs_path = strdup(block->sysfs_path);
 		}
@@ -621,9 +619,9 @@ static void _revalidate_dev(struct block_device *block)
 	/* Bring back controller and host to the device. */
 	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
 					    block->cntrl_path);
+	block->pci_slot = vmdssd_find_pci_slot(block->sysfs_path);
 	if (!block->cntrl) {
 		/* It could be removed VMD drive */
-		block->pci_slot = vmdssd_find_pci_slot(block->sysfs_path);
 		if (!block->pci_slot)
 			log_debug("Failed to get controller for dev: %s, ctrl path: %s",
 				  block->sysfs_path, block->cntrl_path);
@@ -701,8 +699,6 @@ static void _ledmon_execute(void)
 	list_for_each(ledmon_block_list, _flush_msg);
 	/* Check if there is any orphaned device. */
 	list_for_each_parm(ledmon_block_list, _check_block_dev, &restart);
-	/* Invalidate each device in the list. Clear controller and host. */
-	list_for_each(ledmon_block_list, _invalidate_dev);
 
 	if (restart) {
 		/* there is at least one detached element in the list. */
@@ -795,13 +791,15 @@ int main(int argc, char *argv[])
 				  strstatus(status));
 		} else {
 			_ledmon_execute();
-			status = sysfs_reset();
-			if (status != STATUS_SUCCESS) {
-				log_debug("main(): sysfs_reset() failed "
-					  "(status=%s).", strstatus(status));
-			}
 		}
 		_ledmon_wait(sleep_interval);
+		/* Invalidate each device in the list. Clear controller and host. */
+		list_for_each(ledmon_block_list, _invalidate_dev);
+		status = sysfs_reset();
+		if (status != STATUS_SUCCESS) {
+			log_debug("main(): sysfs_reset() failed "
+				  "(status=%s).", strstatus(status));
+		}
 	}
 	stop_udev_monitor();
 	exit(EXIT_SUCCESS);

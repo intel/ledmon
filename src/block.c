@@ -171,6 +171,24 @@ static int is_vmd(struct block_device *bd)
 		 bd->pci_slot);
 }
 
+static enum cntrl_type _get_cntrl_type(struct block_device *bd)
+{
+	enum cntrl_type cntrl = CNTRL_TYPE_UNKNOWN;
+
+	if (!bd->cntrl) {
+		if (bd->pci_slot)
+			/* This is possible only for VMD */
+			cntrl = CNTRL_TYPE_VMD;
+		else
+			log_debug("Device %s : No ctrl dev!",
+				  strstr(bd->sysfs_path, "host"));
+	} else {
+		cntrl = bd->cntrl->cntrl_type;
+	}
+
+	return cntrl;
+}
+
 /**
  * @brief Determines a storage controller.
  *
@@ -213,36 +231,49 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 	struct cntrl_device *cntrl;
 	char link[PATH_MAX], *host;
 	struct block_device *device = NULL;
+	struct pci_slot *pci_slot = NULL;
 	send_message_t send_fn = NULL;
 	flush_message_t flush_fn = NULL;
 	int host_id = -1;
 	char *host_name;
 
 	if (realpath(path, link)) {
+		pci_slot = vmdssd_find_pci_slot(link);
 		cntrl = block_get_controller(cntrl_list, link);
-		if (cntrl == NULL)
-			return NULL;
-		host = _get_host(link, cntrl);
-		if (host == NULL)
-			return NULL;
-		host_name = get_path_hostN(link);
-		if (host_name) {
-			sscanf(host_name, "host%d", &host_id);
-			free(host_name);
+		if (cntrl!= NULL) {
+			if (cntrl->cntrl_type == CNTRL_TYPE_VMD && !pci_slot)
+				return NULL;
+			host = _get_host(link, cntrl);
+			if (host == NULL)
+				return NULL;
+			host_name = get_path_hostN(link);
+			if (host_name) {
+				sscanf(host_name, "host%d", &host_id);
+				free(host_name);
+			}
+			flush_fn = _get_flush_fn(cntrl, link);
+			send_fn = _get_send_fn(cntrl, link);
+			if (send_fn  == NULL) {
+				free(host);
+				return NULL;
+			}
+		} else {
+			if (!pci_slot) {
+				return NULL;
+			} else {
+				/* New VMD drive - no cntrl in system */
+				flush_fn = NULL;
+				send_fn = vmdssd_write;
+			}
 		}
-		flush_fn = _get_flush_fn(cntrl, link);
-		send_fn = _get_send_fn(cntrl, link);
-		if (send_fn  == NULL) {
-			free(host);
-			return NULL;
-		}
+
 		device = calloc(1, sizeof(*device));
 		if (device) {
-			struct _host_type *hosts = cntrl->hosts;
+			struct _host_type *hosts = cntrl ? cntrl->hosts : NULL;
 
 			device->cntrl = cntrl;
 			device->sysfs_path = strdup(link);
-			device->pci_slot = vmdssd_find_pci_slot(device->sysfs_path);
+			device->pci_slot = pci_slot;
 			device->cntrl_path = host;
 			device->ibpi = IBPI_PATTERN_UNKNOWN;
 			device->ibpi_prev = IBPI_PATTERN_NONE;
@@ -259,7 +290,7 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 				}
 				hosts = hosts->next;
 			}
-			if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+			if (cntrl && cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
 				device->phy_index = cntrl_init_smp(link, cntrl);
 				if (!dev_directly_attached(link)
 						&& !scsi_get_enclosure(device)) {
@@ -328,7 +359,8 @@ struct block_device *block_device_duplicate(struct block_device *block)
 int block_compare(struct block_device *bd_old, struct block_device *bd_new)
 {
 	int i = 0;
-	enum cntrl_type cntrl = CNTRL_TYPE_UNKNOWN;
+	enum cntrl_type cntrl_old = CNTRL_TYPE_UNKNOWN;
+	enum cntrl_type cntrl_new = CNTRL_TYPE_UNKNOWN;
 
 	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {
 		log_debug("Device %s : No host_id!",
@@ -340,22 +372,14 @@ int block_compare(struct block_device *bd_old, struct block_device *bd_new)
 			  strstr(bd_new->sysfs_path, "host"));
 		return 0;
 	}
-	if (!bd_old->cntrl) {
-		if (bd_old->pci_slot) {
-			cntrl = CNTRL_TYPE_VMD;
-		} else {
-			log_debug("Device %s : No ctrl dev!",
-				  strstr(bd_old->sysfs_path, "host"));
-			return 0;
-		}
-	} else {
-		cntrl = bd_old->cntrl->cntrl_type;
-	}
 
-	if (cntrl != bd_new->cntrl->cntrl_type)
+	cntrl_old = _get_cntrl_type(bd_old);
+	cntrl_new = _get_cntrl_type(bd_new);
+
+	if (cntrl_old == CNTRL_TYPE_UNKNOWN || cntrl_old != cntrl_new)
 		return 0;
 
-	switch (cntrl) {
+	switch (cntrl_old) {
 	case CNTRL_TYPE_AHCI:
 		/* Missing support for port multipliers. Compare just hostX. */
 		i = (bd_old->host_id == bd_new->host_id);
@@ -368,7 +392,6 @@ int block_compare(struct block_device *bd_old, struct block_device *bd_new)
 			/* Just compare host & phy */
 			i = (bd_old->host_id == bd_new->host_id) &&
 			    (bd_old->phy_index == bd_new->phy_index);
-
 			break;
 		}
 		if (!dev_directly_attached(bd_old->sysfs_path) &&
@@ -382,8 +405,15 @@ int block_compare(struct block_device *bd_old, struct block_device *bd_new)
 		/* */
 		break;
 
-	case CNTRL_TYPE_DELLSSD:
 	case CNTRL_TYPE_VMD:
+		/* compare names and address of the drive */
+		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);
+		if (!i && bd_old->pci_slot && bd_new->pci_slot)
+			i = (strcmp(bd_old->pci_slot->address,
+				 bd_new->pci_slot->address) == 0);
+		break;
+
+	case CNTRL_TYPE_DELLSSD:
 	default:
 		/* Just compare names */
 		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);

@@ -685,6 +685,12 @@ status_t sysfs_scan(void)
 	if (_scan_cntrl() != STATUS_SUCCESS)
 		return STATUS_CNTRL_LIST_ERROR;
 
+	if (slots_list == NULL)
+		return STATUS_NULL_POINTER;
+
+	if (_scan_slots() != STATUS_SUCCESS)
+		return STATUS_ENCLO_LIST_ERROR;
+
 	if (sysfs_block_list == NULL)
 		return STATUS_NULL_POINTER;
 
@@ -702,12 +708,6 @@ status_t sysfs_scan(void)
 
 	if (_scan_slave() != STATUS_SUCCESS)
 		return STATUS_SLAVE_LIST_ERROR;
-
-	if (slots_list == NULL)
-		return STATUS_NULL_POINTER;
-
-	if (_scan_slots() != STATUS_SUCCESS)
-		return STATUS_ENCLO_LIST_ERROR;
 
 	return list_for_each(slave_list, _determine);
 }

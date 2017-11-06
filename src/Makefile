@@ -74,10 +74,10 @@ SOURCES:=$(shell find -name "*.[cC]" -print)
 default: all
 
 ledmon: $(OUTDIR)/.depend $(LEDMON_OBJECTS)
-	$(CC) $(LDFLAGS) $(LDLIBS) $(LEDMON_OBJECTS) -o $@
+	$(CC) $(LDFLAGS) $(LEDMON_OBJECTS) $(LDLIBS) -o $@
 
 ledctl: $(OUTDIR)/.depend $(LEDCTL_OBJECTS)
-	$(CC) $(LDFLAGS) $(LDLIBS) $(LEDCTL_OBJECTS) -o $@
+	$(CC) $(LDFLAGS) $(LEDCTL_OBJECTS) $(LDLIBS) -o $@
 
 $(OUTDIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(ALL_CPPFLAGS) -c $< -o $@

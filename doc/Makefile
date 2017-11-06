@@ -29,7 +29,7 @@ default: all
 
 ledctl.conf.5.gz: ledctl.conf.pod
 	pod2man -r "LEDCTL.CONF Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
-		-s 5 -n ledctl.conf -c "Inter(R) Enclosure LED Utilities Config" $< | gzip -9f > $@
+		-s 5 -n ledctl.conf -c "Intel(R) Enclosure LED Utilities Config" $< | gzip -9f > $@
 
 ledmon.8.gz: ledmon.pod
 	pod2man -r "LEDMON Version $(RELEASE_VER)" -d $(RELEASE_DATE) \

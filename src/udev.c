@@ -42,6 +42,7 @@ static int _compare(struct block_device *bd, const char *syspath)
 	} else {
 		void *cntrl_list;
 		struct block_device *bd_new;
+		int ret;
 
 		cntrl_list = sysfs_get_cntrl_devices();
 		if (!cntrl_list)
@@ -51,7 +52,11 @@ static int _compare(struct block_device *bd, const char *syspath)
 		if (!bd_new)
 			return 0;
 
-		return block_compare(bd, bd_new);
+		ret = block_compare(bd, bd_new);
+		block_device_fini(bd_new);
+		free(bd_new);
+
+		return ret;
 	}
 }
 

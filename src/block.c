@@ -229,7 +229,8 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 struct block_device *block_device_init(void *cntrl_list, const char *path)
 {
 	struct cntrl_device *cntrl;
-	char link[PATH_MAX], *host;
+	char link[PATH_MAX];
+	char *host = NULL;
 	struct block_device *device = NULL;
 	struct pci_slot *pci_slot = NULL;
 	send_message_t send_fn = NULL;
@@ -240,7 +241,7 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 	if (realpath(path, link)) {
 		pci_slot = vmdssd_find_pci_slot(link);
 		cntrl = block_get_controller(cntrl_list, link);
-		if (cntrl!= NULL) {
+		if (cntrl != NULL) {
 			if (cntrl->cntrl_type == CNTRL_TYPE_VMD && !pci_slot)
 				return NULL;
 			host = _get_host(link, cntrl);
@@ -302,8 +303,9 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 					device = NULL;
 				}
 			}
-		} else
+		} else if (host) {
 			free(host);
+		}
 	}
 	return device;
 }

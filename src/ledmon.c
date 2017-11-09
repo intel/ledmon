@@ -144,7 +144,8 @@ enum longopt {
 	OPT_LOG,
 	OPT_QUIET,
 	OPT_VERSION,
-	OPT_WARNING
+	OPT_WARNING,
+	OPT_LOG_LEVEL,
 };
 
 /**
@@ -163,6 +164,7 @@ static struct option longopt[] = {
 	[OPT_QUIET]    = {"quiet", no_argument, NULL, '\0'},
 	[OPT_VERSION]  = {"version", no_argument, NULL, 'v'},
 	[OPT_WARNING]  = {"warning", no_argument, NULL, '\0'},
+	[OPT_LOG_LEVEL] = {"log-level", required_argument, NULL, '\0'},
 			 {NULL, no_argument, NULL, '\0'}
 };
 
@@ -330,6 +332,75 @@ static status_t _set_sleep_interval(const char *optarg)
 }
 
 /**
+ * @brief Sets verbose variable to given level.
+ *
+ * This is internal function of monitor service. The function maps given level
+ * to the value from verbose_level enum and sets verbose value given as second
+ * parameter.
+ *
+ * @param[in]      log_level     required new log_level.
+ * @param[in]      verbose_level address of verbose variable.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+static status_t _set_verbose_level(int log_level, enum verbose_level *verbose)
+{
+	int new_verbose = -1;
+
+	switch (log_level) {
+	case OPT_ALL:
+		new_verbose = VERB_ALL;
+		break;
+	case OPT_DEBUG:
+		new_verbose = VERB_DEBUG;
+		break;
+	case OPT_ERROR:
+		new_verbose = VERB_ERROR;
+		break;
+	case OPT_INFO:
+		new_verbose = VERB_INFO;
+		break;
+	case OPT_QUIET:
+		new_verbose = VERB_QUIET;
+		break;
+	case OPT_WARNING:
+		new_verbose = VERB_WARN;
+		break;
+	}
+	if (new_verbose != -1) {
+		*verbose = new_verbose;
+		return STATUS_SUCCESS;
+	}
+	return STATUS_CMDLINE_ERROR;
+}
+
+/**
+ * @brief Gets id for given CLI option which corresponds to value from longopt
+ * table.
+ *
+ * This is internal function of monitor service. The function maps given string
+ * to the value from longopt enum and returns id of matched element. Generic
+ * parameters allow to use this function for any CLI options-table which bases
+ * on option struct.
+ *
+ * @param[in]     optarg          String containing value given by user in CLI.
+ * @param[in]     longopt         Table of allowed CLI options.
+ *
+ * @return integer id if successful, otherwise a -1.
+ */
+static int _get_option_id(const char *optarg, struct option longopt[])
+{
+	struct option *i = longopt;
+
+	while (i->name != NULL) {
+		if (strcmp(i->name, optarg) == 0)
+			return i-longopt;
+		i++;
+	}
+	return -1;
+}
+
+/**
  * @brief Command line interface handler function.
  *
  * This is internal function of monitor service. This function interprets the
@@ -344,32 +415,24 @@ static status_t _cmdline_parse(int argc, char *argv[])
 {
 	int opt, opt_index = -1;
 	status_t status = STATUS_SUCCESS;
-
 	do {
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
 		if (opt == -1)
 			break;
 		switch (opt) {
+		int new_log_level;
 		case 0:
 			switch (opt_index) {
-			case OPT_ALL:
-				verbose = VERB_ALL;
+			case OPT_LOG_LEVEL:
+				new_log_level = _get_option_id(optarg, longopt);
+				if (new_log_level != -1)
+					status = _set_verbose_level(
+						new_log_level, &verbose);
+				else
+					status = STATUS_CMDLINE_ERROR;
 				break;
-			case OPT_DEBUG:
-				verbose = VERB_DEBUG;
-				break;
-			case OPT_ERROR:
-				verbose = VERB_ERROR;
-				break;
-			case OPT_INFO:
-				verbose = VERB_INFO;
-				break;
-			case OPT_QUIET:
-				verbose = VERB_QUIET;
-				break;
-			case OPT_WARNING:
-				verbose = VERB_WARN;
-				break;
+			default:
+				status = _set_verbose_level(opt, &verbose);
 			}
 			break;
 		case 'l':

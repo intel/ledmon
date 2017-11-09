@@ -78,7 +78,8 @@ The minimum is 5 seconds the maximum is not specified.
 
 Verbose level - 'quiet' means no logging at all and 'all' means to log
 everything. The levels are given in order. If user specifies more then one
-verbose option the last option comes into effect.
+verbose option the last option comes into effect. The default level is
+'warning'. Verbose level also can be set by B<--log-level>=I<level>.
 
 =item B<-h> or B<--help>
 

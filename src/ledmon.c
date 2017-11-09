@@ -43,6 +43,7 @@
 #include "block.h"
 #include "cntrl.h"
 #include "config.h"
+#include "config_file.h"
 #include "ibpi.h"
 #include "list.h"
 #include "pidfile.h"
@@ -58,23 +59,13 @@
 #include "vmdssd.h"
 
 /**
- * Default suspend time between sysfs scan operations, given in seconds.
- */
-#define DEFAULT_SLEEP_INTERVAL    10
-
-/**
- * Minimum suspend time between sysfs scan operations, given in seconds.
- */
-#define MINIMUM_SLEEP_INTERVAL    5
-
-/**
  * @brief List of active block devices.
  *
  * This list holds all block devices attached to supported storage controllers.
  * Only devices which have enclosure management feature enabled are on the
  * list, other devices are ignored (except protocol is forced).
  */
-static void *ledmon_block_list = NULL;
+static void *ledmon_block_list;
 
 /**
  * @brief Daemon process termination flag.
@@ -82,17 +73,17 @@ static void *ledmon_block_list = NULL;
  * This flag indicates that daemon process should terminate. User must send
  * SIGTERM to daemon in order to terminate the process gently.
  */
-static sig_atomic_t terminate = 0;
+static sig_atomic_t terminate;
 
 /**
  * @brief The interval between sysfs scans.
  *
  * This static variable holds the value of time interval used by the daemon to
  * set sleep between two scans of sysfs. The time interval is given in seconds.
- * The value is set to DEFAULT_SLEEP_INTERVAL by default and it can be change
+ * The value is set to LEDMON_DEF_SLEEP_INTERVAL by default and it can be change
  * with appropriate command line option. The minimum time interval is 5 seconds.
  */
-static int sleep_interval = DEFAULT_SLEEP_INTERVAL;
+static int sleep_interval = LEDMON_DEF_SLEEP_INTERVAL;
 
 /**
  * @brief Name of IBPI patterns.
@@ -326,9 +317,9 @@ static status_t _set_log_path(const char *path)
 static status_t _set_sleep_interval(const char *optarg)
 {
 	sleep_interval = atoi(optarg);
-	if (sleep_interval < MINIMUM_SLEEP_INTERVAL) {
+	if (sleep_interval < LEDMON_MIN_SLEEP_INTERVAL) {
 		log_warning("sleep interval too small... using default.");
-		sleep_interval = DEFAULT_SLEEP_INTERVAL;
+		sleep_interval = LEDMON_DEF_SLEEP_INTERVAL;
 	}
 	return STATUS_SUCCESS;
 }
@@ -807,6 +798,10 @@ int main(int argc, char *argv[])
 		return STATUS_ONEXIT_ERROR;
 	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
+
+	status = ledmon_read_config(NULL);
+	if (status != STATUS_SUCCESS)
+		return status;
 
 	if (pidfile_check(progname, NULL) == 0) {
 		log_warning("daemon is running...");

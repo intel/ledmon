@@ -33,6 +33,7 @@ OBJECTS=\
 	$(OUTDIR)/ahci.o	\
 	$(OUTDIR)/block.o	\
 	$(OUTDIR)/cntrl.o	\
+	$(OUTDIR)/config_file.o	\
 	$(OUTDIR)/enclosure.o	\
 	$(OUTDIR)/list.o	\
 	$(OUTDIR)/raid.o	\
@@ -58,6 +59,10 @@ LEDCTL_OBJECTS=\
 	$(OUTDIR)/ledctl.o	\
 	$(OBJECTS)
 
+TEST_CONFIG_OBJECTS=\
+	$(OUTDIR)/list.o	\
+	$(OUTDIR)/config_file.o
+
 CXFLAGS=-O0 -g
 CWFLAGS=-Wall
 CFLAGS=$(CXFLAGS) $(CWFLAGS)
@@ -78,6 +83,10 @@ ledmon: $(OUTDIR)/.depend $(LEDMON_OBJECTS)
 
 ledctl: $(OUTDIR)/.depend $(LEDCTL_OBJECTS)
 	$(CC) $(LDFLAGS) $(LEDCTL_OBJECTS) $(LDLIBS) -o $@
+
+test_config: ALL_CPPFLAGS += -D_TEST_CONFIG
+test_config: $(OUTDIR)/.depend $(TEST_CONFIG_OBJECTS)
+	$(CC) $(LDFLAGS) $(TEST_CONFIG_OBJECTS) $(LDLIBS) -o $@
 
 $(OUTDIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(ALL_CPPFLAGS) -c $< -o $@

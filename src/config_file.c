@@ -181,17 +181,6 @@ int ledmon_read_config(const char *filename)
 	if (!filename)
 		filename = LEDMON_DEF_CONF_FILE;
 
-	memset(&conf, 0, sizeof(struct ledmon_conf));
-
-	/* initialize with default values */
-	conf.blink_on_init = 1;
-	conf.blink_on_migration = 1;
-	conf.rebuild_blink_on_all = 1;
-	conf.raid_memebers_only = 0;
-	conf.log_level = LOG_LEVEL_WARNING;
-	conf.log_path = strdup(LEDMON_DEF_LOG_FILE);
-	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
-
 	f = fopen(filename, "re");
 	if (!f) {
 		log_warning("%s: does not exist, using built-in defaults\n",

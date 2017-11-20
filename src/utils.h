@@ -35,23 +35,6 @@
 #define WRITE_BUFFER_SIZE   1024
 
 /**
- * Verbose level for messages out from application.
- */
-enum verbose_level {
-	VERB_QUIET = 0,
-	VERB_ERROR,
-	VERB_WARN,
-	VERB_INFO,
-	VERB_DEBUG,
-	VERB_ALL
-};
-
-/**
- * Global variable indicates current level of verbosity.
- */
-extern enum verbose_level verbose;
-
-/**
  * This structure describes a device identifier. It consists of major and minor
  * attributes of device.
  */

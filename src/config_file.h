@@ -15,6 +15,7 @@
 
 #define LEDMON_DEF_CONF_FILE "/etc/ledmon.conf"
 #define LEDMON_DEF_LOG_FILE "/var/log/ledmon.log"
+#define LEDCTL_DEF_LOG_FILE "/var/log/ledctl.log"
 #define LEDMON_DEF_SLEEP_INTERVAL 10
 #define LEDMON_MIN_SLEEP_INTERVAL 5
 

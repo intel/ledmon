@@ -76,14 +76,13 @@ static void *ledmon_block_list;
 static sig_atomic_t terminate;
 
 /**
- * @brief The interval between sysfs scans.
+ * @brief Path to ledmon configuration file.
  *
- * This static variable holds the value of time interval used by the daemon to
- * set sleep between two scans of sysfs. The time interval is given in seconds.
- * The value is set to LEDMON_DEF_SLEEP_INTERVAL by default and it can be change
- * with appropriate command line option. The minimum time interval is 5 seconds.
+ * This string contains path of the ledmon configuration file. The value is
+ * set to LEDMON_DEF_CONF_FILE by default and it can be changed by command line
+ * option.
  */
-static int sleep_interval = LEDMON_DEF_SLEEP_INTERVAL;
+static char *ledmon_conf_path;
 
 /**
  * @brief Name of IBPI patterns.
@@ -268,9 +267,15 @@ static void _ledmon_help(void)
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static status_t _set_config_path(const char *path)
+static status_t _set_config_path(char **conf_path, const char *path)
 {
-	(void)path;
+	if (!path)
+		path = LEDMON_DEF_CONF_FILE;
+
+	if (*conf_path)
+		free(*conf_path);
+	*conf_path = strdup(path);
+
 	return STATUS_SUCCESS;
 }
 
@@ -300,6 +305,11 @@ static status_t _set_log_path(const char *path)
 	}
 	if (log_open(temp) < 0)
 		return STATUS_FILE_OPEN_ERROR;
+
+	if (conf.log_path)
+		free(conf.log_path);
+	conf.log_path = strdup(temp);
+
 	return STATUS_SUCCESS;
 }
 
@@ -316,10 +326,10 @@ static status_t _set_log_path(const char *path)
  */
 static status_t _set_sleep_interval(const char *optarg)
 {
-	sleep_interval = atoi(optarg);
-	if (sleep_interval < LEDMON_MIN_SLEEP_INTERVAL) {
+	conf.scan_interval = atoi(optarg);
+	if (conf.scan_interval < LEDMON_MIN_SLEEP_INTERVAL) {
 		log_warning("sleep interval too small... using default.");
-		sleep_interval = LEDMON_DEF_SLEEP_INTERVAL;
+		conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
 	}
 	return STATUS_SUCCESS;
 }
@@ -328,40 +338,39 @@ static status_t _set_sleep_interval(const char *optarg)
  * @brief Sets verbose variable to given level.
  *
  * This is internal function of monitor service. The function maps given level
- * to the value from verbose_level enum and sets verbose value given as second
- * parameter.
+ * to the value from verbose_level enum and sets verbose value to ledmon
+ * configuration.
  *
  * @param[in]      log_level     required new log_level.
- * @param[in]      verbose_level address of verbose variable.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static status_t _set_verbose_level(int log_level, enum verbose_level *verbose)
+static status_t _set_verbose_level(int log_level)
 {
 	int new_verbose = -1;
 
 	switch (log_level) {
 	case OPT_ALL:
-		new_verbose = VERB_ALL;
+		new_verbose = LOG_LEVEL_ALL;
 		break;
 	case OPT_DEBUG:
-		new_verbose = VERB_DEBUG;
+		new_verbose = LOG_LEVEL_DEBUG;
 		break;
 	case OPT_ERROR:
-		new_verbose = VERB_ERROR;
+		new_verbose = LOG_LEVEL_ERROR;
 		break;
 	case OPT_INFO:
-		new_verbose = VERB_INFO;
+		new_verbose = LOG_LEVEL_INFO;
 		break;
 	case OPT_QUIET:
-		new_verbose = VERB_QUIET;
+		new_verbose = LOG_LEVEL_QUIET;
 		break;
 	case OPT_WARNING:
-		new_verbose = VERB_WARN;
+		new_verbose = LOG_LEVEL_WARNING;
 		break;
 	}
 	if (new_verbose != -1) {
-		*verbose = new_verbose;
+		conf.log_level = new_verbose;
 		return STATUS_SUCCESS;
 	}
 	return STATUS_CMDLINE_ERROR;
@@ -394,6 +403,33 @@ static int _get_option_id(const char *optarg, struct option longopt[])
 }
 
 /**
+ * @brief Reads config file path from command line input.
+ *
+ * This is internal function of monitor service. This function looks for
+ * config file path in command line options given to the program from
+ * command line interface. When completed it restores optind to its default
+ * value so command line input can be parsed again.
+ *
+ * @param[in]     argc            - number of arguments.
+ * @param[in]     argv            - array of command line arguments.
+ *
+ * @return The function does not return a value.
+ */
+static char *_parse_conf_path(int argc, char *argv[])
+{
+	int opt_index = -1;
+	int opt = -1;
+
+	do {
+		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
+		if (opt == 'c')
+			return optarg;
+	} while (opt >= 0);
+
+	return NULL;
+}
+
+/**
  * @brief Command line interface handler function.
  *
  * This is internal function of monitor service. This function interprets the
@@ -408,6 +444,8 @@ static status_t _cmdline_parse(int argc, char *argv[])
 {
 	int opt, opt_index = -1;
 	status_t status = STATUS_SUCCESS;
+
+	optind = 1;
 	do {
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
 		if (opt == -1)
@@ -419,13 +457,12 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			case OPT_LOG_LEVEL:
 				new_log_level = _get_option_id(optarg, longopt);
 				if (new_log_level != -1)
-					status = _set_verbose_level(
-						new_log_level, &verbose);
+					status = _set_verbose_level(new_log_level);
 				else
 					status = STATUS_CMDLINE_ERROR;
 				break;
 			default:
-				status = _set_verbose_level(opt, &verbose);
+				status = _set_verbose_level(opt);
 			}
 			break;
 		case 'l':
@@ -445,7 +482,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			status = _set_sleep_interval(optarg);
 			break;
 		case 'c':
-			status = _set_config_path(optarg);
+			status = _set_config_path(&ledmon_conf_path, optarg);
 			break;
 		case 'v':
 			_ledmon_version();
@@ -779,6 +816,20 @@ static void _ledmon_execute(void)
 	}
 }
 
+static status_t _init_ledmon_conf()
+{
+	memset(&conf, 0, sizeof(struct ledmon_conf));
+
+	/* initialize with default values */
+	conf.blink_on_init = 1;
+	conf.blink_on_migration = 1;
+	conf.rebuild_blink_on_all = 1;
+	conf.raid_memebers_only = 0;
+	conf.log_level = LOG_LEVEL_WARNING;
+	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
+	return _set_log_path(LEDMON_DEF_LOG_FILE);
+}
+
 /**
  */
 int main(int argc, char *argv[])
@@ -789,6 +840,10 @@ int main(int argc, char *argv[])
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
+	status = _init_ledmon_conf();
+	if (status != STATUS_SUCCESS)
+		return status;
+
 	if (getuid() != 0) {
 		log_error("Only root can run this application.");
 		return STATUS_NOT_A_PRIVILEGED_USER;
@@ -796,12 +851,14 @@ int main(int argc, char *argv[])
 
 	if (on_exit(_ledmon_status, &terminate))
 		return STATUS_ONEXIT_ERROR;
-	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
-		return STATUS_CMDLINE_ERROR;
 
-	status = ledmon_read_config(NULL);
+	_set_config_path(&ledmon_conf_path, _parse_conf_path(argc, argv));
+	status = ledmon_read_config(ledmon_conf_path);
 	if (status != STATUS_SUCCESS)
 		return status;
+
+	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
+		return STATUS_CMDLINE_ERROR;
 
 	if (pidfile_check(progname, NULL) == 0) {
 		log_warning("daemon is running...");
@@ -862,7 +919,7 @@ int main(int argc, char *argv[])
 		} else {
 			_ledmon_execute();
 		}
-		_ledmon_wait(sleep_interval);
+		_ledmon_wait(conf.scan_interval);
 		/* Invalidate each device in the list. Clear controller and host. */
 		list_for_each(ledmon_block_list, _invalidate_dev);
 		status = sysfs_reset();

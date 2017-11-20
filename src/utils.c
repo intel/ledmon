@@ -38,13 +38,10 @@
 #endif
 
 #include "config.h"
+#include "config_file.h"
 #include "list.h"
 #include "status.h"
 #include "utils.h"
-
-/**
- */
-#define DEFAULT_LOG_NAME      "/var/log/%s.log"
 
 /**
  */
@@ -56,10 +53,6 @@
 /**
  */
 #define TIMESTAMP_PATTERN    "0x%08x:0x%08x "
-
-/**
- */
-enum verbose_level verbose = VERB_WARN;
 
 /**
  * Name of the executable. It is the last section of invocation path.
@@ -304,22 +297,13 @@ void log_close(void)
 
 /**
  */
-static void _log_open_default(void)
-{
-	char temp[PATH_MAX];
-	sprintf(temp, DEFAULT_LOG_NAME, progname);
-	log_open(temp);
-}
-
-/**
- */
 void log_debug(const char *buf, ...)
 {
 	va_list vl;
 
 	if (s_log == NULL)
-		_log_open_default();
-	if (s_log && (verbose >= VERB_DEBUG)) {
+		log_open(conf.log_path);
+	if (s_log && (conf.log_level >= LOG_LEVEL_DEBUG)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_DEBUG);
 		va_start(vl, buf);
@@ -340,8 +324,8 @@ void log_error(const char *buf, ...)
 	va_list vl;
 
 	if (s_log == NULL)
-		_log_open_default();
-	if (s_log && (verbose >= VERB_ERROR)) {
+		log_open(conf.log_path);
+	if (s_log && (conf.log_level >= LOG_LEVEL_ERROR)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_ERROR);
 		va_start(vl, buf);
@@ -362,8 +346,8 @@ void log_warning(const char *buf, ...)
 	va_list vl;
 
 	if (s_log == NULL)
-		_log_open_default();
-	if (s_log && (verbose >= VERB_WARN)) {
+		log_open(conf.log_path);
+	if (s_log && (conf.log_level >= LOG_LEVEL_WARNING)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_WARNING);
 		va_start(vl, buf);
@@ -384,8 +368,8 @@ void log_info(const char *buf, ...)
 	va_list vl;
 
 	if (s_log == NULL)
-		_log_open_default();
-	if (s_log && (verbose >= VERB_INFO)) {
+		log_open(conf.log_path);
+	if (s_log && (conf.log_level >= LOG_LEVEL_INFO)) {
 		_log_timestamp();
 		fprintf(s_log, PREFIX_INFO);
 		va_start(vl, buf);

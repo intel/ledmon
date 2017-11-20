@@ -40,6 +40,7 @@
 #include "block.h"
 #include "cntrl.h"
 #include "config.h"
+#include "config_file.h"
 #include "ibpi.h"
 #include "list.h"
 #include "scsi.h"
@@ -659,6 +660,15 @@ static status_t _ledctl_execute(void *ibpi_list)
 	return STATUS_SUCCESS;
 }
 
+static status_t _init_ledctl_conf()
+{
+	memset(&conf, 0, sizeof(struct ledmon_conf));
+
+	/* initialize with default values */
+	conf.log_level = LOG_LEVEL_WARNING;
+	return _set_log_path(LEDCTL_DEF_LOG_FILE);
+}
+
 /**
  * @brief Application's entry point.
  *
@@ -682,6 +692,10 @@ int main(int argc, char *argv[])
 
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PERROR, LOG_USER);
+
+	status = _init_ledctl_conf();
+	if (status != STATUS_SUCCESS)
+		return status;
 
 	if (getuid() != 0) {
 		log_error("Only root can run this application.");

@@ -402,7 +402,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 		ibpi = IBPI_PATTERN_PFA;
 	} else if ((strcmp(name, "failure") == 0) ||
 		   (strcmp(name, "disk_failed") == 0)) {
-		ibpi = IBPI_PATTERN_FAILED_DRIVE;
+		ibpi = SES_REQ_FAULT;
 	} else if (strcmp(name, "ses_abort") == 0) {
 		ibpi = SES_REQ_ABORT;
 	} else if (strcmp(name, "ses_rebuild") == 0) {

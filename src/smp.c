@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/sysmacros.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>

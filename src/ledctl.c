@@ -30,6 +30,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/sysmacros.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>

@@ -340,4 +340,6 @@ char *get_path_component_rev(const char *path, int index);
  */
 char *get_path_hostN(const char *path);
 
+int match_string(const char *string, const char *pattern);
+
 #endif				/* _UTILS_H_INCLUDED_ */

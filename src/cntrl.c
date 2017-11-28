@@ -30,6 +30,7 @@
 
 #include "cntrl.h"
 #include "config.h"
+#include "config_file.h"
 #include "list.h"
 #include "smp.h"
 #include "status.h"
@@ -308,6 +309,11 @@ static unsigned int _ahci_em_messages(const char *path)
 	}
 }
 
+static int match_cntrl(const char *pattern, const char *name)
+{
+	return match_string(name, pattern);
+}
+
 /*
  * Allocates memory for a new controller device structure. See cntrl.h for
  * details.
@@ -333,6 +339,19 @@ struct cntrl_device *cntrl_device_init(const char *path)
 			em_enabled = 0;
 		}
 		if (em_enabled) {
+			if (conf.cntrls_whitelist) {
+				char *cntrl = list_first_that(conf.cntrls_whitelist, match_cntrl, path);
+				if (!cntrl) {
+					log_debug("%s not found on whitelist, ignoring", path);
+					return NULL;
+				}
+			} else if (conf.cntrls_blacklist) {
+				char *cntrl = list_first_that(conf.cntrls_blacklist, match_cntrl, path);
+				if (cntrl) {
+					log_debug("%s found on blacklist, ignoring", path);
+					return NULL;
+				}
+			}
 			device = malloc(sizeof(struct cntrl_device));
 			if (device) {
 				if (type == CNTRL_TYPE_SCSI) {

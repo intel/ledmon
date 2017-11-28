@@ -660,7 +660,7 @@ static status_t _ledctl_execute(void *ibpi_list)
 	return STATUS_SUCCESS;
 }
 
-static status_t _init_ledctl_conf()
+static status_t _init_ledctl_conf(void)
 {
 	memset(&conf, 0, sizeof(struct ledmon_conf));
 

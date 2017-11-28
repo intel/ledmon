@@ -815,7 +815,7 @@ static void _ledmon_execute(void)
 	}
 }
 
-static status_t _init_ledmon_conf()
+static status_t _init_ledmon_conf(void)
 {
 	memset(&conf, 0, sizeof(struct ledmon_conf));
 

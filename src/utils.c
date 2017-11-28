@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -486,4 +487,28 @@ char *truncate_path_component_rev(const char *path, int index)
 	c = strdup(p);
 	free(p);
 	return c;
+}
+
+int match_string(const char *string, const char *pattern)
+{
+	int status;
+	regex_t regex;
+
+	if (!string || !pattern)
+		return 0;
+
+	if (strcmp(string, pattern) == 0)
+		return 1;
+
+	status = regcomp(&regex, pattern, REG_EXTENDED);
+	if (status != 0) {
+		log_debug("regecomp failed, ret=%d", __FUNCTION__, status);
+		return 0;
+	}
+
+	status = regexec(&regex, string, 0, NULL, 0);
+	if (status != 0)
+		return 0;
+
+	return 1;
 }

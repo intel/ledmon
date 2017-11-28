@@ -642,7 +642,10 @@ static void _add_block(struct block_device *block)
 			} else {
 				temp->ibpi = block->ibpi;
 			}
-		} else {
+		} else if (!(temp->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
+			block->ibpi == IBPI_PATTERN_HOTSPARE) ||
+			(temp->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
+			block->ibpi == IBPI_PATTERN_NONE)) {
 			temp->ibpi = block->ibpi;
 		}
 

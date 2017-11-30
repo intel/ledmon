@@ -33,6 +33,7 @@
 #include "block.h"
 #include "cntrl.h"
 #include "config.h"
+#include "config_file.h"
 #include "enclosure.h"
 #include "ibpi.h"
 #include "list.h"
@@ -232,6 +233,36 @@ static int _match(struct slave_device *s1, struct slave_device *s2)
 static int _is_duplicate(struct slave_device *slave)
 {
 	return (list_first_that(slave_list, _match, slave) != NULL);
+}
+
+/**
+ * @brief Removes given disk from sysfs_block_list if metatada is not present.
+ *
+ * This is internal function (action) of sysfs module. The slave_list keeps
+ * all devices with metadata (raid devices). If disk is not included in slave
+ * list there is not metadata on it.
+ * Function should be used as action for list_for_each_parm method.
+ *
+ * @return The function does not return a value.
+ */
+static void _exclude_non_raid_devices(struct block_device *block_device)
+{
+	struct slave_device *slave_device = list_head(slave_list);
+	int to_remove = 1;
+
+	while (slave_device != NULL) {
+		if (strcmp(slave_device->block->sysfs_path,
+			block_device->sysfs_path) == 0) {
+			to_remove = 0;
+			break;
+		}
+		slave_device = list_next(slave_device);
+	}
+	if (to_remove) {
+		list_remove(block_device);
+		block_device_fini(block_device);
+		free_node(block_device);
+	}
 }
 
 /**
@@ -452,6 +483,8 @@ static status_t _scan_slave(void)
 {
 	list_for_each(volum_list, _link_volum);
 	list_for_each(cntnr_list, _link_cntnr);
+	if (conf.raid_memebers_only)
+		list_for_each(sysfs_block_list, _exclude_non_raid_devices);
 	return STATUS_SUCCESS;
 }
 

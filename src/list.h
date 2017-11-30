@@ -262,4 +262,17 @@ void *__list_last_that(void *ptr, test_t test, void *parm);
  */
 void *__list_first_that(void *ptr, test_t test, void *parm);
 
+
+/**
+ * @brief Frees memory of list node
+ *
+ * This function frees memory of element from the list. Function should be
+ * called on already removed element (by list_remove).
+ *
+ * @param[in]      data            pointer to node data element.
+ *
+ * @return The function does not return a value.
+ */
+void free_node(void *data);
+
 #endif				/* _LIST_H_INCLUDED_ */

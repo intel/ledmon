@@ -106,6 +106,15 @@ static void _delete(struct node *node)
 
 /**
  */
+void free_node(void *data)
+{
+	struct node *node = _Node(data);
+
+	free(node);
+}
+
+/**
+ */
 static void _fini(struct list *list)
 {
 	_delete(list->head);
@@ -445,10 +454,11 @@ status_t __list_for_each(void *ptr, action_t action, void *parm)
 {
 	assert(action != NULL);
 
-	void *node = list_head(ptr);
+	void *next_node, *node = list_head(ptr);
 	while (node != NULL) {
+		next_node = list_next(node);
 		action(node, parm);
-		node = list_next(node);
+		node = next_node;
 	}
 	return STATUS_SUCCESS;
 }

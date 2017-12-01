@@ -691,7 +691,7 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
-	if (!block->cntrl && !block->pci_slot) {
+	if (!block->cntrl) {
 		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
 		return;
@@ -725,12 +725,10 @@ static void _revalidate_dev(struct block_device *block)
 	/* Bring back controller and host to the device. */
 	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
 					    block->cntrl_path);
-	block->pci_slot = vmdssd_find_pci_slot(block->sysfs_path);
 	if (!block->cntrl) {
 		/* It could be removed VMD drive */
-		if (!block->pci_slot)
-			log_debug("Failed to get controller for dev: %s, ctrl path: %s",
-				  block->sysfs_path, block->cntrl_path);
+		log_debug("Failed to get controller for dev: %s, ctrl path: %s",
+			  block->sysfs_path, block->cntrl_path);
 		return;
 	}
 	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
@@ -753,14 +751,12 @@ static void _invalidate_dev(struct block_device *block)
 	/* Those fields are valid only per 'session' - through single scan. */
 	block->cntrl = NULL;
 	block->host = NULL;
-	block->pci_slot = NULL;
 }
 
 static void _check_block_dev(struct block_device *block, int *restart)
 {
 	if (!block->cntrl) {
-		if  (!block->pci_slot)
-			(*restart)++;
+		(*restart)++;
 		return;
 	}
 	/* Check SCSI device behind expander. */

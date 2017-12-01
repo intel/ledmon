@@ -22,7 +22,6 @@
 
 #include "cntrl.h"
 #include "ibpi.h"
-#include "pci_slot.h"
 #include "time.h"
 
 struct block_device;
@@ -126,11 +125,6 @@ struct block_device {
 	int encl_index;
 
 	char encl_dev[PATH_MAX];
-
-	/**
-	 * Pointer to PCI hotplug slot. Specific for VMD drives.
-	 */
-	struct pci_slot *pci_slot;
 };
 
 /**

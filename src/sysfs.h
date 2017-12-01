@@ -114,8 +114,8 @@ void *__sysfs_block_device_first_that(test_t action, void *parm);
 void *__sysfs_pci_slot_first_that(test_t action, void *parm);
 
 /*
- * This function checks if driver type is isci.
+ * This function checks driver type.
  */
-int sysfs_isci_driver(const char *path);
+int sysfs_check_driver(const char *path, const char *driver);
 
 #endif				/* _SYSFS_H_INCLUDED_ */

@@ -62,7 +62,7 @@ static int _is_storage_controller(const char *path)
  */
 static int _is_isci_cntrl(const char *path)
 {
-	return sysfs_isci_driver(path);
+	return sysfs_check_driver(path, "isci");
 }
 
 /**
@@ -130,66 +130,9 @@ static int _is_smp_cntrl(const char *path)
 	return result;
 }
 
-/*
- * Check if this controller is VMD
- */
-static int is_vmd_controller(const char *path)
-{
-	int ret = 0;
-	DIR *dir;
-
-	dir = opendir("/sys/bus/pci/drivers/vmd");
-	if (dir) {
-		struct dirent *ent;
-		char cpath[PATH_MAX];
-
-		memset(cpath, 0, sizeof(cpath));
-
-		for (ent = readdir(dir); ent; ent = readdir(dir)) {
-			char *rp, *c;
-
-			/* is 'ent' a device? check that the 'subsystem' link exists and
-			 * that its target matches 'bus'
-			 */
-			snprintf(cpath, sizeof(cpath) - 1,
-				 "/sys/bus/pci/drivers/vmd/%s/subsystem", ent->d_name);
-			rp = realpath(cpath, NULL);
-			if (rp == NULL)
-				continue;
-
-			c = strrchr(rp, '/');
-			if (c == NULL)
-				goto free_path;
-			if (strncmp("pci", c + 1, strlen("pci")) != 0)
-				goto free_path;
-
-			free(rp);
-
-			snprintf(cpath, sizeof(cpath) - 1,
-				 "/sys/bus/pci/drivers/vmd/%s", ent->d_name);
-			rp = realpath(cpath, NULL);
-			if (rp == NULL)
-				continue;
-
-			if (strncmp(path, rp, strlen(rp)) == 0) {
-				free(rp);
-				ret = 1;
-				break;
-			}
-free_path:
-			free(rp);
-		}
-		closedir(dir);
-	}
-
-	return ret;
-}
-
 static int _is_vmd_cntrl(const char *path)
 {
-	uint64_t cls = get_uint64(path, 0, "class");
-
-	return (cls == 0x10802) && is_vmd_controller(path);  /* nvme ssd */
+	return sysfs_check_driver(path, "vmd");
 }
 
 /**

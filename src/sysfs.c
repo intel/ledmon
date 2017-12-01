@@ -40,6 +40,7 @@
 #include "pci_slot.h"
 #include "raid.h"
 #include "slave.h"
+#include "stdio.h"
 #include "sysfs.h"
 #include "utils.h"
 
@@ -811,18 +812,20 @@ int sysfs_enclosure_attached_to_cntrl(const char *path)
 }
 
 /*
- * This function checks if driver type is isci.
+ * This function checks driver type.
  */
-int sysfs_isci_driver(const char *path)
+int sysfs_check_driver(const char *path, const char *driver)
 {
 	char buf[PATH_MAX];
+	char driver_path[PATH_MAX];
 	char *link;
 	int found = 0;
 	str_cpy(buf, path, PATH_MAX);
 	str_cat(buf, "/driver", PATH_MAX);
+	snprintf(driver_path, PATH_MAX, "/%s", driver);
 
 	link = realpath(buf, NULL);
-	if (link && strstr(link, "/isci"))
+	if (link && strstr(link, driver_path))
 		found = 1;
 	free(link);
 	return found;

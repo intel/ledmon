@@ -829,12 +829,29 @@ static status_t _init_ledmon_conf(void)
 	return _set_log_path(LEDMON_DEF_LOG_FILE);
 }
 
+static void _close_parent_fds(void)
+{
+	void *dir = scan_dir("/proc/self/fd");
+
+	if (dir) {
+		char *elem = list_head(dir);
+
+		while (elem != NULL) {
+			int fd = (int)strtol(basename(elem), NULL, 10);
+
+			if (fd != get_log_fd())
+				close(fd);
+			elem = list_next(elem);
+		}
+		list_fini(dir);
+	}
+}
+
 /**
  */
 int main(int argc, char *argv[])
 {
 	status_t status = STATUS_SUCCESS;
-	int i;
 
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
@@ -877,8 +894,9 @@ int main(int argc, char *argv[])
 		log_debug("main(): setsid() failed (errno=%d).", errno);
 		exit(EXIT_FAILURE);
 	}
-	for (i = getdtablesize() - 1; i >= 0; --i)
-		close(i);
+
+	_close_parent_fds();
+
 	int t = open("/dev/null", O_RDWR);
 	dup(t);
 	dup(t);

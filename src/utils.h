@@ -342,4 +342,8 @@ char *get_path_hostN(const char *path);
 
 int match_string(const char *string, const char *pattern);
 
+/**
+ */
+int get_log_fd(void);
+
 #endif				/* _UTILS_H_INCLUDED_ */

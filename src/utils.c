@@ -518,3 +518,8 @@ int match_string(const char *string, const char *pattern)
 
 	return 1;
 }
+
+int get_log_fd(void)
+{
+	return fileno(s_log);
+}

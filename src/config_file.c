@@ -34,6 +34,15 @@
  */
 struct ledmon_conf conf;
 
+const char *log_level_map[] = {
+	[LOG_LEVEL_QUIET]   = "QUIET",
+	[LOG_LEVEL_ERROR]   = "ERROR",
+	[LOG_LEVEL_WARNING] = "WARNING",
+	[LOG_LEVEL_INFO]    = "INFO",
+	[LOG_LEVEL_DEBUG]   = "DEBUG",
+	[LOG_LEVEL_ALL]     = "ALL"
+};
+
 static int parse_bool(char *s)
 {
 	if (*s && (!strcasecmp(s, "enabled") ||
@@ -73,6 +82,34 @@ void parse_list(void **list, char *s)
 		else
 			break;
 	}
+}
+
+int _map_log_level(char *conf_log_level)
+{
+	int i = 1;
+
+	while (i < sizeof(log_level_map)/sizeof(char *)) {
+		if (strcasecmp(log_level_map[i], conf_log_level) == 0)
+			return i;
+		i++;
+	}
+	return 0;
+}
+
+void _set_log_level(char *s)
+{
+	int log_level;
+
+	log_level = _map_log_level(s);
+	if (log_level)
+		conf.log_level = log_level;
+	else if (sscanf(s, "%d", &log_level) == 1 &&
+			log_level >= LOG_LEVEL_QUIET &&
+			log_level <= LOG_LEVEL_ALL)
+		conf.log_level = log_level;
+	else
+		log_warning("Log level given in config file (%s) is incorrect! Using default log level: %s",
+			s, log_level_map[conf.log_level]);
 }
 
 static int parse_next(FILE *fd)
@@ -115,8 +152,7 @@ static int parse_next(FILE *fd)
 		}
 	} else if (!strncmp(s, "LOG_LEVEL=", 10)) {
 		s += 10;
-		if (*s)
-			sscanf(s, "%d", (int *)&conf.log_level);
+		_set_log_level(s);
 	} else if (!strncmp(s, "LOG_PATH=", 9)) {
 		s += 9;
 		if (*s) {
@@ -158,7 +194,7 @@ static int parse_next(FILE *fd)
 				return -1;
 		}
 	} else {
-		log_error("onfig file: unknown option '%s'.\n", s);
+		log_error("config file: unknown option '%s'.\n", s);
 		return -1;
 	}
 	return 0;

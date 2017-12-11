@@ -53,7 +53,7 @@
 
 /**
  */
-#define TIMESTAMP_PATTERN    "0x%08x:0x%08x "
+#define TIMESTAMP_PATTERN    "%b %d %T "
 
 /**
  * Name of the executable. It is the last section of invocation path.
@@ -236,10 +236,16 @@ void get_id(const char *path, struct device_id *did)
  */
 static void _log_timestamp(void)
 {
-	struct timeval t;
-	if (gettimeofday(&t, NULL) == 0) {
-		fprintf(s_log, TIMESTAMP_PATTERN, (int)t.tv_sec,
-			(int)t.tv_usec);
+	time_t timestamp;
+	struct tm *t;
+	char buf[30];
+
+	timestamp = time(NULL);
+	t = localtime(&timestamp);
+
+	if (t) {
+		strftime(buf, sizeof(buf), TIMESTAMP_PATTERN, t);
+		fprintf(s_log, "%s", buf);
 	}
 }
 

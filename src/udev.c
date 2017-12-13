@@ -132,7 +132,9 @@ int handle_udev_event(void *ledmon_block_list)
 		}
 		if (strncmp(action, "add", 3) == 0) {
 			log_debug("ADDED %s", block->sysfs_path);
-			block->ibpi = IBPI_PATTERN_ADDED;
+			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE ||
+				block->ibpi == IBPI_PATTERN_REMOVED)
+				block->ibpi = IBPI_PATTERN_ADDED;
 		} else if (strncmp(action, "remove", 6) == 0) {
 			log_debug("REMOVED %s", block->sysfs_path);
 			block->ibpi = IBPI_PATTERN_REMOVED;

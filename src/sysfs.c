@@ -570,6 +570,8 @@ static void _set_array_state(struct raid_device *raid,
 		_set_block_state(block, IBPI_PATTERN_REBUILD);
 		break;
 	case RAID_ACTION_RECOVER:
+		if (conf.rebuild_blink_on_all)
+			_set_block_state(block, IBPI_PATTERN_REBUILD);
 		break;
 	}
 }

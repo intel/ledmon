@@ -571,7 +571,7 @@ static void _ledmon_setup_signals(void)
  */
 static void _ledmon_wait(int seconds)
 {
-	int fd, udev_fd, max_fd;
+	int fd, udev_fd, max_fd, res;
 	fd_set rdfds, exfds;
 	struct timespec timeout;
 	sigset_t sigset;
@@ -581,24 +581,23 @@ static void _ledmon_wait(int seconds)
 	timeout.tv_nsec = 0;
 	timeout.tv_sec = seconds;
 
-	FD_ZERO(&rdfds);
-	FD_ZERO(&exfds);
-
 	fd = open("/proc/mdstat", O_RDONLY);
-	if (fd >= 0)
-		FD_SET(fd, &exfds);
-
 	udev_fd = get_udev_monitor();
-	if (udev_fd >= 0)
-		FD_SET(udev_fd, &rdfds);
+	max_fd = MAX(fd, udev_fd) + 1;
+	do {
+		FD_ZERO(&rdfds);
+		FD_ZERO(&exfds);
 
-	max_fd = MAX(fd, udev_fd);
-	while (pselect(max_fd + 1, &rdfds, NULL, &exfds, &timeout, &sigset) > 0) {
-		/* ignore 'change' udev event */
+		if (fd > 0)
+			FD_SET(fd, &exfds);
+		if (udev_fd > 0)
+			FD_SET(udev_fd, &rdfds);
+
+		res = pselect(max_fd, &rdfds, NULL, &exfds, &timeout, &sigset);
 		if (!FD_ISSET(udev_fd, &rdfds) ||
 		    handle_udev_event(ledmon_block_list) <= 0)
 			break;
-	}
+	} while (res > 0);
 
 	if (fd >= 0)
 		close(fd);

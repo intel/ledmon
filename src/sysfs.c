@@ -561,13 +561,15 @@ static void _set_array_state(struct raid_device *raid,
 	case RAID_ACTION_FROZEN:
 		_set_block_state(block, IBPI_PATTERN_NORMAL);
 		break;
-	case RAID_ACTION_CHECK:
 	case RAID_ACTION_RESHAPE:
-		_set_block_state(block, IBPI_PATTERN_REBUILD_P);
+		if (conf.blink_on_migration)
+			_set_block_state(block, IBPI_PATTERN_REBUILD_P);
 		break;
+	case RAID_ACTION_CHECK:
 	case RAID_ACTION_RESYNC:
 	case RAID_ACTION_REPAIR:
-		_set_block_state(block, IBPI_PATTERN_REBUILD);
+		if (conf.blink_on_init)
+			_set_block_state(block, IBPI_PATTERN_REBUILD);
 		break;
 	case RAID_ACTION_RECOVER:
 		if (conf.rebuild_blink_on_all)
@@ -586,10 +588,14 @@ static void _determine(struct slave_device *device)
 	} else if ((device->state & SLAVE_STATE_FAULTY) != 0) {
 		_set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);
 	} else if ((device->state & SLAVE_STATE_SPARE) != 0) {
-		if (_is_failed_array(device->raid) == 0)
-			_set_block_state(device->block, IBPI_PATTERN_REBUILD);
-		else
+		if (_is_failed_array(device->raid) == 0) {
+			if (device->raid->sync_action != RAID_ACTION_RESHAPE ||
+			    conf.blink_on_migration == 1)
+				_set_block_state(device->block,
+						 IBPI_PATTERN_REBUILD);
+		} else {
 			_set_block_state(device->block, IBPI_PATTERN_HOTSPARE);
+		}
 	} else if ((device->state & SLAVE_STATE_IN_SYNC) != 0) {
 		switch (_is_failed_array(device->raid)) {
 		case 0:

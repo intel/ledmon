@@ -111,7 +111,7 @@ static int process_page1(struct ses_pages *sp)
 		}
 	}
 
-	sp->page1_types = ed;
+	sp->page1_types = (struct type_descriptor_header *)ed;
 	sp->page1_types_len = sum_headers;
 
 	/* ed is on type descr header */
@@ -181,7 +181,7 @@ static int is_addr_in_encl(int fd, const char *addr, int *idx)
 {
 	/* Get page10 and read address. If it fits, return 1. */
 	struct ses_pages *sp = ses_init();
-	unsigned char *add_desc = NULL, *types = NULL;
+	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
 	char addr_cmp[32];
@@ -209,11 +209,12 @@ static int is_addr_in_encl(int fd, const char *addr, int *idx)
 
 	/* Check Page10 for address. Extract index. */
 	ap = add_desc = sp->page10 + 8;
-	types = sp->page1_types;
-	for (i = 0; i < sp->page1_types_len; i++, types += 4) {
-		if (types[0] == SES_DEVICE_SLOT ||
-		    types[0] == SES_ARRAY_DEVICE_SLOT) {
-			for (j = 0; j < types[1]; j++, ap += len) {
+	for (i = 0; i < sp->page1_types_len; i++) {
+		struct type_descriptor_header *t = &sp->page1_types[i];
+
+		if (t->element_type == SES_DEVICE_SLOT ||
+		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
+			for (j = 0; j < t->num_of_elements; j++, ap += len) {
 				if (debug)
 					dump_p10(ap);
 				/* Get Additional Element Status Descriptor */
@@ -462,17 +463,19 @@ static void print_page10(struct ses_pages *sp)
 static void send_diag_slot(struct ses_pages *sp, int fd,
 			   const unsigned char *info, int idx)
 {
-	unsigned char *types = sp->page1_types;
 	unsigned char *desc = sp->page2 + 8;	/* Move do descriptors */
 	int i, j;
 	int slot = 0;
 
 	memset(desc, 0, sp->page2_len - 8);
 
-	for (i = 0; i < sp->page1_types_len; i++, types += 4) {
-		if (types[0] == 0x01 || types[0] == 0x17) {
+	for (i = 0; i < sp->page1_types_len; i++) {
+		struct type_descriptor_header *t = &sp->page1_types[i];
+
+		if (t->element_type == SES_DEVICE_SLOT ||
+		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
 			desc += 4;	/* At first, skip overall header. */
-			for (j = 0; j < types[1]; j++, desc += 4) {
+			for (j = 0; j < t->num_of_elements; j++, desc += 4) {
 				if (slot++ == idx) {
 					memcpy(desc, info, 4);
 					/* set select */

@@ -17,6 +17,8 @@
  *
  */
 
+#include <asm/types.h>
+
 /* Size of buffer for SES-2 Messages. */
 #define SES_ALLOC_BUFF 4096
 
@@ -130,6 +132,13 @@ static inline void _set_fault(unsigned char *u)
 	u[3] |= (1 << 5);
 }
 
+struct type_descriptor_header {
+	__u8 element_type;
+	__u8 num_of_elements;
+	__u8 subenclosure_id;
+	__u8 type_desc_text_len;
+};
+
 struct ses_pages {
 	unsigned char *page1;
 	int page1_len;
@@ -137,6 +146,6 @@ struct ses_pages {
 	int page2_len;
 	unsigned char *page10;
 	int page10_len;
-	unsigned char *page1_types;
+	struct type_descriptor_header *page1_types;
 	int page1_types_len;
 };

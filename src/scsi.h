@@ -37,19 +37,6 @@
 char *scsi_get_slot_path(const char *path, const char *cntrl_path);
 
 /**
- * @brief Gets a path to slot of sas controller.
- *
- * This function returns a sysfs path to component of enclosure the device
- * belongs to.
- *
- * @param[in]      path           Canonical sysfs path to block device.
- *
- * @return A sysfs path to controller device associated with the given
- *         block device if successful, otherwise NULL pointer.
- */
-char *sas_get_slot_path(const char *path, const char *ctrl_path);
-
-/**
  * @brief Sends message to SES processor of an enclosure.
  *
  * This function send a message to an enclosure in order to control LEDs of

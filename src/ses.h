@@ -139,5 +139,4 @@ struct ses_pages {
 	int page10_len;
 	unsigned char *page1_types;
 	int page1_types_len;
-	int components;
 };

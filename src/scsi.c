@@ -90,7 +90,6 @@ static int process_page1(struct ses_pages *sp)
 	int len = 0;
 	int sum_headers = 0;	/* Number of Type descriptor headers */
 	int i = 0;
-	int components = 0;	/* Total number of components in enclosure */
 
 	/* How many enclosures is in the main enclosure? */
 	num_encl = sp->page1[1] + 1;
@@ -121,10 +120,7 @@ static int process_page1(struct ses_pages *sp)
 			log_debug("SES: Response page 1 truncated at %d\n", i);
 			return 1;
 		}
-		if (ed[0] == SES_DEVICE_SLOT || ed[0] == SES_ARRAY_DEVICE_SLOT)
-			components += ed[1];
 	}
-	sp->components = components;
 	return 0;
 }
 
@@ -497,7 +493,7 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 	return;
 }
 
-int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
+static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 {
 	switch (ibpi) {
 	case IBPI_PATTERN_UNKNOWN:
@@ -765,8 +761,17 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 }
 
 /**
+ * @brief Gets a path to slot of sas controller.
+ *
+ * This function returns a sysfs path to component of enclosure the device
+ * belongs to.
+ *
+ * @param[in]      path           Canonical sysfs path to block device.
+ *
+ * @return A sysfs path to controller device associated with the given
+ *         block device if successful, otherwise NULL pointer.
  */
-char *sas_get_slot_path(const char *path, const char *ctrl_path)
+static char *sas_get_slot_path(const char *path, const char *ctrl_path)
 {
 	char *host;
 	char host_path[PATH_MAX] = { 0 };

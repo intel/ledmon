@@ -236,7 +236,7 @@ static int is_addr_in_encl(int fd, const char *addr, int *idx)
 
 				if (!strcmp(addr + 2, addr_cmp)) {
 					if (idx)
-						*idx = ap[3];
+						*idx = ap[0] & 0x10 ? ap[3] : j;
 					ses_free(sp);
 					return 1;
 				}

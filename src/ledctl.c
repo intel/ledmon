@@ -642,7 +642,11 @@ static status_t _cmdline_parse(int argc, char *argv[])
 static void _send_cntrl_message(struct block_device **device)
 {
 	(*device)->send_fn((*device), (*device)->ibpi);
-	(*device)->flush_fn((*device));
+}
+
+static void _flush_cntrl_message(struct block_device *device)
+{
+	device->flush_fn(device);
 }
 
 /**
@@ -670,6 +674,8 @@ static status_t _ledctl_execute(void *ibpi_list)
 		list_for_each(state->block_list, _send_cntrl_message);
 		state = list_next(state);
 	}
+
+	sysfs_block_device_for_each(_flush_cntrl_message);
 
 	return STATUS_SUCCESS;
 }

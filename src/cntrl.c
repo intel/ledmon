@@ -216,8 +216,9 @@ static enum cntrl_type _get_type(const char *path)
 	} else if (_is_storage_controller(path)) {
 		if (_is_ahci_cntrl(path))
 			type = CNTRL_TYPE_AHCI;
+		else if (sysfs_enclosure_attached_to_cntrl(path))
+			type = CNTRL_TYPE_SES;
 		else if (_is_isci_cntrl(path)
-				|| sysfs_enclosure_attached_to_cntrl(path)
 				|| _is_smp_cntrl(path))
 			type = CNTRL_TYPE_SCSI;
 	}
@@ -380,6 +381,7 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		switch (type) {
 		case CNTRL_TYPE_DELLSSD:
 		case CNTRL_TYPE_SCSI:
+		case CNTRL_TYPE_SES:
 		case CNTRL_TYPE_VMD:
 			em_enabled = 1;
 			break;
@@ -392,7 +394,8 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		if (em_enabled) {
 			device = malloc(sizeof(struct cntrl_device));
 			if (device) {
-				if (type == CNTRL_TYPE_SCSI) {
+				if (type == CNTRL_TYPE_SCSI
+					|| type == CNTRL_TYPE_SES) {
 					device->isci_present = _is_isci_cntrl(path);
 					device->hosts = _cntrl_get_hosts(path);
 				} else {

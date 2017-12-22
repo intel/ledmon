@@ -702,7 +702,8 @@ static void _revalidate_dev(struct block_device *block)
 				  block->sysfs_path, block->cntrl_path);
 		return;
 	}
-	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI
+		|| block->cntrl->cntrl_type == CNTRL_TYPE_SES) {
 		block->host = block_get_host(block->cntrl, block->host_id);
 		if (block->host) {
 			if (dev_directly_attached(block->sysfs_path))
@@ -733,7 +734,8 @@ static void _check_block_dev(struct block_device *block, int *restart)
 		return;
 	}
 	/* Check SCSI device behind expander. */
-	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI
+		|| block->cntrl->cntrl_type == CNTRL_TYPE_SES) {
 		if (dev_directly_attached(block->sysfs_path) == 0) {
 			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
 			    (block->encl_index == -1

@@ -49,7 +49,7 @@ static int debug = 0;
 
 static void print_page10(struct ses_pages *);
 
-static void send_diag_slot(struct ses_pages *, int, const unsigned char *, int);
+static int send_diag_slot(struct ses_pages *, int, const unsigned char *, int);
 
 static int ses_set_message(enum ibpi_pattern, unsigned char *);
 
@@ -379,20 +379,29 @@ static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
 
 	/* Start processing */
 	/* Read configuration. */
-	if (get_page1(fd, sp->page1, &sp->page1_len))
+	if (get_page1(fd, sp->page1, &sp->page1_len)){
+		log_error("Error reading SES diagnostics Page1.");
 		goto err;
+	}
 
-	if (process_page1(sp))
+	if (process_page1(sp)){
+		log_error("Error processing SES diagnostics Page1.");
 		goto err;
+	}
 
 	/* Get Enclosure Status */
-	if (get_page2(fd, sp->page2, &sp->page2_len))
+	if (get_page2(fd, sp->page2, &sp->page2_len)){
+		log_error("Error reading SES diagnostics Page2.");
 		goto err;
+	}
 
-	if (ses_set_message(ibpi, msg))
-		goto err;	/* unknown message */
+	if (ses_set_message(ibpi, msg)){
+		log_error("Unknown IBPI.");
+		goto err;
+	}
 
-	send_diag_slot(sp, fd, msg, idx);
+	if (send_diag_slot(sp, fd, msg, idx))
+                log_error("Error while setting SES diagnostics Page 2.");
 
  err:
 	ses_free(sp);
@@ -463,26 +472,24 @@ static void print_page10(struct ses_pages *sp)
 	return;
 }
 
-static void send_diag_slot(struct ses_pages *sp, int fd,
+static int send_diag_slot(struct ses_pages *sp, int fd,
 			   const unsigned char *info, int idx)
 {
 	unsigned char *types = sp->page1_types;
 	unsigned char *desc = sp->page2 + 8;	/* Move do descriptors */
 	int i, j;
 	int slot = 0;
-
-	memset(desc, 0, sp->page2_len - 8);
-
+	
 	for (i = 0; i < sp->page1_types_len; i++, types += 4) {
 		if (types[0] == 0x01 || types[0] == 0x17) {
 			desc += 4;	/* At first, skip overall header. */
 			for (j = 0; j < types[1]; j++, desc += 4) {
 				if (slot++ == idx) {
 					memcpy(desc, info, 4);
+					/* keep PRDFAIL */
+					desc[0] &= 0x40;
 					/* set select */
 					desc[0] |= 0x80;
-					/* keep PRDFAIL */
-					desc[0] |= 0x40;
 					/* clear reserved flags */
 					desc[0] &= 0xf0;
 					break;
@@ -490,11 +497,9 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 			}
 		}
 	}
-	if (sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-			    sp->page2, sp->page2_len, 0, debug)) {
-		return;
-	}
-	return;
+	return sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
+			    sp->page2, sp->page2_len, 0, debug);
+
 }
 
 int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
@@ -731,25 +736,17 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
-	/* Failed drive is special. Path in sysfs may be not available.
-	 * In other case re-read address.
-	 * */
-	if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
 		addr = get_drive_sas_addr(device->sysfs_path);
-		if (addr == NULL) {
-			/* Device maybe gone during scan. */
-			log_warning
-			    ("Detected inconsistency. " \
-			     "Marking device '%s' as failed.",
-			     strstr(device->sysfs_path, "host"));
-			ibpi = IBPI_PATTERN_FAILED_DRIVE;
-			device->ibpi = IBPI_PATTERN_FAILED_DRIVE;
-
-			/* FIXME: at worst case we may lose all reference
-			 * to this drive and should remove it from list.
-			 * No API for do that now. */
-		}
-	}
+	
+	if (addr == NULL) {
+	/* Device maybe gone during scan. */
+		log_warning
+		   ("Detected inconsistency. " \
+		    "Marking device '%s' as failed.",
+		   strstr(device->sysfs_path, "host"));
+		ibpi = IBPI_PATTERN_FAILED_DRIVE;
+		device->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+	}	
 	fd = get_enclosure_fd(device, addr);
 	if (fd != -1) {
 		ses_send_to_idx(fd, device->encl_index, ibpi);

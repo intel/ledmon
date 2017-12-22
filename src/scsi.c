@@ -502,7 +502,7 @@ int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 	case IBPI_PATTERN_ONESHOT_NORMAL:
 	case IBPI_PATTERN_NORMAL:
 		_clr_msg(u);
-		_set_ok(u);
+		//_set_ok(u);
 		break;
 	case IBPI_PATTERN_FAILED_ARRAY:
 		_set_ifa(u);

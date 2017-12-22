@@ -625,8 +625,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
  */
 static void _send_cntrl_message(struct block_device *device)
 {
-	/* turn off all unset LEDs */
-	if (device->ibpi == IBPI_PATTERN_UNKNOWN)
+	if (device->ibpi != IBPI_PATTERN_UNKNOWN)
 		device->ibpi = IBPI_PATTERN_NORMAL;
 	device->send_fn(device, device->ibpi);
 	device->flush_fn(device);

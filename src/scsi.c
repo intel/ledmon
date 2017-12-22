@@ -471,18 +471,16 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 	int i, j;
 	int slot = 0;
 
-	memset(desc, 0, sp->page2_len - 8);
-
 	for (i = 0; i < sp->page1_types_len; i++, types += 4) {
 		if (types[0] == 0x01 || types[0] == 0x17) {
 			desc += 4;	/* At first, skip overall header. */
 			for (j = 0; j < types[1]; j++, desc += 4) {
 				if (slot++ == idx) {
 					memcpy(desc, info, 4);
+					/* keep PRDFAIL */
+					desc[0] &= 0x40;
 					/* set select */
 					desc[0] |= 0x80;
-					/* keep PRDFAIL */
-					desc[0] |= 0x40;
 					/* clear reserved flags */
 					desc[0] &= 0xf0;
 					break;
@@ -504,7 +502,7 @@ int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 	case IBPI_PATTERN_ONESHOT_NORMAL:
 	case IBPI_PATTERN_NORMAL:
 		_clr_msg(u);
-		_set_ok(u);
+		//_set_ok(u);
 		break;
 	case IBPI_PATTERN_FAILED_ARRAY:
 		_set_ifa(u);

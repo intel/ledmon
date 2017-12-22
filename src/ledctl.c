@@ -206,7 +206,7 @@ static void _ledctl_help(void)
 	       "\t\tdisk_failed=ses_fault\n");
 	printf("Refer to ledctl(8) man page for more detailed description.\n");
 	printf("Bugs should be reported at: " \
-	       "http://sourceforge.net/p/ledmon/bugs \n");
+		"https://github.com/intel/ledmon/issues\n");
 }
 
 /**

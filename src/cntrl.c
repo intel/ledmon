@@ -37,6 +37,20 @@
 #include "utils.h"
 
 /**
+ * @brief Name of controllers types.
+ *
+ * This is internal array with names of controller types. Array can be use to
+ * translate enumeration type into the string.
+ */
+static const char * const ctrl_type_str[] = {
+	[CNTRL_TYPE_UNKNOWN] = "?",
+	[CNTRL_TYPE_DELLSSD] = "Dell SSD",
+	[CNTRL_TYPE_VMD]     = "VMD",
+	[CNTRL_TYPE_SCSI]    = "SCSI",
+	[CNTRL_TYPE_AHCI]    = "AHCI"
+};
+
+/**
  */
 static int _is_storage_controller(const char *path)
 {
@@ -406,5 +420,25 @@ void cntrl_device_fini(struct cntrl_device *device)
 	if (device) {
 		free(device->sysfs_path);
 		free_hosts(device->hosts);
+	}
+}
+
+/**
+ * @brief Prints given controllers list.
+ *
+ * This is internal function of monitor service. This function prints the path
+ * and type of controller for every controller on given in argument list.
+ *
+ * @param[in]      ctrl_list           address to first element from
+ *                                     controllers list.
+ *
+ * @return The function does not return a value.
+ */
+void cntrl_print_all(struct cntrl_device *ctrl_list)
+{
+	while (ctrl_list != NULL) {
+		printf("%s (%s)\n", ctrl_list->sysfs_path,
+			ctrl_type_str[ctrl_list->cntrl_type]);
+		ctrl_list = list_next(ctrl_list);
 	}
 }

@@ -250,11 +250,6 @@ pattern I<pattern_name> and all other LEDs are turned off.
 
 =over 8
 
-=item B<-c> or B<--config>=I<path>
-
-Sets a path to local configuration file. If this option is specified the
-global configuration file and user configuration file has no effect.
-
 =item B<-l> or B<--log>=I<path>
 
 Sets a path to local log file. If this option is specified the global log
@@ -283,16 +278,6 @@ ledmon and exits.
 
 Global log file, used by all instances of ledctl application. To force logging
 to user defined file use I<-l> option switch.
-
-=item F<~/.ledctl>
-
-User configuration file, shared between ledmon and all ledctl application
-instances.
-
-=item F</etc/ledcfg.conf>
-
-Global configuration file, shared between ledmon and all ledctl application
-instances.
 
 =back
 
@@ -332,7 +317,7 @@ details on the License and the lack of warranty.
 
 =head1 SEE ALSO
 
-ledmon(8), ledctl.conf(5)
+ledmon(8), ledmon.conf(5)
 
 =head1 AUTHOR
 

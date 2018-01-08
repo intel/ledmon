@@ -1,5 +1,5 @@
 ledctl.8.gz
-ledctl.conf.5.gz
+ledmon.conf.5.gz
 ledmon.8.gz
 *.o
 _build

@@ -1,0 +1,124 @@
+#
+#  Intel(R) Enclosure LED Utilities
+#  Copyright (C) 2009-2017 Intel Corporation.
+#
+#  This program is free software; you can redistribute it and/or modify it
+#  under the terms and conditions of the GNU General Public License,
+#  version 2, as published by the Free Software Foundation.
+#
+#  This program is distributed in the hope it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+#
+=head1 NAME
+
+ledmon.conf - Configuration file for Intel(R) Enclosure LED Utilities.
+
+=head1 DESCRIPTION
+
+The ledmon configuration file allows you to use advanced settings and functions
+of Intel(R) Enclosure LED Utilities. The global location of the configuration
+file is F</etc/ledmon.conf>. Instead of a global configuration file, you can
+specify a local config file using the I<-c> option when running ledmon.
+
+=head2 SYNTAX
+
+One line should keep exactly one option and value in the configuration file in
+format: OPTION=VALUE. Any word that begins with a hash sign (B<#>) starts a
+comment and that word together with the remainder of the line is ignored. Empty
+lines are allowed. Either single quotes (B<'>) or double quotes (B<">) should
+not be used.
+
+Values are considered as truth: enabled, true, yes, 1.
+
+Values are considered as false: disabled, false, no, 0.
+
+See also the examples section.
+
+=head2 List of configurable options:
+
+B<BLACKLIST> - Ledmon will exclude scanning controllers listed on blacklist.
+When whitelist is also set in config file, the blacklist will be ignored.
+The controllers should be separated by comma (B<,>) character.
+
+B<BLINK_ON_INIT> - Related with RAID Initialization (resync), Verify (check)
+and Verify and Fix (repair) processes. If value is set to true - status LEDs of
+all member drives will blink with proper pattern if RAID volume is under sync
+process. If value is set to false, processes like init or verifications will not
+be reported by LEDs. The default value is true.
+
+B<BLINK_ON_MIGR> - RAID can be migrated between some levels or strip sizes and
+the flag is related with this processes. Also RAID Grow operation will be
+reported along with this flag. If value is set to true - status LEDs of all
+member drives will blink with proper pattern if RAID volume is under reshape.
+If value is set to false, listed actions will not be reported by LEDs. The
+default value is true.
+
+B<INTERVAL> - The value is given in seconds. Defines time interval between
+ledmon sysfs scan. The minimum is 5 seconds the maximum is not specified. The
+default value is 10 seconds.
+
+B<LOG_LEVEL> - Corresponds with I<--log-level> flag from ledmon. Log level QUIET
+means no logging at all and ALL means to log everything. The default log level
+is WARNING. Acceptable values are: quiet, error, warning, info, debug, all.
+Value also can be set by integer number - 0 means 'quiet' and 5 means 'all'.
+
+B<LOG_PATH> - Sets a path to local log file. If this option is specified the
+global log file F</var/log/ledmon.log> is not used.
+
+B<RAID_MEMBERS_ONLY> - If flag is set to true ledmon will limit monitoring only
+to drives that are RAID members. The default value is false.
+
+B<REBUILD_BLINK_ON_ALL> - Flag is related with RAID rebuild process. When value
+is set to false - only the drive that the RAID is rebuilding to will be marked
+with appropriate LED pattern. If value is set to true all drives from RAID
+that is during rebuild will blink during this operation.
+
+B<WHITELIST> - Ledmon will limit changing LED state to controllers listed on
+whitelist. If any whitelist is set, only devices from list will be scanned by
+ledmon. The controllers should be separated by comma (B<,>) character.
+
+=head1 EXAMPLES
+
+=head2 Excluding one controller from ledmon scans, changing log level and scans
+interval:
+
+LOG_LEVEL=all
+
+INTERVAL=5
+
+#Exclude disks from SATA controller
+
+BLACKLIST=/sys/devices/pci0000:00/0000:00:17.0
+
+=head2 Blink only on RAID members, blink on all disks during rebuild and ignore
+init phase:
+
+RAID_MEMBERS_ONLY=true
+
+BLINK_ON_INIT=false
+
+REBUILD_BLINK_ON_ALL=true
+
+
+=head1 LICENSE
+
+Copyright (c) 2009-2017 Intel Corporation.
+
+This program is distributed under the terms of the GNU General Public License
+as published by the Free Software Foundation. See the built-in help for details
+on the License and the lack of warranty.
+
+=head1 SEE ALSO
+
+ledmon(8), ledctl(8)
+
+=head1 AUTHOR
+
+This manual page was written by Michal Zylowski <michal.zylowski@intel.com>. It
+may be used by others.

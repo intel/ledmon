@@ -100,15 +100,11 @@ Displays version of ledmon and information about the license and exits.
 Global log file, used by ledmon application. To force logging to user defined
 file use I<-l> option switch.
 
-=item F<~/.ledctl>
-
-User configuration file, shared between ledmon and all ledctl application
-instances.
-
-=item F</etc/ledcfg.conf>
+=item F</etc/ledmon.conf>
 
 Global configuration file, shared between ledmon and all ledctl application
-instances.
+instances. Local configuration file can be used by running ledmon with I<-c>
+switch.
 
 =back
 
@@ -127,7 +123,7 @@ hence the PFA pattern from SFF-8489 specification is not visualized.
 
 =head1 SEE ALSO
 
-ledctl(8), ledctl.conf(5)
+ledctl(8), ledmon.conf(5)
 
 =head1 AUTHOR
 

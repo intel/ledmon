@@ -624,13 +624,10 @@ static status_t _cmdline_parse(int argc, char *argv[])
  *
  * @return The function does not return a value.
  */
-static void _send_cntrl_message(struct block_device *device)
+static void _send_cntrl_message(struct block_device **device)
 {
-	/* turn off all unset LEDs */
-	if (device->ibpi == IBPI_PATTERN_UNKNOWN)
-		device->ibpi = IBPI_PATTERN_NORMAL;
-	device->send_fn(device, device->ibpi);
-	device->flush_fn(device);
+	(*device)->send_fn((*device), (*device)->ibpi);
+	(*device)->flush_fn((*device));
 }
 
 /**
@@ -649,9 +646,17 @@ static void _send_cntrl_message(struct block_device *device)
  */
 static status_t _ledctl_execute(void *ibpi_list)
 {
+	struct ibpi_state *state = list_head(ibpi_list);
+
 	if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS)
 		return STATUS_IBPI_DETERMINE_ERROR;
-	return sysfs_block_device_for_each(_send_cntrl_message);
+
+	while (state) {
+		list_for_each(state->block_list, _send_cntrl_message);
+		state = list_next(state);
+	}
+
+	return STATUS_SUCCESS;
 }
 
 /**

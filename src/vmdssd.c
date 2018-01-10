@@ -136,6 +136,9 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	else
 		short_name = device->sysfs_path;
 
+	if (ibpi == device->ibpi_prev)
+		return 0;
+
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 

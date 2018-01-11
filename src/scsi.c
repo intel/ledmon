@@ -116,13 +116,7 @@ static struct ses_pages *ses_init(void)
 	sp->page2 = calloc(1, sizeof(struct ses_page));
 	if (!sp->page2)
 		goto sp2;
-	sp->page10 = calloc(1, sizeof(struct ses_page));
-	if (!sp->page10)
-		goto sp10;
 	return sp;
-
- sp10:
-	free(sp->page2);
  sp2:
 	free(sp->page1);
  sp1:
@@ -153,7 +147,7 @@ static void dump_p10(unsigned char *p)
 }
 
 static uint64_t get_drive_sas_addr(const char *path);
-static int enclosure_load_pages(struct enclosure_device *enclosure);
+static int enclosure_load_page10(struct enclosure_device *enclosure);
 
 static int get_encl_slot(struct block_device *device)
 {
@@ -173,7 +167,7 @@ static int get_encl_slot(struct block_device *device)
 	 * Older kernels may not have the "slot" sysfs attribute,
 	 * fallback to Page10 method.
 	 */
-	if (enclosure_load_pages(device->enclosure))
+	if (enclosure_load_page10(device->enclosure))
 		return -1;
 	sp = device->enclosure->ses_pages;
 
@@ -272,17 +266,47 @@ static int enclosure_load_pages(struct enclosure_device *enclosure)
 
 	/* Get Enclosure Status */
 	ret = get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS);
-	if (ret)
-		goto end;
-
-	/* Additional Element Status */
-	ret = get_ses_page(fd, sp->page10, ENCL_ADDITIONAL_EL_STATUS);
 end:
 	close(fd);
 	if (ret)
 		ses_free(sp);
 	else
 		enclosure->ses_pages = sp;
+	return ret;
+}
+
+static int enclosure_load_page10(struct enclosure_device *enclosure)
+{
+	int ret;
+	int fd;
+	struct ses_page *p;
+
+	if (enclosure->ses_pages && enclosure->ses_pages->page10)
+		return 0;
+
+	ret = enclosure_load_pages(enclosure);
+	if (ret)
+		return ret;
+
+	fd = enclosure_open(enclosure);
+	if (fd == -1)
+		return 1;
+
+	p = calloc(1, sizeof(struct ses_page));
+	if (!p) {
+		ret = 1;
+		goto end;
+	}
+
+	/* Additional Element Status */
+	ret = get_ses_page(fd, p, ENCL_ADDITIONAL_EL_STATUS);
+end:
+	close(fd);
+	if (ret)
+		free(p);
+	else
+		enclosure->ses_pages->page10 = p;
+
 	return ret;
 }
 

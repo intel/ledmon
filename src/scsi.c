@@ -53,33 +53,18 @@ static void send_diag_slot(struct ses_pages *, int, const unsigned char *, int);
 
 static int ses_set_message(enum ibpi_pattern, unsigned char *);
 
-static inline int get_page2(int fd, unsigned char *p2, int *len)
+static int get_ses_page(int fd, struct ses_page *p, int pg_code)
 {
 	int ret;
-	/* Get Enclosure Status */
-	ret = sg_ll_receive_diag(fd, 1, ENCL_CTRL_DIAG_STATUS,
-				 p2, SES_ALLOC_BUFF, 0, debug);
-	*len = (p2[2] << 8) + p2[3] + 4;
-	return ret;
-}
+	int retry_count = 3;
 
-static inline int get_page1(int fd, unsigned char *p1, int *len)
-{
-	int ret;
-	/* Get Enclosure Status */
-	ret = sg_ll_receive_diag(fd, 1, ENCL_CFG_DIAG_STATUS,
-				 p1, SES_ALLOC_BUFF, 0, debug);
-	*len = (p1[2] << 8) + p1[3] + 4;
-	return ret;
-}
+	do {
+		ret = sg_ll_receive_diag(fd, 1, pg_code, p->buf, sizeof(p->buf),
+					 0, debug);
+	} while (ret && retry_count--);
 
-static inline int get_page10(int fd, unsigned char *p10, int *len)
-{
-	int ret;
-	/* Get Enclosure Status */
-	ret = sg_ll_receive_diag(fd, 1, ENCL_ADDITIONAL_EL_STATUS,
-				 p10, SES_ALLOC_BUFF, 0, debug);
-	*len = (p10[2] << 8) + p10[3] + 4;
+	if (!ret)
+		p->len = (p->buf[2] << 8) + p->buf[3] + 4;
 	return ret;
 }
 
@@ -92,12 +77,11 @@ static int process_page1(struct ses_pages *sp)
 	int i = 0;
 
 	/* How many enclosures is in the main enclosure? */
-	num_encl = sp->page1[1] + 1;
-	sp->page1_len = (sp->page1[2] << 8) + sp->page1[3] + 4;
+	num_encl = sp->page1->buf[1] + 1;
 	/* Go to Enclosure Descriptor */
-	ed = sp->page1 + 8;
+	ed = sp->page1->buf + 8;
 	for (i = 0; i < num_encl; i++, ed += len) {
-		if (ed + 3 > sp->page1 + sp->page1_len) {
+		if (ed + 3 > sp->page1->buf + sp->page1->len) {
 			log_debug
 			    ("SES: Error, response pare 1 truncated at %d\n",
 			     i);
@@ -116,7 +100,7 @@ static int process_page1(struct ses_pages *sp)
 
 	/* ed is on type descr header */
 	for (i = 0; i < sum_headers; i++, ed += 4) {
-		if (ed > sp->page1 + sp->page1_len) {
+		if (ed > sp->page1->buf + sp->page1->len) {
 			log_debug("SES: Response page 1 truncated at %d\n", i);
 			return 1;
 		}
@@ -130,13 +114,13 @@ static struct ses_pages *ses_init(void)
 	sp = calloc(1, sizeof(*sp));
 	if (!sp)
 		return NULL;
-	sp->page1 = calloc(SES_ALLOC_BUFF, sizeof(*sp->page1));
+	sp->page1 = calloc(1, sizeof(struct ses_page));
 	if (!sp->page1)
 		goto sp1;
-	sp->page2 = calloc(SES_ALLOC_BUFF, sizeof(*sp->page2));
+	sp->page2 = calloc(1, sizeof(struct ses_page));
 	if (!sp->page2)
 		goto sp2;
-	sp->page10 = calloc(SES_ALLOC_BUFF, sizeof(*sp->page10));
+	sp->page10 = calloc(1, sizeof(struct ses_page));
 	if (!sp->page10)
 		goto sp10;
 	return sp;
@@ -154,13 +138,9 @@ static void ses_free(struct ses_pages *sp)
 {
 	if (!sp)
 		return;
-	if (sp->page1)
-		free(sp->page1);
-	if (sp->page2)
-		free(sp->page2);
-	if (sp->page10)
-		free(sp->page10);
-	memset(sp, 0, sizeof(*sp));
+	free(sp->page1);
+	free(sp->page2);
+	free(sp->page10);
 	free(sp);
 }
 
@@ -190,25 +170,25 @@ static int is_addr_in_encl(int fd, uint64_t addr, int *idx)
 		return 0;
 	/* Start processing */
 	/* Read configuration. */
-	if (get_page1(fd, sp->page1, &sp->page1_len))
+	if (get_ses_page(fd, sp->page1, ENCL_CFG_DIAG_STATUS))
 		goto err;
 
 	if (process_page1(sp))
 		goto err;
 
 	/* Get Enclosure Status - needed? */
-	if (get_page2(fd, sp->page2, &sp->page2_len))
+	if (get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS))
 		goto err;
 
 	/* Additional Element Status */
-	if (get_page10(fd, sp->page10, &sp->page10_len))
+	if (get_ses_page(fd, sp->page10, ENCL_ADDITIONAL_EL_STATUS))
 		goto err;
 
 	if (debug)
 		print_page10(sp);
 
 	/* Check Page10 for address. Extract index. */
-	ap = add_desc = sp->page10 + 8;
+	ap = add_desc = sp->page10->buf + 8;
 	for (i = 0; i < sp->page1_types_len; i++) {
 		struct type_descriptor_header *t = &sp->page1_types[i];
 
@@ -274,14 +254,14 @@ static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
 
 	/* Start processing */
 	/* Read configuration. */
-	if (get_page1(fd, sp->page1, &sp->page1_len))
+	if (get_ses_page(fd, sp->page1, ENCL_CFG_DIAG_STATUS))
 		goto err;
 
 	if (process_page1(sp))
 		goto err;
 
 	/* Get Enclosure Status */
-	if (get_page2(fd, sp->page2, &sp->page2_len))
+	if (get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS))
 		goto err;
 
 	if (ses_set_message(ibpi, msg))
@@ -296,11 +276,11 @@ static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
 
 static void print_page10(struct ses_pages *sp)
 {
-	unsigned char *ai = sp->page10 + 8;
+	unsigned char *ai = sp->page10->buf + 8;
 	int i = 0, len = 0, eip = 0;
 	unsigned char *sas = NULL;
 
-	while (ai < sp->page10 + sp->page10_len) {
+	while (ai < sp->page10->buf + sp->page10->len) {
 		printf("%s()[%d]: Inv: %d, EIP: %d, Proto: 0x%04x\n", __func__,
 		       i++, ((ai[0] & 0x80) >> 7), ((ai[0] & 0x10) >> 4),
 		       ai[0] & 0xf);
@@ -361,11 +341,11 @@ static void print_page10(struct ses_pages *sp)
 static void send_diag_slot(struct ses_pages *sp, int fd,
 			   const unsigned char *info, int idx)
 {
-	unsigned char *desc = sp->page2 + 8;	/* Move do descriptors */
+	unsigned char *desc = sp->page2->buf + 8;	/* Move do descriptors */
 	int i, j;
 	int slot = 0;
 
-	memset(desc, 0, sp->page2_len - 8);
+	memset(desc, 0, sp->page2->len - 8);
 
 	for (i = 0; i < sp->page1_types_len; i++) {
 		struct type_descriptor_header *t = &sp->page1_types[i];
@@ -388,7 +368,7 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 		}
 	}
 	if (sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-			    sp->page2, sp->page2_len, 0, debug)) {
+			    sp->page2->buf, sp->page2->len, 0, debug)) {
 		return;
 	}
 	return;

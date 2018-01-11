@@ -132,6 +132,11 @@ static inline void _set_fault(unsigned char *u)
 	u[3] |= (1 << 5);
 }
 
+struct ses_page {
+	unsigned char buf[SES_ALLOC_BUFF];
+	int len;
+};
+
 struct type_descriptor_header {
 	__u8 element_type;
 	__u8 num_of_elements;
@@ -140,12 +145,9 @@ struct type_descriptor_header {
 };
 
 struct ses_pages {
-	unsigned char *page1;
-	int page1_len;
-	unsigned char *page2;
-	int page2_len;
-	unsigned char *page10;
-	int page10_len;
+	struct ses_page *page1;
+	struct ses_page *page2;
+	struct ses_page *page10;
 	struct type_descriptor_header *page1_types;
 	int page1_types_len;
 };

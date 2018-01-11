@@ -49,10 +49,6 @@ static int debug = 0;
 
 static void print_page10(struct ses_pages *);
 
-static void send_diag_slot(struct ses_pages *, int, const unsigned char *, int);
-
-static int ses_set_message(enum ibpi_pattern, unsigned char *);
-
 static int get_ses_page(int fd, struct ses_page *p, int pg_code)
 {
 	int ret;
@@ -156,11 +152,12 @@ static void dump_p10(unsigned char *p)
 	}
 }
 
-/* Enclosure is already opened. */
-static int is_addr_in_encl(int fd, uint64_t addr, int *idx)
+static struct ses_pages *enclosure_load_pages(struct enclosure_device *enclosure);
+
+static int is_addr_in_encl(struct block_device *device, uint64_t addr, int *idx)
 {
 	/* Get page10 and read address. If it fits, return 1. */
-	struct ses_pages *sp = ses_init();
+	struct ses_pages *sp = enclosure_load_pages(device->enclosure);
 	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
@@ -168,21 +165,6 @@ static int is_addr_in_encl(int fd, uint64_t addr, int *idx)
 
 	if (!sp)
 		return 0;
-	/* Start processing */
-	/* Read configuration. */
-	if (get_ses_page(fd, sp->page1, ENCL_CFG_DIAG_STATUS))
-		goto err;
-
-	if (process_page1(sp))
-		goto err;
-
-	/* Get Enclosure Status - needed? */
-	if (get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS))
-		goto err;
-
-	/* Additional Element Status */
-	if (get_ses_page(fd, sp->page10, ENCL_ADDITIONAL_EL_STATUS))
-		goto err;
 
 	if (debug)
 		print_page10(sp);
@@ -228,7 +210,6 @@ static int is_addr_in_encl(int fd, uint64_t addr, int *idx)
 			}
 		}
 	}
- err:
 	ses_free(sp);
 	return 0;
 }
@@ -243,35 +224,43 @@ static int enclosure_open(const struct enclosure_device *enclosure)
 	return fd;
 }
 
-static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
+static struct ses_pages *enclosure_load_pages(struct enclosure_device *enclosure)
 {
-	unsigned char msg[4] = { 0 };
+	int ret;
+	int fd;
 	struct ses_pages *sp;
 
+	fd = enclosure_open(enclosure);
+	if (fd == -1)
+		return NULL;
+
 	sp = ses_init();
-	if (!sp)
-		return;
+	if (!sp) {
+		ret = 1;
+		goto end;
+	}
 
-	/* Start processing */
 	/* Read configuration. */
-	if (get_ses_page(fd, sp->page1, ENCL_CFG_DIAG_STATUS))
-		goto err;
+	ret = get_ses_page(fd, sp->page1, ENCL_CFG_DIAG_STATUS);
+	if (ret)
+		goto end;
 
-	if (process_page1(sp))
-		goto err;
+	ret = process_page1(sp);
+	if (ret)
+		goto end;
 
 	/* Get Enclosure Status */
-	if (get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS))
-		goto err;
+	ret = get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS);
+	if (ret)
+		goto end;
 
-	if (ses_set_message(ibpi, msg))
-		goto err;	/* unknown message */
-
-	send_diag_slot(sp, fd, msg, idx);
-
- err:
-	ses_free(sp);
-	return;
+	/* Additional Element Status */
+	ret = get_ses_page(fd, sp->page10, ENCL_ADDITIONAL_EL_STATUS);
+end:
+	close(fd);
+	if (ret)
+		ses_free(sp);
+	return sp;
 }
 
 static void print_page10(struct ses_pages *sp)
@@ -338,12 +327,21 @@ static void print_page10(struct ses_pages *sp)
 	return;
 }
 
-static void send_diag_slot(struct ses_pages *sp, int fd,
-			   const unsigned char *info, int idx)
+static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u);
+
+static int send_diag_slot(struct ses_pages *sp, enum ibpi_pattern ibpi,
+			  struct block_device *device)
 {
+	int idx = device->encl_index;
 	unsigned char *desc = sp->page2->buf + 8;	/* Move do descriptors */
 	int i, j;
 	int slot = 0;
+	int fd;
+	int ret;
+
+	fd = enclosure_open(device->enclosure);
+	if (fd == -1)
+		return 1;
 
 	memset(desc, 0, sp->page2->len - 8);
 
@@ -355,7 +353,7 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 			desc += 4;	/* At first, skip overall header. */
 			for (j = 0; j < t->num_of_elements; j++, desc += 4) {
 				if (slot++ == idx) {
-					memcpy(desc, info, 4);
+					ses_set_message(ibpi, desc);
 					/* set select */
 					desc[0] |= 0x80;
 					/* keep PRDFAIL */
@@ -367,11 +365,10 @@ static void send_diag_slot(struct ses_pages *sp, int fd,
 			}
 		}
 	}
-	if (sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-			    sp->page2->buf, sp->page2->len, 0, debug)) {
-		return;
-	}
-	return;
+	ret = sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
+			      sp->page2->buf, sp->page2->len, 0, debug);
+	close(fd);
+	return ret;
 }
 
 static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
@@ -550,9 +547,7 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 int scsi_get_enclosure(struct block_device *device)
 {
 	uint64_t addr;
-	int fd = -1;
 	struct enclosure_device *encl;
-	int ret;
 
 	if (!device || !device->sysfs_path)
 		return 0;
@@ -573,21 +568,15 @@ int scsi_get_enclosure(struct block_device *device)
 	if (!device->enclosure)
 		return 0;
 
-	fd = enclosure_open(device->enclosure);
-	if (fd == -1)
-		return 0;
-
-	ret = is_addr_in_encl(fd, addr, &device->encl_index);
-
-	close(fd);
-	return ret;
+	return is_addr_in_encl(device, addr, &device->encl_index);
 }
 
 /**
  */
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-	int fd = -1;
+	struct ses_pages *sp;
+	int ret;
 
 	if (!device || !device->sysfs_path || !device->enclosure ||
 	    device->encl_index == -1)
@@ -600,16 +589,18 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
-	fd = enclosure_open(device->enclosure);
-	if (fd != -1) {
-		ses_send_to_idx(fd, device->encl_index, ibpi);
-		close(fd);
-	} else {
+	sp = enclosure_load_pages(device->enclosure);
+	if (!sp) {
 		log_warning
 		    ("Unable to send %s message to %s. Device is missing?",
 		     ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
+		return 1;
 	}
-	return 0;
+
+	ret = send_diag_slot(sp, ibpi, device);
+
+	ses_free(sp);
+	return ret;
 }
 
 /**

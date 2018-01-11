@@ -116,6 +116,7 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 		return NULL;
 
 	slot = sysfs_pci_slot_first_that(_pci_slot_search, pci_addr);
+	free(pci_addr);
 	if (slot == NULL || check_slot_module(slot->sysfs_path) < 0)
 		return NULL;
 

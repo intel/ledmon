@@ -253,121 +253,14 @@ static int is_addr_in_encl(int fd, uint64_t addr, int *idx)
 	return 0;
 }
 
-static char *_get_dev_sg(const char *path)
+static int enclosure_open(const struct enclosure_device *enclosure)
 {
-	char *ret = NULL;
-	DIR *d;
-	struct dirent *de;
-
-	/* /sys/class/enclosure/X/device/scsi_generic path is expected. */
-
-	d = opendir(path);
-	if (!d)
-		return NULL;
-	while ((de = readdir(d))) {
-		if ((strcmp(de->d_name, ".") == 0) ||
-		    (strcmp(de->d_name, "..")) == 0) {
-			continue;
-		}
-		break;
-		/* */
-	}
-	if (de) {
-		ret = calloc(strlen("/dev/") +
-			     strlen(de->d_name) + 1, sizeof(*ret));
-		if (ret) {
-			strcpy(ret, "/dev/");
-			strcat(ret, de->d_name);
-		}
-	}
-	closedir(d);
-	return ret;
-}
-
-/* SYSFS_ENCL/<enclosure>/SCSI_GEN - path to sgX directory for enclosure. */
-#define SYSFS_ENCL "/sys/class/enclosure"
-#define SCSI_GEN "device/scsi_generic"
-static int get_enclosure_fd(struct block_device *device, uint64_t addr)
-{
-	DIR *d = NULL;
-	struct dirent *de = NULL;
-	char *p = NULL;
-	int len;
-	char *dev = NULL;
 	int fd = -1;
 
-	/* There may be device path already filled */
-	if (device->encl_index != -1 && device->encl_dev[0] != 0) {
-		fd = open(device->encl_dev, O_RDWR);
-		if (fd == -1) {
-			/* Enclosure device may change during extensive disks
-			 * hotplugging */
-			device->encl_index = -1;
-			memset(device->encl_dev, 0, sizeof(device->encl_dev));
+	if (enclosure->dev_path)
+		fd = open(enclosure->dev_path, O_RDWR);
 
-			if (!addr) {
-				/* If there is no SAS address then there is
-				 * no way to find enclosure device that this
-				 * drive 'was' in. */
-				return fd;
-			}
-		} else {
-			return fd;
-		}
-	}
-
-	if (!addr) {
-		/* when there is no enclosure device and device index
-		 * then address should not be NULL */
-		return -1;
-	}
-
-	d = opendir(SYSFS_ENCL);
-	if (!d)
-		return -1;
-	while ((de = readdir(d))) {
-		if ((strcmp(de->d_name, ".") == 0) ||
-		    (strcmp(de->d_name, "..")) == 0) {
-			continue;
-		}
-		/* */
-		len =
-		    strlen(SCSI_GEN) + strlen(SYSFS_ENCL) + strlen(de->d_name) +
-		    4;
-		p = calloc(len, sizeof(*p));
-		if (!p)
-			break;
-		strcpy(p, SYSFS_ENCL);
-		strcat(p, "/");
-		strcat(p, de->d_name);
-		strcat(p, "/");
-		strcat(p, SCSI_GEN);
-		dev = _get_dev_sg(p);
-		free(p);
-		if (!dev)
-			break;
-		fd = open(dev, O_RDWR);
-		if (fd == -1) {
-			free(dev);
-			break;
-		}
-		if (is_addr_in_encl(fd, addr, &device->encl_index)) {
-			strncpy(device->encl_dev, dev, PATH_MAX);
-			free(dev);
-			break;	/* HIT */
-		} else {
-			close(fd);
-			fd = -1;
-		}
-		free(dev);
-	}
-	closedir(d);
 	return fd;
-}
-
-static void put_enclosure_fd(int fd)
-{
-	close(fd);
 }
 
 static void ses_send_to_idx(int fd, int idx, enum ibpi_pattern ibpi)
@@ -678,20 +571,36 @@ int scsi_get_enclosure(struct block_device *device)
 {
 	uint64_t addr;
 	int fd = -1;
+	struct enclosure_device *encl;
+	int ret;
 
 	if (!device || !device->sysfs_path)
 		return 0;
 
-	memset(device->encl_dev, 0, sizeof(device->encl_dev));
 	addr = get_drive_sas_addr(device->sysfs_path);
 	if (addr == 0)
 		return 0;
 
-	fd = get_enclosure_fd(device, addr);
-	if (fd != -1)
-		put_enclosure_fd(fd);
+	encl = sysfs_get_enclosure_devices();
+	while (encl) {
+		if (_slot_match(encl->sysfs_path, device->cntrl_path)) {
+			device->enclosure = encl;
+			break;
+		}
+		encl = list_next(encl);
+	}
 
-	return (fd == -1) ? 0 : 1;
+	if (!device->enclosure)
+		return 0;
+
+	fd = enclosure_open(device->enclosure);
+	if (fd == -1)
+		return 0;
+
+	ret = is_addr_in_encl(fd, addr, &device->encl_index);
+
+	close(fd);
+	return ret;
 }
 
 /**
@@ -699,9 +608,9 @@ int scsi_get_enclosure(struct block_device *device)
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	int fd = -1;
-	uint64_t addr = 0;
 
-	if (!device || !device->sysfs_path)
+	if (!device || !device->sysfs_path || !device->enclosure ||
+	    device->encl_index == -1)
 		__set_errno_and_return(EINVAL);
 
 	/* write only if state has changed */
@@ -711,29 +620,10 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
-	/* Failed drive is special. Path in sysfs may be not available.
-	 * In other case re-read address.
-	 * */
-	if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-		addr = get_drive_sas_addr(device->sysfs_path);
-		if (addr == 0) {
-			/* Device maybe gone during scan. */
-			log_warning
-			    ("Detected inconsistency. " \
-			     "Marking device '%s' as failed.",
-			     strstr(device->sysfs_path, "host"));
-			ibpi = IBPI_PATTERN_FAILED_DRIVE;
-			device->ibpi = IBPI_PATTERN_FAILED_DRIVE;
-
-			/* FIXME: at worst case we may lose all reference
-			 * to this drive and should remove it from list.
-			 * No API for do that now. */
-		}
-	}
-	fd = get_enclosure_fd(device, addr);
+	fd = enclosure_open(device->enclosure);
 	if (fd != -1) {
 		ses_send_to_idx(fd, device->encl_index, ibpi);
-		put_enclosure_fd(fd);
+		close(fd);
 	} else {
 		log_warning
 		    ("Unable to send %s message to %s. Device is missing?",

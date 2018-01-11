@@ -124,7 +124,7 @@ struct block_device {
  */
 	int encl_index;
 
-	char encl_dev[PATH_MAX];
+	struct enclosure_device *enclosure;
 
 /**
  * If disk is a raid member, this field will be set with raid name/path.

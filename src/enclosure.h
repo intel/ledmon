@@ -39,6 +39,11 @@ struct enclosure_device {
    * SAS address as identifier of an enclosure.
    */
 	uint64_t sas_address;
+
+  /**
+   * Path to enclosure's sg device.
+   */
+	char *dev_path;
 };
 
 /**

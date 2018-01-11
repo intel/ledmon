@@ -330,7 +330,7 @@ struct block_device *block_device_duplicate(struct block_device *block)
 			result->host_id = block->host_id;
 			result->phy_index = block->phy_index;
 			result->encl_index = block->encl_index;
-			strcpy(result->encl_dev, block->encl_dev);
+			result->enclosure = block->enclosure;
 		}
 	}
 	return result;
@@ -374,6 +374,7 @@ int block_compare(struct block_device *bd_old, struct block_device *bd_new)
 			/* Both expander attached */
 			i = (bd_old->host_id == bd_new->host_id) &&
 			    (bd_old->phy_index == bd_new->phy_index);
+			i = i && (bd_old->enclosure == bd_new->enclosure);
 			i = i && (bd_old->encl_index == bd_new->encl_index);
 			break;
 		}

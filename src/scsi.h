@@ -52,7 +52,7 @@ char *scsi_get_slot_path(const char *path, const char *cntrl_path);
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
 
 /**
- * @brief Fills encl_index and encl_dev.
+ * @brief Assigns enclosure device to block device.
  *
  * @param[in]      device        Path to block device.
  *

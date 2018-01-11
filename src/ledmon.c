@@ -773,8 +773,8 @@ static void _check_block_dev(struct block_device *block, int *restart)
 	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
 		if (dev_directly_attached(block->sysfs_path) == 0) {
 			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
-			    (block->encl_index == -1
-			     || block->encl_dev[0] == 0)) {
+			    (block->encl_index == -1 ||
+			     block->enclosure == NULL)) {
 				(*restart)++;
 				log_debug("%s(): invalidating device: %s. "
 					"No link to enclosure", __func__,

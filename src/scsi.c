@@ -177,14 +177,14 @@ static void dump_p10(unsigned char *p)
 }
 
 /* Enclosure is already opened. */
-static int is_addr_in_encl(int fd, const char *addr, int *idx)
+static int is_addr_in_encl(int fd, uint64_t addr, int *idx)
 {
 	/* Get page10 and read address. If it fits, return 1. */
 	struct ses_pages *sp = ses_init();
 	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
-	char addr_cmp[32];
+	uint64_t addr_cmp;
 
 	if (!sp)
 		return 0;
@@ -228,13 +228,18 @@ static int is_addr_in_encl(int fd, const char *addr, int *idx)
 				else
 					addr_p = ap + 4;
 				/* Process only PHY 0 descriptor. */
-				sprintf(addr_cmp,
-					"%02x%02x%02x%02x%02x%02x%02x%02x",
-					addr_p[12], addr_p[13], addr_p[14],
-					addr_p[15], addr_p[16], addr_p[17],
-					addr_p[18], addr_p[19]);
 
-				if (!strcmp(addr + 2, addr_cmp)) {
+				/* Convert be64 to le64 */
+				addr_cmp = ((uint64_t)addr_p[12] << 8*7) |
+					   ((uint64_t)addr_p[13] << 8*6) |
+					   ((uint64_t)addr_p[14] << 8*5) |
+					   ((uint64_t)addr_p[15] << 8*4) |
+					   ((uint64_t)addr_p[16] << 8*3) |
+					   ((uint64_t)addr_p[17] << 8*2) |
+					   ((uint64_t)addr_p[18] << 8*1) |
+					   ((uint64_t)addr_p[19]);
+
+				if (addr == addr_cmp) {
 					if (idx)
 						*idx = ap[0] & 0x10 ? ap[3] : j;
 					ses_free(sp);
@@ -282,7 +287,7 @@ static char *_get_dev_sg(const char *path)
 /* SYSFS_ENCL/<enclosure>/SCSI_GEN - path to sgX directory for enclosure. */
 #define SYSFS_ENCL "/sys/class/enclosure"
 #define SCSI_GEN "device/scsi_generic"
-static int get_enclosure_fd(struct block_device *device, char *addr)
+static int get_enclosure_fd(struct block_device *device, uint64_t addr)
 {
 	DIR *d = NULL;
 	struct dirent *de = NULL;
@@ -591,10 +596,6 @@ static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
 	return 0;
 }
 
-/* SAS_ADDR_PATH - path in sysfs where sas_address for disk can be found */
-#define SAS_ADDR_PATH "/sys/class/sas_end_device/%s/" \
-						"device/sas_device/%s/sas_address"
-
 static char *get_drive_end_dev(const char *path)
 {
 	char *s, *c, *p;
@@ -610,53 +611,35 @@ static char *get_drive_end_dev(const char *path)
 		return NULL;
 
 	strncpy(p, c, s - c);
-	p[s - c] = 0;
 	return p;
 }
 
-static char *get_drive_sas_addr(const char *path)
+static uint64_t get_drive_sas_addr(const char *path)
 {
-#define ADDR_LEN 64
-	int len = strlen(path);
-	char *buff, *end_dev, addr[ADDR_LEN] = { 0 };
-	int fd;
+	uint64_t ret = 0;
+	size_t size = strlen(path) * 2;
+	char *buff, *end_dev;
 
 	/* Make big buffer. */
-	buff = calloc(len * 2, sizeof(*buff));
-
+	buff = malloc(size);
 	if (!buff)
-		return NULL;
+		return ret;
 
 	end_dev = get_drive_end_dev(path);
 	if (!end_dev) {
 		free(buff);
-		return NULL;
+		return ret;
 	}
 
-	(void)sprintf(buff, SAS_ADDR_PATH, end_dev, end_dev);
+	snprintf(buff, size, "/sys/class/sas_end_device/%s/device/sas_device/%s",
+		 end_dev, end_dev);
 
-	fd = open(buff, O_RDONLY);
-	if (fd == -1) {
-		free(end_dev);
-		free(buff);
-		return NULL;
-	}
-	if (read(fd, addr, ADDR_LEN) == ADDR_LEN) {
-		/* The value should be 19. */
-		free(end_dev);
-		free(buff);
-		close(fd);
-		return NULL;
-	}
-	close(fd);
-	len = strnlen(addr, ADDR_LEN);
-	if (len && addr[len - 1] == '\n')
-		addr[len - 1] = 0;
-	else /* make sure that addr is null-terminated */
-		addr[len < ADDR_LEN ? len : ADDR_LEN - 1] = 0;
+	ret = get_uint64(buff, ret, "sas_address");
+
 	free(end_dev);
 	free(buff);
-	return strdup(addr);
+
+	return ret;
 }
 
 /**
@@ -693,7 +676,7 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 
 int scsi_get_enclosure(struct block_device *device)
 {
-	char *addr;
+	uint64_t addr;
 	int fd = -1;
 
 	if (!device || !device->sysfs_path)
@@ -701,14 +684,12 @@ int scsi_get_enclosure(struct block_device *device)
 
 	memset(device->encl_dev, 0, sizeof(device->encl_dev));
 	addr = get_drive_sas_addr(device->sysfs_path);
-	if (addr == NULL)
+	if (addr == 0)
 		return 0;
 
 	fd = get_enclosure_fd(device, addr);
 	if (fd != -1)
 		put_enclosure_fd(fd);
-	if (addr)
-		free(addr);
 
 	return (fd == -1) ? 0 : 1;
 }
@@ -718,7 +699,7 @@ int scsi_get_enclosure(struct block_device *device)
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	int fd = -1;
-	char *addr = NULL;
+	uint64_t addr = 0;
 
 	if (!device || !device->sysfs_path)
 		__set_errno_and_return(EINVAL);
@@ -735,7 +716,7 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	 * */
 	if (ibpi != IBPI_PATTERN_FAILED_DRIVE) {
 		addr = get_drive_sas_addr(device->sysfs_path);
-		if (addr == NULL) {
+		if (addr == 0) {
 			/* Device maybe gone during scan. */
 			log_warning
 			    ("Detected inconsistency. " \
@@ -758,8 +739,6 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 		    ("Unable to send %s message to %s. Device is missing?",
 		     ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
 	}
-	if (addr)
-		free(addr);
 	return 0;
 }
 

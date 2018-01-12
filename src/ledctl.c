@@ -200,7 +200,7 @@ static void _ledctl_help(void)
 	       "\t\tses_abort, ses_rebuild, ses_ifa, ses_ica, ses_cons_check,\n"
 	       "\t\tses_hotspare, ses_rsvd_dev, ses_ok, ses_ident, ses_rm,\n"
 	       "\t\tses_insert, ses_missing, ses_dnr, ses_active, ses_prdfail,\n"
-	       "\t\tses_enbale_bb, ses_enable_ba, ses_devoff, ses_fault\n"
+	       "\t\tses_enable_bb, ses_enable_ba, ses_devoff, ses_fault\n"
 	       "\tAutomatic translation form IBPI into SES-2:\n"
 	       "\t\tlocate=ses_ident, locate_off=~ses_ident,\n"
 	       "\t\tnormal=ses_ok, off=ses_ok, degraded=ses_ica,\n"
@@ -435,7 +435,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 		ibpi = SES_REQ_DNR;
 	} else if (strcmp(name, "ses_active") == 0) {
 		ibpi = SES_REQ_ACTIVE;
-	} else if (strcmp(name, "ses_enbale_bb") == 0) {
+	} else if (strcmp(name, "ses_enable_bb") == 0) {
 		ibpi = SES_REQ_EN_BB;
 	} else if (strcmp(name, "ses_enable_ba") == 0) {
 		ibpi = SES_REQ_EN_BA;

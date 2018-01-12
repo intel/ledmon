@@ -156,7 +156,7 @@ SES-2 DO NOT REMOVE
 
 SES-2 ACTIVE
 
-=item B<ses_enbale_bb>
+=item B<ses_enable_bb>
 
 SES-2 ENABLE BYP B
 

@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef _SES_H_INCLUDED_
+#define _SES_H_INCLUDED_
+
 #include <asm/types.h>
 
 /* Size of buffer for SES-2 Messages. */
@@ -151,3 +154,5 @@ struct ses_pages {
 	struct type_descriptor_header *page1_types;
 	int page1_types_len;
 };
+
+#endif

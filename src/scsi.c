@@ -153,7 +153,7 @@ static void dump_p10(unsigned char *p)
 }
 
 static uint64_t get_drive_sas_addr(const char *path);
-static struct ses_pages *enclosure_load_pages(struct enclosure_device *enclosure);
+static int enclosure_load_pages(struct enclosure_device *enclosure);
 
 static int get_encl_slot(struct block_device *device)
 {
@@ -173,15 +173,13 @@ static int get_encl_slot(struct block_device *device)
 	 * Older kernels may not have the "slot" sysfs attribute,
 	 * fallback to Page10 method.
 	 */
-	sp = enclosure_load_pages(device->enclosure);
-	if (!sp)
+	if (enclosure_load_pages(device->enclosure))
 		return -1;
+	sp = device->enclosure->ses_pages;
 
 	addr = get_drive_sas_addr(device->sysfs_path);
-	if (!addr) {
-		ses_free(sp);
+	if (!addr)
 		return -1;
-	}
 
 	if (debug)
 		print_page10(sp);
@@ -220,7 +218,6 @@ static int get_encl_slot(struct block_device *device)
 
 				if (addr == addr_cmp) {
 					idx = ap[0] & 0x10 ? ap[3] : j;
-					ses_free(sp);
 					return idx;
 				}
 			}
@@ -232,7 +229,6 @@ static int get_encl_slot(struct block_device *device)
 			break;
 		}
 	}
-	ses_free(sp);
 	return -1;
 }
 
@@ -246,15 +242,18 @@ static int enclosure_open(const struct enclosure_device *enclosure)
 	return fd;
 }
 
-static struct ses_pages *enclosure_load_pages(struct enclosure_device *enclosure)
+static int enclosure_load_pages(struct enclosure_device *enclosure)
 {
 	int ret;
 	int fd;
 	struct ses_pages *sp;
 
+	if (enclosure->ses_pages)
+		return 0;
+
 	fd = enclosure_open(enclosure);
 	if (fd == -1)
-		return NULL;
+		return 1;
 
 	sp = ses_init();
 	if (!sp) {
@@ -282,7 +281,15 @@ end:
 	close(fd);
 	if (ret)
 		ses_free(sp);
-	return sp;
+	else
+		enclosure->ses_pages = sp;
+	return ret;
+}
+
+static void enclosure_free_pages(struct enclosure_device *enclosure)
+{
+	ses_free(enclosure->ses_pages);
+	enclosure->ses_pages = NULL;
 }
 
 static void print_page10(struct ses_pages *sp)
@@ -351,9 +358,9 @@ static void print_page10(struct ses_pages *sp)
 
 static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u);
 
-static int send_diag_slot(struct ses_pages *sp, enum ibpi_pattern ibpi,
-			  struct block_device *device)
+static int send_diag_slot(enum ibpi_pattern ibpi, struct block_device *device)
 {
+	struct ses_pages *sp = device->enclosure->ses_pages;
 	int idx = device->encl_index;
 	unsigned char *desc = sp->page2->buf + 8;	/* Move do descriptors */
 	int i, j;
@@ -590,7 +597,6 @@ int scsi_get_enclosure(struct block_device *device)
  */
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-	struct ses_pages *sp;
 	int ret;
 
 	if (!device || !device->sysfs_path || !device->enclosure ||
@@ -604,17 +610,17 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
-	sp = enclosure_load_pages(device->enclosure);
-	if (!sp) {
+	ret = enclosure_load_pages(device->enclosure);
+	if (ret) {
 		log_warning
 		    ("Unable to send %s message to %s. Device is missing?",
 		     ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
-		return 1;
+		return ret;
 	}
 
-	ret = send_diag_slot(sp, ibpi, device);
+	ret = send_diag_slot(ibpi, device);
 
-	ses_free(sp);
+	enclosure_free_pages(device->enclosure);
 	return ret;
 }
 

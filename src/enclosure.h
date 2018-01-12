@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+#include "ses.h"
+
 /**
  * @brief Enclosure device structure.
  *
@@ -44,6 +46,8 @@ struct enclosure_device {
    * Path to enclosure's sg device.
    */
 	char *dev_path;
+
+	struct ses_pages *ses_pages;
 };
 
 /**

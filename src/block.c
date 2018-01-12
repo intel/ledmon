@@ -107,10 +107,14 @@ static flush_message_t _get_flush_fn(struct cntrl_device *cntrl, const char *pat
 {
 	flush_message_t result = NULL;
 
-	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI && dev_directly_attached(path))
-		result = scsi_smp_write_buffer;
-	else
+	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+		if (dev_directly_attached(path))
+			result = scsi_smp_write_buffer;
+		else
+			result = scsi_ses_flush;
+	} else {
 		result = do_not_flush;
+	}
 	return result;
 }
 

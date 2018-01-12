@@ -358,19 +358,13 @@ static void print_page10(struct ses_pages *sp)
 
 static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u);
 
-static int send_diag_slot(enum ibpi_pattern ibpi, struct block_device *device)
+static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 {
 	struct ses_pages *sp = device->enclosure->ses_pages;
 	int idx = device->encl_index;
 	unsigned char *desc = sp->page2->buf + 8;	/* Move do descriptors */
 	int i, j;
 	int slot = 0;
-	int fd;
-	int ret;
-
-	fd = enclosure_open(device->enclosure);
-	if (fd == -1)
-		return 1;
 
 	memset(desc, 0, sp->page2->len - 8);
 
@@ -394,8 +388,23 @@ static int send_diag_slot(enum ibpi_pattern ibpi, struct block_device *device)
 			}
 		}
 	}
+
+	return 0;
+}
+
+static int ses_send_diag(struct enclosure_device *enclosure)
+{
+	int ret;
+	int fd;
+
+	fd = enclosure_open(enclosure);
+	if (fd == -1)
+		return 1;
+
 	ret = sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-			      sp->page2->buf, sp->page2->len, 0, debug);
+			      enclosure->ses_pages->page2->buf,
+			      enclosure->ses_pages->page2->len,
+			      0, debug);
 	close(fd);
 	return ret;
 }
@@ -618,7 +627,20 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 		return ret;
 	}
 
-	ret = send_diag_slot(ibpi, device);
+	return ses_write_msg(ibpi, device);
+}
+
+int scsi_ses_flush(struct block_device *device)
+{
+	int ret;
+
+	if (!device || !device->enclosure)
+		return 1;
+
+	if (!device->enclosure->ses_pages)
+		return 0;
+
+	ret = ses_send_diag(device->enclosure);
 
 	enclosure_free_pages(device->enclosure);
 	return ret;

@@ -152,19 +152,36 @@ static void dump_p10(unsigned char *p)
 	}
 }
 
+static uint64_t get_drive_sas_addr(const char *path);
 static struct ses_pages *enclosure_load_pages(struct enclosure_device *enclosure);
 
-static int is_addr_in_encl(struct block_device *device, uint64_t addr, int *idx)
+static int get_encl_slot(struct block_device *device)
 {
-	/* Get page10 and read address. If it fits, return 1. */
-	struct ses_pages *sp = enclosure_load_pages(device->enclosure);
+	struct ses_pages *sp;
 	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
-	uint64_t addr_cmp;
+	uint64_t addr, addr_cmp;
+	int idx;
 
+	/* try to get slot from sysfs */
+	idx = get_int(device->cntrl_path, -1, "slot");
+	if (idx != -1)
+		return idx;
+
+	/*
+	 * Older kernels may not have the "slot" sysfs attribute,
+	 * fallback to Page10 method.
+	 */
+	sp = enclosure_load_pages(device->enclosure);
 	if (!sp)
-		return 0;
+		return -1;
+
+	addr = get_drive_sas_addr(device->sysfs_path);
+	if (!addr) {
+		ses_free(sp);
+		return -1;
+	}
 
 	if (debug)
 		print_page10(sp);
@@ -202,16 +219,21 @@ static int is_addr_in_encl(struct block_device *device, uint64_t addr, int *idx)
 					   ((uint64_t)addr_p[19]);
 
 				if (addr == addr_cmp) {
-					if (idx)
-						*idx = ap[0] & 0x10 ? ap[3] : j;
+					idx = ap[0] & 0x10 ? ap[3] : j;
 					ses_free(sp);
-					return 1;
+					return idx;
 				}
 			}
+		} else {
+			/*
+			 * Device Slot and Array Device Slot elements are
+			 * always first on the type descriptor header list
+			 */
+			break;
 		}
 	}
 	ses_free(sp);
-	return 0;
+	return -1;
 }
 
 static int enclosure_open(const struct enclosure_device *enclosure)
@@ -546,29 +568,22 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 
 int scsi_get_enclosure(struct block_device *device)
 {
-	uint64_t addr;
 	struct enclosure_device *encl;
 
 	if (!device || !device->sysfs_path)
-		return 0;
-
-	addr = get_drive_sas_addr(device->sysfs_path);
-	if (addr == 0)
 		return 0;
 
 	encl = sysfs_get_enclosure_devices();
 	while (encl) {
 		if (_slot_match(encl->sysfs_path, device->cntrl_path)) {
 			device->enclosure = encl;
+			device->encl_index = get_encl_slot(device);
 			break;
 		}
 		encl = list_next(encl);
 	}
 
-	if (!device->enclosure)
-		return 0;
-
-	return is_addr_in_encl(device, addr, &device->encl_index);
+	return (device->enclosure != NULL && device->encl_index != -1);
 }
 
 /**

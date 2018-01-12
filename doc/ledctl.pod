@@ -172,6 +172,10 @@ SES-2 DEVICE OFF
 
 SES-2 FAULT
 
+=item B<ses_prdfail>
+
+SES-2 PRDFAIL
+
 =back
 
 =head2 Patterns Translation
@@ -189,29 +193,21 @@ I<locate> is translated to I<ses_ident>
 
 I<locate_off> is translated to I<~ses_ident>
 
-=item B<normal>
+=item B<normal> or B<off>
 
-I<normal> is translated to I<ses_ok>
+I<normal> or I<off> is translated to I<ses_ok>
 
-=item B<off>
+=item B<ica> or B<degraded>
 
-I<off> is translated to I<ses_ok>
+I<ica> or I<degraded> is translated to I<ses_ica>
 
-=item B<degraded>
+=item B<rebuild> or B<rebuild_p>
 
-I<degraded> is translated to I<ses_ica>
+I<rebuild> or I<rebuild_p> is translated to I<ses_rebuild>
 
-=item B<rebuild>
+=item B<ifa> or B<failed_array>
 
-I<rebuild> is translated to I<ses_rebuild>
-
-=item B<rebuild_p>
-
-I<rebuild_p> is translated to I<ses_rebuild>
-
-=item B<failed>
-
-I<failed> is translated to I<ses_ifa>
+I<ifa> or I<failed_array> is translated to I<ses_ifa>
 
 =item B<hotspare>
 
@@ -219,15 +215,11 @@ I<hotspare> is translated to I<ses_hotspare>
 
 =item B<pfa>
 
-I<pfa> is translated to I<ses_rsvd_dev>
+I<pfa> is translated to I<ses_prdfail>
 
-=item B<failure>
+=item B<failure> or B<disk_failed>
 
-I<failure> is translated to I<ses_fault>
-
-=item B<disk_failed>
-
-I<disk_failed> is translated to I<ses_fault>
+I<failure> or I<disk_failed> is translated to I<ses_fault>
 
 =back
 

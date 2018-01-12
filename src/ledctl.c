@@ -199,14 +199,14 @@ static void _ledctl_help(void)
 	       "\t\tdisk_failed\n" "\tSES-2 only patterns:\n"
 	       "\t\tses_abort, ses_rebuild, ses_ifa, ses_ica, ses_cons_check,\n"
 	       "\t\tses_hotspare, ses_rsvd_dev, ses_ok, ses_ident, ses_rm,\n"
-	       "\t\tses_insert, ses_missing, ses_dnr, ses_active,\n"
+	       "\t\tses_insert, ses_missing, ses_dnr, ses_active, ses_prdfail,\n"
 	       "\t\tses_enbale_bb, ses_enable_ba, ses_devoff, ses_fault\n"
 	       "\tAutomatic translation form IBPI into SES-2:\n"
 	       "\t\tlocate=ses_ident, locate_off=~ses_ident,\n"
 	       "\t\tnormal=ses_ok, off=ses_ok, degraded=ses_ica,\n"
 	       "\t\trebuild=ses_rebuild rebuild_p=ses_rebuild,\n"
 	       "\t\tfailed_array=ses_ifa, hotspare=ses_hotspare\n"
-	       "\t\tpfa=ses_rsvd_dev, failure=ses_fault,\n"
+	       "\t\tpfa=ses_prdfail, failure=ses_fault,\n"
 	       "\t\tdisk_failed=ses_fault\n");
 	printf("Refer to ledctl(8) man page for more detailed description.\n");
 	printf("Bugs should be reported at: " \
@@ -443,6 +443,8 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 		ibpi = SES_REQ_DEV_OFF;
 	} else if (strcmp(name, "ses_fault") == 0) {
 		ibpi = SES_REQ_FAULT;
+	} else if (strcmp(name, "ses_prdfail") == 0) {
+		ibpi = SES_REQ_PRDFAIL;
 	} else {
 		return NULL;
 	}

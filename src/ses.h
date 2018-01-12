@@ -38,6 +38,11 @@ typedef enum __attribute__((packed)) {
 	SES_ARRAY_DEVICE_SLOT	= 0x17,
 } element_type;
 
+static inline void _set_prdfail(unsigned char *u)
+{
+	u[0] |= (1 << 6);
+}
+
 static inline void _set_abrt(unsigned char *u)
 {
 	u[1] |= (1 << 0);

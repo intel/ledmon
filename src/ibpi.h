@@ -92,7 +92,8 @@ enum ibpi_pattern {
 	SES_REQ_EN_BB,
 	SES_REQ_EN_BA,
 	SES_REQ_DEV_OFF,
-	SES_REQ_FAULT
+	SES_REQ_FAULT,
+	SES_REQ_PRDFAIL,
 };
 
 extern const char *ibpi_str[];

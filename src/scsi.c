@@ -419,8 +419,10 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 		int ret = ses_set_message(ibpi, desc_element);
 		if (ret)
 			return ret;
-		/* set select, clear rest */
-		desc_element->common_control = 0x80;
+		/* keep PRDFAIL, clear rest */
+		desc_element->common_control &= 0x40;
+		/* set select */
+		desc_element->common_control |= 0x80;
 
 		/* second byte is valid only for Array Device Slot */
 		if (element_type != SES_ARRAY_DEVICE_SLOT)
@@ -470,7 +472,7 @@ static enum ibpi_pattern ibpi_to_ses(enum ibpi_pattern ibpi)
 	case IBPI_PATTERN_HOTSPARE:
 		return SES_REQ_HOSTSPARE;
 	case IBPI_PATTERN_PFA:
-		return SES_REQ_RSVD_DEV;
+		return SES_REQ_PRDFAIL;
 	default:
 		return ibpi;
 	}
@@ -547,6 +549,9 @@ static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el
 		break;
 	case SES_REQ_FAULT:
 		_set_fault(msg.b);
+		break;
+	case SES_REQ_PRDFAIL:
+		_set_prdfail(msg.b);
 		break;
 	default:
 		return 1;

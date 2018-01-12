@@ -38,11 +38,6 @@ typedef enum __attribute__((packed)) {
 	SES_ARRAY_DEVICE_SLOT	= 0x17,
 } element_type;
 
-static inline void _clr_msg(unsigned char *u)
-{
-	u[0] = u[1] = u[2] = u[3] = 0;
-}
-
 static inline void _set_abrt(unsigned char *u)
 {
 	u[1] |= (1 << 0);

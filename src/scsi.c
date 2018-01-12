@@ -380,7 +380,7 @@ static void print_page10(struct ses_pages *sp)
 	return;
 }
 
-static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u);
+static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el);
 
 static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 {
@@ -416,7 +416,7 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 	}
 
 	if (desc_element) {
-		int ret = ses_set_message(ibpi, desc_element->b);
+		int ret = ses_set_message(ibpi, desc_element);
 		if (ret)
 			return ret;
 		/* set select, clear rest */
@@ -449,98 +449,111 @@ static int ses_send_diag(struct enclosure_device *enclosure)
 	return ret;
 }
 
-static int ses_set_message(enum ibpi_pattern ibpi, unsigned char *u)
+static enum ibpi_pattern ibpi_to_ses(enum ibpi_pattern ibpi)
 {
 	switch (ibpi) {
 	case IBPI_PATTERN_UNKNOWN:
 	case IBPI_PATTERN_ONESHOT_NORMAL:
 	case IBPI_PATTERN_NORMAL:
-		_clr_msg(u);
-		_set_ok(u);
-		break;
+		return SES_REQ_OK;
 	case IBPI_PATTERN_FAILED_ARRAY:
-		_set_ifa(u);
-		break;
+		return SES_REQ_IFA;
 	case IBPI_PATTERN_DEGRADED:
-		_set_ica(u);
-		break;
+		return SES_REQ_ICA;
 	case IBPI_PATTERN_REBUILD:
 	case IBPI_PATTERN_REBUILD_P:
-		_set_rebuild(u);
-		break;
+		return SES_REQ_REBUILD;
 	case IBPI_PATTERN_FAILED_DRIVE:
-		_set_fault(u);
-		break;
-	case IBPI_PATTERN_LOCATE_OFF:
-		_clr_ident(u);
-		break;
+		return SES_REQ_FAULT;
 	case IBPI_PATTERN_LOCATE:
-		_set_ident(u);
-		break;
+		return SES_REQ_IDENT;
 	case IBPI_PATTERN_HOTSPARE:
-		_set_hspare(u);
-		break;
+		return SES_REQ_HOSTSPARE;
 	case IBPI_PATTERN_PFA:
-		_set_rsvd_dev(u);
-		break;
-		/* SES MESSAGES */
+		return SES_REQ_RSVD_DEV;
+	default:
+		return ibpi;
+	}
+}
+
+static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el)
+{
+	struct ses_slot_ctrl_elem msg = { 0 };
+
+	if (ibpi == IBPI_PATTERN_LOCATE_OFF) {
+		/*
+		 * For locate_off we don't set a new state, just clear the
+		 * IDENT bit and the bits that are reserved or have different
+		 * meanings in Status and Control pages (RQST ACTIVE and
+		 * RQST MISSING).
+		 */
+		_clr_ident(el->b);
+		el->b2 &= 0x4e;
+		el->b3 &= 0x3c;
+		return 0;
+	}
+
+	switch (ibpi_to_ses(ibpi)) {
 	case SES_REQ_ABORT:
-		_set_abrt(u);
+		_set_abrt(msg.b);
 		break;
 	case SES_REQ_REBUILD:
-		_set_rebuild(u);
+		_set_rebuild(msg.b);
 		break;
 	case SES_REQ_IFA:
-		_set_ifa(u);
+		_set_ifa(msg.b);
 		break;
 	case SES_REQ_ICA:
-		_set_ica(u);
+		_set_ica(msg.b);
 		break;
 	case SES_REQ_CONS_CHECK:
-		_set_cons_check(u);
+		_set_cons_check(msg.b);
 		break;
 	case SES_REQ_HOSTSPARE:
-		_set_hspare(u);
+		_set_hspare(msg.b);
 		break;
 	case SES_REQ_RSVD_DEV:
-		_set_rsvd_dev(u);
+		_set_rsvd_dev(msg.b);
 		break;
 	case SES_REQ_OK:
-		_set_ok(u);
+		_set_ok(msg.b);
 		break;
 	case SES_REQ_IDENT:
-		_set_ident(u);
+		_set_ident(msg.b);
 		break;
 	case SES_REQ_RM:
-		_set_rm(u);
+		_set_rm(msg.b);
 		break;
 	case SES_REQ_INS:
-		_set_ins(u);
+		_set_ins(msg.b);
 		break;
 	case SES_REQ_MISSING:
-		_set_miss(u);
+		_set_miss(msg.b);
 		break;
 	case SES_REQ_DNR:
-		_set_dnr(u);
+		_set_dnr(msg.b);
 		break;
 	case SES_REQ_ACTIVE:
-		_set_actv(u);
+		_set_actv(msg.b);
 		break;
 	case SES_REQ_EN_BB:
-		_set_enbb(u);
+		_set_enbb(msg.b);
 		break;
 	case SES_REQ_EN_BA:
-		_set_enba(u);
+		_set_enba(msg.b);
 		break;
 	case SES_REQ_DEV_OFF:
-		_set_off(u);
+		_set_off(msg.b);
 		break;
 	case SES_REQ_FAULT:
-		_set_fault(u);
+		_set_fault(msg.b);
 		break;
 	default:
 		return 1;
 	}
+
+	*el = msg;
+
 	return 0;
 }
 

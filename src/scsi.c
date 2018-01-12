@@ -386,34 +386,50 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 {
 	struct ses_pages *sp = device->enclosure->ses_pages;
 	int idx = device->encl_index;
-	unsigned char *desc = sp->page2->buf + 8;	/* Move do descriptors */
-	int i, j;
-	int slot = 0;
-
-	memset(desc, 0, sp->page2->len - 8);
+	/* Move do descriptors */
+	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2->buf + 8);
+	int i;
+	struct ses_slot_ctrl_elem *desc_element = NULL;
+	element_type element_type = SES_UNSPECIFIED;
 
 	for (i = 0; i < sp->page1_types_len; i++) {
 		struct type_descriptor_header *t = &sp->page1_types[i];
 
+		descriptors++; /* At first, skip overall header. */
+
 		if (t->element_type == SES_DEVICE_SLOT ||
 		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
-			desc += 4;	/* At first, skip overall header. */
-			for (j = 0; j < t->num_of_elements; j++, desc += 4) {
-				if (slot++ == idx) {
-					ses_set_message(ibpi, desc);
-					/* set select */
-					desc[0] |= 0x80;
-					/* keep PRDFAIL */
-					desc[0] |= 0x40;
-					/* clear reserved flags */
-					desc[0] &= 0xf0;
-					break;
-				}
+			if (element_type < t->element_type &&
+			    t->num_of_elements > idx) {
+				element_type = t->element_type;
+				desc_element = &descriptors[idx];
 			}
+		} else {
+			/*
+			 * Device Slot and Array Device Slot elements are
+			 * always first on the type descriptor header list
+			 */
+			break;
 		}
+
+		descriptors += t->num_of_elements;
 	}
 
-	return 0;
+	if (desc_element) {
+		int ret = ses_set_message(ibpi, desc_element->b);
+		if (ret)
+			return ret;
+		/* set select, clear rest */
+		desc_element->common_control = 0x80;
+
+		/* second byte is valid only for Array Device Slot */
+		if (element_type != SES_ARRAY_DEVICE_SLOT)
+			desc_element->array_slot_control = 0;
+
+		return 0;
+	}
+
+	return 1;
 }
 
 static int ses_send_diag(struct enclosure_device *enclosure)

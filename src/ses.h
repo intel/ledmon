@@ -32,8 +32,11 @@
 #define ENCL_ADDITIONAL_EL_STATUS	0x0a
 #define SCSI_PROTOCOL_SAS		6
 
-#define SES_DEVICE_SLOT			0x01
-#define SES_ARRAY_DEVICE_SLOT		0x17
+typedef enum __attribute__((packed)) {
+	SES_UNSPECIFIED		= 0x00,
+	SES_DEVICE_SLOT		= 0x01,
+	SES_ARRAY_DEVICE_SLOT	= 0x17,
+} element_type;
 
 static inline void _clr_msg(unsigned char *u)
 {
@@ -141,7 +144,7 @@ struct ses_page {
 };
 
 struct type_descriptor_header {
-	__u8 element_type;
+	element_type element_type;
 	__u8 num_of_elements;
 	__u8 subenclosure_id;
 	__u8 type_desc_text_len;
@@ -153,6 +156,18 @@ struct ses_pages {
 	struct ses_page *page10;
 	struct type_descriptor_header *page1_types;
 	int page1_types_len;
+};
+
+struct ses_slot_ctrl_elem {
+	union {
+		struct {
+			__u8 common_control;
+			__u8 array_slot_control;
+			__u8 b2;
+			__u8 b3;
+		};
+		__u8 b[4];
+	};
 };
 
 #endif

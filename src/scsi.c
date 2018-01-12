@@ -47,8 +47,6 @@
 
 static int debug = 0;
 
-static void print_page10(struct ses_pages *);
-
 static int get_ses_page(int fd, struct ses_page *p, int pg_code)
 {
 	int ret;
@@ -144,86 +142,6 @@ static void dump_p10(unsigned char *p)
 		       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
 		       p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 	}
-}
-
-static uint64_t get_drive_sas_addr(const char *path);
-static int enclosure_load_page10(struct enclosure_device *enclosure);
-
-static int get_encl_slot(struct block_device *device)
-{
-	struct ses_pages *sp;
-	unsigned char *add_desc = NULL;
-	unsigned char *ap = NULL, *addr_p = NULL;
-	int i, j, len = 0;
-	uint64_t addr, addr_cmp;
-	int idx;
-
-	/* try to get slot from sysfs */
-	idx = get_int(device->cntrl_path, -1, "slot");
-	if (idx != -1)
-		return idx;
-
-	/*
-	 * Older kernels may not have the "slot" sysfs attribute,
-	 * fallback to Page10 method.
-	 */
-	if (enclosure_load_page10(device->enclosure))
-		return -1;
-	sp = device->enclosure->ses_pages;
-
-	addr = get_drive_sas_addr(device->sysfs_path);
-	if (!addr)
-		return -1;
-
-	if (debug)
-		print_page10(sp);
-
-	/* Check Page10 for address. Extract index. */
-	ap = add_desc = sp->page10->buf + 8;
-	for (i = 0; i < sp->page1_types_len; i++) {
-		struct type_descriptor_header *t = &sp->page1_types[i];
-
-		if (t->element_type == SES_DEVICE_SLOT ||
-		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
-			for (j = 0; j < t->num_of_elements; j++, ap += len) {
-				if (debug)
-					dump_p10(ap);
-				/* Get Additional Element Status Descriptor */
-				/* length (x-1) */
-				len = ap[1] + 2;
-				if ((ap[0] & 0xf) != SCSI_PROTOCOL_SAS)
-					continue;	/* need SAS PROTO */
-				/* It is a SAS protocol, go on */
-				if ((ap[0] & 0x10))	/* Check EIP */
-					addr_p = ap + 8;
-				else
-					addr_p = ap + 4;
-				/* Process only PHY 0 descriptor. */
-
-				/* Convert be64 to le64 */
-				addr_cmp = ((uint64_t)addr_p[12] << 8*7) |
-					   ((uint64_t)addr_p[13] << 8*6) |
-					   ((uint64_t)addr_p[14] << 8*5) |
-					   ((uint64_t)addr_p[15] << 8*4) |
-					   ((uint64_t)addr_p[16] << 8*3) |
-					   ((uint64_t)addr_p[17] << 8*2) |
-					   ((uint64_t)addr_p[18] << 8*1) |
-					   ((uint64_t)addr_p[19]);
-
-				if (addr == addr_cmp) {
-					idx = ap[0] & 0x10 ? ap[3] : j;
-					return idx;
-				}
-			}
-		} else {
-			/*
-			 * Device Slot and Array Device Slot elements are
-			 * always first on the type descriptor header list
-			 */
-			break;
-		}
-	}
-	return -1;
 }
 
 static int enclosure_open(const struct enclosure_device *enclosure)
@@ -380,77 +298,6 @@ static void print_page10(struct ses_pages *sp)
 	return;
 }
 
-static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el);
-
-static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
-{
-	struct ses_pages *sp = device->enclosure->ses_pages;
-	int idx = device->encl_index;
-	/* Move do descriptors */
-	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2->buf + 8);
-	int i;
-	struct ses_slot_ctrl_elem *desc_element = NULL;
-	element_type element_type = SES_UNSPECIFIED;
-
-	for (i = 0; i < sp->page1_types_len; i++) {
-		struct type_descriptor_header *t = &sp->page1_types[i];
-
-		descriptors++; /* At first, skip overall header. */
-
-		if (t->element_type == SES_DEVICE_SLOT ||
-		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
-			if (element_type < t->element_type &&
-			    t->num_of_elements > idx) {
-				element_type = t->element_type;
-				desc_element = &descriptors[idx];
-			}
-		} else {
-			/*
-			 * Device Slot and Array Device Slot elements are
-			 * always first on the type descriptor header list
-			 */
-			break;
-		}
-
-		descriptors += t->num_of_elements;
-	}
-
-	if (desc_element) {
-		int ret = ses_set_message(ibpi, desc_element);
-		if (ret)
-			return ret;
-		/* keep PRDFAIL, clear rest */
-		desc_element->common_control &= 0x40;
-		/* set select */
-		desc_element->common_control |= 0x80;
-
-		/* second byte is valid only for Array Device Slot */
-		if (element_type != SES_ARRAY_DEVICE_SLOT)
-			desc_element->array_slot_control = 0;
-
-		return 0;
-	}
-
-	return 1;
-}
-
-static int ses_send_diag(struct enclosure_device *enclosure)
-{
-	int ret;
-	int fd;
-
-	fd = enclosure_open(enclosure);
-	if (fd == -1)
-		return 1;
-
-	ret = sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-			      enclosure->ses_pages->page2->buf,
-			      enclosure->ses_pages->page2->len,
-			      0, debug);
-	close(fd);
-	return ret;
-}
-
 static enum ibpi_pattern ibpi_to_ses(enum ibpi_pattern ibpi)
 {
 	switch (ibpi) {
@@ -562,6 +409,75 @@ static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el
 	return 0;
 }
 
+static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
+{
+	struct ses_pages *sp = device->enclosure->ses_pages;
+	int idx = device->encl_index;
+	/* Move do descriptors */
+	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2->buf + 8);
+	int i;
+	struct ses_slot_ctrl_elem *desc_element = NULL;
+	element_type element_type = SES_UNSPECIFIED;
+
+	for (i = 0; i < sp->page1_types_len; i++) {
+		struct type_descriptor_header *t = &sp->page1_types[i];
+
+		descriptors++; /* At first, skip overall header. */
+
+		if (t->element_type == SES_DEVICE_SLOT ||
+		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
+			if (element_type < t->element_type &&
+			    t->num_of_elements > idx) {
+				element_type = t->element_type;
+				desc_element = &descriptors[idx];
+			}
+		} else {
+			/*
+			 * Device Slot and Array Device Slot elements are
+			 * always first on the type descriptor header list
+			 */
+			break;
+		}
+
+		descriptors += t->num_of_elements;
+	}
+
+	if (desc_element) {
+		int ret = ses_set_message(ibpi, desc_element);
+		if (ret)
+			return ret;
+		/* keep PRDFAIL, clear rest */
+		desc_element->common_control &= 0x40;
+		/* set select */
+		desc_element->common_control |= 0x80;
+
+		/* second byte is valid only for Array Device Slot */
+		if (element_type != SES_ARRAY_DEVICE_SLOT)
+			desc_element->array_slot_control = 0;
+
+		return 0;
+	}
+
+	return 1;
+}
+
+static int ses_send_diag(struct enclosure_device *enclosure)
+{
+	int ret;
+	int fd;
+
+	fd = enclosure_open(enclosure);
+	if (fd == -1)
+		return 1;
+
+	ret = sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
+			      enclosure->ses_pages->page2->buf,
+			      enclosure->ses_pages->page2->len,
+			      0, debug);
+	close(fd);
+	return ret;
+}
+
 static char *get_drive_end_dev(const char *path)
 {
 	char *s, *c, *p;
@@ -606,6 +522,83 @@ static uint64_t get_drive_sas_addr(const char *path)
 	free(buff);
 
 	return ret;
+}
+
+static int get_encl_slot(struct block_device *device)
+{
+	struct ses_pages *sp;
+	unsigned char *add_desc = NULL;
+	unsigned char *ap = NULL, *addr_p = NULL;
+	int i, j, len = 0;
+	uint64_t addr, addr_cmp;
+	int idx;
+
+	/* try to get slot from sysfs */
+	idx = get_int(device->cntrl_path, -1, "slot");
+	if (idx != -1)
+		return idx;
+
+	/*
+	 * Older kernels may not have the "slot" sysfs attribute,
+	 * fallback to Page10 method.
+	 */
+	if (enclosure_load_page10(device->enclosure))
+		return -1;
+	sp = device->enclosure->ses_pages;
+
+	addr = get_drive_sas_addr(device->sysfs_path);
+	if (!addr)
+		return -1;
+
+	if (debug)
+		print_page10(sp);
+
+	/* Check Page10 for address. Extract index. */
+	ap = add_desc = sp->page10->buf + 8;
+	for (i = 0; i < sp->page1_types_len; i++) {
+		struct type_descriptor_header *t = &sp->page1_types[i];
+
+		if (t->element_type == SES_DEVICE_SLOT ||
+		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
+			for (j = 0; j < t->num_of_elements; j++, ap += len) {
+				if (debug)
+					dump_p10(ap);
+				/* Get Additional Element Status Descriptor */
+				/* length (x-1) */
+				len = ap[1] + 2;
+				if ((ap[0] & 0xf) != SCSI_PROTOCOL_SAS)
+					continue;	/* need SAS PROTO */
+				/* It is a SAS protocol, go on */
+				if ((ap[0] & 0x10))	/* Check EIP */
+					addr_p = ap + 8;
+				else
+					addr_p = ap + 4;
+				/* Process only PHY 0 descriptor. */
+
+				/* Convert be64 to le64 */
+				addr_cmp = ((uint64_t)addr_p[12] << 8*7) |
+					   ((uint64_t)addr_p[13] << 8*6) |
+					   ((uint64_t)addr_p[14] << 8*5) |
+					   ((uint64_t)addr_p[15] << 8*4) |
+					   ((uint64_t)addr_p[16] << 8*3) |
+					   ((uint64_t)addr_p[17] << 8*2) |
+					   ((uint64_t)addr_p[18] << 8*1) |
+					   ((uint64_t)addr_p[19]);
+
+				if (addr == addr_cmp) {
+					idx = ap[0] & 0x10 ? ap[3] : j;
+					return idx;
+				}
+			}
+		} else {
+			/*
+			 * Device Slot and Array Device Slot elements are
+			 * always first on the type descriptor header list
+			 */
+			break;
+		}
+	}
+	return -1;
 }
 
 /**

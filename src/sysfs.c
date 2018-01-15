@@ -563,7 +563,7 @@ static void _set_array_state(struct raid_device *raid,
 		break;
 	case RAID_ACTION_RESHAPE:
 		if (conf.blink_on_migration)
-			_set_block_state(block, IBPI_PATTERN_REBUILD_P);
+			_set_block_state(block, IBPI_PATTERN_REBUILD);
 		break;
 	case RAID_ACTION_CHECK:
 	case RAID_ACTION_RESYNC:

@@ -30,7 +30,7 @@
  * - FAIL        - a block device has failed or is missing. Failure LED is
  *                 active and the behavior is depended on implementation
  *                 of enclosure management processor.
- * - REBUILD(_P) - this means a RAID device is recovering or rebuilding
+ * - REBUILD     - this means a RAID device is recovering or rebuilding
  *                 its data. Depending on implementation of enclosure
  *                 management processor appropriate LED is blinking or solid.
  * - ICA         - In a Critical Array, this means a RAID device is degraded and
@@ -65,7 +65,6 @@ enum ibpi_pattern {
 	IBPI_PATTERN_DEGRADED,
 	IBPI_PATTERN_HOTSPARE,
 	IBPI_PATTERN_REBUILD,
-	IBPI_PATTERN_REBUILD_P,
 	IBPI_PATTERN_FAILED_ARRAY,
 	IBPI_PATTERN_PFA,
 	IBPI_PATTERN_FAILED_DRIVE,

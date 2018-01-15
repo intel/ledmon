@@ -80,7 +80,7 @@ Turns only Status LED and Failure LED off.
 
 Visualizes "In a Critical Array" pattern.
 
-=item B<rebuild> or B<rebuild_p>
+=item B<rebuild>
 
 Visualizes "Rebuild" pattern.
 
@@ -201,9 +201,9 @@ I<normal> or I<off> is translated to I<ses_ok>
 
 I<ica> or I<degraded> is translated to I<ses_ica>
 
-=item B<rebuild> or B<rebuild_p>
+=item B<rebuild>
 
-I<rebuild> or I<rebuild_p> is translated to I<ses_rebuild>
+I<rebuild> is translated to I<ses_rebuild>
 
 =item B<ifa> or B<failed_array>
 

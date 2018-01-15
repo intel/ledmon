@@ -96,7 +96,6 @@ const char *ibpi_str[] = {
 	[IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
 	[IBPI_PATTERN_DEGRADED]       = "In a Critical Array",
 	[IBPI_PATTERN_REBUILD]        = "Rebuild",
-	[IBPI_PATTERN_REBUILD_P]      = "Rebuild Preferred",
 	[IBPI_PATTERN_FAILED_ARRAY]   = "In a Failed Array",
 	[IBPI_PATTERN_HOTSPARE]       = "Hotspare",
 	[IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",

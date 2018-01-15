@@ -81,7 +81,6 @@ const char *ibpi_str[] = {
 	[IBPI_PATTERN_ONESHOT_NORMAL] = "",
 	[IBPI_PATTERN_DEGRADED]       = "ICA",
 	[IBPI_PATTERN_REBUILD]        = "REBUILD",
-	[IBPI_PATTERN_REBUILD_P]      = "REBUILD",
 	[IBPI_PATTERN_FAILED_ARRAY]   = "IFA",
 	[IBPI_PATTERN_HOTSPARE]       = "HOTSPARE",
 	[IBPI_PATTERN_PFA]            = "PFA",
@@ -195,8 +194,8 @@ static void _ledctl_help(void)
 	printf("Patterns:\n"
 	       "\tCommon patterns are:\n"
 	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""
-	       "\t\trebuild_p, failed_array, hotspare, pfa, failure,\n"
-	       "\t\tdisk_failed\n" "\tSES-2 only patterns:\n"
+	       "\t\tfailed_array, hotspare, pfa, failure, disk_failed\n"
+	       "\tSES-2 only patterns:\n"
 	       "\t\tses_abort, ses_rebuild, ses_ifa, ses_ica, ses_cons_check,\n"
 	       "\t\tses_hotspare, ses_rsvd_dev, ses_ok, ses_ident, ses_rm,\n"
 	       "\t\tses_insert, ses_missing, ses_dnr, ses_active, ses_prdfail,\n"
@@ -204,9 +203,8 @@ static void _ledctl_help(void)
 	       "\tAutomatic translation form IBPI into SES-2:\n"
 	       "\t\tlocate=ses_ident, locate_off=~ses_ident,\n"
 	       "\t\tnormal=ses_ok, off=ses_ok, degraded=ses_ica,\n"
-	       "\t\trebuild=ses_rebuild rebuild_p=ses_rebuild,\n"
-	       "\t\tfailed_array=ses_ifa, hotspare=ses_hotspare\n"
-	       "\t\tpfa=ses_prdfail, failure=ses_fault,\n"
+	       "\t\trebuild=ses_rebuild, failed_array=ses_ifa,\n"
+	       "\t\thotspare=ses_hotspare, pfa=ses_prdfail, failure=ses_fault,\n"
 	       "\t\tdisk_failed=ses_fault\n");
 	printf("Refer to ledctl(8) man page for more detailed description.\n");
 	printf("Bugs should be reported at: " \
@@ -369,7 +367,7 @@ static status_t _set_log_path(const char *path)
  * @param[in]      name       a name of IBPI pattern i.e. taken from command
  *                            line interface. It might be 'locate', 'normal',
  *                            'locate_off', 'off', 'ica', 'degraded', 'rebuild',
- *                            'rebuild_p', 'ifa', 'failed_array', 'hotspare',
+ *                            'ifa', 'failed_array', 'hotspare',
  *                            'pfa', 'failure' or 'disk_failed' string.
  *
  * @return Pointer to IBPI state structure if successful, otherwise the function
@@ -395,8 +393,6 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 		ibpi = IBPI_PATTERN_DEGRADED;
 	} else if (strcmp(name, "rebuild") == 0) {
 		ibpi = IBPI_PATTERN_REBUILD;
-	} else if (strcmp(name, "rebuild_p") == 0) {
-		ibpi = IBPI_PATTERN_REBUILD_P;
 	} else if ((strcmp(name, "ifa") == 0) ||
 		   (strcmp(name, "failed_array") == 0)) {
 		ibpi = IBPI_PATTERN_FAILED_ARRAY;

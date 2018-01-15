@@ -310,7 +310,6 @@ static enum ibpi_pattern ibpi_to_ses(enum ibpi_pattern ibpi)
 	case IBPI_PATTERN_DEGRADED:
 		return SES_REQ_ICA;
 	case IBPI_PATTERN_REBUILD:
-	case IBPI_PATTERN_REBUILD_P:
 		return SES_REQ_REBUILD;
 	case IBPI_PATTERN_FAILED_DRIVE:
 		return SES_REQ_FAULT;

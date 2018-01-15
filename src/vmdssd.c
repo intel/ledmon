@@ -76,9 +76,8 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
 		break;
 	case IBPI_PATTERN_FAILED_DRIVE:
 		*new = ATTENTION_FAILURE;
-	break;
+		break;
 	case IBPI_PATTERN_REBUILD:
-	case IBPI_PATTERN_REBUILD_P:
 		*new = ATTENTION_REBUILD;
 		break;
 	default:

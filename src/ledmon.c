@@ -592,6 +592,17 @@ static void _ledmon_wait(int seconds)
 }
 
 /**
+ * @brief _compare_volume
+ * @param device
+ * @param path
+ * @return
+ */
+static int _compare_volume(struct raid_device *device, const char *path)
+{
+	return (strcmp(device->sysfs_path, path) == 0);
+}
+
+/**
  * @brief Adds the block device to list.
  *
  * This is internal function of monitor service. The function adds a block
@@ -608,6 +619,7 @@ static void _ledmon_wait(int seconds)
 static void _add_block(struct block_device *block)
 {
 	struct block_device *temp;
+	struct raid_device *related_raid;
 
 	temp = list_first_that(ledmon_block_list, block_compare, block);
 	if (temp) {
@@ -634,6 +646,17 @@ static void _add_block(struct block_device *block)
 			(temp->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
 			block->ibpi == IBPI_PATTERN_NONE)) {
 			temp->ibpi = block->ibpi;
+		}
+
+		if (block->raid_path != NULL && temp->raid_path == NULL) {
+			temp->raid_path = strdup(block->raid_path);
+		} else if (block->raid_path == NULL &&
+				temp->raid_path != NULL) {
+			related_raid = list_first_that(sysfs_get_volumes(),
+					_compare_volume, temp->raid_path);
+			if (related_raid != NULL) {
+				temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+			}
 		}
 
 		if (ibpi != temp->ibpi) {

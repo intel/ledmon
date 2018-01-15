@@ -259,6 +259,7 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 			device->host = NULL;
 			device->host_id = host_id;
 			device->encl_index = -1;
+			device->raid_path = NULL;
 			while (hosts) {
 				if (hosts->host_id == host_id) {
 					device->host = hosts;
@@ -296,6 +297,9 @@ void block_device_fini(struct block_device *device)
 
 		if (device->cntrl_path)
 			free(device->cntrl_path);
+
+		if (device->raid_path)
+			free(device->raid_path);
 
 		/* free(device); */
 	}

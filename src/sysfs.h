@@ -77,6 +77,11 @@ void *sysfs_get_enclosure_devices(void);
 void *sysfs_get_cntrl_devices(void);
 
 /**
+ * The function returns list of RAID volumes present in the system.
+ */
+void *sysfs_get_volumes(void);
+
+/**
  * The function checks if the given storage controller is attached to enclosure
  * device(s).
  */

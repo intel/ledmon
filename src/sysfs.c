@@ -582,6 +582,10 @@ static void _set_array_state(struct raid_device *raid,
  */
 static void _determine(struct slave_device *device)
 {
+	if (device->block->raid_path != NULL)
+		free(device->block->raid_path);
+	device->block->raid_path = strdup(device->raid->sysfs_path);
+
 	if ((device->
 	     state & (SLAVE_STATE_BLOCKED | SLAVE_STATE_WRITE_MOSTLY)) != 0) {
 		_set_block_state(device->block, IBPI_PATTERN_NORMAL);
@@ -773,6 +777,14 @@ void *sysfs_get_enclosure_devices(void)
 void *sysfs_get_cntrl_devices(void)
 {
 	return list_head(cntrl_list);
+}
+
+/*
+ * The function returns list of RAID volumes present in the system.
+ */
+void *sysfs_get_volumes(void)
+{
+	return list_head(volum_list);
 }
 
 /*

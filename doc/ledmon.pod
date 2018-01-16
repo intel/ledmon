@@ -69,11 +69,6 @@ global configuration file and user configuration file has no effect.
 Sets a path to local log file. If this option is specified the global log
 file F</var/log/ledmon.log> is not used.
 
-=item B<-L> or B<--list-controllers>
-
-Prints information (system path and type) of all controllers detected by ledmon
-and exits.
-
 =item B<-t> or B<--interval>=I<seconds>
 
 Sets time interval between scans of sysfs. The value is given in seconds.

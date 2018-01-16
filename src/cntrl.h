@@ -110,16 +110,16 @@ struct cntrl_device *cntrl_device_init(const char *path);
 void cntrl_device_fini(struct cntrl_device *device);
 
 /**
- * @brief Prints given controllers list.
+ * @brief Prints given controller to stdout.
  *
- * This is internal function of monitor service. This function prints the path
- * and type of controller for every controller on given in argument list.
+ * This function prints the path and type of controller device given as
+ * argument.
  *
- * @param[in]      ctrl_list           address to first element from
- *                                     controllers list.
+ * @param[in]      ctrl_dev            address to element from a
+ *                                     controller list.
  *
  * @return The function does not return a value.
  */
-void cntrl_print_all(struct cntrl_device *ctrl_list);
+void print_cntrl(struct cntrl_device *ctrl_dev);
 
 #endif				/* _CNTRL_H_INCLUDED_ */

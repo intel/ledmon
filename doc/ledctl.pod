@@ -268,6 +268,11 @@ Prints this text out and exits.
 
 Displays version of ledctl and information about the license and exits.
 
+=item B<-L> or B<--list-controllers>
+
+Prints information (system path and type) of all controllers detected by
+ledmon and exits.
+
 =back
 
 =head1 FILES

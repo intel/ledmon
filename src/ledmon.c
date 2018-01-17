@@ -746,6 +746,8 @@ static void _revalidate_dev(struct block_device *block)
 		if (block->host) {
 			if (dev_directly_attached(block->sysfs_path))
 				cntrl_init_smp(NULL, block->cntrl);
+			else
+				scsi_get_enclosure(block);
 		} else {
 			log_debug("Failed to get host for dev: %s, hostId: %d",
 				  block->sysfs_path, block->host_id);
@@ -761,28 +763,15 @@ static void _invalidate_dev(struct block_device *block)
 	/* Those fields are valid only per 'session' - through single scan. */
 	block->cntrl = NULL;
 	block->host = NULL;
+	block->enclosure = NULL;
+	block->encl_index = -1;
 }
 
 static void _check_block_dev(struct block_device *block, int *restart)
 {
 	if (!block->cntrl) {
 		(*restart)++;
-		return;
 	}
-	/* Check SCSI device behind expander. */
-	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
-		if (dev_directly_attached(block->sysfs_path) == 0) {
-			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
-			    (block->encl_index == -1 ||
-			     block->enclosure == NULL)) {
-				(*restart)++;
-				log_debug("%s(): invalidating device: %s. "
-					"No link to enclosure", __func__,
-					strstr(block->sysfs_path, "host"));
-			}
-		}
-	}
-	return;
 }
 
 /**

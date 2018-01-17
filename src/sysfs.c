@@ -666,6 +666,10 @@ status_t sysfs_reset(void)
 		list_for_each(enclo_list, enclosure_device_fini);
 		list_delete(enclo_list);
 	}
+	if (slots_list) {
+		list_for_each(slots_list, pci_slot_fini);
+		list_delete(slots_list);
+	}
 	return STATUS_SUCCESS;
 }
 

@@ -854,14 +854,14 @@ int main(int argc, char *argv[])
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
+	if (getuid() != 0) {
+		fprintf(stderr, "Only root can run this application.\n");
+		return STATUS_NOT_A_PRIVILEGED_USER;
+	}
+
 	status = _init_ledmon_conf();
 	if (status != STATUS_SUCCESS)
 		return status;
-
-	if (getuid() != 0) {
-		log_error("Only root can run this application.");
-		return STATUS_NOT_A_PRIVILEGED_USER;
-	}
 
 	if (on_exit(_ledmon_status, &terminate))
 		return STATUS_ONEXIT_ERROR;

@@ -423,22 +423,8 @@ void cntrl_device_fini(struct cntrl_device *device)
 	}
 }
 
-/**
- * @brief Prints given controllers list.
- *
- * This is internal function of monitor service. This function prints the path
- * and type of controller for every controller on given in argument list.
- *
- * @param[in]      ctrl_list           address to first element from
- *                                     controllers list.
- *
- * @return The function does not return a value.
- */
-void cntrl_print_all(struct cntrl_device *ctrl_list)
+void print_cntrl(struct cntrl_device *ctrl_dev)
 {
-	while (ctrl_list != NULL) {
-		printf("%s (%s)\n", ctrl_list->sysfs_path,
-			ctrl_type_str[ctrl_list->cntrl_type]);
-		ctrl_list = list_next(ctrl_list);
-	}
+		printf("%s (%s)\n", ctrl_dev->sysfs_path,
+			ctrl_type_str[ctrl_dev->cntrl_type]);
 }

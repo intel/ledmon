@@ -128,7 +128,7 @@ static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d\n"
  * Internal variable of monitor service. It is used to help parse command line
  * short options.
  */
-static char *shortopt = "t:c:hLvl:";
+static char *shortopt = "t:c:hvl:";
 
 /**
  * Internal enumeration type. It is used to help parse command line arguments.
@@ -146,7 +146,6 @@ enum longopt {
 	OPT_VERSION,
 	OPT_WARNING,
 	OPT_LOG_LEVEL,
-	OPT_LIST_CTRL,
 };
 
 /**
@@ -166,7 +165,6 @@ static struct option longopt[] = {
 	[OPT_VERSION]  = {"version", no_argument, NULL, 'v'},
 	[OPT_WARNING]  = {"warning", no_argument, NULL, '\0'},
 	[OPT_LOG_LEVEL] = {"log-level", required_argument, NULL, '\0'},
-	[OPT_LIST_CTRL] = {"list-controllers", no_argument, NULL, 'L'},
 			 {NULL, no_argument, NULL, '\0'}
 };
 
@@ -439,16 +437,6 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			break;
 		case 'l':
 			status = _set_log_path(optarg);
-			break;
-		case 'L':
-			if (sysfs_init() == STATUS_SUCCESS &&
-				sysfs_scan() == STATUS_SUCCESS) {
-				cntrl_print_all(sysfs_get_cntrl_devices());
-				exit(EXIT_SUCCESS);
-			} else {
-				log_debug("Unable to scan controllers.");
-				exit(EXIT_FAILURE);
-			}
 			break;
 		case 't':
 			status = _set_sleep_interval(optarg);

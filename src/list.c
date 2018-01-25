@@ -51,73 +51,6 @@ static struct node *_new(void *data, size_t size)
 
 /**
  */
-static void _delete(struct node *node)
-{
-	struct node *next;
-
-	while (node) {
-		next = node->next;
-		free(node);
-		node = next;
-	}
-}
-
-/**
- */
-static void _fini(struct list *list)
-{
-	_delete(list->head);
-	free(list);
-}
-
-/**
- */
-static void _list_delete(struct list *list)
-{
-	_delete(list->head);
-	list->head = list->tail = NULL;
-}
-
-/**
- */
-static status_t _remove(struct node *node)
-{
-	struct list *list;
-
-	list = node->list;
-	if (list == NULL)
-		return STATUS_INVALID_NODE;
-	if (node->prev)
-		node->prev->next = node->next;
-	else
-		list->head = node->next;
-	if (node->next)
-		node->next->prev = node->prev;
-	else
-		list->tail = node->prev;
-	node->list = NULL;
-	node->next = NULL;
-	node->prev = NULL;
-
-	return STATUS_SUCCESS;
-}
-
-/**
- */
-static struct node *_next(struct node *ptr)
-{
-	return ptr->next;
-}
-
-/**
- */
-static struct node *_prev(struct node *ptr)
-{
-	return ptr->prev;
-}
-
-/**
- */
 static void _put_front(struct list *list, struct node *elem)
 {
 	if (list->head == NULL)
@@ -146,20 +79,6 @@ static void _put_back(struct list *list, struct node *elem)
 
 /**
  */
-static struct node *_tail(struct list *ptr)
-{
-	return ptr->tail;
-}
-
-/**
- */
-static struct node *_head(struct list *ptr)
-{
-	return ptr->head;
-}
-
-/**
- */
 status_t list_init(struct list **ptr)
 {
 	struct list *t;
@@ -178,8 +97,10 @@ status_t list_init(struct list **ptr)
  */
 status_t list_fini(struct list *ptr)
 {
-	if (ptr != NULL)
-		_fini(ptr);
+	if (ptr != NULL) {
+		list_clear(ptr);
+		free(ptr);
+	}
 	return STATUS_SUCCESS;
 }
 
@@ -187,9 +108,27 @@ status_t list_fini(struct list *ptr)
  */
 status_t list_remove(struct node *ptr)
 {
+	struct list *list;
+
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	return _remove(ptr);
+
+	list = ptr->list;
+	if (list == NULL)
+		return STATUS_INVALID_NODE;
+	if (ptr->prev)
+		ptr->prev->next = ptr->next;
+	else
+		list->head = ptr->next;
+	if (ptr->next)
+		ptr->next->prev = ptr->prev;
+	else
+		list->tail = ptr->prev;
+	ptr->list = NULL;
+	ptr->next = NULL;
+	ptr->prev = NULL;
+
+	return STATUS_SUCCESS;
 }
 
 /**
@@ -226,57 +165,47 @@ void *list_put(struct list *ptr, void *data, size_t size)
  */
 struct node *list_next(struct node *ptr)
 {
-	if (ptr) {
-		struct node *node = _next(ptr);
-		if (node)
-			return node;
-	}
-	return NULL;
+	return ptr->next;
 }
 
 /**
  */
 struct node *list_prev(struct node *ptr)
 {
-	if (ptr) {
-		struct node *node = _prev(ptr);
-		if (node)
-			return node;
-	}
-	return NULL;
+	return ptr->prev;
 }
 
 /**
  */
 struct node *list_head(struct list *ptr)
 {
-	if (ptr) {
-		struct node *node = _head(ptr);
-		if (node)
-			return node;
-	}
-	return NULL;
+	return ptr->head;
 }
 
 /**
  */
 struct node *list_tail(struct list *ptr)
 {
-	if (ptr) {
-		struct node *node = _tail(ptr);
-		if (node)
-			return node;
-	}
-	return NULL;
+	return ptr->tail;
 }
 
 /**
  */
 status_t list_clear(struct list *ptr)
 {
+	struct node *node;
+	struct node *next;
+
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	_list_delete(ptr);
+
+	node = ptr->head;
+	while (node) {
+		next = node->next;
+		free(node);
+		node = next;
+	}
+	ptr->head = ptr->tail = NULL;
 	return STATUS_SUCCESS;
 }
 

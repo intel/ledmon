@@ -172,7 +172,7 @@ static struct option longopt[] = {
  */
 static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
 {
-	sysfs_fini();
+	sysfs_reset();
 	list_for_each(&ledmon_block_list, block_device_fini);
 	list_clear(&ledmon_block_list);
 	log_close();
@@ -908,30 +908,16 @@ int main(int argc, char *argv[])
 	if (on_exit(_ledmon_fini, progname))
 		exit(STATUS_ONEXIT_ERROR);
 	list_init(&ledmon_block_list);
-	status = sysfs_init();
-	if (status != STATUS_SUCCESS) {
-		log_debug("main(): sysfs_init() failed (status=%s).",
-			  strstatus(status));
-		exit(EXIT_FAILURE);
-	}
+	sysfs_init();
 	log_info("monitor service has been started...");
 	while (terminate == 0) {
 		timestamp = time(NULL);
-		status = sysfs_scan();
-		if (status != STATUS_SUCCESS) {
-			log_debug("main(): sysfs_scan() failed (status=%s).",
-				  strstatus(status));
-		} else {
-			_ledmon_execute();
-		}
+		sysfs_scan();
+		_ledmon_execute();
 		_ledmon_wait(conf.scan_interval);
 		/* Invalidate each device in the list. Clear controller and host. */
 		list_for_each(&ledmon_block_list, _invalidate_dev);
-		status = sysfs_reset();
-		if (status != STATUS_SUCCESS) {
-			log_debug("main(): sysfs_reset() failed "
-				  "(status=%s).", strstatus(status));
-		}
+		sysfs_reset();
 	}
 	stop_udev_monitor();
 	exit(EXIT_SUCCESS);

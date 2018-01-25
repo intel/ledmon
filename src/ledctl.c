@@ -143,7 +143,7 @@ static struct option longopt[] = {
 static void _ledctl_fini(int __attribute__ ((unused)) status,
 			 void *__attribute__ ((unused)) ignore)
 {
-	sysfs_fini();
+	sysfs_reset();
 	list_clear(&ibpi_list);
 	log_close();
 }
@@ -605,17 +605,11 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			status = _set_log_path(optarg);
 			break;
 		case 'L':
-			if (sysfs_init() == STATUS_SUCCESS &&
-				sysfs_scan() == STATUS_SUCCESS) {
-				list_for_each(sysfs_get_cntrl_devices(),
-					     print_cntrl);
-				sysfs_reset();
-				exit(EXIT_SUCCESS);
-			} else {
-				log_debug("Unable to scan controllers.");
-				exit(EXIT_FAILURE);
-			}
-		break;
+			sysfs_init();
+			sysfs_scan();
+			list_for_each(sysfs_get_cntrl_devices(), print_cntrl);
+			sysfs_reset();
+			exit(EXIT_SUCCESS);
 		case ':':
 		case '?':
 		default:
@@ -731,18 +725,8 @@ int main(int argc, char *argv[])
 	if (_cmdline_parse(argc, argv))
 		exit(STATUS_CMDLINE_ERROR);
 	list_init(&ibpi_list);
-	status = sysfs_init();
-	if (status != STATUS_SUCCESS) {
-		log_debug("main(): sysfs_init() failed (status=%s).",
-			  strstatus(status));
-		exit(STATUS_SYSFS_INIT_ERROR);
-	}
-	status = sysfs_scan();
-	if (status != STATUS_SUCCESS) {
-		log_debug("main(): sysfs_scan() failed (status=%s).",
-			  strstatus(status));
-		exit(STATUS_SYSFS_SCAN_ERROR);
-	}
+	sysfs_init();
+	sysfs_scan();
 	status = _cmdline_ibpi_parse(argc, argv);
 	if (status != STATUS_SUCCESS) {
 		log_debug("main(): _ibpi_parse() failed (status=%s).",

@@ -430,45 +430,34 @@ static void _check_slots(const char *path)
 	_slots_add(path);
 }
 
-/**
- */
-static status_t _scan_block(void)
+static void _scan_block(void)
 {
 	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
 	if (dir) {
 		list_for_each(dir, _block_add);
 		list_fini(dir);
 	}
-	return STATUS_SUCCESS;
 }
 
-/**
- */
-static status_t _scan_raid(void)
+static void _scan_raid(void)
 {
 	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
 	if (dir) {
 		list_for_each(dir, _check_raid);
 		list_fini(dir);
 	}
-	return STATUS_SUCCESS;
 }
 
-/**
- */
-static status_t _scan_cntrl(void)
+static void _scan_cntrl(void)
 {
 	struct list *dir = scan_dir(SYSFS_PCI_DEVICES);
 	if (dir) {
 		list_for_each(dir, _check_cntrl);
 		list_fini(dir);
 	}
-	return STATUS_SUCCESS;
 }
 
-/**
- */
-static status_t _scan_slave(void)
+static void _scan_slave(void)
 {
 	list_for_each(&volum_list, _link_volum);
 	list_for_each(&cntnr_list, _link_cntnr);
@@ -485,31 +474,24 @@ static status_t _scan_slave(void)
 			node = next_node;
 		}
 	}
-	return STATUS_SUCCESS;
 }
 
-/**
- */
-static status_t _scan_enclo(void)
+static void _scan_enclo(void)
 {
 	struct list *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
 	if (dir) {
 		list_for_each(dir, _check_enclo);
 		list_fini(dir);
 	}
-	return STATUS_SUCCESS;
 }
 
-/**
- */
-static status_t _scan_slots(void)
+static void _scan_slots(void)
 {
 	struct list *dir = scan_dir(SYSFS_PCI_SLOTS);
 	if (dir) {
 		list_for_each(dir, _check_slots);
 		list_fini(dir);
 	}
-	return STATUS_SUCCESS;
 }
 
 /**
@@ -613,9 +595,7 @@ static void _determine(struct slave_device *device)
 	}
 }
 
-/**
- */
-status_t sysfs_init(void)
+void sysfs_init(void)
 {
 	list_init(&sysfs_block_list);
 	list_init(&volum_list);
@@ -624,13 +604,9 @@ status_t sysfs_init(void)
 	list_init(&cntnr_list);
 	list_init(&enclo_list);
 	list_init(&slots_list);
-
-	return STATUS_SUCCESS;
 }
 
-/**
- */
-void sysfs_fini(void)
+void sysfs_reset(void)
 {
 	list_for_each(&sysfs_block_list, block_device_fini);
 	list_clear(&sysfs_block_list);
@@ -654,57 +630,16 @@ void sysfs_fini(void)
 	list_clear(&slots_list);
 }
 
-/**
- */
-status_t sysfs_reset(void)
+void sysfs_scan(void)
 {
-	list_for_each(&sysfs_block_list, block_device_fini);
-	list_clear(&sysfs_block_list);
+	_scan_enclo();
+	_scan_cntrl();
+	_scan_slots();
+	_scan_block();
+	_scan_raid();
+	_scan_slave();
 
-	list_for_each(&volum_list, raid_device_fini);
-	list_clear(&volum_list);
-
-	list_for_each(&cntrl_list, cntrl_device_fini);
-	list_clear(&cntrl_list);
-
-	list_for_each(&slave_list, slave_device_fini);
-	list_clear(&slave_list);
-
-	list_for_each(&cntnr_list, raid_device_fini);
-	list_clear(&cntnr_list);
-
-	list_for_each(&enclo_list, enclosure_device_fini);
-	list_clear(&enclo_list);
-
-	list_for_each(&slots_list, pci_slot_fini);
-	list_clear(&slots_list);
-
-	return STATUS_SUCCESS;
-}
-
-/**
- */
-status_t sysfs_scan(void)
-{
-	if (_scan_enclo() != STATUS_SUCCESS)
-		return STATUS_ENCLO_LIST_ERROR;
-
-	if (_scan_cntrl() != STATUS_SUCCESS)
-		return STATUS_CNTRL_LIST_ERROR;
-
-	if (_scan_slots() != STATUS_SUCCESS)
-		return STATUS_ENCLO_LIST_ERROR;
-
-	if (_scan_block() != STATUS_SUCCESS)
-		return STATUS_BLOCK_LIST_ERROR;
-
-	if (_scan_raid() != STATUS_SUCCESS)
-		return STATUS_VOLUM_LIST_ERROR;
-
-	if (_scan_slave() != STATUS_SUCCESS)
-		return STATUS_SLAVE_LIST_ERROR;
-
-	return list_for_each(&slave_list, _determine);
+	list_for_each(&slave_list, _determine);
 }
 
 /*

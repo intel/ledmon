@@ -25,34 +25,17 @@
 /**
  * @brief Initializes sysfs module.
  *
- * This function initializes sysfs module. The function allocates memory for
- * internal lists and initializes the lists. Application must call this function
- * before any sysfs module function.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * This function initializes sysfs module internal lists.
+ * Application must call this function before any sysfs module function.
  */
-status_t sysfs_init(void);
-
-/**
- * @brief Finalizes sysfs module.
- *
- * This function releases memory allocated for sysfs module and its components.
- * Application must call this function at the very end of execution.
- *
- * @return The function does not return a value.
- */
-void sysfs_fini(void);
+void sysfs_init(void);
 
 /**
  * @brief Resets the content of internal lists.
  *
- * This function releases memory allocated for elements of internal lists. The
- * function does not release memory allocated for the lists itself. Use
- * sysfs_fini() function instead to release memory allocated for internal lists.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * This function releases memory allocated for elements of internal lists.
  */
-status_t sysfs_reset(void);
+void sysfs_reset(void);
 
 /**
  * @brief Scans sysfs tree and populates internal lists.
@@ -60,10 +43,8 @@ status_t sysfs_reset(void);
  * This function scans sysfs tree for storage controllers, block devices, RAID
  * devices, container devices, slave devices and enclosure devices registered
  * in the system. Only supported block and controller devices are put on a list.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t sysfs_scan(void);
+void sysfs_scan(void);
 
 /**
  * The function returns list of enclosure devices attached to SAS/SCSI storage

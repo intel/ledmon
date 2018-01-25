@@ -65,7 +65,7 @@
  * Only devices which have enclosure management feature enabled are on the
  * list, other devices are ignored (except protocol is forced).
  */
-static void *ledmon_block_list;
+static struct list *ledmon_block_list;
 
 /**
  * @brief Daemon process termination flag.
@@ -832,7 +832,7 @@ static status_t _init_ledmon_conf(void)
 
 static void _close_parent_fds(void)
 {
-	void *dir = scan_dir("/proc/self/fd");
+	struct list *dir = scan_dir("/proc/self/fd");
 
 	if (dir) {
 		char *elem = list_head(dir);

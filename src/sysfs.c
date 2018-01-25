@@ -59,7 +59,7 @@
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *sysfs_block_list = NULL;
+static struct list *sysfs_block_list;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -69,7 +69,7 @@ static void *sysfs_block_list = NULL;
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *volum_list = NULL;
+static struct list *volum_list;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -80,7 +80,7 @@ static void *volum_list = NULL;
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *cntrl_list = NULL;
+static struct list *cntrl_list;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -90,7 +90,7 @@ static void *cntrl_list = NULL;
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *slave_list = NULL;
+static struct list *slave_list;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -100,13 +100,13 @@ static void *slave_list = NULL;
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *cntnr_list = NULL;
+static struct list *cntnr_list;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds the
  * pointer to list of enclosures registered in the system.
  */
-static void *enclo_list = NULL;
+static struct list *enclo_list;
 
 /**
  * This is internal variable global to sysfs module only. The variable holds
@@ -116,7 +116,7 @@ static void *enclo_list = NULL;
  * Use sysfs_fini() function to delete the content of the list and release
  * memory allocated for the list.
  */
-static void *slots_list = NULL;
+static struct list *slots_list;
 
 /**
  * @brief Determine device type.
@@ -263,9 +263,11 @@ static void _exclude_non_raid_devices(struct block_device *block_device)
 		slave_device = list_next(slave_device);
 	}
 	if (to_remove) {
-		list_remove(block_device);
+		struct node *node = _Node(block_device);
+
+		list_remove(node);
 		block_device_fini(block_device);
-		free_node(block_device);
+		free(node);
 	}
 }
 
@@ -300,7 +302,7 @@ static void _link_volum(struct raid_device *device)
 	str_cpy(temp, device->sysfs_path, PATH_MAX);
 	str_cat(temp, "/md", PATH_MAX);
 
-	void *dir = scan_dir(temp);
+	struct list *dir = scan_dir(temp);
 	if (dir) {
 		list_for_each_parm(dir, _slave_vol_add, device);
 		list_fini(dir);
@@ -316,7 +318,7 @@ static void _link_cntnr(struct raid_device *device)
 	str_cpy(temp, device->sysfs_path, PATH_MAX);
 	str_cat(temp, "/md", PATH_MAX);
 
-	void *dir = scan_dir(temp);
+	struct list *dir = scan_dir(temp);
 	if (dir) {
 		list_for_each_parm(dir, _slave_cnt_add, device);
 		list_fini(dir);
@@ -327,7 +329,7 @@ static void _link_cntnr(struct raid_device *device)
  */
 static void _block_add(const char *path)
 {
-	void *device = block_device_init(cntrl_list, path);
+	struct block_device *device = block_device_init(cntrl_list, path);
 	if (device) {
 		list_put(sysfs_block_list, device, sizeof(struct block_device));
 		free(device);
@@ -338,7 +340,8 @@ static void _block_add(const char *path)
  */
 static void _volum_add(const char *path, unsigned int device_num)
 {
-	void *device = raid_device_init(path, device_num, DEVICE_TYPE_VOLUME);
+	struct raid_device *device =
+	    raid_device_init(path, device_num, DEVICE_TYPE_VOLUME);
 	if (device) {
 		list_put(volum_list, device, sizeof(struct raid_device));
 		free(device);
@@ -349,7 +352,7 @@ static void _volum_add(const char *path, unsigned int device_num)
  */
 static void _cntnr_add(const char *path, unsigned int device_num)
 {
-	void *device =
+	struct raid_device *device =
 	    raid_device_init(path, device_num, DEVICE_TYPE_CONTAINER);
 	if (device) {
 		list_put(cntnr_list, device, sizeof(struct raid_device));
@@ -382,7 +385,7 @@ static void _raid_add(const char *path)
  */
 static void _cntrl_add(const char *path)
 {
-	void *device = cntrl_device_init(path);
+	struct cntrl_device *device = cntrl_device_init(path);
 	if (device) {
 		list_put(cntrl_list, device, sizeof(struct cntrl_device));
 		free(device);
@@ -393,7 +396,7 @@ static void _cntrl_add(const char *path)
  */
 static void _enclo_add(const char *path)
 {
-	void *device = enclosure_device_init(path);
+	struct enclosure_device *device = enclosure_device_init(path);
 	if (device) {
 		list_put(enclo_list, device, sizeof(struct enclosure_device));
 		free(device);
@@ -404,7 +407,7 @@ static void _enclo_add(const char *path)
  */
 static void _slots_add(const char *path)
 {
-	void *device = pci_slot_init(path);
+	struct pci_slot *device = pci_slot_init(path);
 	if (device) {
 		list_put(slots_list, device, sizeof(struct pci_slot));
 		free(device);
@@ -449,7 +452,7 @@ static void _check_slots(const char *path)
  */
 static status_t _scan_block(void)
 {
-	void *dir = scan_dir(SYSFS_CLASS_BLOCK);
+	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
 	if (dir) {
 		list_for_each(dir, _block_add);
 		list_fini(dir);
@@ -461,7 +464,7 @@ static status_t _scan_block(void)
  */
 static status_t _scan_raid(void)
 {
-	void *dir = scan_dir(SYSFS_CLASS_BLOCK);
+	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
 	if (dir) {
 		list_for_each(dir, _check_raid);
 		list_fini(dir);
@@ -473,7 +476,7 @@ static status_t _scan_raid(void)
  */
 static status_t _scan_cntrl(void)
 {
-	void *dir = scan_dir(SYSFS_PCI_DEVICES);
+	struct list *dir = scan_dir(SYSFS_PCI_DEVICES);
 	if (dir) {
 		list_for_each(dir, _check_cntrl);
 		list_fini(dir);
@@ -496,7 +499,7 @@ static status_t _scan_slave(void)
  */
 static status_t _scan_enclo(void)
 {
-	void *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
+	struct list *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
 	if (dir) {
 		list_for_each(dir, _check_enclo);
 		list_fini(dir);
@@ -508,7 +511,7 @@ static status_t _scan_enclo(void)
  */
 static status_t _scan_slots(void)
 {
-	void *dir = scan_dir(SYSFS_PCI_SLOTS);
+	struct list *dir = scan_dir(SYSFS_PCI_SLOTS);
 	if (dir) {
 		list_for_each(dir, _check_slots);
 		list_fini(dir);
@@ -769,25 +772,25 @@ status_t sysfs_scan(void)
  * The function reutrns list of enclosure devices attached to SAS/SCSI storage
  * controller(s).
  */
-void *sysfs_get_enclosure_devices(void)
+struct list *sysfs_get_enclosure_devices(void)
 {
-	return list_head(enclo_list);
+	return enclo_list;
 }
 
 /*
  * The function returns list of controller devices present in the system.
  */
-void *sysfs_get_cntrl_devices(void)
+struct list *sysfs_get_cntrl_devices(void)
 {
-	return list_head(cntrl_list);
+	return cntrl_list;
 }
 
 /*
  * The function returns list of RAID volumes present in the system.
  */
-void *sysfs_get_volumes(void)
+struct list *sysfs_get_volumes(void)
 {
-	return list_head(volum_list);
+	return volum_list;
 }
 
 /*
@@ -803,7 +806,7 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm)
  * The function is looking for block device according to criteria defined by
  * 'test' function. See sysfs.h for details.
  */
-void *sysfs_block_device_first_that(test_t test, void *parm)
+struct block_device *sysfs_block_device_first_that(test_t test, void *parm)
 {
 	return list_first_that(sysfs_block_list, test, parm);
 }
@@ -812,7 +815,7 @@ void *sysfs_block_device_first_that(test_t test, void *parm)
  * The function is looking for PCI hotplug slot according to criteria defined
  * by 'test' function. See sysfs.h for details.
  */
-void *sysfs_pci_slot_first_that(test_t test, void *parm)
+struct pci_slot *sysfs_pci_slot_first_that(test_t test, void *parm)
 {
 	return list_first_that(slots_list, test, parm);
 }

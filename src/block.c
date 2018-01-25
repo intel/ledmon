@@ -35,7 +35,6 @@
 #include "block.h"
 #include "config.h"
 #include "dellssd.h"
-#include "list.h"
 #include "pci_slot.h"
 #include "raid.h"
 #include "scsi.h"
@@ -191,7 +190,7 @@ static int is_vmd(const struct block_device *bd)
  *         returns NULL pointer. The NULL pointer means that block devices is
  *         connected to unsupported storage controller.
  */
-struct cntrl_device *block_get_controller(void *cntrl_list, char *path)
+struct cntrl_device *block_get_controller(struct list *cntrl_list, char *path)
 {
 	return list_first_that(cntrl_list, _compare, path);
 }
@@ -215,7 +214,7 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 /*
  * Allocates a new block device structure. See block.h for details.
  */
-struct block_device *block_device_init(void *cntrl_list, const char *path)
+struct block_device *block_device_init(struct list *cntrl_list, const char *path)
 {
 	struct cntrl_device *cntrl;
 	char link[PATH_MAX];

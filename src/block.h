@@ -23,6 +23,7 @@
 #include "cntrl.h"
 #include "ibpi.h"
 #include "time.h"
+#include "list.h"
 
 struct block_device;
 
@@ -147,7 +148,7 @@ struct block_device {
  * @return Pointer to block device structure if successful, otherwise the function
  *         returns the NULL pointer.
  */
-struct block_device *block_device_init(void *cntrl_list, const char *path);
+struct block_device *block_device_init(struct list *cntrl_list, const char *path);
 
 /**
  * @brief Releases a block device structure.
@@ -193,7 +194,7 @@ struct block_device *block_device_duplicate(struct block_device *device);
  *         returns NULL pointer. The NULL pointer means that block devices is
  *         connected to unsupported storage controller.
  */
-struct cntrl_device *block_get_controller(void *cntrl_list, char *path);
+struct cntrl_device *block_get_controller(struct list *cntrl_list, char *path);
 
 /**
  * The global timestamp variable. It is updated every time the sysfs is scanning

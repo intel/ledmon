@@ -125,10 +125,10 @@ int get_int(const char *path, int defval, const char *name)
 
 /**
  */
-void *scan_dir(const char *path)
+struct list *scan_dir(const char *path)
 {
 	struct dirent *dirent;
-	void *result;
+	struct list *result;
 	char temp[PATH_MAX];
 
 	if (list_init(&result) != STATUS_SUCCESS)

@@ -103,7 +103,7 @@ static int _is_dellssd_cntrl(const char *path)
 static int _is_smp_cntrl(const char *path)
 {
 	int result = 0;
-	void *dir = scan_dir(path);
+	struct list *dir = scan_dir(path);
 	char *p;
 	char host_path[PATH_MAX] = { 0 };
 	char *host;
@@ -237,7 +237,7 @@ void _find_host(const char *path, struct _host_type **hosts)
 static struct _host_type *_cntrl_get_hosts(const char *path)
 {
 	struct _host_type *hosts = NULL;
-	void *dir = scan_dir(path);
+	struct list *dir = scan_dir(path);
 	if (dir) {
 		list_for_each_parm(dir, _find_host, &hosts);
 		list_fini(dir);

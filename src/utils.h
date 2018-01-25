@@ -155,7 +155,7 @@ int put_int(const char *path, const char *name, int value);
  * @return List containing content of the given directory. Each element on the
  *         list is canonical path.
  */
-void *scan_dir(const char *path);
+struct list *scan_dir(const char *path);
 
 /**
  * @brief Writes a text to file.

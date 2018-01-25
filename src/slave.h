@@ -44,7 +44,7 @@ struct slave_device {
 
 /**
  */
-struct slave_device *slave_device_init(const char *path, void *block_list);
+struct slave_device *slave_device_init(const char *path, struct list *block_list);
 
 /**
  */

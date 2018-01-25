@@ -24,7 +24,6 @@
 
 #include "block.h"
 #include "ibpi.h"
-#include "list.h"
 #include "status.h"
 #include "sysfs.h"
 #include "udev.h"
@@ -43,7 +42,7 @@ static int _compare(const void *item, const void *param)
 	if (strcmp(bd->sysfs_path, syspath) == 0) {
 		return 1;
 	} else {
-		void *cntrl_list;
+		struct list *cntrl_list;
 		struct block_device *bd_new;
 		int ret;
 
@@ -118,7 +117,7 @@ int get_udev_monitor()
 	return create_udev_monitor();
 }
 
-int handle_udev_event(void *ledmon_block_list)
+int handle_udev_event(struct list *ledmon_block_list)
 {
 	struct udev_device *dev;
 

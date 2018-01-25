@@ -621,7 +621,7 @@ static int _slot_match(const void *item, const void *param)
  */
 static char *_slot_find(const char *enclo_path, const char *device_path)
 {
-	void *dir;
+	struct list *dir;
 	char *temp, *result = NULL;
 
 	dir = scan_dir(enclo_path);
@@ -641,7 +641,7 @@ int scsi_get_enclosure(struct block_device *device)
 	if (!device || !device->sysfs_path)
 		return 0;
 
-	encl = sysfs_get_enclosure_devices();
+	encl = list_head(sysfs_get_enclosure_devices());
 	while (encl) {
 		if (_slot_match(encl->sysfs_path, device->cntrl_path)) {
 			device->enclosure = encl;
@@ -733,7 +733,7 @@ static char *_get_enc_slot_path(const char *path)
 	struct enclosure_device *device;
 	char *result = NULL;
 
-	device = sysfs_get_enclosure_devices();
+	device = list_head(sysfs_get_enclosure_devices());
 	while (device) {
 		result = _slot_find(device->sysfs_path, path);
 		if (result != NULL)

@@ -13,6 +13,8 @@
 #ifndef SRC_CONFIG_FILE_H_
 #define SRC_CONFIG_FILE_H_
 
+#include "list.h"
+
 #define LEDMON_DEF_CONF_FILE "/etc/ledmon.conf"
 #define LEDMON_DEF_LOG_FILE "/var/log/ledmon.log"
 #define LEDCTL_DEF_LOG_FILE "/var/log/ledctl.log"
@@ -42,8 +44,8 @@ struct ledmon_conf {
 	int raid_memebers_only;
 
 	/* whitelist and blacklist of controllers for blinking */
-	void *cntrls_whitelist;
-	void *cntrls_blacklist;
+	struct list *cntrls_whitelist;
+	struct list *cntrls_blacklist;
 };
 
 extern struct ledmon_conf conf;

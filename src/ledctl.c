@@ -57,7 +57,7 @@
  */
 struct ibpi_state {
 	enum ibpi_pattern ibpi;
-	void *block_list;
+	struct list *block_list;
 };
 
 /**
@@ -67,7 +67,7 @@ struct ibpi_state {
  * to be visualized. Each element on the list is struct ibpi_state type. There's
  * only one instance of each IBPI pattern on the list (no duplicates).
  */
-static void *ibpi_list = NULL;
+static struct list *ibpi_list;
 
 /**
  * @brief IBPI pattern names.
@@ -225,7 +225,7 @@ static void _ledctl_help(void)
  *         of list for block devices failed or putting new element
  *         no IBPI state list failed.
  */
-static void *_ibpi_state_init(enum ibpi_pattern ibpi)
+static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 {
 	struct ibpi_state state;
 
@@ -291,7 +291,7 @@ static void _determine(struct ibpi_state *state)
  *         STATUS_LIST_EMPTY      the specified list has no elements.
  *         STATUS_NULL_POINTER    ibpi_list is NULL.
  */
-static status_t _ibpi_state_determine(void *ibpi_list)
+static status_t _ibpi_state_determine(struct list *ibpi_list)
 {
 	if (list_is_empty(ibpi_list) == 0)
 		return list_for_each(ibpi_list, _determine);
@@ -492,7 +492,7 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 {
 	struct stat st;
 	char temp[PATH_MAX], path[PATH_MAX];
-	void *blk1, *blk2;
+	struct block_device *blk1, *blk2;
 
 	if ((realpath(name, temp) == NULL) && (errno != ENOTDIR))
 		return STATUS_INVALID_PATH;
@@ -667,7 +667,7 @@ static void _flush_cntrl_message(struct block_device *device)
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static status_t _ledctl_execute(void *ibpi_list)
+static status_t _ledctl_execute(struct list *ibpi_list)
 {
 	struct ibpi_state *state = list_head(ibpi_list);
 

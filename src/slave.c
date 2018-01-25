@@ -100,7 +100,7 @@ static int _compare(const void *item, const void *param)
 
 /**
  */
-static struct block_device *_get_block(const char *path, void *block_list)
+static struct block_device *_get_block(const char *path, struct list *block_list)
 {
 	char temp[PATH_MAX];
 	char link[PATH_MAX];
@@ -128,7 +128,7 @@ static struct block_device *_get_block(const char *path, void *block_list)
 
 /**
  */
-struct slave_device *slave_device_init(const char *path, void *block_list)
+struct slave_device *slave_device_init(const char *path, struct list *block_list)
 {
 	struct slave_device *device = NULL;
 	struct block_device *block;

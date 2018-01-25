@@ -20,6 +20,8 @@
 #ifndef _UDEV_H_INCLUDED_
 #define _UDEV_H_INCLUDED_
 
+#include "list.h"
+
 /**
  * @brief Deletes udev context and udev monitor.
  *
@@ -50,6 +52,6 @@ int get_udev_monitor(void);
  *         1 if registered event is not 'add' or 'remove';
  *         -1 on libudev error.
  */
-int handle_udev_event(void *ledmon_block_list);
+int handle_udev_event(struct list *ledmon_block_list);
 
 #endif                         /* _UDEV_H_INCLUDED_ */

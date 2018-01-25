@@ -33,28 +33,6 @@
 
 /**
  */
-enum type {
-	TYPE_LIST = 0,
-	TYPE_NODE,
-};
-
-/**
- */
-struct node {
-	struct node *next, *prev;
-	void *list;
-	enum type type;
-} __attribute__ ((packed));
-
-/**
- */
-struct list {
-	struct node *head, *tail;
-	enum type type;
-} __attribute__ ((packed));
-
-/**
- */
 #define _Type(_ptr) (*(((enum type *)(_ptr)) - 1))
 
 /**
@@ -64,14 +42,6 @@ struct list {
 #else				/* _DEBUG */
 #define Check(_item, _type)
 #endif				/* _DEBUG */
-
-/**
- */
-#define _Node(_ptr) (((struct node *)(_ptr)) - 1)
-
-/**
- */
-#define _List(_ptr) (((struct list *)(_ptr)) - 1)
 
 /**
  */
@@ -102,15 +72,6 @@ static void _delete(struct node *node)
 		free(node);
 		node = next;
 	}
-}
-
-/**
- */
-void free_node(void *data)
-{
-	struct node *node = _Node(data);
-
-	free(node);
 }
 
 /**
@@ -263,7 +224,7 @@ static void _put_back(struct list *list, struct node *elem)
 
 /**
  */
-static struct node *_tail(void *ptr)
+static struct node *_tail(struct list *ptr)
 {
 	switch (_Type(ptr)) {
 	case TYPE_NODE:
@@ -276,7 +237,7 @@ static struct node *_tail(void *ptr)
 
 /**
  */
-static struct node *_head(void *ptr)
+static struct node *_head(struct list *ptr)
 {
 	switch (_Type(ptr)) {
 	case TYPE_NODE:
@@ -289,7 +250,7 @@ static struct node *_head(void *ptr)
 
 /**
  */
-status_t list_init(void **ptr)
+status_t list_init(struct list **ptr)
 {
 	struct list *t;
 
@@ -306,7 +267,7 @@ status_t list_init(void **ptr)
 
 /**
  */
-status_t list_fini(void *ptr)
+status_t list_fini(struct list *ptr)
 {
 	if (ptr != NULL) {
 		Check(ptr, TYPE_LIST);
@@ -317,7 +278,7 @@ status_t list_fini(void *ptr)
 
 /**
  */
-status_t list_remove(void *ptr)
+status_t list_remove(struct node *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
@@ -327,7 +288,7 @@ status_t list_remove(void *ptr)
 
 /**
  */
-void *list_add(void *ptr, void *data, size_t size)
+void *list_add(struct list *ptr, void *data, size_t size)
 {
 	void *result = NULL;
 
@@ -351,7 +312,7 @@ void *list_add(void *ptr, void *data, size_t size)
 
 /**
  */
-void *list_put(void *ptr, void *data, size_t size)
+void *list_put(struct list *ptr, void *data, size_t size)
 {
 	void *result = NULL;
 
@@ -399,7 +360,7 @@ void *list_prev(void *ptr)
 
 /**
  */
-void *list_head(void *ptr)
+void *list_head(struct list *ptr)
 {
 	if (ptr) {
 		struct node *node = _head(ptr);
@@ -411,7 +372,7 @@ void *list_head(void *ptr)
 
 /**
  */
-void *list_tail(void *ptr)
+void *list_tail(struct list *ptr)
 {
 	if (ptr) {
 		struct node *node = _tail(ptr);
@@ -423,7 +384,7 @@ void *list_tail(void *ptr)
 
 /**
  */
-status_t list_delete(void *ptr)
+status_t list_delete(struct list *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
@@ -440,7 +401,7 @@ status_t list_delete(void *ptr)
 
 /**
  */
-int list_is_empty(void *ptr)
+int list_is_empty(struct list *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
@@ -450,7 +411,7 @@ int list_is_empty(void *ptr)
 
 /**
  */
-status_t __list_for_each(void *ptr, action_t action, void *parm)
+status_t __list_for_each(struct list *ptr, action_t action, void *parm)
 {
 	assert(action != NULL);
 
@@ -465,7 +426,7 @@ status_t __list_for_each(void *ptr, action_t action, void *parm)
 
 /**
  */
-void *list_first_that(void *ptr, test_t test, const void *parm)
+void *list_first_that(struct list *ptr, test_t test, const void *parm)
 {
 	assert(test != NULL);
 
@@ -480,7 +441,7 @@ void *list_first_that(void *ptr, test_t test, const void *parm)
 
 /**
  */
-void *list_last_that(void *ptr, test_t test, const void *parm)
+void *list_last_that(struct list *ptr, test_t test, const void *parm)
 {
 	assert(test != NULL);
 

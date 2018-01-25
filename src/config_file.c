@@ -22,7 +22,6 @@
 #include <stdarg.h>
 
 #include "config_file.h"
-#include "list.h"
 #include "utils.h"
 
 
@@ -60,7 +59,7 @@ static int parse_bool(char *s)
 	return -1;
 }
 
-void parse_list(void **list, char *s)
+static void parse_list(struct list **list, char *s)
 {
 	if (*list)
 		list_fini(*list);

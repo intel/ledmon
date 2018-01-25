@@ -23,8 +23,6 @@
 #include "list.h"
 #include "utils.h"
 
-/**
- */
 struct list *list_alloc(void)
 {
 	struct list *t;
@@ -37,44 +35,38 @@ struct list *list_alloc(void)
 	return t;
 }
 
-/**
- */
-void list_fini(struct list *ptr)
+void list_fini(struct list *list)
 {
 	struct node *node;
 	struct node *next;
 
-	node = ptr->head;
+	node = list->head;
 	while (node) {
 		next = node->next;
 		free(node->item);
 		free(node);
 		node = next;
 	}
-	free(ptr);
+	free(list);
 }
 
-/**
- */
-void list_remove(struct node *ptr)
+void list_remove(struct node *node)
 {
-	struct list *list = ptr->list;
+	struct list *list = node->list;
 
-	if (ptr->prev)
-		ptr->prev->next = ptr->next;
+	if (node->prev)
+		node->prev->next = node->next;
 	else
-		list->head = ptr->next;
-	if (ptr->next)
-		ptr->next->prev = ptr->prev;
+		list->head = node->next;
+	if (node->next)
+		node->next->prev = node->prev;
 	else
-		list->tail = ptr->prev;
-	ptr->list = NULL;
-	ptr->next = NULL;
-	ptr->prev = NULL;
+		list->tail = node->prev;
+	node->list = NULL;
+	node->next = NULL;
+	node->prev = NULL;
 }
 
-/**
- */
 void list_insert(struct list *list, void *item, struct node *after)
 {
 	struct node *new;
@@ -105,64 +97,25 @@ void list_insert(struct list *list, void *item, struct node *after)
 	new->prev = after;
 }
 
-/**
- */
-struct node *list_next(struct node *ptr)
-{
-	return ptr->next;
-}
-
-/**
- */
-struct node *list_prev(struct node *ptr)
-{
-	return ptr->prev;
-}
-
-/**
- */
-struct node *list_head(struct list *ptr)
-{
-	return ptr->head;
-}
-
-/**
- */
-struct node *list_tail(struct list *ptr)
-{
-	return ptr->tail;
-}
-
-/**
- */
-void list_clear(struct list *ptr)
+void list_clear(struct list *list)
 {
 	struct node *node;
 	struct node *next;
 
-	node = ptr->head;
+	node = list->head;
 	while (node) {
 		next = node->next;
 		free(node);
 		node = next;
 	}
-	ptr->head = ptr->tail = NULL;
+	list->head = list->tail = NULL;
 }
 
-/**
- */
-int list_is_empty(struct list *ptr)
-{
-	return (ptr->head == NULL);
-}
-
-/**
- */
-void __list_for_each(struct list *ptr, action_t action, void *parm)
+void __list_for_each(struct list *list, action_t action, void *parm)
 {
 	assert(action != NULL);
 
-	struct node *next_node, *node = list_head(ptr);
+	struct node *next_node, *node = list_head(list);
 	while (node != NULL) {
 		next_node = list_next(node);
 		action(node->item, parm);
@@ -170,13 +123,11 @@ void __list_for_each(struct list *ptr, action_t action, void *parm)
 	}
 }
 
-/**
- */
-void *list_first_that(struct list *ptr, test_t test, const void *parm)
+void *list_first_that(struct list *list, test_t test, const void *parm)
 {
 	assert(test != NULL);
 
-	struct node *node = list_head(ptr);
+	struct node *node = list_head(list);
 	while (node) {
 		if (test(node->item, parm))
 			return node->item;
@@ -185,13 +136,11 @@ void *list_first_that(struct list *ptr, test_t test, const void *parm)
 	return NULL;
 }
 
-/**
- */
-void *list_last_that(struct list *ptr, test_t test, const void *parm)
+void *list_last_that(struct list *list, test_t test, const void *parm)
 {
 	assert(test != NULL);
 
-	struct node *node = list_tail(ptr);
+	struct node *node = list_tail(list);
 	while (node) {
 		if (test(node->item, parm))
 			return node->item;

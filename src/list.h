@@ -82,29 +82,29 @@ struct list *list_alloc(void);
  * This function releases the memory allocated for a list object. It also frees
  * the data items attached to list nodes.
  *
- * @param[in]      ptr            pointer to a list object.
+ * @param[in]      list           pointer to a list object.
  */
-void list_fini(struct list *ptr);
+void list_fini(struct list *list);
 
 /**
  * @brief Removes an element from the list.
  *
  * This function removes an element from the list. It only detaches the element
  * and does not release the memory allocated for the element. To free memory
- * allocated for an element use free() on ptr after calling this function.
+ * allocated for an element use free() on node after calling this function.
  *
- * @param[in]      ptr            pointer to a node object.
+ * @param[in]      node           pointer to a node object.
  */
-void list_remove(struct node *ptr);
+void list_remove(struct node *node);
 
 /**
  * @brief Clears a list.
  *
  * This function removes and deallocates all elements from the list.
  *
- * @param[in]      ptr            pointer to a list object.
+ * @param[in]      list           pointer to a list object.
  */
-void list_clear(struct list *ptr);
+void list_clear(struct list *list);
 
 /**
  * @brief Inserts an element into the list.
@@ -136,59 +136,74 @@ static inline void list_append(struct list *list, void *item)
  *
  * This function returns next element relatively to the given element.
  *
- * @param[in]      ptr            pointer to a node object.
+ * @param[in]      node           pointer to a node object.
  *
  * @return Pointer to an element if successful. The NULL pointer means
- *         that ptr is the last element on the list.
+ *         that node is the last element on the list.
  */
-struct node *list_next(struct node *ptr);
+static inline struct node *list_next(const struct node *node)
+{
+	return node->next;
+}
 
 /**
  * @brief Returns previous element.
  *
  * This function returns previous element relatively to the given element.
  *
- * @param[in]      ptr            pointer to a node object.
+ * @param[in]      node           pointer to a node object.
  *
  * @return Pointer to an element if successful. The NULL pointer means
- *         that ptr is the first element on the list.
+ *         that node is the first element on the list.
  */
-struct node *list_prev(struct node *ptr);
+static inline struct node *list_prev(const struct node *node)
+{
+	return node->prev;
+}
 
 /**
  * @brief Returns head of a list.
  *
  * This function returns a head of a list.
  *
- * @param[in]      ptr            pointer to a list object.
+ * @param[in]      list           pointer to a list object.
  *
  * @return Pointer to an element if successful. The NULL pointer means that
  *         there's no element on a list.
  */
-struct node *list_head(struct list *ptr);
+static inline struct node *list_head(const struct list *list)
+{
+	return list->head;
+}
 
 /**
  * @brief Returns tail of a list.
  *
  * This function returns a tail of a list.
  *
- * @param[in]      ptr            pointer to a list object.
+ * @param[in]      list           pointer to a list object.
  *
  * @return Pointer to an element if successful. The NULL pointer means that
  *         there's no element on a list.
  */
-struct node *list_tail(struct list *ptr);
+static inline struct node *list_tail(const struct list *list)
+{
+	return list->tail;
+}
 
 /**
  * @brief Checks if a list is empty.
  *
  * This function checks if a list object has elements.
  *
- * @param[in]      ptr            pointer to a list object.
+ * @param[in]      list           pointer to a list object.
  *
  * @return 1 if list is empty, otherwise the function returns 0.
  */
-int list_is_empty(struct list *ptr);
+static inline int list_is_empty(const struct list *list)
+{
+	return (list->head == NULL);
+}
 
 /**
  * @brief Walks through each element.
@@ -196,12 +211,12 @@ int list_is_empty(struct list *ptr);
  * This function invokes the action function for each element on a list.
  * Refer to action_t data-type for details about the function prototype.
  *
- * @param[in]      ptr            pointer to list object.
+ * @param[in]      list           pointer to list object.
  * @param[in]      action         pointer to an action function.
  * @param[in]      parm           additional parameter to pass directly to
  *                                'action' function.
  */
-void __list_for_each(struct list *ptr, action_t action, void *parm);
+void __list_for_each(struct list *list, action_t action, void *parm);
 
 /**
  * @brief Searches for an element.
@@ -211,7 +226,7 @@ void __list_for_each(struct list *ptr, action_t action, void *parm);
  * stop. The function starts searching from head of the list and moves to
  * next element relatively.
  *
- * @param[in]      ptr            pointer to list object.
+ * @param[in]      list           pointer to list object.
  * @param[in]      test           pointer to an test function.
  * @param[in]      parm           additional parameter to pass directly to
  *                                'test' function.
@@ -219,7 +234,7 @@ void __list_for_each(struct list *ptr, action_t action, void *parm);
  * @return Pointer to an element. If the function returns NULL that means there
  *         is no such an element on a list.
  */
-void *list_last_that(struct list *ptr, test_t test, const void *parm);
+void *list_last_that(struct list *list, test_t test, const void *parm);
 
 /**
  * @brief Searches for an element backward.
@@ -229,7 +244,7 @@ void *list_last_that(struct list *ptr, test_t test, const void *parm);
  * stop. The function starts searching from tail of the list and moves to
  * previous element relatively.
  *
- * @param[in]      ptr            pointer to list object.
+ * @param[in]      list           pointer to list object.
  * @param[in]      test           pointer to an test function.
  * @param[in]      parm           additional parameter to pass directly to
  *                                'test' function.
@@ -237,6 +252,6 @@ void *list_last_that(struct list *ptr, test_t test, const void *parm);
  * @return Pointer to an element. If the function returns NULL that means there
  *         is no such an element on a list.
  */
-void *list_first_that(struct list *ptr, test_t test, const void *parm);
+void *list_first_that(struct list *list, test_t test, const void *parm);
 
 #endif				/* _LIST_H_INCLUDED_ */

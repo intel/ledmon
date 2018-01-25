@@ -17,19 +17,11 @@
  *
  */
 
+#include <stdlib.h>
 #include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 
-#if _HAVE_DMALLOC_H
-#include <dmalloc.h>
-#endif
-
-#include "config.h"
 #include "list.h"
-#include "version.h"
 
 /**
  */
@@ -93,27 +85,20 @@ struct list *list_alloc(void)
 
 /**
  */
-status_t list_fini(struct list *ptr)
+void list_fini(struct list *ptr)
 {
 	if (ptr != NULL) {
 		list_clear(ptr);
 		free(ptr);
 	}
-	return STATUS_SUCCESS;
 }
 
 /**
  */
-status_t list_remove(struct node *ptr)
+void list_remove(struct node *ptr)
 {
-	struct list *list;
+	struct list *list = ptr->list;
 
-	if (ptr == NULL)
-		return STATUS_NULL_POINTER;
-
-	list = ptr->list;
-	if (list == NULL)
-		return STATUS_INVALID_NODE;
 	if (ptr->prev)
 		ptr->prev->next = ptr->next;
 	else
@@ -125,8 +110,6 @@ status_t list_remove(struct node *ptr)
 	ptr->list = NULL;
 	ptr->next = NULL;
 	ptr->prev = NULL;
-
-	return STATUS_SUCCESS;
 }
 
 /**
@@ -189,13 +172,10 @@ struct node *list_tail(struct list *ptr)
 
 /**
  */
-status_t list_clear(struct list *ptr)
+void list_clear(struct list *ptr)
 {
 	struct node *node;
 	struct node *next;
-
-	if (ptr == NULL)
-		return STATUS_NULL_POINTER;
 
 	node = ptr->head;
 	while (node) {
@@ -204,21 +184,18 @@ status_t list_clear(struct list *ptr)
 		node = next;
 	}
 	ptr->head = ptr->tail = NULL;
-	return STATUS_SUCCESS;
 }
 
 /**
  */
 int list_is_empty(struct list *ptr)
 {
-	if (ptr == NULL)
-		return STATUS_NULL_POINTER;
 	return (ptr->head == NULL);
 }
 
 /**
  */
-status_t __list_for_each(struct list *ptr, action_t action, void *parm)
+void __list_for_each(struct list *ptr, action_t action, void *parm)
 {
 	assert(action != NULL);
 
@@ -228,7 +205,6 @@ status_t __list_for_each(struct list *ptr, action_t action, void *parm)
 		action(node->item, parm);
 		node = next_node;
 	}
-	return STATUS_SUCCESS;
 }
 
 /**

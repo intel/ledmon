@@ -20,10 +20,6 @@
 #ifndef _LIST_H_INCLUDED_
 #define _LIST_H_INCLUDED_
 
-#include <stdlib.h>
-
-#include "status.h"
-
 struct node {
 	struct node *next, *prev;
 	struct list *list;
@@ -90,10 +86,8 @@ struct list *list_alloc(void);
  * this function is called.
  *
  * @param[in]      ptr            pointer to a list object.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t list_fini(struct list *ptr);
+void list_fini(struct list *ptr);
 
 /**
  * @brief Removes an element from the list.
@@ -103,10 +97,8 @@ status_t list_fini(struct list *ptr);
  * allocated for an element use free() on ptr after calling this function.
  *
  * @param[in]      ptr            pointer to a node object.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t list_remove(struct node *ptr);
+void list_remove(struct node *ptr);
 
 /**
  * @brief Clears a list.
@@ -114,10 +106,8 @@ status_t list_remove(struct node *ptr);
  * This function removes and deallocates all elements from the list.
  *
  * @param[in]      ptr            pointer to a list object.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t list_clear(struct list *ptr);
+void list_clear(struct list *ptr);
 
 /**
  * @brief Adds an element in front.
@@ -218,10 +208,8 @@ int list_is_empty(struct list *ptr);
  * @param[in]      action         pointer to an action function.
  * @param[in]      parm           additional parameter to pass directly to
  *                                'action' function.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t __list_for_each(struct list *ptr, action_t action, void *parm);
+void __list_for_each(struct list *ptr, action_t action, void *parm);
 
 /**
  * @brief Searches for an element.

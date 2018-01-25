@@ -287,12 +287,13 @@ static void _determine(struct ibpi_state *state)
  *         The following status codes function returns:
  *
  *         STATUS_LIST_EMPTY      the specified list has no elements.
- *         STATUS_NULL_POINTER    ibpi_list is NULL.
  */
 static status_t _ibpi_state_determine(struct list *ibpi_list)
 {
-	if (list_is_empty(ibpi_list) == 0)
-		return list_for_each(ibpi_list, _determine);
+	if (list_is_empty(ibpi_list) == 0) {
+		list_for_each(ibpi_list, _determine);
+		return STATUS_SUCCESS;
+	}
 	log_error("missing operand(s)... run %s --help for details.", progname);
 	return STATUS_LIST_EMPTY;
 }

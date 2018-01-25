@@ -671,9 +671,9 @@ struct list *sysfs_get_volumes(void)
  * The function executes action() function for each block device on the list.
  * See sysfs.h for details.
  */
-status_t __sysfs_block_device_for_each(action_t action, void *parm)
+void __sysfs_block_device_for_each(action_t action, void *parm)
 {
-	return __list_for_each(&sysfs_block_list, action, parm);
+	__list_for_each(&sysfs_block_list, action, parm);
 }
 
 /*

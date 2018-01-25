@@ -75,7 +75,7 @@ int sysfs_enclosure_attached_to_cntrl(const char *path);
 
 /**
  */
-status_t __sysfs_block_device_for_each(action_t action, void *parm);
+void __sysfs_block_device_for_each(action_t action, void *parm);
 
 /**
  */

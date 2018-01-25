@@ -50,40 +50,33 @@ void sysfs_scan(void);
  * The function returns list of enclosure devices attached to SAS/SCSI storage
  * controller(s).
  */
-struct list *sysfs_get_enclosure_devices(void);
+const struct list *sysfs_get_enclosure_devices(void);
 
 /**
  * The function returns list of controller devices present in the system.
  */
-struct list *sysfs_get_cntrl_devices(void);
+const struct list *sysfs_get_cntrl_devices(void);
 
 /**
  * The function returns list of RAID volumes present in the system.
  */
-struct list *sysfs_get_volumes(void);
+const struct list *sysfs_get_volumes(void);
+
+/**
+ * The function returns list of block devices present in the system.
+ */
+const struct list *sysfs_get_block_devices(void);
+
+/**
+ * The function returns list of pci slots present in the system.
+ */
+const struct list *sysfs_get_pci_slots(void);
 
 /**
  * The function checks if the given storage controller is attached to enclosure
  * device(s).
  */
 int sysfs_enclosure_attached_to_cntrl(const char *path);
-
-/**
- */
-#define sysfs_block_device_for_each(__action) \
-	__sysfs_block_device_for_each((action_t)(__action), (void *)0)
-
-/**
- */
-void __sysfs_block_device_for_each(action_t action, void *parm);
-
-/**
- */
-struct block_device *sysfs_block_device_first_that(test_t action, void *parm);
-
-/**
- */
-struct pci_slot *sysfs_pci_slot_first_that(test_t action, void *parm);
 
 /*
  * This function checks driver type.

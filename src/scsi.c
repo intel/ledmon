@@ -602,10 +602,8 @@ static int get_encl_slot(struct block_device *device)
 
 /**
  */
-static int _slot_match(const void *item, const void *param)
+static int _slot_match(const char *slot_path, const char *device_path)
 {
-	const char *slot_path = item;
-	const char *device_path = param;
 	char temp[PATH_MAX], link[PATH_MAX];
 
 	str_cpy(temp, slot_path, PATH_MAX);
@@ -626,9 +624,12 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 
 	dir = scan_dir(enclo_path);
 	if (dir) {
-		temp = list_first_that(dir, _slot_match, device_path);
-		if (temp)
-			result = strdup(temp);
+		list_for_each(dir, temp) {
+			if (_slot_match(temp, device_path)) {
+				result = strdup(temp);
+				break;
+			}
+		}
 		list_fini(dir);
 	}
 	return result;
@@ -636,21 +637,17 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 
 int scsi_get_enclosure(struct block_device *device)
 {
-	struct node *node;
+	struct enclosure_device *encl;
 
 	if (!device || !device->sysfs_path)
 		return 0;
 
-	node = list_head(sysfs_get_enclosure_devices());
-	while (node) {
-		struct enclosure_device *encl = node->item;
-
+	list_for_each(sysfs_get_enclosure_devices(), encl) {
 		if (_slot_match(encl->sysfs_path, device->cntrl_path)) {
 			device->enclosure = encl;
 			device->encl_index = get_encl_slot(device);
 			break;
 		}
-		node = list_next(node);
 	}
 
 	return (device->enclosure != NULL && device->encl_index != -1);
@@ -732,17 +729,13 @@ static char *sas_get_slot_path(const char *path, const char *ctrl_path)
  */
 static char *_get_enc_slot_path(const char *path)
 {
-	struct node *node;
+	struct enclosure_device *device;
 	char *result = NULL;
 
-	node = list_head(sysfs_get_enclosure_devices());
-	while (node) {
-		struct enclosure_device *device = node->item;
-
+	list_for_each(sysfs_get_enclosure_devices(), device) {
 		result = _slot_find(device->sysfs_path, path);
 		if (result != NULL)
 			break;
-		node = list_next(node);
 	}
 	return result;
 }

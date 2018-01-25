@@ -190,26 +190,6 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
 }
 
 /**
- * @brief Matches two slave devices.
- *
- * This is internal function of sysfs module. The function compares two slave
- * devices together. Slave device is identical to other slave device if both if
- * both devices are associated with the same block device.
- *
- * @param[in]      s1             Pointer to slave device to compare with.
- * @param[in]      s2             Pointer to slave to compare to.
- *
- * @return 1 if slave devices matches, otherwise the function returns 0.
- */
-static int _match(const void *item, const void *param)
-{
-	const struct slave_device *s1 = item;
-	const struct slave_device *s2 = param;
-
-	return (s1->block == s2->block);
-}
-
-/**
  * @brief Checks for duplicate entries on list of slave devices.
  *
  * This is internal function of sysfs module. The functions checks if the given
@@ -222,7 +202,13 @@ static int _match(const void *item, const void *param)
  */
 static int _is_duplicate(struct slave_device *slave)
 {
-	return (list_first_that(&slave_list, _match, slave) != NULL);
+	struct slave_device *device;
+
+	list_for_each(&slave_list, device) {
+		if (device->block == slave->block)
+			return 1;
+	}
+	return 0;
 }
 
 /**
@@ -237,17 +223,14 @@ static int _is_duplicate(struct slave_device *slave)
  */
 static int _is_non_raid_device(struct block_device *block_device)
 {
-	struct node *node = list_head(&slave_list);
+	struct slave_device *slave_device;
 
-	while (node) {
-		struct slave_device *slave_device = node->item;
-
+	list_for_each(&slave_list, slave_device) {
 		if (strcmp(slave_device->block->sysfs_path,
-			block_device->sysfs_path) == 0) {
+			   block_device->sysfs_path) == 0)
 			return 0;
-		}
-		node = list_next(node);
 	}
+
 	return 1;
 }
 
@@ -271,9 +254,7 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 	}
 }
 
-/**
- */
-static void _link_volum(struct raid_device *device)
+static void _link_raid_device(struct raid_device *device, enum device_type type)
 {
 	char temp[PATH_MAX];
 
@@ -282,23 +263,14 @@ static void _link_volum(struct raid_device *device)
 
 	struct list *dir = scan_dir(temp);
 	if (dir) {
-		list_for_each_parm(dir, _slave_vol_add, device);
-		list_fini(dir);
-	}
-}
+		const char *dir_path;
 
-/**
- */
-static void _link_cntnr(struct raid_device *device)
-{
-	char temp[PATH_MAX];
-
-	str_cpy(temp, device->sysfs_path, PATH_MAX);
-	str_cat(temp, "/md", PATH_MAX);
-
-	struct list *dir = scan_dir(temp);
-	if (dir) {
-		list_for_each_parm(dir, _slave_cnt_add, device);
+		list_for_each(dir, dir_path) {
+			if (type == DEVICE_TYPE_VOLUME)
+				_slave_vol_add(dir_path, device);
+			else if (type == DEVICE_TYPE_CONTAINER)
+				_slave_cnt_add(dir_path, device);
+		}
 		list_fini(dir);
 	}
 }
@@ -407,18 +379,14 @@ static void _check_enclo(const char *path)
 		_enclo_add(link);
 }
 
-/**
- */
-static void _check_slots(const char *path)
-{
-	_slots_add(path);
-}
-
 static void _scan_block(void)
 {
 	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
 	if (dir) {
-		list_for_each(dir, _block_add);
+		const char *dir_path;
+
+		list_for_each(dir, dir_path)
+			_block_add(dir_path);
 		list_fini(dir);
 	}
 }
@@ -427,7 +395,10 @@ static void _scan_raid(void)
 {
 	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
 	if (dir) {
-		list_for_each(dir, _check_raid);
+		const char *dir_path;
+
+		list_for_each(dir, dir_path)
+			_check_raid(dir_path);
 		list_fini(dir);
 	}
 }
@@ -436,26 +407,31 @@ static void _scan_cntrl(void)
 {
 	struct list *dir = scan_dir(SYSFS_PCI_DEVICES);
 	if (dir) {
-		list_for_each(dir, _check_cntrl);
+		const char *dir_path;
+
+		list_for_each(dir, dir_path)
+			_check_cntrl(dir_path);
 		list_fini(dir);
 	}
 }
 
 static void _scan_slave(void)
 {
-	list_for_each(&volum_list, _link_volum);
-	list_for_each(&cntnr_list, _link_cntnr);
-	if (conf.raid_memebers_only) {
-		struct node *next_node, *node = list_head(&sysfs_block_list);
+	struct raid_device *device;
 
-		while (node != NULL) {
-			next_node = list_next(node);
+	list_for_each(&volum_list, device)
+		_link_raid_device(device, DEVICE_TYPE_VOLUME);
+	list_for_each(&cntnr_list, device)
+		_link_raid_device(device, DEVICE_TYPE_CONTAINER);
+	if (conf.raid_memebers_only) {
+		struct node *node;
+
+		list_for_each_node(&sysfs_block_list, node) {
 			if (_is_non_raid_device(node->item)) {
 				list_remove(node);
 				block_device_fini(node->item);
 				free(node);
 			}
-			node = next_node;
 		}
 	}
 }
@@ -464,7 +440,10 @@ static void _scan_enclo(void)
 {
 	struct list *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
 	if (dir) {
-		list_for_each(dir, _check_enclo);
+		const char *dir_path;
+
+		list_for_each(dir, dir_path)
+			_check_enclo(dir_path);
 		list_fini(dir);
 	}
 }
@@ -473,7 +452,10 @@ static void _scan_slots(void)
 {
 	struct list *dir = scan_dir(SYSFS_PCI_SLOTS);
 	if (dir) {
-		list_for_each(dir, _check_slots);
+		const char *dir_path;
+
+		list_for_each(dir, dir_path)
+			_slots_add(dir_path);
 		list_fini(dir);
 	}
 }
@@ -579,6 +561,14 @@ static void _determine(struct slave_device *device)
 	}
 }
 
+static void _determine_slaves(struct list *slave_list)
+{
+	struct slave_device *device;
+
+	list_for_each(slave_list, device)
+		_determine(device);
+}
+
 void sysfs_init(void)
 {
 	list_init(&sysfs_block_list);
@@ -592,25 +582,34 @@ void sysfs_init(void)
 
 void sysfs_reset(void)
 {
-	list_for_each(&sysfs_block_list, block_device_fini);
+	void *item;
+
+	list_for_each(&sysfs_block_list, item)
+		block_device_fini(item);
 	list_clear(&sysfs_block_list);
 
-	list_for_each(&volum_list, raid_device_fini);
+	list_for_each(&volum_list, item)
+		raid_device_fini(item);
 	list_clear(&volum_list);
 
-	list_for_each(&cntrl_list, cntrl_device_fini);
+	list_for_each(&cntrl_list, item)
+		cntrl_device_fini(item);
 	list_clear(&cntrl_list);
 
-	list_for_each(&slave_list, slave_device_fini);
+	list_for_each(&slave_list, item)
+		slave_device_fini(item);
 	list_clear(&slave_list);
 
-	list_for_each(&cntnr_list, raid_device_fini);
+	list_for_each(&cntnr_list, item)
+		raid_device_fini(item);
 	list_clear(&cntnr_list);
 
-	list_for_each(&enclo_list, enclosure_device_fini);
+	list_for_each(&enclo_list, item)
+		enclosure_device_fini(item);
 	list_clear(&enclo_list);
 
-	list_for_each(&slots_list, pci_slot_fini);
+	list_for_each(&slots_list, item)
+		pci_slot_fini(item);
 	list_clear(&slots_list);
 }
 
@@ -623,14 +622,14 @@ void sysfs_scan(void)
 	_scan_raid();
 	_scan_slave();
 
-	list_for_each(&slave_list, _determine);
+	_determine_slaves(&slave_list);
 }
 
 /*
  * The function reutrns list of enclosure devices attached to SAS/SCSI storage
  * controller(s).
  */
-struct list *sysfs_get_enclosure_devices(void)
+const struct list *sysfs_get_enclosure_devices(void)
 {
 	return &enclo_list;
 }
@@ -638,7 +637,7 @@ struct list *sysfs_get_enclosure_devices(void)
 /*
  * The function returns list of controller devices present in the system.
  */
-struct list *sysfs_get_cntrl_devices(void)
+const struct list *sysfs_get_cntrl_devices(void)
 {
 	return &cntrl_list;
 }
@@ -646,47 +645,19 @@ struct list *sysfs_get_cntrl_devices(void)
 /*
  * The function returns list of RAID volumes present in the system.
  */
-struct list *sysfs_get_volumes(void)
+const struct list *sysfs_get_volumes(void)
 {
 	return &volum_list;
 }
 
-/*
- * The function executes action() function for each block device on the list.
- * See sysfs.h for details.
- */
-void __sysfs_block_device_for_each(action_t action, void *parm)
+const struct list *sysfs_get_block_devices(void)
 {
-	__list_for_each(&sysfs_block_list, action, parm);
+	return &sysfs_block_list;
 }
 
-/*
- * The function is looking for block device according to criteria defined by
- * 'test' function. See sysfs.h for details.
- */
-struct block_device *sysfs_block_device_first_that(test_t test, void *parm)
+const struct list *sysfs_get_pci_slots(void)
 {
-	return list_first_that(&sysfs_block_list, test, parm);
-}
-
-/*
- * The function is looking for PCI hotplug slot according to criteria defined
- * by 'test' function. See sysfs.h for details.
- */
-struct pci_slot *sysfs_pci_slot_first_that(test_t test, void *parm)
-{
-	return list_first_that(&slots_list, test, parm);
-}
-
-/**
- */
-static int _enclo_match(const void *item, const void *param)
-{
-	const struct enclosure_device *device = item;
-	const char *path = param;
-
-	return (device->sysfs_path != NULL) &&
-	    (strncmp(device->sysfs_path, path, strlen(path)) == 0);
+	return &slots_list;
 }
 
 /*
@@ -695,7 +666,14 @@ static int _enclo_match(const void *item, const void *param)
  */
 int sysfs_enclosure_attached_to_cntrl(const char *path)
 {
-	return (list_first_that(&enclo_list, _enclo_match, path) != NULL);
+	struct enclosure_device *device;
+
+	list_for_each(&enclo_list, device) {
+		if ((device->sysfs_path != NULL) &&
+		    (strncmp(device->sysfs_path, path, strlen(path)) == 0))
+			return 1;
+	}
+	return 0;
 }
 
 /*

@@ -149,8 +149,11 @@ static void ibpi_state_fini(struct ibpi_state *p)
 static void _ledctl_fini(int __attribute__ ((unused)) status,
 			 void *__attribute__ ((unused)) ignore)
 {
+	struct ibpi_state *state;
+
 	sysfs_reset();
-	list_for_each(&ibpi_list, ibpi_state_fini);
+	list_for_each(&ibpi_list, state)
+		ibpi_state_fini(state);
 	list_clear(&ibpi_list);
 	log_close();
 }
@@ -245,24 +248,6 @@ static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 }
 
 /**
- * @brief Sets an IBPI state.
- *
- * This is internal function of ledctl utility. The function sets an IBPI state
- * for a block device. If existing pattern has higher priority then state
- * requested the function does nothing.
- *
- * @param[in]      block          pointer to block device structure.
- * @param[in]      ibpi           IBPI pattern/state to be set.
- *
- * @return The function does not return a value.
- */
-static void _set_state(struct block_device **block, enum ibpi_pattern ibpi)
-{
-	if ((*block)->ibpi < ibpi)
-		(*block)->ibpi = ibpi;
-}
-
-/**
  * @brief Sets a state of block device.
  *
  * This is internal function of ledctl utility. The function sets
@@ -277,7 +262,12 @@ static void _set_state(struct block_device **block, enum ibpi_pattern ibpi)
 static void _determine(struct ibpi_state *state)
 {
 	if (list_is_empty(&state->block_list) == 0) {
-		list_for_each_parm(&state->block_list, _set_state, state->ibpi);
+		struct block_device *block;
+
+		list_for_each(&state->block_list, block) {
+			if (block->ibpi < state->ibpi)
+				block->ibpi = state->ibpi;
+		}
 	} else {
 		log_warning
 		    ("IBPI %s: missing block device(s)... pattern ignored.",
@@ -302,31 +292,26 @@ static void _determine(struct ibpi_state *state)
 static status_t _ibpi_state_determine(struct list *ibpi_list)
 {
 	if (list_is_empty(ibpi_list) == 0) {
-		list_for_each(ibpi_list, _determine);
+		struct ibpi_state *state;
+
+		list_for_each(ibpi_list, state)
+			_determine(state);
 		return STATUS_SUCCESS;
 	}
 	log_error("missing operand(s)... run %s --help for details.", progname);
 	return STATUS_LIST_EMPTY;
 }
 
-/**
- * @brief Tests the IBPI state.
- *
- * This is internal function of ledctl utility. The function checks if the given
- * IBPI state is already on the list. The function is designed to be used as the
- * 'test' argument of list_first_that() function.
- *
- * @param[in]      state          pointer to IBPI state structure.
- * @param[in]      ibpi           IBPI state is being searched.
- *
- * @return 1 if the IBPI state matches, otherwise the function returns 0.
- */
-static int _ibpi_find(const void *item, const void *param)
+static struct ibpi_state *_ibpi_find(const struct list *ibpi_list,
+				     enum ibpi_pattern ibpi)
 {
-	const struct ibpi_state *state = item;
-	enum ibpi_pattern ibpi = *(enum ibpi_pattern *)param;
+	struct ibpi_state *state;
 
-	return (state->ibpi == ibpi);
+	list_for_each(ibpi_list, state) {
+		if (state->ibpi == ibpi)
+			return state;
+	}
+	return NULL;
 }
 
 /**
@@ -457,30 +442,22 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 	} else {
 		return NULL;
 	}
-	state = list_first_that(&ibpi_list, _ibpi_find, &ibpi);
+	state = _ibpi_find(&ibpi_list, ibpi);
 	if (state == NULL)
 		state = _ibpi_state_init(ibpi);
 	return state;
 }
 
-/**
- * This is internal function of ledctl utility. The function checks if the
- * given block device is the one we looking for. This function is design
- * to be used as 'test' parameter for list_first_that() function.
- *
- * @param[in]      block          pointer to block device structure, the
- *                                element on block_list of sysfs structure.
- * @param[in]      path           path to block device in sysfs tree we are
- *                                looking for.
- *
- * @return 1 if the block device is found, otherwise the function returns 0.
- */
-static int _block_device_search(const void *item, const void *param)
+static struct block_device *_block_device_search(const struct list *block_list,
+						 const char *path)
 {
-	const struct block_device *block = item;
-	const char *path = param;
+	struct block_device *block;
 
-	return (strcmp(block->sysfs_path, path) == 0);
+	list_for_each(block_list, block) {
+		if (strcmp(block->sysfs_path, path) == 0)
+			return block;
+	}
+	return NULL;
 }
 
 /**
@@ -516,14 +493,14 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 	} else {
 		str_cpy(path, temp, PATH_MAX);
 	}
-	blk1 = sysfs_block_device_first_that(_block_device_search, path);
+	blk1 = _block_device_search(sysfs_get_block_devices(), path);
 	if (blk1 == NULL) {
 		log_error("%s: device not supported", name);
 		return STATUS_NOT_SUPPORTED;
 	}
-	blk2 = list_first_that(&state->block_list, _block_device_search, path);
+	blk2 = _block_device_search(&state->block_list, path);
 	if (blk2 == NULL)
-		list_append(&state->block_list, &blk1);
+		list_append(&state->block_list, blk1);
 	else
 		log_info("%s: %s: device already on the list.",
 			 ibpi_str[state->ibpi], path);
@@ -615,11 +592,16 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			status = _set_log_path(optarg);
 			break;
 		case 'L':
+		{
+			struct cntrl_device *ctrl_dev;
+
 			sysfs_init();
 			sysfs_scan();
-			list_for_each(sysfs_get_cntrl_devices(), print_cntrl);
+			list_for_each(sysfs_get_cntrl_devices(), ctrl_dev)
+				print_cntrl(ctrl_dev);
 			sysfs_reset();
 			exit(EXIT_SUCCESS);
+		}
 		case ':':
 		case '?':
 		default:
@@ -632,27 +614,6 @@ static status_t _cmdline_parse(int argc, char *argv[])
 	} while (1);
 
 	return STATUS_SUCCESS;
-}
-
-/**
- * @brief Sends a LED control message.
- *
- * This is internal function of ledctl utility. The function sends LED control
- * message to controller in order to control LED in enclosure. The pattern to
- * send is stored in block device structure.
- *
- * @param[in]      device         a pointer to block device structure.
- *
- * @return The function does not return a value.
- */
-static void _send_cntrl_message(struct block_device **device)
-{
-	(*device)->send_fn((*device), (*device)->ibpi);
-}
-
-static void _flush_cntrl_message(struct block_device *device)
-{
-	device->flush_fn(device);
 }
 
 /**
@@ -671,20 +632,18 @@ static void _flush_cntrl_message(struct block_device *device)
  */
 static status_t _ledctl_execute(struct list *ibpi_list)
 {
-	struct node *node;
+	struct ibpi_state *state;
+	struct block_device *device;
 
 	if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS)
 		return STATUS_IBPI_DETERMINE_ERROR;
 
-	node = list_head(ibpi_list);
-	while (node) {
-		struct ibpi_state *state = node->item;
+	list_for_each(ibpi_list, state)
+		list_for_each(&state->block_list, device)
+			device->send_fn(device, device->ibpi);
 
-		list_for_each(&state->block_list, _send_cntrl_message);
-		node = list_next(node);
-	}
-
-	sysfs_block_device_for_each(_flush_cntrl_message);
+	list_for_each(sysfs_get_block_devices(), device)
+		device->flush_fn(device);
 
 	return STATUS_SUCCESS;
 }

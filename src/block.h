@@ -148,7 +148,7 @@ struct block_device {
  * @return Pointer to block device structure if successful, otherwise the function
  *         returns the NULL pointer.
  */
-struct block_device *block_device_init(struct list *cntrl_list, const char *path);
+struct block_device *block_device_init(const struct list *cntrl_list, const char *path);
 
 /**
  * @brief Releases a block device structure.
@@ -189,7 +189,7 @@ struct block_device *block_device_duplicate(struct block_device *device);
  *         returns NULL pointer. The NULL pointer means that block devices is
  *         connected to unsupported storage controller.
  */
-struct cntrl_device *block_get_controller(struct list *cntrl_list, char *path);
+struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *path);
 
 /**
  * The global timestamp variable. It is updated every time the sysfs is scanning
@@ -217,11 +217,12 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id);
  * The function is design to be used as 'test' parameter for list_find_first()
  * function.
  *
- * @param[in]    blk1            - an element from a list to compare to.
- * @param[in]    blk2            - a block device being searched.
+ * @param[in]    bd_old          - an element from a list to compare to.
+ * @param[in]    bd_new          - a block device being searched.
  *
  * @return 0 if the block devices do not match, otherwise function returns 1.
  */
-int block_compare(const void *item, const void *param);
+int block_compare(const struct block_device *bd_old,
+		  const struct block_device *bd_new);
 
 #endif				/* _BLOCK_H_INCLUDED_ */

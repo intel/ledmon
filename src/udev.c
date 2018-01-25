@@ -31,11 +31,8 @@
 
 static struct udev_monitor *udev_monitor;
 
-static int _compare(const void *item, const void *param)
+static int _compare(const struct block_device *bd, const char *syspath)
 {
-	const struct block_device *bd = item;
-	const char *syspath = param;
-
 	if (!bd || !syspath)
 		return 0;
 
@@ -119,8 +116,13 @@ int handle_udev_event(struct list *ledmon_block_list)
 	if (dev) {
 		const char *action = udev_device_get_action(dev);
 		const char *syspath = udev_device_get_syspath(dev);
-		struct block_device *block =
-			list_first_that(ledmon_block_list, _compare, syspath);
+		struct block_device *block = NULL;
+
+		list_for_each(ledmon_block_list, block) {
+			if (_compare(block, syspath))
+				break;
+			block = NULL;
+		}
 
 		if (!block) {
 			/* ignore - device is new or ledmon is not interested about it */

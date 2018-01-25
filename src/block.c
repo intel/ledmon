@@ -145,28 +145,6 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 	return result;
 }
 
-/**
- * @brief Checks if block device is connected to the given controller.
- *
- * This is the internal function of 'block device' module. It is design to be
- * used as test argument in list_first_that() function. The function checks if
- * a block device is connected to the given storage controller.
- *
- * @param[in]      cntrl          pointer to controller structure to compare to.
- * @param[in]      path           real path to block device in sysfs.
- *
- * @return 1 if a block device is connected to a controller, otherwise the
- *         function will return 0.
- */
-static int _compare(const void *item, const void *param)
-{
-	const struct cntrl_device *cntrl = item;
-	const char *path = param;
-
-	return (strncmp(cntrl->sysfs_path, path, strlen(cntrl->sysfs_path)) ==
-		0);
-}
-
 static int is_dellssd(const struct block_device *bd)
 {
 	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
@@ -190,9 +168,16 @@ static int is_vmd(const struct block_device *bd)
  *         returns NULL pointer. The NULL pointer means that block devices is
  *         connected to unsupported storage controller.
  */
-struct cntrl_device *block_get_controller(struct list *cntrl_list, char *path)
+struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *path)
 {
-	return list_first_that(cntrl_list, _compare, path);
+	struct cntrl_device *cntrl;
+
+	list_for_each(cntrl_list, cntrl) {
+		if (strncmp(cntrl->sysfs_path, path,
+			    strlen(cntrl->sysfs_path)) == 0)
+			return cntrl;
+	}
+	return NULL;
 }
 
 struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
@@ -214,7 +199,7 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 /*
  * Allocates a new block device structure. See block.h for details.
  */
-struct block_device *block_device_init(struct list *cntrl_list, const char *path)
+struct block_device *block_device_init(const struct list *cntrl_list, const char *path)
 {
 	struct cntrl_device *cntrl;
 	char link[PATH_MAX];
@@ -342,10 +327,9 @@ struct block_device *block_device_duplicate(struct block_device *block)
 	return result;
 }
 
-int block_compare(const void *item, const void *param)
+int block_compare(const struct block_device *bd_old,
+		  const struct block_device *bd_new)
 {
-	const struct block_device *bd_old = item;
-	const struct block_device *bd_new = param;
 	int i = 0;
 
 	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {

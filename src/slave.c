@@ -90,20 +90,11 @@ static unsigned int _get_slot(const char *path)
 
 /**
  */
-static int _compare(const void *item, const void *param)
-{
-	const struct block_device *device = item;
-	const char *path = param;
-
-	return (strcmp(device->sysfs_path, path) == 0);
-}
-
-/**
- */
 static struct block_device *_get_block(const char *path, struct list *block_list)
 {
 	char temp[PATH_MAX];
 	char link[PATH_MAX];
+	struct block_device *device;
 
 	str_cpy(temp, path, PATH_MAX);
 	str_cat(temp, "/block", PATH_MAX);
@@ -123,7 +114,11 @@ static struct block_device *_get_block(const char *path, struct list *block_list
 		}
 	}
 
-	return list_first_that(block_list, _compare, link);
+	list_for_each(block_list, device) {
+		if (strcmp(device->sysfs_path, link) == 0)
+			return device;
+	}
+	return NULL;
 }
 
 /**

@@ -38,14 +38,10 @@ struct list *list_alloc(void)
 void list_fini(struct list *list)
 {
 	struct node *node;
-	struct node *next;
 
-	node = list->head;
-	while (node) {
-		next = node->next;
+	list_for_each_node(list, node) {
 		free(node->item);
 		free(node);
-		node = next;
 	}
 	free(list);
 }
@@ -100,51 +96,8 @@ void list_insert(struct list *list, void *item, struct node *after)
 void list_clear(struct list *list)
 {
 	struct node *node;
-	struct node *next;
 
-	node = list->head;
-	while (node) {
-		next = node->next;
+	list_for_each_node(list, node)
 		free(node);
-		node = next;
-	}
 	list->head = list->tail = NULL;
-}
-
-void __list_for_each(struct list *list, action_t action, void *parm)
-{
-	assert(action != NULL);
-
-	struct node *next_node, *node = list_head(list);
-	while (node != NULL) {
-		next_node = list_next(node);
-		action(node->item, parm);
-		node = next_node;
-	}
-}
-
-void *list_first_that(struct list *list, test_t test, const void *parm)
-{
-	assert(test != NULL);
-
-	struct node *node = list_head(list);
-	while (node) {
-		if (test(node->item, parm))
-			return node->item;
-		node = list_next(node);
-	}
-	return NULL;
-}
-
-void *list_last_that(struct list *list, test_t test, const void *parm)
-{
-	assert(test != NULL);
-
-	struct node *node = list_tail(list);
-	while (node) {
-		if (test(node->item, parm))
-			return node->item;
-		node = list_prev(node);
-	}
-	return NULL;
 }

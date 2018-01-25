@@ -106,11 +106,11 @@ static int _is_smp_cntrl(const char *path)
 	struct list *dir = scan_dir(path);
 	char *p;
 	char host_path[PATH_MAX] = { 0 };
-	struct node *node;
 	if (dir) {
-		node = list_head(dir);
-		while (node) {
-			p = strrchr(node->item, '/');
+		const char *dir_path;
+
+		list_for_each(dir, dir_path) {
+			p = strrchr(dir_path, '/');
 			if (!p++)
 				break;
 			if (strncmp(p, "host", strlen("host")) == 0) {
@@ -123,7 +123,6 @@ static int _is_smp_cntrl(const char *path)
 					"",
 					0) == 0;
 			}
-			node = list_next(node);
 		}
 		list_fini(dir);
 	}
@@ -239,7 +238,10 @@ static struct _host_type *_cntrl_get_hosts(const char *path)
 	struct _host_type *hosts = NULL;
 	struct list *dir = scan_dir(path);
 	if (dir) {
-		list_for_each_parm(dir, _find_host, &hosts);
+		const char *dir_path;
+
+		list_for_each(dir, dir_path)
+			_find_host(dir_path, &hosts);
 		list_fini(dir);
 	}
 	return hosts;
@@ -309,14 +311,6 @@ static unsigned int _ahci_em_messages(const char *path)
 	}
 }
 
-static int match_cntrl(const void *item, const void *param)
-{
-	const char *pattern = item;
-	const char *name = param;
-
-	return match_string(name, pattern);
-}
-
 /*
  * Allocates memory for a new controller device structure. See cntrl.h for
  * details.
@@ -343,16 +337,26 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		}
 		if (em_enabled) {
 			if (conf.cntrls_whitelist) {
-				char *cntrl = list_first_that(conf.cntrls_whitelist, match_cntrl, path);
+				char *cntrl = NULL;
+
+				list_for_each(conf.cntrls_whitelist, cntrl) {
+					if (match_string(cntrl, path))
+						break;
+					cntrl = NULL;
+				}
 				if (!cntrl) {
 					log_debug("%s not found on whitelist, ignoring", path);
 					return NULL;
 				}
 			} else if (conf.cntrls_blacklist) {
-				char *cntrl = list_first_that(conf.cntrls_blacklist, match_cntrl, path);
-				if (cntrl) {
-					log_debug("%s found on blacklist, ignoring", path);
-					return NULL;
+				char *cntrl;
+
+				list_for_each(conf.cntrls_blacklist, cntrl) {
+					if (match_string(cntrl, path)) {
+						log_debug("%s found on blacklist, ignoring",
+							  path);
+						return NULL;
+					}
 				}
 			}
 			device = malloc(sizeof(struct cntrl_device));

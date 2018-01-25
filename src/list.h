@@ -30,30 +30,27 @@ struct list {
 	struct node *head, *tail;
 };
 
-/**
- * This data-type represents a prototype of test function. Test function is used
- * by list_first_that() and list_last_that() functions as 'test' parameter. The
- * function should return 0 if search should continue, otherwise it should
- * return 1.
- */
-typedef int (*test_t) (const void *item, const void *param);
+#define __list_for_each_node(__list, __node, __start_fn, __iter_fn) \
+	for (struct node *__n = __start_fn(__list), *__next; \
+	     __n && (__node = __n) && ((__next = __iter_fn(__n)) || (!__next)); \
+	     __n = __next)
 
-/**
- * This data-type represents a prototype of action function. Action function is
- * used by list_for_each() function as 'action' parameter.
- */
-typedef void (*action_t) (void *item, void *param);
+#define list_for_each_node(__list, __node) \
+	__list_for_each_node(__list, __node, list_head, list_next)
 
-/**
- */
-#define list_for_each_parm(__list, __action, __parm) \
-	__list_for_each((void *)(__list), \
-				(action_t)(__action), (void *)(__parm))
+#define list_for_each_node_reverse(__list, __node) \
+	__list_for_each_node(__list, __node, list_tail, list_prev)
 
-/**
- */
-#define list_for_each(__list, __action) \
-	__list_for_each((void *)(__list), (action_t)(__action), (void *)0)
+#define __list_for_each(__list, __item, __start_fn, __iter_fn) \
+	for (struct node *__node = __start_fn(__list); \
+	     __node && ((__item = __node->item) || (!__node->item)); \
+	     __node = __iter_fn(__node))
+
+#define list_for_each(__list, __item) \
+	__list_for_each(__list, __item, list_head, list_next)
+
+#define list_for_each_reverse(__list, __item) \
+	__list_for_each(__list, __item, list_tail, list_prev)
 
 /**
  * @brief Initializes a list object.
@@ -204,54 +201,5 @@ static inline int list_is_empty(const struct list *list)
 {
 	return (list->head == NULL);
 }
-
-/**
- * @brief Walks through each element.
- *
- * This function invokes the action function for each element on a list.
- * Refer to action_t data-type for details about the function prototype.
- *
- * @param[in]      list           pointer to list object.
- * @param[in]      action         pointer to an action function.
- * @param[in]      parm           additional parameter to pass directly to
- *                                'action' function.
- */
-void __list_for_each(struct list *list, action_t action, void *parm);
-
-/**
- * @brief Searches for an element.
- *
- * This function searches for an element on a list. The function 'test' is
- * called for each element on the list and if element matches the search will
- * stop. The function starts searching from head of the list and moves to
- * next element relatively.
- *
- * @param[in]      list           pointer to list object.
- * @param[in]      test           pointer to an test function.
- * @param[in]      parm           additional parameter to pass directly to
- *                                'test' function.
- *
- * @return Pointer to an element. If the function returns NULL that means there
- *         is no such an element on a list.
- */
-void *list_last_that(struct list *list, test_t test, const void *parm);
-
-/**
- * @brief Searches for an element backward.
- *
- * This function searches for an element on a list. The function 'test' is
- * called for each element on the list and if element matches the search will
- * stop. The function starts searching from tail of the list and moves to
- * previous element relatively.
- *
- * @param[in]      list           pointer to list object.
- * @param[in]      test           pointer to an test function.
- * @param[in]      parm           additional parameter to pass directly to
- *                                'test' function.
- *
- * @return Pointer to an element. If the function returns NULL that means there
- *         is no such an element on a list.
- */
-void *list_first_that(struct list *list, test_t test, const void *parm);
 
 #endif				/* _LIST_H_INCLUDED_ */

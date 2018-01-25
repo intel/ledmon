@@ -39,14 +39,6 @@
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 
-static int _pci_slot_search(const void *item, const void *param)
-{
-	const struct pci_slot *slot = item;
-	const char *address = param;
-
-	return (strcmp(slot->address, address) == 0);
-}
-
 static char *get_slot_from_syspath(char *path)
 {
 	char *cur, *ret = NULL;
@@ -112,13 +104,17 @@ static int check_slot_module(const char *slot_path)
 struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 {
 	char *pci_addr;
-	struct pci_slot *slot;
+	struct pci_slot *slot = NULL;
 
 	pci_addr = get_slot_from_syspath(device_path);
 	if (!pci_addr)
 		return NULL;
 
-	slot = sysfs_pci_slot_first_that(_pci_slot_search, pci_addr);
+	list_for_each(sysfs_get_pci_slots(), slot) {
+		if (strcmp(slot->address, pci_addr) == 0)
+			break;
+		slot = NULL;
+	}
 	free(pci_addr);
 	if (slot == NULL || check_slot_module(slot->sysfs_path) < 0)
 		return NULL;

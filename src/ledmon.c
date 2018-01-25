@@ -172,8 +172,11 @@ static struct option longopt[] = {
  */
 static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
 {
+	struct block_device *device;
+
 	sysfs_reset();
-	list_for_each(&ledmon_block_list, block_device_fini);
+	list_for_each(&ledmon_block_list, device)
+		block_device_fini(device);
 	list_clear(&ledmon_block_list);
 	log_close();
 	pidfile_remove(progname);
@@ -589,20 +592,6 @@ static void _ledmon_wait(int seconds)
 }
 
 /**
- * @brief _compare_volume
- * @param device
- * @param path
- * @return
- */
-static int _compare_volume(const void *item, const void *param)
-{
-	const struct raid_device *device = item;
-	const char *path = param;
-
-	return (strcmp(device->sysfs_path, path) == 0);
-}
-
-/**
  * @brief Adds the block device to list.
  *
  * This is internal function of monitor service. The function adds a block
@@ -618,10 +607,13 @@ static int _compare_volume(const void *item, const void *param)
  */
 static void _add_block(struct block_device *block)
 {
-	struct block_device *temp;
-	struct raid_device *related_raid;
+	struct block_device *temp = NULL;
 
-	temp = list_first_that(&ledmon_block_list, block_compare, block);
+	list_for_each(&ledmon_block_list, temp) {
+		if (block_compare(temp, block))
+			break;
+		temp = NULL;
+	}
 	if (temp) {
 		enum ibpi_pattern ibpi = temp->ibpi;
 		temp->timestamp = block->timestamp;
@@ -652,10 +644,14 @@ static void _add_block(struct block_device *block)
 			temp->raid_path = strdup(block->raid_path);
 		} else if (block->raid_path == NULL &&
 				temp->raid_path != NULL) {
-			related_raid = list_first_that(sysfs_get_volumes(),
-					_compare_volume, temp->raid_path);
-			if (related_raid != NULL) {
-				temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+			struct raid_device *related_raid;
+
+			list_for_each(sysfs_get_volumes(), related_raid) {
+				if (strcmp(related_raid->sysfs_path,
+					   temp->raid_path) == 0) {
+					temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+					break;
+				}
 			}
 		}
 
@@ -786,21 +782,28 @@ static void _check_block_dev(struct block_device *block, int *restart)
 static void _ledmon_execute(void)
 {
 	int restart = 0;	/* ledmon_block_list needs restart? */
+	struct block_device *device;
 
 	/* Revalidate each device in the list. Bring back controller and host */
-	list_for_each(&ledmon_block_list, _revalidate_dev);
+	list_for_each(&ledmon_block_list, device)
+		_revalidate_dev(device);
 	/* Scan all devices and compare them against saved list */
-	sysfs_block_device_for_each(_add_block);
+	list_for_each(sysfs_get_block_devices(), device)
+		_add_block(device);
 	/* Send message to all devices in the list if needed. */
-	list_for_each(&ledmon_block_list, _send_msg);
+	list_for_each(&ledmon_block_list, device)
+		_send_msg(device);
 	/* Flush unsent messages from internal buffers. */
-	list_for_each(&ledmon_block_list, _flush_msg);
+	list_for_each(&ledmon_block_list, device)
+		_flush_msg(device);
 	/* Check if there is any orphaned device. */
-	list_for_each_parm(&ledmon_block_list, _check_block_dev, &restart);
+	list_for_each(&ledmon_block_list, device)
+		_check_block_dev(device, &restart);
 
 	if (restart) {
 		/* there is at least one detached element in the list. */
-		list_for_each(&ledmon_block_list, block_device_fini);
+		list_for_each(&ledmon_block_list, device)
+			block_device_fini(device);
 		list_clear(&ledmon_block_list);
 	}
 }
@@ -824,15 +827,13 @@ static void _close_parent_fds(void)
 	struct list *dir = scan_dir("/proc/self/fd");
 
 	if (dir) {
-		struct node *node = list_head(dir);
+		char *elem;
 
-		while (node) {
-			char *elem = node->item;
+		list_for_each(dir, elem) {
 			int fd = (int)strtol(basename(elem), NULL, 10);
 
 			if (fd != get_log_fd())
 				close(fd);
-			node = list_next(node);
 		}
 		list_fini(dir);
 	}
@@ -909,12 +910,15 @@ int main(int argc, char *argv[])
 	sysfs_init();
 	log_info("monitor service has been started...");
 	while (terminate == 0) {
+		struct block_device *device;
+
 		timestamp = time(NULL);
 		sysfs_scan();
 		_ledmon_execute();
 		_ledmon_wait(conf.scan_interval);
 		/* Invalidate each device in the list. Clear controller and host. */
-		list_for_each(&ledmon_block_list, _invalidate_dev);
+		list_for_each(&ledmon_block_list, device)
+			_invalidate_dev(device);
 		sysfs_reset();
 	}
 	stop_udev_monitor();

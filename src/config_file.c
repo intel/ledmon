@@ -242,14 +242,10 @@ int ledmon_read_config(const char *filename)
  * usage: ledmon_conf_test [<filename>]
  */
 
-void print(const char *s)
-{
-	printf("%s, ", s);
-}
-
 int main(int argc, char *argv[])
 {
 	char *filename = NULL;
+	char *s;
 
 	if (argc == 2)
 		filename = argv[1];
@@ -269,7 +265,8 @@ int main(int argc, char *argv[])
 		printf("WHITELIST: NONE\n");
 	else {
 		printf("WHITELIST: ");
-		list_for_each(conf.cntrls_whitelist, print);
+		list_for_each(conf.cntrls_whitelist, s)
+			printf("%s, ", s);
 		printf("\n");
 	}
 
@@ -277,7 +274,8 @@ int main(int argc, char *argv[])
 		printf("BLACKLIST: NONE\n");
 	else {
 		printf("BLACKLIST: ");
-		list_for_each(conf.cntrls_blacklist, print);
+		list_for_each(conf.cntrls_blacklist, s)
+			printf("%s, ", s);
 		printf("\n");
 	}
 

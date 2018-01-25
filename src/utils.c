@@ -133,7 +133,7 @@ int scan_dir(const char *path, struct list *result)
 	if (!dir)
 		return -1;
 
-	list_init(result);
+	list_init(result, NULL);
 
 	while ((dirent = readdir(dir)) != NULL) {
 		char *str;

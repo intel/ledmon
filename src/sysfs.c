@@ -571,46 +571,24 @@ static void _determine_slaves(struct list *slave_list)
 
 void sysfs_init(void)
 {
-	list_init(&sysfs_block_list);
-	list_init(&volum_list);
-	list_init(&cntrl_list);
-	list_init(&slave_list);
-	list_init(&cntnr_list);
-	list_init(&enclo_list);
-	list_init(&slots_list);
+	list_init(&sysfs_block_list, (item_free_t)block_device_fini);
+	list_init(&volum_list, (item_free_t)raid_device_fini);
+	list_init(&cntrl_list, (item_free_t)cntrl_device_fini);
+	list_init(&slave_list, (item_free_t)slave_device_fini);
+	list_init(&cntnr_list, (item_free_t)raid_device_fini);
+	list_init(&enclo_list, (item_free_t)enclosure_device_fini);
+	list_init(&slots_list, (item_free_t)pci_slot_fini);
 }
 
 void sysfs_reset(void)
 {
-	void *item;
-
-	list_for_each(&sysfs_block_list, item)
-		block_device_fini(item);
-	list_clear(&sysfs_block_list);
-
-	list_for_each(&volum_list, item)
-		raid_device_fini(item);
-	list_clear(&volum_list);
-
-	list_for_each(&cntrl_list, item)
-		cntrl_device_fini(item);
-	list_clear(&cntrl_list);
-
-	list_for_each(&slave_list, item)
-		slave_device_fini(item);
-	list_clear(&slave_list);
-
-	list_for_each(&cntnr_list, item)
-		raid_device_fini(item);
-	list_clear(&cntnr_list);
-
-	list_for_each(&enclo_list, item)
-		enclosure_device_fini(item);
-	list_clear(&enclo_list);
-
-	list_for_each(&slots_list, item)
-		pci_slot_fini(item);
-	list_clear(&slots_list);
+	list_erase(&sysfs_block_list);
+	list_erase(&volum_list);
+	list_erase(&cntrl_list);
+	list_erase(&slave_list);
+	list_erase(&cntnr_list);
+	list_erase(&enclo_list);
+	list_erase(&slots_list);
 }
 
 void sysfs_scan(void)

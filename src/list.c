@@ -17,18 +17,18 @@
  *
  */
 
-#include <stdlib.h>
 #include <assert.h>
 
 #include "list.h"
 #include "utils.h"
 
-void list_erase(struct list *list)
+void __list_erase(struct list *list, item_free_t free_fn)
 {
 	struct node *node;
 
 	list_for_each_node(list, node) {
-		free(node->item);
+		if (free_fn)
+			free_fn(node->item);
 		free(node);
 	}
 	list->head = list->tail = NULL;
@@ -79,13 +79,4 @@ void list_insert(struct list *list, void *item, struct node *after)
 	new->next = *x;
 	*x = new;
 	new->prev = after;
-}
-
-void list_clear(struct list *list)
-{
-	struct node *node;
-
-	list_for_each_node(list, node)
-		free(node);
-	list->head = list->tail = NULL;
 }

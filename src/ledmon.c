@@ -172,12 +172,8 @@ static struct option longopt[] = {
  */
 static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
 {
-	struct block_device *device;
-
 	sysfs_reset();
-	list_for_each(&ledmon_block_list, device)
-		block_device_fini(device);
-	list_clear(&ledmon_block_list);
+	list_erase(&ledmon_block_list);
 	log_close();
 	pidfile_remove(progname);
 }
@@ -802,9 +798,7 @@ static void _ledmon_execute(void)
 
 	if (restart) {
 		/* there is at least one detached element in the list. */
-		list_for_each(&ledmon_block_list, device)
-			block_device_fini(device);
-		list_clear(&ledmon_block_list);
+		list_erase(&ledmon_block_list);
 	}
 }
 
@@ -819,8 +813,8 @@ static status_t _init_ledmon_conf(void)
 	conf.raid_memebers_only = 0;
 	conf.log_level = LOG_LEVEL_WARNING;
 	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
-	list_init(&conf.cntrls_whitelist);
-	list_init(&conf.cntrls_blacklist);
+	list_init(&conf.cntrls_whitelist, NULL);
+	list_init(&conf.cntrls_blacklist, NULL);
 	return _set_log_path(LEDMON_DEF_LOG_FILE);
 }
 
@@ -908,7 +902,7 @@ int main(int argc, char *argv[])
 
 	if (on_exit(_ledmon_fini, progname))
 		exit(STATUS_ONEXIT_ERROR);
-	list_init(&ledmon_block_list);
+	list_init(&ledmon_block_list, (item_free_t)block_device_fini);
 	sysfs_init();
 	log_info("monitor service has been started...");
 	while (terminate == 0) {

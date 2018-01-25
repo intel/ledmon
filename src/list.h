@@ -20,14 +20,19 @@
 #ifndef _LIST_H_INCLUDED_
 #define _LIST_H_INCLUDED_
 
+#include <stdlib.h>
+
 struct node {
 	struct node *next, *prev;
 	struct list *list;
 	void *item;
 };
 
+typedef void (*item_free_t)(void *);
+
 struct list {
 	struct node *head, *tail;
+	item_free_t item_free;
 };
 
 #define __list_for_each_node(__list, __node, __start_fn, __iter_fn) \
@@ -56,11 +61,19 @@ struct list {
  * @brief Initializes a list object.
  *
  * Initializes a list object to reflect an empty state.
+ *
+ * @param[in]      list           pointer to a list object.
+ * @param[in]      item_free_fn   custom callback for deallocating list items.
+ *                                If NULL, free() will be used.
  */
-static inline void list_init(struct list *list)
+static inline void list_init(struct list *list, item_free_t item_free_fn)
 {
 	list->head = NULL;
 	list->tail = NULL;
+	if (item_free_fn)
+		list->item_free = item_free_fn;
+	else
+		list->item_free = free;
 }
 
 /**
@@ -71,7 +84,25 @@ static inline void list_init(struct list *list)
  *
  * @param[in]      list           pointer to a list object.
  */
-void list_erase(struct list *list);
+static inline void list_erase(struct list *list)
+{
+	void __list_erase(struct list *list, item_free_t free_fn);
+	__list_erase(list, list->item_free);
+}
+
+/**
+ * @brief Clears a list.
+ *
+ * This function removes and deallocates all nodes from the list. It does not
+ * free the data items, to do that use list_erase().
+ *
+ * @param[in]      list           pointer to a list object.
+ */
+static inline void list_clear(struct list *list)
+{
+	void __list_erase(struct list *list, item_free_t free_fn);
+	__list_erase(list, NULL);
+}
 
 /**
  * @brief Removes an element from the list.
@@ -83,15 +114,6 @@ void list_erase(struct list *list);
  * @param[in]      node           pointer to a node object.
  */
 void list_remove(struct node *node);
-
-/**
- * @brief Clears a list.
- *
- * This function removes and deallocates all elements from the list.
- *
- * @param[in]      list           pointer to a list object.
- */
-void list_clear(struct list *list);
 
 /**
  * @brief Inserts an element into the list.

@@ -149,12 +149,8 @@ static void ibpi_state_fini(struct ibpi_state *p)
 static void _ledctl_fini(int __attribute__ ((unused)) status,
 			 void *__attribute__ ((unused)) ignore)
 {
-	struct ibpi_state *state;
-
 	sysfs_reset();
-	list_for_each(&ibpi_list, state)
-		ibpi_state_fini(state);
-	list_clear(&ibpi_list);
+	list_erase(&ibpi_list);
 	log_close();
 }
 
@@ -239,7 +235,7 @@ static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 	if (!state)
 		return NULL;
 
-	list_init(&state->block_list);
+	list_init(&state->block_list, NULL);
 	state->ibpi = ibpi;
 
 	list_append(&ibpi_list, state);
@@ -654,8 +650,8 @@ static status_t _init_ledctl_conf(void)
 
 	/* initialize with default values */
 	conf.log_level = LOG_LEVEL_WARNING;
-	list_init(&conf.cntrls_whitelist);
-	list_init(&conf.cntrls_blacklist);
+	list_init(&conf.cntrls_whitelist, NULL);
+	list_init(&conf.cntrls_blacklist, NULL);
 	return _set_log_path(LEDCTL_DEF_LOG_FILE);
 }
 
@@ -695,7 +691,7 @@ int main(int argc, char *argv[])
 		exit(STATUS_ONEXIT_ERROR);
 	if (_cmdline_parse(argc, argv))
 		exit(STATUS_CMDLINE_ERROR);
-	list_init(&ibpi_list);
+	list_init(&ibpi_list, (item_free_t)ibpi_state_fini);
 	sysfs_init();
 	sysfs_scan();
 	status = _cmdline_ibpi_parse(argc, argv);

@@ -42,15 +42,10 @@ static int _compare(const void *item, const void *param)
 	if (strcmp(bd->sysfs_path, syspath) == 0) {
 		return 1;
 	} else {
-		struct list *cntrl_list;
 		struct block_device *bd_new;
 		int ret;
 
-		cntrl_list = sysfs_get_cntrl_devices();
-		if (!cntrl_list)
-			return 0;
-
-		bd_new = block_device_init(cntrl_list, syspath);
+		bd_new = block_device_init(sysfs_get_cntrl_devices(), syspath);
 		if (!bd_new)
 			return 0;
 

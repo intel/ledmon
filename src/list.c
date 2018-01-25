@@ -79,18 +79,16 @@ static void _put_back(struct list *list, struct node *elem)
 
 /**
  */
-status_t list_init(struct list **ptr)
+struct list *list_alloc(void)
 {
 	struct list *t;
 
 	t = malloc(sizeof(struct list));
 	if (t == NULL)
-		return STATUS_OUT_OF_MEMORY;
-	t->head = NULL;
-	t->tail = NULL;
+		return NULL;
+	list_init(t);
 
-	*ptr = t;
-	return STATUS_SUCCESS;
+	return t;
 }
 
 /**

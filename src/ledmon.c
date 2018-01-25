@@ -65,7 +65,7 @@
  * Only devices which have enclosure management feature enabled are on the
  * list, other devices are ignored (except protocol is forced).
  */
-static struct list *ledmon_block_list;
+static struct list ledmon_block_list;
 
 /**
  * @brief Daemon process termination flag.
@@ -173,10 +173,8 @@ static struct option longopt[] = {
 static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
 {
 	sysfs_fini();
-	if (ledmon_block_list) {
-		list_for_each(ledmon_block_list, block_device_fini);
-		list_fini(ledmon_block_list);
-	}
+	list_for_each(&ledmon_block_list, block_device_fini);
+	list_clear(&ledmon_block_list);
 	log_close();
 	pidfile_remove(progname);
 }
@@ -582,7 +580,7 @@ static void _ledmon_wait(int seconds)
 
 		res = pselect(max_fd, &rdfds, NULL, &exfds, &timeout, &sigset);
 		if (!FD_ISSET(udev_fd, &rdfds) ||
-		    handle_udev_event(ledmon_block_list) <= 0)
+		    handle_udev_event(&ledmon_block_list) <= 0)
 			break;
 	} while (res > 0);
 
@@ -623,7 +621,7 @@ static void _add_block(struct block_device *block)
 	struct block_device *temp;
 	struct raid_device *related_raid;
 
-	temp = list_first_that(ledmon_block_list, block_compare, block);
+	temp = list_first_that(&ledmon_block_list, block_compare, block);
 	if (temp) {
 		enum ibpi_pattern ibpi = temp->ibpi;
 		temp->timestamp = block->timestamp;
@@ -679,7 +677,7 @@ static void _add_block(struct block_device *block)
 		if (temp != NULL) {
 			log_info("NEW %s: state '%s'.", temp->sysfs_path,
 				 ibpi_str[temp->ibpi]);
-			list_put(ledmon_block_list, temp,
+			list_put(&ledmon_block_list, temp,
 				 sizeof(struct block_device));
 			free(temp);
 		}
@@ -790,29 +788,22 @@ static void _check_block_dev(struct block_device *block, int *restart)
 static void _ledmon_execute(void)
 {
 	int restart = 0;	/* ledmon_block_list needs restart? */
-	status_t status = STATUS_SUCCESS;
 
 	/* Revalidate each device in the list. Bring back controller and host */
-	list_for_each(ledmon_block_list, _revalidate_dev);
+	list_for_each(&ledmon_block_list, _revalidate_dev);
 	/* Scan all devices and compare them against saved list */
 	sysfs_block_device_for_each(_add_block);
 	/* Send message to all devices in the list if needed. */
-	list_for_each(ledmon_block_list, _send_msg);
+	list_for_each(&ledmon_block_list, _send_msg);
 	/* Flush unsent messages from internal buffers. */
-	list_for_each(ledmon_block_list, _flush_msg);
+	list_for_each(&ledmon_block_list, _flush_msg);
 	/* Check if there is any orphaned device. */
-	list_for_each_parm(ledmon_block_list, _check_block_dev, &restart);
+	list_for_each_parm(&ledmon_block_list, _check_block_dev, &restart);
 
 	if (restart) {
 		/* there is at least one detached element in the list. */
-		list_for_each(ledmon_block_list, block_device_fini);
-		list_fini(ledmon_block_list);
-		status = list_init(&ledmon_block_list);
-		if (status != STATUS_SUCCESS) {
-			log_debug("%s(): list_init() failed (status=%s).",
-				  __func__, strstatus(status));
-			exit(EXIT_FAILURE);
-		}
+		list_for_each(&ledmon_block_list, block_device_fini);
+		list_clear(&ledmon_block_list);
 	}
 }
 
@@ -916,12 +907,7 @@ int main(int argc, char *argv[])
 
 	if (on_exit(_ledmon_fini, progname))
 		exit(STATUS_ONEXIT_ERROR);
-	status = list_init(&ledmon_block_list);
-	if (status != STATUS_SUCCESS) {
-		log_debug("main(): list_init() failed (status=%s).",
-			  strstatus(status));
-		exit(EXIT_FAILURE);
-	}
+	list_init(&ledmon_block_list);
 	status = sysfs_init();
 	if (status != STATUS_SUCCESS) {
 		log_debug("main(): sysfs_init() failed (status=%s).",
@@ -940,7 +926,7 @@ int main(int argc, char *argv[])
 		}
 		_ledmon_wait(conf.scan_interval);
 		/* Invalidate each device in the list. Clear controller and host. */
-		list_for_each(ledmon_block_list, _invalidate_dev);
+		list_for_each(&ledmon_block_list, _invalidate_dev);
 		status = sysfs_reset();
 		if (status != STATUS_SUCCESS) {
 			log_debug("main(): sysfs_reset() failed "

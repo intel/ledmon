@@ -57,17 +57,17 @@
  */
 struct ibpi_state {
 	enum ibpi_pattern ibpi;
-	struct list *block_list;
+	struct list block_list;
 };
 
 /**
  * @brief List of IBPI patterns.
  *
- * This variable holds a pointer to a list of IBPI patterns the user requested
- * to be visualized. Each element on the list is struct ibpi_state type. There's
- * only one instance of each IBPI pattern on the list (no duplicates).
+ * This is a list of IBPI patterns the user requested to be visualized.
+ * Each element on the list is struct ibpi_state type. There's only one
+ * instance of each IBPI pattern on the list (no duplicates).
  */
-static struct list *ibpi_list;
+static struct list ibpi_list;
 
 /**
  * @brief IBPI pattern names.
@@ -144,8 +144,7 @@ static void _ledctl_fini(int __attribute__ ((unused)) status,
 			 void *__attribute__ ((unused)) ignore)
 {
 	sysfs_fini();
-	if (ibpi_list)
-		list_fini(ibpi_list);
+	list_clear(&ibpi_list);
 	log_close();
 }
 
@@ -229,10 +228,9 @@ static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 {
 	struct ibpi_state state;
 
-	if (list_init(&state.block_list) != STATUS_SUCCESS)
-		return NULL;
+	list_init(&state.block_list);
 	state.ibpi = ibpi;
-	return list_put(ibpi_list, &state, sizeof(struct ibpi_state));
+	return list_put(&ibpi_list, &state, sizeof(struct ibpi_state));
 }
 
 /**
@@ -267,8 +265,8 @@ static void _set_state(struct block_device **block, enum ibpi_pattern ibpi)
  */
 static void _determine(struct ibpi_state *state)
 {
-	if (list_is_empty(state->block_list) == 0) {
-		list_for_each_parm(state->block_list, _set_state, state->ibpi);
+	if (list_is_empty(&state->block_list) == 0) {
+		list_for_each_parm(&state->block_list, _set_state, state->ibpi);
 	} else {
 		log_warning
 		    ("IBPI %s: missing block device(s)... pattern ignored.",
@@ -447,7 +445,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 	} else {
 		return NULL;
 	}
-	state = list_first_that(ibpi_list, _ibpi_find, &ibpi);
+	state = list_first_that(&ibpi_list, _ibpi_find, &ibpi);
 	if (state == NULL)
 		state = _ibpi_state_init(ibpi);
 	return state;
@@ -511,9 +509,9 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 		log_error("%s: device not supported", name);
 		return STATUS_NOT_SUPPORTED;
 	}
-	blk2 = list_first_that(state->block_list, _block_device_search, path);
+	blk2 = list_first_that(&state->block_list, _block_device_search, path);
 	if (blk2 == NULL) {
-		if (list_put(state->block_list, &blk1, sizeof(void *)) == NULL)
+		if (list_put(&state->block_list, &blk1, sizeof(void *)) == NULL)
 			return STATUS_OUT_OF_MEMORY;
 	} else {
 		log_info("%s: %s: device already on the list.",
@@ -678,7 +676,7 @@ static status_t _ledctl_execute(struct list *ibpi_list)
 	while (node) {
 		struct ibpi_state *state = node->item;
 
-		list_for_each(state->block_list, _send_cntrl_message);
+		list_for_each(&state->block_list, _send_cntrl_message);
 		node = list_next(node);
 	}
 
@@ -732,12 +730,7 @@ int main(int argc, char *argv[])
 		exit(STATUS_ONEXIT_ERROR);
 	if (_cmdline_parse(argc, argv))
 		exit(STATUS_CMDLINE_ERROR);
-	status = list_init(&ibpi_list);
-	if (status != STATUS_SUCCESS) {
-		log_debug("main(): list_init() failed (status=%s).",
-			  strstatus(status));
-		exit(STATUS_LIST_INIT_ERROR);
-	}
+	list_init(&ibpi_list);
 	status = sysfs_init();
 	if (status != STATUS_SUCCESS) {
 		log_debug("main(): sysfs_init() failed (status=%s).",
@@ -756,5 +749,5 @@ int main(int argc, char *argv[])
 			  strstatus(status));
 		exit(STATUS_INVALID_STATE);
 	}
-	return _ledctl_execute(ibpi_list);
+	return _ledctl_execute(&ibpi_list);
 }

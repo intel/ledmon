@@ -131,7 +131,8 @@ struct list *scan_dir(const char *path)
 	struct list *result;
 	char temp[PATH_MAX];
 
-	if (list_init(&result) != STATUS_SUCCESS)
+	result = list_alloc();
+	if (!result)
 		return NULL;
 	DIR *dir = opendir(path);
 	if (dir) {

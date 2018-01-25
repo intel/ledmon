@@ -60,18 +60,25 @@ typedef void (*action_t) (void *item, void *param);
 	__list_for_each((void *)(__list), (action_t)(__action), (void *)0)
 
 /**
+ * @brief Initializes a list object.
+ *
+ * Initializes a list object to reflect an empty state.
+ */
+static inline void list_init(struct list *list)
+{
+	list->head = NULL;
+	list->tail = NULL;
+}
+
+/**
  * @brief Creates a list object.
  *
  * The function allocates memory for a new list object and initializes its
  * fields to reflect an empty state.
  *
- * @param [in,out] ptr            placeholder where the pointer to the new list
- *                                will be stored. In case of an error the NULL
- *                                pointer is stored instead.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t error code.
+ * @return pointer to allocated list if successful, otherwise NULL.
  */
-status_t list_init(struct list **ptr);
+struct list *list_alloc(void);
 
 /**
  * @brief Finalizes a list object.

@@ -59,13 +59,12 @@ static int parse_bool(char *s)
 	return -1;
 }
 
-static void parse_list(struct list **list, char *s)
+static struct list *parse_list(char *s)
 {
-	if (*list)
-		list_fini(*list);
+	struct list *list = list_alloc();
 
-	if (list_init(list) != STATUS_SUCCESS)
-		return;
+	if (!list)
+		return NULL;
 
 	while (s && *s) {
 		char *sep;
@@ -74,13 +73,15 @@ static void parse_list(struct list **list, char *s)
 		if (sep)
 			*sep = '\0';
 
-		list_put(*list, strdup(s), strlen(s));
+		list_put(list, strdup(s), strlen(s));
 
 		if (sep)
 			s = sep + 1;
 		else
 			break;
 	}
+
+	return list;
 }
 
 int _map_log_level(char *conf_log_level)
@@ -181,14 +182,14 @@ static int parse_next(FILE *fd)
 	} else if (!strncmp(s, "WHITELIST=", 10)) {
 		s += 10;
 		if (*s) {
-			parse_list(&conf.cntrls_whitelist, s);
+			conf.cntrls_whitelist = parse_list(s);
 			if (!conf.cntrls_whitelist)
 				return -1;
 		}
 	} else if (!strncmp(s, "BLACKLIST=", 10)) {
 		s += 10;
 		if (*s) {
-			parse_list(&conf.cntrls_blacklist, s);
+			conf.cntrls_blacklist = parse_list(s);
 			if (!conf.cntrls_blacklist)
 				return -1;
 		}

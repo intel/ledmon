@@ -33,18 +33,6 @@
 
 /**
  */
-#define _Type(_ptr) (*(((enum type *)(_ptr)) - 1))
-
-/**
- */
-#ifdef _DEBUG
-#define Check(_ptr, _type) assert(_Type(_ptr) == (_type))
-#else				/* _DEBUG */
-#define Check(_item, _type)
-#endif				/* _DEBUG */
-
-/**
- */
 static struct node *_new(void *data, size_t size)
 {
 	struct node *t;
@@ -52,10 +40,10 @@ static struct node *_new(void *data, size_t size)
 	t = malloc(size + sizeof(struct node));
 	if (t != NULL) {
 		t->list = NULL;
-		t->type = TYPE_NODE;
 		t->prev = NULL;
 		t->next = NULL;
-		memcpy(t + 1, data, size);
+		t->item = t + 1;
+		memcpy(t->item, data, size);
 	}
 
 	return t;
@@ -116,82 +104,16 @@ static status_t _remove(struct node *node)
 
 /**
  */
-static struct node *_next(void *ptr)
+static struct node *_next(struct node *ptr)
 {
-	switch (_Type(ptr)) {
-	case TYPE_NODE:
-		return _Node(ptr)->next;
-	case TYPE_LIST:
-		return _List(ptr)->head;
-	}
-	abort();
+	return ptr->next;
 }
 
 /**
  */
-static struct node *_prev(void *ptr)
+static struct node *_prev(struct node *ptr)
 {
-	switch (_Type(ptr)) {
-	case TYPE_NODE:
-		return _Node(ptr)->prev;
-	case TYPE_LIST:
-		return _List(ptr)->tail;
-	}
-	abort();
-}
-
-/**
- */
-static struct node *_get_last(struct node *node)
-{
-	while (node) {
-		if (node->next == NULL)
-			break;
-		node = node->next;
-	}
-	return node;
-}
-
-/**
- */
-static struct node *_get_first(struct node *node)
-{
-	while (node) {
-		if (node->prev == NULL)
-			break;
-		node = node->prev;
-	}
-	return node;
-}
-
-/**
- */
-static void _put_before(struct node *node, struct node *elem)
-{
-	struct node *t;
-
-	t = node->prev;
-	node->prev = elem;
-	elem->prev = t;
-	if (t != NULL)
-		t->next = elem;
-	elem->next = node;
-	elem->list = node->list;
-}
-
-/**
- */
-static void _put_after(struct node *node, struct node *elem)
-{
-	struct node *t;
-
-	t = node->next;
-	node->next = elem;
-	elem->next = t;
-	if (t != NULL)
-		t->prev = elem;
-	elem->prev = node;
-	elem->list = node->list;
+	return ptr->prev;
 }
 
 /**
@@ -226,26 +148,14 @@ static void _put_back(struct list *list, struct node *elem)
  */
 static struct node *_tail(struct list *ptr)
 {
-	switch (_Type(ptr)) {
-	case TYPE_NODE:
-		return _get_last(_Node(ptr));
-	case TYPE_LIST:
-		return _List(ptr)->tail;
-	}
-	abort();
+	return ptr->tail;
 }
 
 /**
  */
 static struct node *_head(struct list *ptr)
 {
-	switch (_Type(ptr)) {
-	case TYPE_NODE:
-		return _get_first(_Node(ptr));
-	case TYPE_LIST:
-		return _List(ptr)->head;
-	}
-	abort();
+	return ptr->head;
 }
 
 /**
@@ -259,9 +169,8 @@ status_t list_init(struct list **ptr)
 		return STATUS_OUT_OF_MEMORY;
 	t->head = NULL;
 	t->tail = NULL;
-	t->type = TYPE_LIST;
 
-	*ptr = t + 1;
+	*ptr = t;
 	return STATUS_SUCCESS;
 }
 
@@ -269,10 +178,8 @@ status_t list_init(struct list **ptr)
  */
 status_t list_fini(struct list *ptr)
 {
-	if (ptr != NULL) {
-		Check(ptr, TYPE_LIST);
-		_fini(_List(ptr));
-	}
+	if (ptr != NULL)
+		_fini(ptr);
 	return STATUS_SUCCESS;
 }
 
@@ -282,102 +189,83 @@ status_t list_remove(struct node *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	Check(ptr, TYPE_NODE);
-	return _remove(_Node(ptr));
+	return _remove(ptr);
 }
 
 /**
  */
 void *list_add(struct list *ptr, void *data, size_t size)
 {
-	void *result = NULL;
-
 	if (ptr && data && (size > 0)) {
-		result = _new(data, size);
+		struct node *result = _new(data, size);
+
 		if (result != NULL) {
-			switch (_Type(ptr)) {
-			case TYPE_LIST:
-				_put_front(_List(ptr), result);
-				break;
-			case TYPE_NODE:
-				_put_before(_Node(ptr), result);
-				break;
-			default:
-				abort();
-			}
+			_put_front(ptr, result);
+			return result->item;
 		}
 	}
-	return result + sizeof(struct node);
+	return NULL;
 }
 
 /**
  */
 void *list_put(struct list *ptr, void *data, size_t size)
 {
-	void *result = NULL;
-
 	if (ptr && data && (size > 0)) {
-		result = _new(data, size);
+		struct node *result = _new(data, size);
+
 		if (result != NULL) {
-			switch (_Type(ptr)) {
-			case TYPE_LIST:
-				_put_back(_List(ptr), result);
-				break;
-			case TYPE_NODE:
-				_put_after(_Node(ptr), result);
-				break;
-			default:
-				abort();
-			}
+			_put_back(ptr, result);
+			return result->item;
 		}
 	}
-	return result + sizeof(struct node);
+	return NULL;
 }
 
 /**
  */
-void *list_next(void *ptr)
+struct node *list_next(struct node *ptr)
 {
 	if (ptr) {
 		struct node *node = _next(ptr);
 		if (node)
-			return node + 1;
+			return node;
 	}
 	return NULL;
 }
 
 /**
  */
-void *list_prev(void *ptr)
+struct node *list_prev(struct node *ptr)
 {
 	if (ptr) {
 		struct node *node = _prev(ptr);
 		if (node)
-			return node + 1;
+			return node;
 	}
 	return NULL;
 }
 
 /**
  */
-void *list_head(struct list *ptr)
+struct node *list_head(struct list *ptr)
 {
 	if (ptr) {
 		struct node *node = _head(ptr);
 		if (node)
-			return node + 1;
+			return node;
 	}
 	return NULL;
 }
 
 /**
  */
-void *list_tail(struct list *ptr)
+struct node *list_tail(struct list *ptr)
 {
 	if (ptr) {
 		struct node *node = _tail(ptr);
 		if (node)
-			return node + 1;
+			return node;
 	}
 	return NULL;
 }
@@ -388,14 +276,7 @@ status_t list_delete(struct list *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	switch (_Type(ptr)) {
-	case TYPE_NODE:
-		_delete(_Node(ptr));
-		break;
-	case TYPE_LIST:
-		_list_delete(_List(ptr));
-		break;
-	}
+	_list_delete(ptr);
 	return STATUS_SUCCESS;
 }
 
@@ -405,8 +286,7 @@ int list_is_empty(struct list *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;
-	Check(ptr, TYPE_LIST);
-	return (_List(ptr)->head == NULL);
+	return (ptr->head == NULL);
 }
 
 /**
@@ -415,10 +295,10 @@ status_t __list_for_each(struct list *ptr, action_t action, void *parm)
 {
 	assert(action != NULL);
 
-	void *next_node, *node = list_head(ptr);
+	struct node *next_node, *node = list_head(ptr);
 	while (node != NULL) {
 		next_node = list_next(node);
-		action(node, parm);
+		action(node->item, parm);
 		node = next_node;
 	}
 	return STATUS_SUCCESS;
@@ -430,13 +310,13 @@ void *list_first_that(struct list *ptr, test_t test, const void *parm)
 {
 	assert(test != NULL);
 
-	void *node = list_head(ptr);
+	struct node *node = list_head(ptr);
 	while (node) {
-		if (test(node, parm))
-			break;
+		if (test(node->item, parm))
+			return node->item;
 		node = list_next(node);
 	}
-	return node;
+	return NULL;
 }
 
 /**
@@ -445,11 +325,11 @@ void *list_last_that(struct list *ptr, test_t test, const void *parm)
 {
 	assert(test != NULL);
 
-	void *node = list_tail(ptr);
+	struct node *node = list_tail(ptr);
 	while (node) {
-		if (test(node, parm))
-			break;
+		if (test(node->item, parm))
+			return node->item;
 		node = list_prev(node);
 	}
-	return node;
+	return NULL;
 }

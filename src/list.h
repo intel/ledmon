@@ -24,31 +24,15 @@
 
 #include "status.h"
 
-/**
- */
-enum type {
-	TYPE_LIST = 0,
-	TYPE_NODE,
-};
-
 struct node {
 	struct node *next, *prev;
 	struct list *list;
-	enum type type;
-} __attribute__ ((packed));
+	void *item;
+};
 
 struct list {
 	struct node *head, *tail;
-	enum type type;
-} __attribute__ ((packed));
-
-/**
- */
-#define _Node(_ptr) (((struct node *)(_ptr)) - 1)
-
-/**
- */
-#define _List(_ptr) (((struct list *)(_ptr)) - 1)
+};
 
 /**
  * This data-type represents a prototype of test function. Test function is used
@@ -163,29 +147,25 @@ void *list_put(struct list *ptr, void *data, size_t size);
  * @brief Reruns next element.
  *
  * This function returns next element relatively to the given element.
- * If the ptr is a list object the function returns a head of the list.
  *
- * @param[in]      ptr            pointer to a list object or to node object.
+ * @param[in]      ptr            pointer to a node object.
  *
  * @return Pointer to an element if successful. The NULL pointer means
- *         that ptr is the last element on the list or if ptr is a list object
- *         NULL means that there's no elements on the list.
+ *         that ptr is the last element on the list.
  */
-void *list_next(void *ptr);
+struct node *list_next(struct node *ptr);
 
 /**
  * @brief Returns previous element.
  *
  * This function returns previous element relatively to the given element.
- * If the ptr is a list object the function returns a tail of the list.
  *
- * @param[in]      ptr            pointer to a list object or to node object.
+ * @param[in]      ptr            pointer to a node object.
  *
  * @return Pointer to an element if successful. The NULL pointer means
- *         that ptr is the first element on the list or if ptr is a list object
- *         the NULL means that there's no elements on the list.
+ *         that ptr is the first element on the list.
  */
-void *list_prev(void *ptr);
+struct node *list_prev(struct node *ptr);
 
 /**
  * @brief Returns head of a list.
@@ -197,7 +177,7 @@ void *list_prev(void *ptr);
  * @return Pointer to an element if successful. The NULL pointer means that
  *         there's no element on a list.
  */
-void *list_head(struct list *ptr);
+struct node *list_head(struct list *ptr);
 
 /**
  * @brief Returns tail of a list.
@@ -209,7 +189,7 @@ void *list_head(struct list *ptr);
  * @return Pointer to an element if successful. The NULL pointer means that
  *         there's no element on a list.
  */
-void *list_tail(struct list *ptr);
+struct node *list_tail(struct list *ptr);
 
 /**
  * @brief Checks if a list is empty.

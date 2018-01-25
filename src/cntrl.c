@@ -106,11 +106,11 @@ static int _is_smp_cntrl(const char *path)
 	struct list *dir = scan_dir(path);
 	char *p;
 	char host_path[PATH_MAX] = { 0 };
-	char *host;
+	struct node *node;
 	if (dir) {
-		host = list_head(dir);
-		while (host) {
-			p = strrchr(host, '/');
+		node = list_head(dir);
+		while (node) {
+			p = strrchr(node->item, '/');
 			if (!p++)
 				break;
 			if (strncmp(p, "host", strlen("host")) == 0) {
@@ -123,7 +123,7 @@ static int _is_smp_cntrl(const char *path)
 					"",
 					0) == 0;
 			}
-			host = list_next(host);
+			node = list_next(node);
 		}
 		list_fini(dir);
 	}

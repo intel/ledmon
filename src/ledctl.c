@@ -669,14 +669,17 @@ static void _flush_cntrl_message(struct block_device *device)
  */
 static status_t _ledctl_execute(struct list *ibpi_list)
 {
-	struct ibpi_state *state = list_head(ibpi_list);
+	struct node *node;
 
 	if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS)
 		return STATUS_IBPI_DETERMINE_ERROR;
 
-	while (state) {
+	node = list_head(ibpi_list);
+	while (node) {
+		struct ibpi_state *state = node->item;
+
 		list_for_each(state->block_list, _send_cntrl_message);
-		state = list_next(state);
+		node = list_next(node);
 	}
 
 	sysfs_block_device_for_each(_flush_cntrl_message);

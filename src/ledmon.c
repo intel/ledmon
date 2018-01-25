@@ -835,14 +835,15 @@ static void _close_parent_fds(void)
 	struct list *dir = scan_dir("/proc/self/fd");
 
 	if (dir) {
-		char *elem = list_head(dir);
+		struct node *node = list_head(dir);
 
-		while (elem != NULL) {
+		while (node) {
+			char *elem = node->item;
 			int fd = (int)strtol(basename(elem), NULL, 10);
 
 			if (fd != get_log_fd())
 				close(fd);
-			elem = list_next(elem);
+			node = list_next(node);
 		}
 		list_fini(dir);
 	}

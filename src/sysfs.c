@@ -240,35 +240,29 @@ static int _is_duplicate(struct slave_device *slave)
 }
 
 /**
- * @brief Removes given disk from sysfs_block_list if metatada is not present.
+ * @brief Checks if given disk can be removed from sysfs_block_list if
+ * metatada is not present.
  *
  * This is internal function (action) of sysfs module. The slave_list keeps
  * all devices with metadata (raid devices). If disk is not included in slave
  * list there is not metadata on it.
- * Function should be used as action for list_for_each_parm method.
  *
- * @return The function does not return a value.
+ * @return 1 if can be removed, otherwise 0.
  */
-static void _exclude_non_raid_devices(struct block_device *block_device)
+static int _is_non_raid_device(struct block_device *block_device)
 {
-	struct slave_device *slave_device = list_head(slave_list);
-	int to_remove = 1;
+	struct node *node = list_head(slave_list);
 
-	while (slave_device != NULL) {
+	while (node) {
+		struct slave_device *slave_device = node->item;
+
 		if (strcmp(slave_device->block->sysfs_path,
 			block_device->sysfs_path) == 0) {
-			to_remove = 0;
-			break;
+			return 0;
 		}
-		slave_device = list_next(slave_device);
+		node = list_next(node);
 	}
-	if (to_remove) {
-		struct node *node = _Node(block_device);
-
-		list_remove(node);
-		block_device_fini(block_device);
-		free(node);
-	}
+	return 1;
 }
 
 /**
@@ -490,8 +484,19 @@ static status_t _scan_slave(void)
 {
 	list_for_each(volum_list, _link_volum);
 	list_for_each(cntnr_list, _link_cntnr);
-	if (conf.raid_memebers_only)
-		list_for_each(sysfs_block_list, _exclude_non_raid_devices);
+	if (conf.raid_memebers_only) {
+		struct node *next_node, *node = list_head(sysfs_block_list);
+
+		while (node != NULL) {
+			next_node = list_next(node);
+			if (_is_non_raid_device(node->item)) {
+				list_remove(node);
+				block_device_fini(node->item);
+				free(node);
+			}
+			node = next_node;
+		}
+	}
 	return STATUS_SUCCESS;
 }
 

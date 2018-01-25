@@ -636,19 +636,21 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 
 int scsi_get_enclosure(struct block_device *device)
 {
-	struct enclosure_device *encl;
+	struct node *node;
 
 	if (!device || !device->sysfs_path)
 		return 0;
 
-	encl = list_head(sysfs_get_enclosure_devices());
-	while (encl) {
+	node = list_head(sysfs_get_enclosure_devices());
+	while (node) {
+		struct enclosure_device *encl = node->item;
+
 		if (_slot_match(encl->sysfs_path, device->cntrl_path)) {
 			device->enclosure = encl;
 			device->encl_index = get_encl_slot(device);
 			break;
 		}
-		encl = list_next(encl);
+		node = list_next(node);
 	}
 
 	return (device->enclosure != NULL && device->encl_index != -1);
@@ -730,15 +732,17 @@ static char *sas_get_slot_path(const char *path, const char *ctrl_path)
  */
 static char *_get_enc_slot_path(const char *path)
 {
-	struct enclosure_device *device;
+	struct node *node;
 	char *result = NULL;
 
-	device = list_head(sysfs_get_enclosure_devices());
-	while (device) {
+	node = list_head(sysfs_get_enclosure_devices());
+	while (node) {
+		struct enclosure_device *device = node->item;
+
 		result = _slot_find(device->sysfs_path, path);
 		if (result != NULL)
 			break;
-		device = list_next(device);
+		node = list_next(node);
 	}
 	return result;
 }

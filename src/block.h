@@ -154,11 +154,6 @@ struct block_device *block_device_init(struct list *cntrl_list, const char *path
  * @brief Releases a block device structure.
  *
  * This function releases memory allocated for block device structure.
- * To be more specific it only frees memory allocated for the structure fields.
- * It is due to the way list is implemented for the purpose of this utility.
- * If one would like release block device structure not stored as a list node
- * it must call free() explicitly just after function block_device_fini()
- * is called.
  *
  * @param[in]      device         pointer to block device structure.
  *

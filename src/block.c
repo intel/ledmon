@@ -307,7 +307,7 @@ void block_device_fini(struct block_device *device)
 		if (device->raid_path)
 			free(device->raid_path);
 
-		/* free(device); */
+		free(device);
 	}
 }
 

@@ -48,7 +48,6 @@ struct pci_slot *pci_slot_init(const char *path)
 
 	if (result->attention == -1) {
 		pci_slot_fini(result);
-		free(result);
 		return NULL;
 	}
 
@@ -62,9 +61,8 @@ struct pci_slot *pci_slot_init(const char *path)
 void pci_slot_fini(struct pci_slot *slot)
 {
 	if (slot) {
-		if (slot->sysfs_path)
-			free(slot->sysfs_path);
-		if (slot->address)
-			free(slot->address);
+		free(slot->sysfs_path);
+		free(slot->address);
+		free(slot);
 	}
 }

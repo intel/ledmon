@@ -184,9 +184,7 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
 		device = slave_device_init(path, &sysfs_block_list);
 		if (device) {
 			device->raid = raid;
-			list_put(&slave_list, device,
-				 sizeof(struct slave_device));
-			free(device);
+			list_put(&slave_list, device);
 		}
 	}
 }
@@ -265,12 +263,10 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 		if (device) {
 			if (!_is_duplicate(device)) {
 				device->raid = raid;
-				list_put(&slave_list, device,
-					 sizeof(struct slave_device));
+				list_put(&slave_list, device);
 			} else {
 				slave_device_fini(device);
 			}
-			free(device);
 		}
 	}
 }
@@ -312,10 +308,8 @@ static void _link_cntnr(struct raid_device *device)
 static void _block_add(const char *path)
 {
 	struct block_device *device = block_device_init(&cntrl_list, path);
-	if (device) {
-		list_put(&sysfs_block_list, device, sizeof(struct block_device));
-		free(device);
-	}
+	if (device)
+		list_put(&sysfs_block_list, device);
 }
 
 /**
@@ -324,10 +318,8 @@ static void _volum_add(const char *path, unsigned int device_num)
 {
 	struct raid_device *device =
 	    raid_device_init(path, device_num, DEVICE_TYPE_VOLUME);
-	if (device) {
-		list_put(&volum_list, device, sizeof(struct raid_device));
-		free(device);
-	}
+	if (device)
+		list_put(&volum_list, device);
 }
 
 /**
@@ -336,10 +328,8 @@ static void _cntnr_add(const char *path, unsigned int device_num)
 {
 	struct raid_device *device =
 	    raid_device_init(path, device_num, DEVICE_TYPE_CONTAINER);
-	if (device) {
-		list_put(&cntnr_list, device, sizeof(struct raid_device));
-		free(device);
-	}
+	if (device)
+		list_put(&cntnr_list, device);
 }
 
 /**
@@ -368,10 +358,8 @@ static void _raid_add(const char *path)
 static void _cntrl_add(const char *path)
 {
 	struct cntrl_device *device = cntrl_device_init(path);
-	if (device) {
-		list_put(&cntrl_list, device, sizeof(struct cntrl_device));
-		free(device);
-	}
+	if (device)
+		list_put(&cntrl_list, device);
 }
 
 /**
@@ -379,10 +367,8 @@ static void _cntrl_add(const char *path)
 static void _enclo_add(const char *path)
 {
 	struct enclosure_device *device = enclosure_device_init(path);
-	if (device) {
-		list_put(&enclo_list, device, sizeof(struct enclosure_device));
-		free(device);
-	}
+	if (device)
+		list_put(&enclo_list, device);
 }
 
 /**
@@ -390,10 +376,8 @@ static void _enclo_add(const char *path)
 static void _slots_add(const char *path)
 {
 	struct pci_slot *device = pci_slot_init(path);
-	if (device) {
-		list_put(&slots_list, device, sizeof(struct pci_slot));
-		free(device);
-	}
+	if (device)
+		list_put(&slots_list, device);
 }
 
 /**

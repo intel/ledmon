@@ -151,6 +151,5 @@ struct slave_device *slave_device_init(const char *path, struct list *block_list
  */
 void slave_device_fini(struct slave_device *device)
 {
-	(void)device;
-	/* Function reserved for future improvements. */
+	free(device);
 }

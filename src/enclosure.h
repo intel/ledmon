@@ -70,9 +70,7 @@ struct enclosure_device *enclosure_device_init(const char *path);
 /**
  * @brief Releases an enclosure device structure.
  *
- * This function releases memory allocated for enclosure device structure. To be
- * more specific it only frees memory allocated for the fields of the structure.
- * It is due to the way list is implemented for the purpose of this utility.
+ * This function releases memory allocated for enclosure device structure.
  *
  * @param[in]      device         Pointer to enclosure device structure.
  *

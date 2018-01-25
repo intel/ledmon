@@ -129,6 +129,6 @@ void enclosure_device_fini(struct enclosure_device *enclosure)
 	if (enclosure) {
 		free(enclosure->sysfs_path);
 		free(enclosure->dev_path);
-		/* free(enclosure); */
+		free(enclosure);
 	}
 }

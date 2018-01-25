@@ -19,54 +19,39 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include <string.h>
 
 #include "list.h"
 
 /**
  */
-static struct node *_new(void *data, size_t size)
-{
-	struct node *t;
-
-	t = malloc(size + sizeof(struct node));
-	if (t != NULL) {
-		t->list = NULL;
-		t->prev = NULL;
-		t->next = NULL;
-		t->item = t + 1;
-		memcpy(t->item, data, size);
-	}
-
-	return t;
-}
-
-/**
- */
 static void _put_front(struct list *list, struct node *elem)
 {
-	if (list->head == NULL)
+	if (list->head == NULL) {
+		elem->next = NULL;
 		list->tail = elem;
-	else {
+	} else {
 		elem->next = list->head;
 		list->head->prev = elem;
 	}
 	list->head = elem;
 	elem->list = list;
+	elem->prev = NULL;
 }
 
 /**
  */
 static void _put_back(struct list *list, struct node *elem)
 {
-	if (list->tail == NULL)
+	if (list->tail == NULL) {
+		elem->prev = NULL;
 		list->head = elem;
-	else {
+	} else {
 		elem->prev = list->tail;
 		list->tail->next = elem;
 	}
 	list->tail = elem;
 	elem->list = list;
+	elem->next = NULL;
 }
 
 /**
@@ -87,10 +72,17 @@ struct list *list_alloc(void)
  */
 void list_fini(struct list *ptr)
 {
-	if (ptr != NULL) {
-		list_clear(ptr);
-		free(ptr);
+	struct node *node;
+	struct node *next;
+
+	node = ptr->head;
+	while (node) {
+		next = node->next;
+		free(node->item);
+		free(node);
+		node = next;
 	}
+	free(ptr);
 }
 
 /**
@@ -114,32 +106,28 @@ void list_remove(struct node *ptr)
 
 /**
  */
-void *list_add(struct list *ptr, void *data, size_t size)
+struct node *list_add(struct list *ptr, void *data)
 {
-	if (ptr && data && (size > 0)) {
-		struct node *result = _new(data, size);
+	struct node *result = malloc(sizeof(struct node));
 
-		if (result != NULL) {
-			_put_front(ptr, result);
-			return result->item;
-		}
+	if (result != NULL) {
+		_put_front(ptr, result);
+		result->item = data;
 	}
-	return NULL;
+	return result;
 }
 
 /**
  */
-void *list_put(struct list *ptr, void *data, size_t size)
+struct node *list_put(struct list *ptr, void *data)
 {
-	if (ptr && data && (size > 0)) {
-		struct node *result = _new(data, size);
+	struct node *result = malloc(sizeof(struct node));
 
-		if (result != NULL) {
-			_put_back(ptr, result);
-			return result->item;
-		}
+	if (result != NULL) {
+		_put_back(ptr, result);
+		result->item = data;
 	}
-	return NULL;
+	return result;
 }
 
 /**

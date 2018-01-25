@@ -51,7 +51,6 @@ static int _compare(const void *item, const void *param)
 
 		ret = block_compare(bd, bd_new);
 		block_device_fini(bd_new);
-		free(bd_new);
 
 		return ret;
 	}

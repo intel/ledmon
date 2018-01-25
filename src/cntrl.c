@@ -385,6 +385,7 @@ void cntrl_device_fini(struct cntrl_device *device)
 	if (device) {
 		free(device->sysfs_path);
 		free_hosts(device->hosts);
+		free(device);
 	}
 }
 

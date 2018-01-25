@@ -128,6 +128,12 @@ static struct option longopt[] = {
 			{NULL, no_argument, NULL, '\0'}
 };
 
+static void ibpi_state_fini(struct ibpi_state *p)
+{
+	list_clear(&p->block_list);
+	free(p);
+}
+
 /**
  * @brief Finalizes LED control utility.
  *
@@ -144,6 +150,7 @@ static void _ledctl_fini(int __attribute__ ((unused)) status,
 			 void *__attribute__ ((unused)) ignore)
 {
 	sysfs_reset();
+	list_for_each(&ibpi_list, ibpi_state_fini);
 	list_clear(&ibpi_list);
 	log_close();
 }
@@ -226,11 +233,20 @@ static void _ledctl_help(void)
  */
 static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 {
-	struct ibpi_state state;
+	struct ibpi_state *state = malloc(sizeof(struct ibpi_state));
 
-	list_init(&state.block_list);
-	state.ibpi = ibpi;
-	return list_put(&ibpi_list, &state, sizeof(struct ibpi_state));
+	if (!state)
+		return NULL;
+
+	list_init(&state->block_list);
+	state->ibpi = ibpi;
+
+	if (!list_put(&ibpi_list, state)) {
+		free(state);
+		state = NULL;
+	}
+
+	return state;
 }
 
 /**
@@ -512,7 +528,7 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 	}
 	blk2 = list_first_that(&state->block_list, _block_device_search, path);
 	if (blk2 == NULL) {
-		if (list_put(&state->block_list, &blk1, sizeof(void *)) == NULL)
+		if (list_put(&state->block_list, &blk1) == NULL)
 			return STATUS_OUT_OF_MEMORY;
 	} else {
 		log_info("%s: %s: device already on the list.",

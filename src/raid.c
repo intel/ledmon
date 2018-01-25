@@ -163,6 +163,6 @@ void raid_device_fini(struct raid_device *device)
 	if (device) {
 		if (device->sysfs_path)
 			free(device->sysfs_path);
-		/* free(device); */
+		free(device);
 	}
 }

@@ -137,6 +137,7 @@ struct list *scan_dir(const char *path)
 	DIR *dir = opendir(path);
 	if (dir) {
 		while ((dirent = readdir(dir)) != NULL) {
+			char *str;
 			if ((strcmp(dirent->d_name, ".") == 0)
 			    || (strcmp(dirent->d_name, "..")) == 0) {
 				continue;
@@ -144,7 +145,15 @@ struct list *scan_dir(const char *path)
 			str_cpy(temp, path, PATH_MAX);
 			str_cat(temp, PATH_DELIM_STR, PATH_MAX);
 			str_cat(temp, dirent->d_name, PATH_MAX);
-			list_put(result, temp, strlen(temp) + 1);
+
+			str = strdup(temp);
+			if (!str) {
+				list_fini(result);
+				result = NULL;
+				break;
+			}
+
+			list_put(result, str);
 		}
 		closedir(dir);
 	}

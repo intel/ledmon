@@ -99,9 +99,6 @@ struct cntrl_device *cntrl_device_init(const char *path);
  * @brief Releases a controller device structure.
  *
  * This function releases memory allocated for controller device structure.
- * To be more specific it only frees memory allocated for the fields of the
- * structure. It is due to the way list is implemented for the purpose of this
- * utility.
  *
  * @param[in]     device         pointer to controller device structure.
  *

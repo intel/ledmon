@@ -79,11 +79,8 @@ struct list *list_alloc(void);
 /**
  * @brief Finalizes a list object.
  *
- * This function releases the memory allocated for a list object. The function
- * does not release the memory allocated by other function and stored
- * in elements. It only releases a placeholder where the elements are stored.
- * It is user responsibility to free allocated other memory before
- * this function is called.
+ * This function releases the memory allocated for a list object. It also frees
+ * the data items attached to list nodes.
  *
  * @param[in]      ptr            pointer to a list object.
  */
@@ -115,14 +112,12 @@ void list_clear(struct list *ptr);
  * This function adds an element to head of the list.
  *
  * @param[in]      ptr            pointer to list object.
- * @param[in]      data           placeholder where the information to put on
- *                                a list is stored.
- * @param[in]      size           number of bytes stored in data parameter.
+ * @param[in]      data           data item to be inserted into the list.
  *
- * @return Pointer to element on a list if successful, otherwise a NULL and
+ * @return Pointer to the newly allocated list node, otherwise a NULL and
  *         this means out of memory in the system.
  */
-void *list_add(struct list *ptr, void *data, size_t size);
+struct node *list_add(struct list *ptr, void *data);
 
 /**
  * @brief Puts an element in back.
@@ -130,14 +125,12 @@ void *list_add(struct list *ptr, void *data, size_t size);
  * This function puts an element on tail of a list.
  *
  * @param[in]      ptr            pointer to list object.
- * @param[in]      data           placeholder where the information to put on
- *                                a list is stored.
- * @param[in]      size           number of bytes stored in data parameter.
+ * @param[in]      data           data item to be inserted into the list.
  *
- * @return Pointer to element on a list if successful, otherwise a NULL and
+ * @return Pointer to the newly allocated list node, otherwise a NULL and
  *         this means out of memory in the system.
  */
-void *list_put(struct list *ptr, void *data, size_t size);
+struct node *list_put(struct list *ptr, void *data);
 
 /**
  * @brief Reruns next element.

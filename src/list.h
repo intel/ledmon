@@ -64,24 +64,14 @@ static inline void list_init(struct list *list)
 }
 
 /**
- * @brief Creates a list object.
- *
- * The function allocates memory for a new list object and initializes its
- * fields to reflect an empty state.
- *
- * @return pointer to allocated list if successful, otherwise NULL.
- */
-struct list *list_alloc(void);
-
-/**
- * @brief Finalizes a list object.
+ * @brief Clears a list and frees the items it contains.
  *
  * This function releases the memory allocated for a list object. It also frees
- * the data items attached to list nodes.
+ * the data items attached to list nodes. It does not free the list itself.
  *
  * @param[in]      list           pointer to a list object.
  */
-void list_fini(struct list *list);
+void list_erase(struct list *list);
 
 /**
  * @brief Removes an element from the list.

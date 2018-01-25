@@ -44,8 +44,8 @@ struct ledmon_conf {
 	int raid_memebers_only;
 
 	/* whitelist and blacklist of controllers for blinking */
-	struct list *cntrls_whitelist;
-	struct list *cntrls_blacklist;
+	struct list cntrls_whitelist;
+	struct list cntrls_blacklist;
 };
 
 extern struct ledmon_conf conf;

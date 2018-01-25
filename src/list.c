@@ -23,19 +23,7 @@
 #include "list.h"
 #include "utils.h"
 
-struct list *list_alloc(void)
-{
-	struct list *t;
-
-	t = malloc(sizeof(struct list));
-	if (t == NULL)
-		return NULL;
-	list_init(t);
-
-	return t;
-}
-
-void list_fini(struct list *list)
+void list_erase(struct list *list)
 {
 	struct node *node;
 
@@ -43,7 +31,7 @@ void list_fini(struct list *list)
 		free(node->item);
 		free(node);
 	}
-	free(list);
+	list->head = list->tail = NULL;
 }
 
 void list_remove(struct node *node)

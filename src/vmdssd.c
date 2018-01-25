@@ -84,13 +84,12 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
 static int check_slot_module(const char *slot_path)
 {
 	char module_path[PATH_MAX], real_module_path[PATH_MAX];
-	struct list *dir;
+	struct list dir;
 
 	// check if slot is managed by pciehp driver
 	snprintf(module_path, PATH_MAX, "%s/module", slot_path);
-	dir = scan_dir(module_path);
-	if (dir) {
-		list_fini(dir);
+	if (scan_dir(module_path, &dir) == 0) {
+		list_erase(&dir);
 		realpath(module_path, real_module_path);
 		if (strcmp(real_module_path, SYSFS_PCIEHP) != 0)
 			__set_errno_and_return(EINVAL);

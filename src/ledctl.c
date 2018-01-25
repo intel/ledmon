@@ -654,6 +654,8 @@ static status_t _init_ledctl_conf(void)
 
 	/* initialize with default values */
 	conf.log_level = LOG_LEVEL_WARNING;
+	list_init(&conf.cntrls_whitelist);
+	list_init(&conf.cntrls_blacklist);
 	return _set_log_path(LEDCTL_DEF_LOG_FILE);
 }
 

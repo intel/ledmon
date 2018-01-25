@@ -619,18 +619,17 @@ static int _slot_match(const char *slot_path, const char *device_path)
  */
 static char *_slot_find(const char *enclo_path, const char *device_path)
 {
-	struct list *dir;
+	struct list dir;
 	char *temp, *result = NULL;
 
-	dir = scan_dir(enclo_path);
-	if (dir) {
-		list_for_each(dir, temp) {
+	if (scan_dir(enclo_path, &dir) == 0) {
+		list_for_each(&dir, temp) {
 			if (_slot_match(temp, device_path)) {
 				result = strdup(temp);
 				break;
 			}
 		}
-		list_fini(dir);
+		list_erase(&dir);
 	}
 	return result;
 }

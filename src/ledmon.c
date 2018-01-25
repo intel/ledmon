@@ -819,23 +819,25 @@ static status_t _init_ledmon_conf(void)
 	conf.raid_memebers_only = 0;
 	conf.log_level = LOG_LEVEL_WARNING;
 	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
+	list_init(&conf.cntrls_whitelist);
+	list_init(&conf.cntrls_blacklist);
 	return _set_log_path(LEDMON_DEF_LOG_FILE);
 }
 
 static void _close_parent_fds(void)
 {
-	struct list *dir = scan_dir("/proc/self/fd");
+	struct list dir;
 
-	if (dir) {
+	if (scan_dir("/proc/self/fd", &dir) == 0) {
 		char *elem;
 
-		list_for_each(dir, elem) {
+		list_for_each(&dir, elem) {
 			int fd = (int)strtol(basename(elem), NULL, 10);
 
 			if (fd != get_log_fd())
 				close(fd);
 		}
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 

@@ -22,6 +22,7 @@
 
 #include "stdlib.h"
 #include "stdint.h"
+#include "list.h"
 
 /**
  * Maximum number of bytes in temporary buffer. It is used for local variables.
@@ -150,12 +151,16 @@ int put_int(const char *path, const char *name, int value);
  * file on a list. The function puts a canonical paths on the list, however it
  * does not resolve any symbolic link.
  *
- * @param[in]      path           Path to directory to read.
+ * This function allocates memory for the list elements. The caller should free
+ * it using list_erase().
  *
- * @return List containing content of the given directory. Each element on the
- *         list is canonical path.
+ * @param[in]      path           Path to directory to read.
+ * @param[in]      result         Pointer to list where the directory contents
+ *                                will be put.
+ *
+ * @return 0 on success, -1 on error.
  */
-struct list *scan_dir(const char *path);
+int scan_dir(const char *path, struct list *result);
 
 /**
  * @brief Writes a text to file.

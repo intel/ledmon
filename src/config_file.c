@@ -60,12 +60,9 @@ static int parse_bool(char *s)
 	return -1;
 }
 
-static struct list *parse_list(char *s)
+static void parse_list(struct list *list, char *s)
 {
-	struct list *list = list_alloc();
-
-	if (!list)
-		return NULL;
+	list_erase(list);
 
 	while (s && *s) {
 		char *sep;
@@ -81,8 +78,6 @@ static struct list *parse_list(char *s)
 		else
 			break;
 	}
-
-	return list;
 }
 
 int _map_log_level(char *conf_log_level)
@@ -182,18 +177,12 @@ static int parse_next(FILE *fd)
 			return -1;
 	} else if (!strncmp(s, "WHITELIST=", 10)) {
 		s += 10;
-		if (*s) {
-			conf.cntrls_whitelist = parse_list(s);
-			if (!conf.cntrls_whitelist)
-				return -1;
-		}
+		if (*s)
+			parse_list(&conf.cntrls_whitelist, s);
 	} else if (!strncmp(s, "BLACKLIST=", 10)) {
 		s += 10;
-		if (*s) {
-			conf.cntrls_blacklist = parse_list(s);
-			if (!conf.cntrls_blacklist)
-				return -1;
-		}
+		if (*s)
+			parse_list(&conf.cntrls_blacklist, s);
 	} else {
 		log_error("config file: unknown option '%s'.\n", s);
 		return -1;
@@ -203,8 +192,8 @@ static int parse_next(FILE *fd)
 
 void ledmon_free_config()
 {
-	list_fini(conf.cntrls_blacklist);
-	list_fini(conf.cntrls_whitelist);
+	list_erase(&conf.cntrls_blacklist);
+	list_erase(&conf.cntrls_whitelist);
 
 	if (conf.log_path)
 		free(conf.log_path);
@@ -261,20 +250,20 @@ int main(int argc, char *argv[])
 	printf("REBUILD_BLINK_ON_ALL: %d\n", conf.rebuild_blink_on_all);
 	printf("RAID_MEMBERS_ONLY: %d\n", conf.raid_memebers_only);
 
-	if (!conf.cntrls_whitelist)
+	if (list_is_empty(&conf.cntrls_whitelist))
 		printf("WHITELIST: NONE\n");
 	else {
 		printf("WHITELIST: ");
-		list_for_each(conf.cntrls_whitelist, s)
+		list_for_each(&conf.cntrls_whitelist, s)
 			printf("%s, ", s);
 		printf("\n");
 	}
 
-	if (!conf.cntrls_blacklist)
+	if (list_is_empty(&conf.cntrls_blacklist))
 		printf("BLACKLIST: NONE\n");
 	else {
 		printf("BLACKLIST: ");
-		list_for_each(conf.cntrls_blacklist, s)
+		list_for_each(&conf.cntrls_blacklist, s)
 			printf("%s, ", s);
 		printf("\n");
 	}

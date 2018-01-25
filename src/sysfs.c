@@ -257,21 +257,21 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 static void _link_raid_device(struct raid_device *device, enum device_type type)
 {
 	char temp[PATH_MAX];
+	struct list dir;
 
 	str_cpy(temp, device->sysfs_path, PATH_MAX);
 	str_cat(temp, "/md", PATH_MAX);
 
-	struct list *dir = scan_dir(temp);
-	if (dir) {
+	if (scan_dir(temp, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path) {
+		list_for_each(&dir, dir_path) {
 			if (type == DEVICE_TYPE_VOLUME)
 				_slave_vol_add(dir_path, device);
 			else if (type == DEVICE_TYPE_CONTAINER)
 				_slave_cnt_add(dir_path, device);
 		}
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 
@@ -381,37 +381,37 @@ static void _check_enclo(const char *path)
 
 static void _scan_block(void)
 {
-	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
-	if (dir) {
+	struct list dir;
+	if (scan_dir(SYSFS_CLASS_BLOCK, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path)
+		list_for_each(&dir, dir_path)
 			_block_add(dir_path);
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 
 static void _scan_raid(void)
 {
-	struct list *dir = scan_dir(SYSFS_CLASS_BLOCK);
-	if (dir) {
+	struct list dir;
+	if (scan_dir(SYSFS_CLASS_BLOCK, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path)
+		list_for_each(&dir, dir_path)
 			_check_raid(dir_path);
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 
 static void _scan_cntrl(void)
 {
-	struct list *dir = scan_dir(SYSFS_PCI_DEVICES);
-	if (dir) {
+	struct list dir;
+	if (scan_dir(SYSFS_PCI_DEVICES, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path)
+		list_for_each(&dir, dir_path)
 			_check_cntrl(dir_path);
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 
@@ -438,25 +438,25 @@ static void _scan_slave(void)
 
 static void _scan_enclo(void)
 {
-	struct list *dir = scan_dir(SYSFS_CLASS_ENCLOSURE);
-	if (dir) {
+	struct list dir;
+	if (scan_dir(SYSFS_CLASS_ENCLOSURE, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path)
+		list_for_each(&dir, dir_path)
 			_check_enclo(dir_path);
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 
 static void _scan_slots(void)
 {
-	struct list *dir = scan_dir(SYSFS_PCI_SLOTS);
-	if (dir) {
+	struct list dir;
+	if (scan_dir(SYSFS_PCI_SLOTS, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path)
+		list_for_each(&dir, dir_path)
 			_slots_add(dir_path);
-		list_fini(dir);
+		list_erase(&dir);
 	}
 }
 

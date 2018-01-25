@@ -125,39 +125,39 @@ int get_int(const char *path, int defval, const char *name)
 
 /**
  */
-struct list *scan_dir(const char *path)
+int scan_dir(const char *path, struct list *result)
 {
 	struct dirent *dirent;
-	struct list *result;
-	char temp[PATH_MAX];
-
-	result = list_alloc();
-	if (!result)
-		return NULL;
+	int ret = 0;
 	DIR *dir = opendir(path);
-	if (dir) {
-		while ((dirent = readdir(dir)) != NULL) {
-			char *str;
-			if ((strcmp(dirent->d_name, ".") == 0)
-			    || (strcmp(dirent->d_name, "..")) == 0) {
-				continue;
-			}
-			str_cpy(temp, path, PATH_MAX);
-			str_cat(temp, PATH_DELIM_STR, PATH_MAX);
-			str_cat(temp, dirent->d_name, PATH_MAX);
+	if (!dir)
+		return -1;
 
-			str = strdup(temp);
-			if (!str) {
-				list_fini(result);
-				result = NULL;
-				break;
-			}
+	list_init(result);
 
-			list_append(result, str);
+	while ((dirent = readdir(dir)) != NULL) {
+		char *str;
+		size_t len;
+
+		if ((strcmp(dirent->d_name, ".") == 0) ||
+		    (strcmp(dirent->d_name, "..")) == 0)
+			continue;
+
+		len = strlen(path) + strlen(dirent->d_name) + 2;
+		str = malloc(len);
+		if (!str) {
+			ret = -1;
+			list_erase(result);
+			break;
 		}
-		closedir(dir);
+
+		snprintf(str, len, "%s/%s", path, dirent->d_name);
+
+		list_append(result, str);
 	}
-	return result;
+	closedir(dir);
+
+	return ret;
 }
 
 /**

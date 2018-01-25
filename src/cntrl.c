@@ -103,13 +103,13 @@ static int _is_dellssd_cntrl(const char *path)
 static int _is_smp_cntrl(const char *path)
 {
 	int result = 0;
-	struct list *dir = scan_dir(path);
+	struct list dir;
 	char *p;
 	char host_path[PATH_MAX] = { 0 };
-	if (dir) {
+	if (scan_dir(path, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path) {
+		list_for_each(&dir, dir_path) {
 			p = strrchr(dir_path, '/');
 			if (!p++)
 				break;
@@ -124,7 +124,7 @@ static int _is_smp_cntrl(const char *path)
 					0) == 0;
 			}
 		}
-		list_fini(dir);
+		list_erase(&dir);
 	}
 
 	return result;
@@ -236,13 +236,13 @@ void _find_host(const char *path, struct _host_type **hosts)
 static struct _host_type *_cntrl_get_hosts(const char *path)
 {
 	struct _host_type *hosts = NULL;
-	struct list *dir = scan_dir(path);
-	if (dir) {
+	struct list dir;
+	if (scan_dir(path, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(dir, dir_path)
+		list_for_each(&dir, dir_path)
 			_find_host(dir_path, &hosts);
-		list_fini(dir);
+		list_erase(&dir);
 	}
 	return hosts;
 }
@@ -336,10 +336,10 @@ struct cntrl_device *cntrl_device_init(const char *path)
 			em_enabled = 0;
 		}
 		if (em_enabled) {
-			if (conf.cntrls_whitelist) {
+			if (!list_is_empty(&conf.cntrls_whitelist)) {
 				char *cntrl = NULL;
 
-				list_for_each(conf.cntrls_whitelist, cntrl) {
+				list_for_each(&conf.cntrls_whitelist, cntrl) {
 					if (match_string(cntrl, path))
 						break;
 					cntrl = NULL;
@@ -348,10 +348,10 @@ struct cntrl_device *cntrl_device_init(const char *path)
 					log_debug("%s not found on whitelist, ignoring", path);
 					return NULL;
 				}
-			} else if (conf.cntrls_blacklist) {
+			} else if (!list_is_empty(&conf.cntrls_blacklist)) {
 				char *cntrl;
 
-				list_for_each(conf.cntrls_blacklist, cntrl) {
+				list_for_each(&conf.cntrls_blacklist, cntrl) {
 					if (match_string(cntrl, path)) {
 						log_debug("%s found on blacklist, ignoring",
 							  path);

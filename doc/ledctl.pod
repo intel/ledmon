@@ -236,7 +236,8 @@ In case of a RAID device or a container device a state will be set for all
 block devices associated, respectively.
 
 The LEDs of devices listed in I<list_of_devices> are set to the given
-pattern I<pattern_name> and all other LEDs are turned off.
+pattern I<pattern_name> and all other LEDs are turned off (unless --listed-only
+option is given).
 
 =head1 OPTIONS
 
@@ -259,6 +260,11 @@ Displays version of ledctl and information about the license and exits.
 
 Prints information (system path and type) of all controllers detected by
 ledmon and exits.
+
+=item B<-x> or B<--listed-only>
+
+With this option ledctl will change state only on devices listed in CLI. The
+rest of devices will not be touched.
 
 =back
 

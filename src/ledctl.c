@@ -102,7 +102,7 @@ static char *ledctl_version = "Intel(R) Enclosure LED Control Application %d.%d\
  * Internal variable of monitor service. It is used to help parse command line
  * short options.
  */
-static char *shortopt = "c:hLvl:";
+static char *shortopt = "c:hLxvl:";
 
 /**
  * Internal enumeration type. It is used to help parse command line arguments.
@@ -113,6 +113,7 @@ enum longopt {
 	OPT_LOG,
 	OPT_VERSION,
 	OPT_LIST_CTRL,
+	OPT_LISTED_ONLY,
 };
 
 /**
@@ -125,8 +126,11 @@ static struct option longopt[] = {
 	[OPT_LOG]     = {"log", required_argument, NULL, 'l'},
 	[OPT_VERSION] = {"version", no_argument, NULL, 'v'},
 	[OPT_LIST_CTRL] = {"list-controllers", no_argument, NULL, 'L'},
+	[OPT_LISTED_ONLY] = {"listed-only", no_argument, NULL, 'x'},
 			{NULL, no_argument, NULL, '\0'}
 };
+
+static int listed_only;
 
 static void ibpi_state_fini(struct ibpi_state *p)
 {
@@ -587,6 +591,10 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		case 'l':
 			status = _set_log_path(optarg);
 			break;
+		case 'x':
+			status = STATUS_SUCCESS;
+			listed_only = 1;
+			break;
 		case 'L':
 		{
 			struct cntrl_device *ctrl_dev;
@@ -633,6 +641,11 @@ static status_t _ledctl_execute(struct list *ibpi_list)
 
 	if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS)
 		return STATUS_IBPI_DETERMINE_ERROR;
+
+	if (!listed_only) {
+		list_for_each(sysfs_get_block_devices(), device)
+			device->send_fn(device, IBPI_PATTERN_LOCATE_OFF);
+	}
 
 	list_for_each(ibpi_list, state)
 		list_for_each(&state->block_list, device)

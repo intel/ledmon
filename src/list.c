@@ -25,38 +25,6 @@
 
 /**
  */
-static void _put_front(struct list *list, struct node *elem)
-{
-	if (list->head == NULL) {
-		elem->next = NULL;
-		list->tail = elem;
-	} else {
-		elem->next = list->head;
-		list->head->prev = elem;
-	}
-	list->head = elem;
-	elem->list = list;
-	elem->prev = NULL;
-}
-
-/**
- */
-static void _put_back(struct list *list, struct node *elem)
-{
-	if (list->tail == NULL) {
-		elem->prev = NULL;
-		list->head = elem;
-	} else {
-		elem->prev = list->tail;
-		list->tail->next = elem;
-	}
-	list->tail = elem;
-	elem->list = list;
-	elem->next = NULL;
-}
-
-/**
- */
 struct list *list_alloc(void)
 {
 	struct list *t;
@@ -105,36 +73,36 @@ void list_remove(struct node *ptr)
 	ptr->prev = NULL;
 }
 
-struct node *node_alloc(void)
+/**
+ */
+void list_insert(struct list *list, void *item, struct node *after)
 {
-	struct node *ret = malloc(sizeof(struct node));
+	struct node *new;
+	struct node **x;
 
-	if (!ret) {
+	new = malloc(sizeof(struct node));
+	if (!new) {
 		log_error("Failed to allocate memory for list node.");
 		exit(1);
 	}
 
-	return ret;
-}
+	new->list = list;
+	new->item = item;
 
-/**
- */
-void list_add(struct list *ptr, void *data)
-{
-	struct node *result = node_alloc();
+	if (after) {
+		assert(list == after->list);
+		x = &after->next;
+	} else {
+		x = &list->head;
+	}
 
-	_put_front(ptr, result);
-	result->item = data;
-}
-
-/**
- */
-void list_put(struct list *ptr, void *data)
-{
-	struct node *result = node_alloc();
-
-	_put_back(ptr, result);
-	result->item = data;
+	if (*x == NULL)
+		list->tail = new;
+	else
+		(*x)->prev = new;
+	new->next = *x;
+	*x = new;
+	new->prev = after;
 }
 
 /**

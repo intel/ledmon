@@ -184,7 +184,7 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
 		device = slave_device_init(path, &sysfs_block_list);
 		if (device) {
 			device->raid = raid;
-			list_put(&slave_list, device);
+			list_append(&slave_list, device);
 		}
 	}
 }
@@ -263,7 +263,7 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 		if (device) {
 			if (!_is_duplicate(device)) {
 				device->raid = raid;
-				list_put(&slave_list, device);
+				list_append(&slave_list, device);
 			} else {
 				slave_device_fini(device);
 			}
@@ -309,7 +309,7 @@ static void _block_add(const char *path)
 {
 	struct block_device *device = block_device_init(&cntrl_list, path);
 	if (device)
-		list_put(&sysfs_block_list, device);
+		list_append(&sysfs_block_list, device);
 }
 
 /**
@@ -319,7 +319,7 @@ static void _volum_add(const char *path, unsigned int device_num)
 	struct raid_device *device =
 	    raid_device_init(path, device_num, DEVICE_TYPE_VOLUME);
 	if (device)
-		list_put(&volum_list, device);
+		list_append(&volum_list, device);
 }
 
 /**
@@ -329,7 +329,7 @@ static void _cntnr_add(const char *path, unsigned int device_num)
 	struct raid_device *device =
 	    raid_device_init(path, device_num, DEVICE_TYPE_CONTAINER);
 	if (device)
-		list_put(&cntnr_list, device);
+		list_append(&cntnr_list, device);
 }
 
 /**
@@ -359,7 +359,7 @@ static void _cntrl_add(const char *path)
 {
 	struct cntrl_device *device = cntrl_device_init(path);
 	if (device)
-		list_put(&cntrl_list, device);
+		list_append(&cntrl_list, device);
 }
 
 /**
@@ -368,7 +368,7 @@ static void _enclo_add(const char *path)
 {
 	struct enclosure_device *device = enclosure_device_init(path);
 	if (device)
-		list_put(&enclo_list, device);
+		list_append(&enclo_list, device);
 }
 
 /**
@@ -377,7 +377,7 @@ static void _slots_add(const char *path)
 {
 	struct pci_slot *device = pci_slot_init(path);
 	if (device)
-		list_put(&slots_list, device);
+		list_append(&slots_list, device);
 }
 
 /**

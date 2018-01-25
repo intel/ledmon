@@ -677,7 +677,7 @@ static void _add_block(struct block_device *block)
 		if (temp != NULL) {
 			log_info("NEW %s: state '%s'.", temp->sysfs_path,
 				 ibpi_str[temp->ibpi]);
-			list_put(&ledmon_block_list, temp);
+			list_append(&ledmon_block_list, temp);
 		}
 	}
 }

@@ -74,7 +74,7 @@ static struct list *parse_list(char *s)
 		if (sep)
 			*sep = '\0';
 
-		list_put(list, strdup(s));
+		list_append(list, strdup(s));
 
 		if (sep)
 			s = sep + 1;

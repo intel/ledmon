@@ -107,24 +107,29 @@ void list_remove(struct node *ptr);
 void list_clear(struct list *ptr);
 
 /**
- * @brief Adds an element in front.
+ * @brief Inserts an element into the list.
  *
- * This function adds an element to head of the list.
+ * This function puts an element after a given element.
  *
- * @param[in]      ptr            pointer to list object.
- * @param[in]      data           data item to be inserted into the list.
+ * @param[in]      list           pointer to list object.
+ * @param[in]      item           data item to be inserted into the list.
+ * @param[in]      after          list node after which to insert the element.
+ *                                If NULL, then insert at the head of the list.
  */
-void list_add(struct list *ptr, void *data);
+void list_insert(struct list *list, void *item, struct node *after);
 
 /**
- * @brief Puts an element in back.
+ * @brief Appends an element to the end of the list.
  *
  * This function puts an element on tail of a list.
  *
- * @param[in]      ptr            pointer to list object.
- * @param[in]      data           data item to be inserted into the list.
+ * @param[in]      list           pointer to list object.
+ * @param[in]      item           data item to be inserted into the list.
  */
-void list_put(struct list *ptr, void *data);
+static inline void list_append(struct list *list, void *item)
+{
+	list_insert(list, item, list->tail);
+}
 
 /**
  * @brief Reruns next element.

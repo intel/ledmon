@@ -239,7 +239,7 @@ static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 	list_init(&state->block_list);
 	state->ibpi = ibpi;
 
-	list_put(&ibpi_list, state);
+	list_append(&ibpi_list, state);
 
 	return state;
 }
@@ -523,7 +523,7 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 	}
 	blk2 = list_first_that(&state->block_list, _block_device_search, path);
 	if (blk2 == NULL)
-		list_put(&state->block_list, &blk1);
+		list_append(&state->block_list, &blk1);
 	else
 		log_info("%s: %s: device already on the list.",
 			 ibpi_str[state->ibpi], path);

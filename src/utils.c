@@ -153,7 +153,7 @@ struct list *scan_dir(const char *path)
 				break;
 			}
 
-			list_put(result, str);
+			list_append(result, str);
 		}
 		closedir(dir);
 	}

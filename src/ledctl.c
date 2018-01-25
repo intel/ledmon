@@ -227,9 +227,7 @@ static void _ledctl_help(void)
  * @param[in]      ibpi           an IBPI pattern to add.
  *
  * @return Pointer to the created element if successful, otherwise function
- *         returns NULL. The NULL pointer means either initialization
- *         of list for block devices failed or putting new element
- *         no IBPI state list failed.
+ *         returns NULL. The NULL pointer means element allocation failed.
  */
 static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 {
@@ -241,10 +239,7 @@ static struct ibpi_state *_ibpi_state_init(enum ibpi_pattern ibpi)
 	list_init(&state->block_list);
 	state->ibpi = ibpi;
 
-	if (!list_put(&ibpi_list, state)) {
-		free(state);
-		state = NULL;
-	}
+	list_put(&ibpi_list, state);
 
 	return state;
 }
@@ -527,13 +522,11 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 		return STATUS_NOT_SUPPORTED;
 	}
 	blk2 = list_first_that(&state->block_list, _block_device_search, path);
-	if (blk2 == NULL) {
-		if (list_put(&state->block_list, &blk1) == NULL)
-			return STATUS_OUT_OF_MEMORY;
-	} else {
+	if (blk2 == NULL)
+		list_put(&state->block_list, &blk1);
+	else
 		log_info("%s: %s: device already on the list.",
 			 ibpi_str[state->ibpi], path);
-	}
 	return STATUS_SUCCESS;
 }
 

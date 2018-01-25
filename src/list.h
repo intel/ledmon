@@ -113,11 +113,8 @@ void list_clear(struct list *ptr);
  *
  * @param[in]      ptr            pointer to list object.
  * @param[in]      data           data item to be inserted into the list.
- *
- * @return Pointer to the newly allocated list node, otherwise a NULL and
- *         this means out of memory in the system.
  */
-struct node *list_add(struct list *ptr, void *data);
+void list_add(struct list *ptr, void *data);
 
 /**
  * @brief Puts an element in back.
@@ -126,11 +123,8 @@ struct node *list_add(struct list *ptr, void *data);
  *
  * @param[in]      ptr            pointer to list object.
  * @param[in]      data           data item to be inserted into the list.
- *
- * @return Pointer to the newly allocated list node, otherwise a NULL and
- *         this means out of memory in the system.
  */
-struct node *list_put(struct list *ptr, void *data);
+void list_put(struct list *ptr, void *data);
 
 /**
  * @brief Reruns next element.

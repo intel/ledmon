@@ -21,6 +21,7 @@
 #include <assert.h>
 
 #include "list.h"
+#include "utils.h"
 
 /**
  */
@@ -104,30 +105,36 @@ void list_remove(struct node *ptr)
 	ptr->prev = NULL;
 }
 
-/**
- */
-struct node *list_add(struct list *ptr, void *data)
+struct node *node_alloc(void)
 {
-	struct node *result = malloc(sizeof(struct node));
+	struct node *ret = malloc(sizeof(struct node));
 
-	if (result != NULL) {
-		_put_front(ptr, result);
-		result->item = data;
+	if (!ret) {
+		log_error("Failed to allocate memory for list node.");
+		exit(1);
 	}
-	return result;
+
+	return ret;
 }
 
 /**
  */
-struct node *list_put(struct list *ptr, void *data)
+void list_add(struct list *ptr, void *data)
 {
-	struct node *result = malloc(sizeof(struct node));
+	struct node *result = node_alloc();
 
-	if (result != NULL) {
-		_put_back(ptr, result);
-		result->item = data;
-	}
-	return result;
+	_put_front(ptr, result);
+	result->item = data;
+}
+
+/**
+ */
+void list_put(struct list *ptr, void *data)
+{
+	struct node *result = node_alloc();
+
+	_put_back(ptr, result);
+	result->item = data;
 }
 
 /**

@@ -30,7 +30,7 @@
  * function should return 0 if search should continue, otherwise it should
  * return 1.
  */
-typedef int (*test_t) (void *item, void *param);
+typedef int (*test_t) (const void *item, const void *param);
 
 /**
  * This data-type represents a prototype of action function. Action function is
@@ -48,16 +48,6 @@ typedef void (*action_t) (void *item, void *param);
  */
 #define list_for_each(__list, __action) \
 	__list_for_each((void *)(__list), (action_t)(__action), (void *)0)
-
-/**
- */
-#define list_first_that_no_parm(__list, __test) \
-	__list_first_that((void *)(__list), (test_t)(__test), (void *)0)
-
-/**
- */
-#define list_first_that(__list, __test, __parm) \
-	__list_first_that((void *)(__list), (test_t)(__test), (void *)(__parm))
 
 /**
  * @brief Creates a list object.
@@ -242,7 +232,7 @@ status_t __list_for_each(void *ptr, action_t action, void *parm);
  * @return Pointer to an element. If the function returns NULL that means there
  *         is no such an element on a list.
  */
-void *__list_last_that(void *ptr, test_t test, void *parm);
+void *list_last_that(void *ptr, test_t test, const void *parm);
 
 /**
  * @brief Searches for an element backward.
@@ -260,7 +250,7 @@ void *__list_last_that(void *ptr, test_t test, void *parm);
  * @return Pointer to an element. If the function returns NULL that means there
  *         is no such an element on a list.
  */
-void *__list_first_that(void *ptr, test_t test, void *parm);
+void *list_first_that(void *ptr, test_t test, const void *parm);
 
 
 /**

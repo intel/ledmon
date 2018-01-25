@@ -602,8 +602,10 @@ static int get_encl_slot(struct block_device *device)
 
 /**
  */
-static int _slot_match(const char *slot_path, const char *device_path)
+static int _slot_match(const void *item, const void *param)
 {
+	const char *slot_path = item;
+	const char *device_path = param;
 	char temp[PATH_MAX], link[PATH_MAX];
 
 	str_cpy(temp, slot_path, PATH_MAX);

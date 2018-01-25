@@ -311,8 +311,11 @@ static status_t _ibpi_state_determine(void *ibpi_list)
  *
  * @return 1 if the IBPI state matches, otherwise the function returns 0.
  */
-static int _ibpi_find(struct ibpi_state *state, enum ibpi_pattern ibpi)
+static int _ibpi_find(const void *item, const void *param)
 {
+	const struct ibpi_state *state = item;
+	enum ibpi_pattern ibpi = *(enum ibpi_pattern *)param;
+
 	return (state->ibpi == ibpi);
 }
 
@@ -444,7 +447,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 	} else {
 		return NULL;
 	}
-	state = list_first_that(ibpi_list, _ibpi_find, ibpi);
+	state = list_first_that(ibpi_list, _ibpi_find, &ibpi);
 	if (state == NULL)
 		state = _ibpi_state_init(ibpi);
 	return state;
@@ -462,8 +465,11 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
  *
  * @return 1 if the block device is found, otherwise the function returns 0.
  */
-static int _block_device_search(struct block_device *block, const char *path)
+static int _block_device_search(const void *item, const void *param)
 {
+	const struct block_device *block = item;
+	const char *path = param;
+
 	return (strcmp(block->sysfs_path, path) == 0);
 }
 

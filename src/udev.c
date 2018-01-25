@@ -32,8 +32,11 @@
 
 static struct udev_monitor *udev_monitor;
 
-static int _compare(struct block_device *bd, const char *syspath)
+static int _compare(const void *item, const void *param)
 {
+	const struct block_device *bd = item;
+	const char *syspath = param;
+
 	if (!bd || !syspath)
 		return 0;
 

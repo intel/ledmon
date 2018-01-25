@@ -159,18 +159,21 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
  * @return 1 if a block device is connected to a controller, otherwise the
  *         function will return 0.
  */
-static int _compare(struct cntrl_device *cntrl, const char *path)
+static int _compare(const void *item, const void *param)
 {
+	const struct cntrl_device *cntrl = item;
+	const char *path = param;
+
 	return (strncmp(cntrl->sysfs_path, path, strlen(cntrl->sysfs_path)) ==
 		0);
 }
 
-static int is_dellssd(struct block_device *bd)
+static int is_dellssd(const struct block_device *bd)
 {
 	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
 }
 
-static int is_vmd(struct block_device *bd)
+static int is_vmd(const struct block_device *bd)
 {
 	return ((bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD));
 }
@@ -340,8 +343,10 @@ struct block_device *block_device_duplicate(struct block_device *block)
 	return result;
 }
 
-int block_compare(struct block_device *bd_old, struct block_device *bd_new)
+int block_compare(const void *item, const void *param)
 {
+	const struct block_device *bd_old = item;
+	const struct block_device *bd_new = param;
 	int i = 0;
 
 	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {

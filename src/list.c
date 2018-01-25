@@ -465,7 +465,7 @@ status_t __list_for_each(void *ptr, action_t action, void *parm)
 
 /**
  */
-void *__list_first_that(void *ptr, test_t test, void *parm)
+void *list_first_that(void *ptr, test_t test, const void *parm)
 {
 	assert(test != NULL);
 
@@ -480,7 +480,7 @@ void *__list_first_that(void *ptr, test_t test, void *parm)
 
 /**
  */
-void *__list_last_that(void *ptr, test_t test, void *parm)
+void *list_last_that(void *ptr, test_t test, const void *parm)
 {
 	assert(test != NULL);
 

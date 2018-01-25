@@ -215,8 +215,11 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
  *
  * @return 1 if slave devices matches, otherwise the function returns 0.
  */
-static int _match(struct slave_device *s1, struct slave_device *s2)
+static int _match(const void *item, const void *param)
 {
+	const struct slave_device *s1 = item;
+	const struct slave_device *s2 = param;
+
 	return (s1->block == s2->block);
 }
 
@@ -800,24 +803,27 @@ status_t __sysfs_block_device_for_each(action_t action, void *parm)
  * The function is looking for block device according to criteria defined by
  * 'test' function. See sysfs.h for details.
  */
-void *__sysfs_block_device_first_that(test_t test, void *parm)
+void *sysfs_block_device_first_that(test_t test, void *parm)
 {
-	return __list_first_that(sysfs_block_list, test, parm);
+	return list_first_that(sysfs_block_list, test, parm);
 }
 
 /*
  * The function is looking for PCI hotplug slot according to criteria defined
  * by 'test' function. See sysfs.h for details.
  */
-void *__sysfs_pci_slot_first_that(test_t test, void *parm)
+void *sysfs_pci_slot_first_that(test_t test, void *parm)
 {
-	return __list_first_that(slots_list, test, parm);
+	return list_first_that(slots_list, test, parm);
 }
 
 /**
  */
-static int _enclo_match(struct enclosure_device *device, const char *path)
+static int _enclo_match(const void *item, const void *param)
 {
+	const struct enclosure_device *device = item;
+	const char *path = param;
+
 	return (device->sysfs_path != NULL) &&
 	    (strncmp(device->sysfs_path, path, strlen(path)) == 0);
 }

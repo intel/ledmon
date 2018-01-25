@@ -309,8 +309,11 @@ static unsigned int _ahci_em_messages(const char *path)
 	}
 }
 
-static int match_cntrl(const char *pattern, const char *name)
+static int match_cntrl(const void *item, const void *param)
 {
+	const char *pattern = item;
+	const char *name = param;
+
 	return match_string(name, pattern);
 }
 

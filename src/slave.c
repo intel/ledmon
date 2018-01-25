@@ -90,8 +90,11 @@ static unsigned int _get_slot(const char *path)
 
 /**
  */
-static int _compare(struct block_device *device, const char *path)
+static int _compare(const void *item, const void *param)
 {
+	const struct block_device *device = item;
+	const char *path = param;
+
 	return (strcmp(device->sysfs_path, path) == 0);
 }
 

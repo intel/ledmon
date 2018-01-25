@@ -226,6 +226,6 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id);
  *
  * @return 0 if the block devices do not match, otherwise function returns 1.
  */
-int block_compare(struct block_device *bd_old, struct block_device *bd_new);
+int block_compare(const void *item, const void *param);
 
 #endif				/* _BLOCK_H_INCLUDED_ */

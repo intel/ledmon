@@ -596,8 +596,11 @@ static void _ledmon_wait(int seconds)
  * @param path
  * @return
  */
-static int _compare_volume(struct raid_device *device, const char *path)
+static int _compare_volume(const void *item, const void *param)
 {
+	const struct raid_device *device = item;
+	const char *path = param;
+
 	return (strcmp(device->sysfs_path, path) == 0);
 }
 

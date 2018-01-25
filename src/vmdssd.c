@@ -39,8 +39,11 @@
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 
-static int _pci_slot_search(struct pci_slot *slot, const char *address)
+static int _pci_slot_search(const void *item, const void *param)
 {
+	const struct pci_slot *slot = item;
+	const char *address = param;
+
 	return (strcmp(slot->address, address) == 0);
 }
 

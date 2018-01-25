@@ -701,31 +701,31 @@ status_t sysfs_reset(void)
 {
 	if (sysfs_block_list) {
 		list_for_each(sysfs_block_list, block_device_fini);
-		list_delete(sysfs_block_list);
+		list_clear(sysfs_block_list);
 	}
 	if (volum_list) {
 		list_for_each(volum_list, raid_device_fini);
-		list_delete(volum_list);
+		list_clear(volum_list);
 	}
 	if (cntrl_list) {
 		list_for_each(cntrl_list, cntrl_device_fini);
-		list_delete(cntrl_list);
+		list_clear(cntrl_list);
 	}
 	if (slave_list) {
 		list_for_each(slave_list, slave_device_fini);
-		list_delete(slave_list);
+		list_clear(slave_list);
 	}
 	if (cntnr_list) {
 		list_for_each(cntnr_list, raid_device_fini);
-		list_delete(cntnr_list);
+		list_clear(cntnr_list);
 	}
 	if (enclo_list) {
 		list_for_each(enclo_list, enclosure_device_fini);
-		list_delete(enclo_list);
+		list_clear(enclo_list);
 	}
 	if (slots_list) {
 		list_for_each(slots_list, pci_slot_fini);
-		list_delete(slots_list);
+		list_clear(slots_list);
 	}
 	return STATUS_SUCCESS;
 }

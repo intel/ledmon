@@ -272,7 +272,7 @@ struct node *list_tail(struct list *ptr)
 
 /**
  */
-status_t list_delete(struct list *ptr)
+status_t list_clear(struct list *ptr)
 {
 	if (ptr == NULL)
 		return STATUS_NULL_POINTER;

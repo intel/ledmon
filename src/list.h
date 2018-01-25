@@ -93,7 +93,7 @@ status_t list_fini(struct list *ptr);
  *
  * This function removes an element from the list. It only detaches the element
  * and does not release the memory allocated for the element. To free memory
- * allocated for an element use list_delete() function instead.
+ * allocated for an element use free() on ptr after calling this function.
  *
  * @param[in]      ptr            pointer to a node object.
  *
@@ -102,16 +102,15 @@ status_t list_fini(struct list *ptr);
 status_t list_remove(struct node *ptr);
 
 /**
- * @brief Deletes an element.
+ * @brief Clears a list.
  *
- * This function removes and frees memory allocated for element. If element has
- * next element not NULL then function walks deep and frees this element, too.
- * To delete the specific element only use list_remove() function first. This
- * function does not release memory allocated by other functions i.e. strings.
- * It is user responsibility to free other memory allocated before this function
- * is called. In other way the memory leaking might be observed.
+ * This function removes and deallocates all elements from the list.
+ *
+ * @param[in]      ptr            pointer to a list object.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t list_delete(struct list *ptr);
+status_t list_clear(struct list *ptr);
 
 /**
  * @brief Adds an element in front.

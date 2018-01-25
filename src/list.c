@@ -34,7 +34,7 @@ void __list_erase(struct list *list, item_free_t free_fn)
 	list->head = list->tail = NULL;
 }
 
-void list_remove(struct node *node)
+void __list_remove(struct node *node, item_free_t free_fn)
 {
 	struct list *list = node->list;
 
@@ -49,6 +49,9 @@ void list_remove(struct node *node)
 	node->list = NULL;
 	node->next = NULL;
 	node->prev = NULL;
+
+	if (free_fn)
+		free_fn(node->item);
 }
 
 void list_insert(struct list *list, void *item, struct node *after)

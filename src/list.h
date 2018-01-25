@@ -109,11 +109,30 @@ static inline void list_clear(struct list *list)
  *
  * This function removes an element from the list. It only detaches the element
  * and does not release the memory allocated for the element. To free memory
- * allocated for an element use free() on node after calling this function.
+ * allocated for an element use list_delete() instead.
  *
  * @param[in]      node           pointer to a node object.
  */
-void list_remove(struct node *node);
+static inline void list_remove(struct node *node)
+{
+	void __list_remove(struct node *node, item_free_t free_fn);
+	__list_remove(node, NULL);
+}
+
+/**
+ * @brief Removes an element from the list and releases its memory.
+ *
+ * This function removes an element from the list and frees the memory allocated
+ * for the list node and data item.
+ *
+ * @param[in]      node           pointer to a node object.
+ */
+static inline void list_delete(struct node *node)
+{
+	void __list_remove(struct node *node, item_free_t free_fn);
+	__list_remove(node, node->list->item_free);
+	free(node);
+}
 
 /**
  * @brief Inserts an element into the list.

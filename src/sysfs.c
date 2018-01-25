@@ -427,11 +427,8 @@ static void _scan_slave(void)
 		struct node *node;
 
 		list_for_each_node(&sysfs_block_list, node) {
-			if (_is_non_raid_device(node->item)) {
-				list_remove(node);
-				block_device_fini(node->item);
-				free(node);
-			}
+			if (_is_non_raid_device(node->item))
+				list_delete(node);
 		}
 	}
 }

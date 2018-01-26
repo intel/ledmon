@@ -502,7 +502,7 @@ static uint64_t get_drive_sas_addr(const char *path)
 	char *buff, *end_dev;
 
 	/* Make big buffer. */
-	buff = malloc(size);
+	buff = malloc(size + 1);
 	if (!buff)
 		return ret;
 

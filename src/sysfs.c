@@ -260,7 +260,7 @@ static void _link_raid_device(struct raid_device *device, enum device_type type)
 	struct list dir;
 
 	str_cpy(temp, device->sysfs_path, PATH_MAX);
-	str_cat(temp, "/md", PATH_MAX);
+	str_cat(temp, "/md", PATH_MAX - 1);
 
 	if (scan_dir(temp, &dir) == 0) {
 		const char *dir_path;
@@ -661,8 +661,8 @@ int sysfs_check_driver(const char *path, const char *driver)
 	char *link;
 	int found = 0;
 	str_cpy(buf, path, PATH_MAX);
-	str_cat(buf, "/driver", PATH_MAX);
-	snprintf(driver_path, PATH_MAX, "/%s", driver);
+	str_cat(buf, "/driver", PATH_MAX - 1);
+	snprintf(driver_path, PATH_MAX - 1, "/%s", driver);
 
 	link = realpath(buf, NULL);
 	if (link && strstr(link, driver_path))

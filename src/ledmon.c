@@ -651,7 +651,7 @@ static void _add_block(struct block_device *block)
 			}
 		}
 
-		if (ibpi != temp->ibpi) {
+		if (ibpi != temp->ibpi && ibpi <= IBPI_PATTERN_REMOVED) {
 			log_info("CHANGE %s: from '%s' to '%s'.",
 				 temp->sysfs_path, ibpi_str[ibpi],
 				 ibpi_str[temp->ibpi]);

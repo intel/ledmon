@@ -235,19 +235,20 @@ static void _ledmon_help(void)
 	printf("\nUsage: %s [OPTIONS]\n\n", progname);
 	printf("Mandatory arguments for long options are mandatory for short "
 	       "options, too.\n\n");
-	printf("--interval=VALUE\t\t  Set time interval to VALUE seconds.\n"
-	       "\t\t\t\t  The smallest interval is 5 seconds.\n");
-	printf("--config=PATH,  -c PATH\t\t  Use alternate configuration file "
-	       "(not yet\n\t\t\t\t  implemented).\n");
-	printf
-	    ("--log=PATH\t\t\t  Use local log file instead\n\t\t\t\t  /var/log/"
-	     "ledmon.log global file.\n");
-	printf("--help\t\t\t\t  Displays this help text.\n");
-	printf
-	    ("--version\t\t\t  Displays version and license information.\n\n");
-	printf("Refer to ledmon(8) man page for more detailed description.\n");
-	printf(
-	"Bugs should be reported at: https://github.com/intel/ledmon/issues\n");
+	print_opt("--interval=VALUE", "-t VALUE",
+			  "Set time interval to VALUE seconds.");
+	print_opt("", "", "The smallest interval is 5 seconds.");
+	print_opt("--config=PATH", "-c PATH",
+			  "Use alternate configuration file.");
+	print_opt("--log=PATH", "-l PATH",
+			  "Use local log file instead /var/log/ledmon.log");
+	print_opt("--log-level=VALUE", "-l VALUE",
+			  "Allows user to set ledmon verbose level in logs.");
+	print_opt("--help", "-h", "Displays this help text.");
+	print_opt("--version", "-v",
+			  "Displays version and license information.");
+	printf("\nRefer to ledmon(8) man page for more detailed description.\n");
+	printf("Bugs should be reported at: https://github.com/intel/ledmon/issues\n");
 }
 
 /**

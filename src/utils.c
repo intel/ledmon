@@ -533,3 +533,8 @@ int get_log_fd(void)
 {
 	return fileno(s_log);
 }
+
+void print_opt(const char *long_opt, const char *short_opt, const char *desc)
+{
+	printf("%-20s%-10s%s\n", long_opt, short_opt, desc);
+}

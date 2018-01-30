@@ -188,17 +188,17 @@ static void _ledctl_help(void)
 	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
 	printf("\nUsage: %s [OPTIONS] pattern=list_of_devices ...\n\n",
 	       progname);
-	printf("Mandatory arguments for long options are mandatory for" \
-	       " short options, too.\n\n");
-	printf
-	    ("--log=PATH,\t-l PATH\t\t  Use local log file instead\n" \
-	     "\t\t\t\t  /var/log/ledctl.log global file.\n");
-	printf("--config=PATH,\t-c PATH\t\t  Use alternate configuration" \
-	       " file (not yet\n\t\t\t\t  implemented).\n");
-	printf("--help,\t\t-h\t\t  Displays this help text.\n");
-	printf
-	    ("--version,\t-v\t\t  Displays version and license information.\n\n");
-	printf("Patterns:\n"
+	printf("Mandatory arguments for long options are mandatory for short options, too.\n\n");
+	print_opt("--listed-only", "-x",
+			  "Ledctl will change state only for given devices.");
+	print_opt("--list-controllers", "-L",
+			  "Displays list of controllers detected by ledmon.");
+	print_opt("--log=PATH", "-l PATH",
+			  "Use local log file instead /var/log/ledctl.log.");
+	print_opt("--help", "-h", "Displays this help text.");
+	print_opt("--version", "-v",
+			  "Displays version and license information.");
+	printf("\nPatterns:\n"
 	       "\tCommon patterns are:\n"
 	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""
 	       "\t\tfailed_array, hotspare, pfa, failure, disk_failed\n"

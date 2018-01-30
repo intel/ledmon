@@ -351,4 +351,8 @@ int match_string(const char *string, const char *pattern);
  */
 int get_log_fd(void);
 
+/**
+ */
+void print_opt(const char *long_opt, const char *short_opt, const char *desc);
+
 #endif				/* _UTILS_H_INCLUDED_ */

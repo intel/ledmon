@@ -864,6 +864,9 @@ int main(int argc, char *argv[])
 	if (status != STATUS_SUCCESS)
 		return status;
 
+	if(conf.log_path)
+		_set_log_path(conf.log_path);
+
 	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
 

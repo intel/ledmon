@@ -204,8 +204,12 @@ int ledmon_read_config(const char *filename)
 {
 	FILE *f;
 
-	if (!filename)
+	if (!filename || (filename && access(filename, F_OK) < 0)) {
+		if (filename)
+			log_warning("%s: does not exist, using global config file\n",
+						filename);
 		filename = LEDMON_DEF_CONF_FILE;
+	}
 
 	f = fopen(filename, "re");
 	if (!f) {

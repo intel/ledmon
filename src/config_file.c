@@ -223,6 +223,10 @@ int ledmon_read_config(const char *filename)
 		fclose(f);
 	}
 
+	if (!list_is_empty(&conf.cntrls_whitelist) &&
+	    !list_is_empty(&conf.cntrls_blacklist))
+		log_warning("Both whitelist and blacklist are specified - ignoring blacklist.");
+
 	return STATUS_SUCCESS;
 }
 

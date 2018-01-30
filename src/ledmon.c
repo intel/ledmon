@@ -397,30 +397,40 @@ static int _get_option_id(const char *optarg, struct option longopt[])
 }
 
 /**
- * @brief Reads config file path from command line input.
+ * @brief Reads config file path and checks if command line input contains
+ * options which don't require to run ledmon as daemon.
  *
  * This is internal function of monitor service. This function looks for
  * config file path in command line options given to the program from
- * command line interface. When completed it restores optind to its default
- * value so command line input can be parsed again.
+ * command line interface. It also handles options to print help and version.
  *
  * @param[in]     argc            - number of arguments.
  * @param[in]     argv            - array of command line arguments.
  *
- * @return The function does not return a value.
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static char *_parse_conf_path(int argc, char *argv[])
+static status_t _cmdline_parse_non_daemonise(int argc, char *argv[])
 {
 	int opt_index = -1;
 	int opt = -1;
+	status_t status = STATUS_SUCCESS;
 
 	do {
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
-		if (opt == 'c')
-			return optarg;
+		switch (opt) {
+		case 'c':
+			status = _set_config_path(&ledmon_conf_path, optarg);
+			break;
+		case 'h':
+			_ledmon_help();
+			exit(EXIT_SUCCESS);
+		case 'v':
+			_ledmon_version();
+			exit(EXIT_SUCCESS);
+		}
 	} while (opt >= 0);
 
-	return NULL;
+	return status;
 }
 
 /**
@@ -465,15 +475,6 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		case 't':
 			status = _set_sleep_interval(optarg);
 			break;
-		case 'c':
-			status = _set_config_path(&ledmon_conf_path, optarg);
-			break;
-		case 'v':
-			_ledmon_version();
-			exit(EXIT_SUCCESS);
-		case 'h':
-			_ledmon_help();
-			exit(EXIT_SUCCESS);
 		case ':':
 		case '?':
 		default:
@@ -844,6 +845,9 @@ int main(int argc, char *argv[])
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
+	if (_cmdline_parse_non_daemonise(argc, argv) != STATUS_SUCCESS)
+		return STATUS_CMDLINE_ERROR;
+
 	if (getuid() != 0) {
 		fprintf(stderr, "Only root can run this application.\n");
 		return STATUS_NOT_A_PRIVILEGED_USER;
@@ -856,7 +860,6 @@ int main(int argc, char *argv[])
 	if (on_exit(_ledmon_status, &terminate))
 		return STATUS_ONEXIT_ERROR;
 
-	_set_config_path(&ledmon_conf_path, _parse_conf_path(argc, argv));
 	status = ledmon_read_config(ledmon_conf_path);
 	if (status != STATUS_SUCCESS)
 		return status;

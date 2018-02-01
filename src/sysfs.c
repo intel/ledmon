@@ -530,11 +530,11 @@ static void _determine(struct slave_device *device)
 		free(device->block->raid_path);
 	device->block->raid_path = strdup(device->raid->sysfs_path);
 
-	if ((device->
+	if ((device->state & SLAVE_STATE_FAULTY) != 0) {
+		_set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);
+	} else if ((device->
 	     state & (SLAVE_STATE_BLOCKED | SLAVE_STATE_WRITE_MOSTLY)) != 0) {
 		_set_block_state(device->block, IBPI_PATTERN_NORMAL);
-	} else if ((device->state & SLAVE_STATE_FAULTY) != 0) {
-		_set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);
 	} else if ((device->state & SLAVE_STATE_SPARE) != 0) {
 		if (_is_failed_array(device->raid) == 0) {
 			if (device->raid->sync_action != RAID_ACTION_RESHAPE ||

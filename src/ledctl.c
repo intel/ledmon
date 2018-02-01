@@ -102,13 +102,12 @@ static char *ledctl_version = "Intel(R) Enclosure LED Control Application %d.%d\
  * Internal variable of monitor service. It is used to help parse command line
  * short options.
  */
-static char *shortopt = "c:hLxvl:";
+static char *shortopt = "hLxvl:";
 
 /**
  * Internal enumeration type. It is used to help parse command line arguments.
  */
 enum longopt {
-	OPT_CONFIG,
 	OPT_HELP,
 	OPT_LOG,
 	OPT_VERSION,
@@ -121,7 +120,6 @@ enum longopt {
  * long options.
  */
 static struct option longopt[] = {
-	[OPT_CONFIG]  = {"config", required_argument, NULL, 'c'},
 	[OPT_HELP]    = {"help", no_argument, NULL, 'h'},
 	[OPT_LOG]     = {"log", required_argument, NULL, 'l'},
 	[OPT_VERSION] = {"version", no_argument, NULL, 'v'},
@@ -610,7 +608,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		case '?':
 		default:
 			log_debug("[opt='%c', opt_index=%d]", opt, opt_index);
-			break;
+			return STATUS_CMDLINE_ERROR;
 		}
 		opt_index = -1;
 		if (status != STATUS_SUCCESS)

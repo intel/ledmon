@@ -428,6 +428,9 @@ static status_t _cmdline_parse_non_daemonise(int argc, char *argv[])
 		case 'v':
 			_ledmon_version();
 			exit(EXIT_SUCCESS);
+		case ':':
+		case '?':
+			return STATUS_CMDLINE_ERROR;
 		}
 	} while (opt >= 0);
 
@@ -455,6 +458,8 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
 		if (opt == -1)
 			break;
+		if (opt == 'c')
+			continue;
 		switch (opt) {
 		int new_log_level;
 		case 0:
@@ -475,11 +480,6 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			break;
 		case 't':
 			status = _set_sleep_interval(optarg);
-			break;
-		case ':':
-		case '?':
-		default:
-			log_debug("[opt='%c', opt_index=%d]", opt, opt_index);
 			break;
 		}
 		opt_index = -1;

@@ -23,6 +23,7 @@
 #include "stdlib.h"
 #include "stdint.h"
 #include "list.h"
+#include "status.h"
 
 /**
  * Maximum number of bytes in temporary buffer. It is used for local variables.
@@ -354,5 +355,9 @@ int get_log_fd(void);
 /**
  */
 void print_opt(const char *long_opt, const char *short_opt, const char *desc);
+
+/**
+ */
+status_t set_log_path(const char *path);
 
 #endif				/* _UTILS_H_INCLUDED_ */

@@ -275,40 +275,6 @@ static status_t _set_config_path(char **conf_path, const char *path)
 }
 
 /**
- * @brief Sets the path to local log file.
- *
- * This is internal function of monitor service. This function sets the path and
- * file name of log file. The function checks if the specified path is valid. In
- * case of incorrect path the function does nothing.
- *
- * @param[in]      path           new location and name of log file.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- *         The following status code are returned:
- *
- *         STATUS_INVALID_PATH    the given path is invalid.
- *         STATUS_FILE_OPEN_ERROR unable to open a log file i.e. because of
- *                                insufficient privileges.
- */
-static status_t _set_log_path(const char *path)
-{
-	char temp[PATH_MAX];
-
-	if (realpath(path, temp) == NULL) {
-		if ((errno != ENOENT) && (errno != ENOTDIR))
-			return STATUS_INVALID_PATH;
-	}
-	if (log_open(temp) < 0)
-		return STATUS_FILE_OPEN_ERROR;
-
-	if (conf.log_path)
-		free(conf.log_path);
-	conf.log_path = strdup(temp);
-
-	return STATUS_SUCCESS;
-}
-
-/**
  * @brief Sets the value of sleep interval.
  *
  * This function is used by command line handler to set new value of time
@@ -476,7 +442,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			}
 			break;
 		case 'l':
-			status = _set_log_path(optarg);
+			status = set_log_path(optarg);
 			break;
 		case 't':
 			status = _set_sleep_interval(optarg);
@@ -817,7 +783,7 @@ static status_t _init_ledmon_conf(void)
 	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
 	list_init(&conf.cntrls_whitelist, NULL);
 	list_init(&conf.cntrls_blacklist, NULL);
-	return _set_log_path(LEDMON_DEF_LOG_FILE);
+	return set_log_path(LEDMON_DEF_LOG_FILE);
 }
 
 static void _close_parent_fds(void)
@@ -866,7 +832,7 @@ int main(int argc, char *argv[])
 		return status;
 
 	if(conf.log_path)
-		_set_log_path(conf.log_path);
+		set_log_path(conf.log_path);
 
 	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;

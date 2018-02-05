@@ -124,8 +124,8 @@ static int parse_next(FILE *fd)
 			if (feof(fd))
 				s = strchr(buf, '\0');
 			else {
-				log_error("config file: missing newline at line '%s'.",
-					 buf);
+				fprintf(stderr, "config file: missing newline at line '%s'.",
+					buf);
 				return -1;
 			}
 		}
@@ -151,10 +151,8 @@ static int parse_next(FILE *fd)
 		_set_log_level(s);
 	} else if (!strncmp(s, "LOG_PATH=", 9)) {
 		s += 9;
-		if (*s) {
-			free(conf.log_path);
-			conf.log_path = strdup(s);
-		}
+		if (*s)
+			set_log_path(s);
 	} else if (!strncmp(s, "BLINK_ON_MIGR=", 14)) {
 		s += 14;
 		conf.blink_on_migration = parse_bool(s);
@@ -184,7 +182,7 @@ static int parse_next(FILE *fd)
 		if (*s)
 			parse_list(&conf.cntrls_blacklist, s);
 	} else {
-		log_error("config file: unknown option '%s'.\n", s);
+		fprintf(stderr, "config file: unknown option '%s'.\n", s);
 		return -1;
 	}
 	return 0;
@@ -206,15 +204,15 @@ int ledmon_read_config(const char *filename)
 
 	if (!filename || (filename && access(filename, F_OK) < 0)) {
 		if (filename)
-			log_warning("%s: does not exist, using global config file\n",
-						filename);
+			fprintf(stdout, "%s: does not exist, using global config file\n",
+				filename);
 		filename = LEDMON_DEF_CONF_FILE;
 	}
 
 	f = fopen(filename, "re");
 	if (!f) {
-		log_warning("%s: does not exist, using built-in defaults\n",
-			    filename);
+		fprintf(stdout, "%s: does not exist, using built-in defaults\n",
+			filename);
 	} else {
 		while (!feof(f)) {
 			if (parse_next(f)) {

@@ -538,3 +538,37 @@ void print_opt(const char *long_opt, const char *short_opt, const char *desc)
 {
 	printf("%-20s%-10s%s\n", long_opt, short_opt, desc);
 }
+
+/**
+ * @brief Sets the path to local log file.
+ *
+ * This function sets the path and
+ * file name of log file. The function checks if the specified path is valid. In
+ * case of incorrect path the function does nothing.
+ *
+ * @param[in]      path           new location and name of log file.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ *         The following status code are returned:
+ *
+ *         STATUS_INVALID_PATH    the given path is invalid.
+ *         STATUS_FILE_OPEN_ERROR unable to open a log file i.e. because of
+ *                                insufficient privileges.
+ */
+status_t set_log_path(const char *path)
+{
+	char temp[PATH_MAX];
+
+	if (realpath(path, temp) == NULL) {
+		if ((errno != ENOENT) && (errno != ENOTDIR))
+			return STATUS_INVALID_PATH;
+	}
+	if (log_open(temp) < 0)
+		return STATUS_FILE_OPEN_ERROR;
+
+	if (conf.log_path)
+		free(conf.log_path);
+	conf.log_path = strdup(temp);
+
+	return STATUS_SUCCESS;
+}

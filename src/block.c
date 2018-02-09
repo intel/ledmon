@@ -83,8 +83,7 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 
 	if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
 		result = ahci_sgpio_write;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
-		   && !dev_directly_attached(path)) {
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_SES) {
 		result = scsi_ses_write;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
 		   && dev_directly_attached(path)) {
@@ -130,7 +129,8 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 {
 	char *result = NULL;
 
-	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI)
+	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
+		|| cntrl->cntrl_type == CNTRL_TYPE_SES)
 		result = scsi_get_slot_path(path, cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI)
 		result = ahci_get_port_path(path);
@@ -291,7 +291,8 @@ struct block_device *block_device_init(void *cntrl_list, const char *path)
 				}
 				hosts = hosts->next;
 			}
-			if (cntrl && cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+			if (cntrl && (cntrl->cntrl_type == CNTRL_TYPE_SCSI
+				|| cntrl->cntrl_type == CNTRL_TYPE_SES)) {
 				device->phy_index = cntrl_init_smp(link, cntrl);
 				if (!dev_directly_attached(link)
 						&& !scsi_get_enclosure(device)) {
@@ -388,6 +389,7 @@ int block_compare(struct block_device *bd_old, struct block_device *bd_new)
 		break;
 
 	case CNTRL_TYPE_SCSI:
+	case CNTRL_TYPE_SES:
 		/* Host and phy is not enough. They might be DA or EA. */
 		if (dev_directly_attached(bd_old->sysfs_path) &&
 		    dev_directly_attached(bd_new->sysfs_path)) {

@@ -79,6 +79,10 @@ SOURCES:=$(shell find -name "*.[cC]" -print)
 
 default: all
 
+ifdef DEBUG_IBPI
+CPPFLAGS += -DDEBUG_IBPI
+endif
+
 ledmon: $(OUTDIR)/.depend $(LEDMON_OBJECTS)
 	$(CC) $(LDFLAGS) $(LEDMON_OBJECTS) $(LDLIBS) -o $@
 

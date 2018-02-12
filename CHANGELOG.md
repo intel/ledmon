@@ -1,13 +1,13 @@
-### v0.90 / TODO
+### v0.90 / 2018-02-14
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.80...v0.90)
 
 Enhancements
 
 * Handle udev events in ledmon.
-* Possibility to list all controllers detected by LED utilities tool.
-* Configuration file for ledmon advanced features.
-* Added option to ledctl for managing only listed devices.
+* Possibility to list all controllers detected by LED utilities tool (ledctl --list-controllers).
+* Configuration file for ledmon advanced features (check man ledmon.config).
+* Added option to ledctl for managing only listed devices (ledctl --listed-only).
 * Documentation improvements.
 
 Bug fixes

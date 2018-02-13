@@ -24,6 +24,7 @@
 #include "ibpi.h"
 #include "time.h"
 #include "list.h"
+#include "raid.h"
 
 struct block_device;
 
@@ -128,9 +129,10 @@ struct block_device {
 	struct enclosure_device *enclosure;
 
 /**
- * If disk is a raid member, this field will be set with raid name/path.
+ * If disk is a raid member, this field will be set with a copy of raid device
+ * struct.
  */
-	char *raid_path;
+	struct raid_device *raid_dev;
 };
 
 /**

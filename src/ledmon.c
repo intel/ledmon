@@ -556,6 +556,131 @@ static void _ledmon_wait(int seconds)
 }
 
 /**
+ * @brief Determine failed state by comparing saved block device with new
+ * scanned.
+ *
+ * This is internal function of monitor service. Due race conditions related
+ * with removing files from /sys/block/md* when raid is stopped or disk is
+ * failed, this function analyse state of every block device between scans.
+ *
+ * @param[in]    block           Pointer to new (scanned) block device
+ *				 structure.
+ * @param[in]    temp            Pointer to previously saved state of block
+ *				 device structure.
+ *
+ * @return The function does not return a value.
+ */
+static void _handle_fail_state(struct block_device *block,
+			       struct block_device *temp)
+{
+	struct raid_device *temp_raid_device = NULL;
+
+	if (!temp->raid_dev)
+		/*
+		 * Device is a RAID member now, so keep information about
+		 * related with device RAID.
+		 */
+		temp->raid_dev = raid_device_duplicate(block->raid_dev);
+
+	if (!temp->raid_dev)
+		return;
+
+	temp_raid_device = find_raid_device(sysfs_get_volumes(),
+					    temp->raid_dev->sysfs_path);
+
+	if (!block->raid_dev) {
+		if (temp->raid_dev->type == DEVICE_TYPE_VOLUME &&
+		    temp_raid_device) {
+			/*
+			 * Device is outside of the volume, but related raid
+			 * still exist, so disk has been removed from volume -
+			 * blink fail LED. It is case when drive is removed
+			 * by mdadm -If.
+			 */
+			temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+			/*
+			 * Changing failed state to hotspare will be prevent by
+			 * code from _add_block function. If disk come back to
+			 * container failed state should be removed. By setting
+			 * type to CONTAINER ledmon can react in this case.
+			 */
+			temp->raid_dev->type = DEVICE_TYPE_CONTAINER;
+		} else {
+			/*
+			 * Device was RAID member and was failed (was outside
+			 * of array and container). Now again is in container.
+			 * Release object to perform hotspare state.
+			 * Or:
+			 * Device is outside of the volume, but related raid is
+			 * removed (or stopped) so device is no longer a RAID
+			 * member.
+			 */
+			raid_device_fini(temp->raid_dev);
+			temp->raid_dev = NULL;
+		}
+	} else if (block->raid_dev) {
+		if (temp->raid_dev->type == DEVICE_TYPE_VOLUME &&
+		    block->raid_dev->type == DEVICE_TYPE_CONTAINER) {
+			/*
+			 * Drive is removed from volume, but still exist
+			 * in container.
+			 */
+			enum raid_level new_level;
+
+			if (!temp_raid_device)
+				new_level = RAID_LEVEL_UNKNOWN;
+			else
+				new_level = temp_raid_device->level;
+
+			if ((temp->raid_dev->level == RAID_LEVEL_10 ||
+				 temp->raid_dev->level == RAID_LEVEL_1) &&
+				 new_level == RAID_LEVEL_0) {
+				/*
+				 * Device is removed from volume due to
+				 * migration to raid. State of this disk is
+				 * hotspare now.
+				 */
+				temp->ibpi = IBPI_PATTERN_HOTSPARE;
+			} else {
+				/*
+				 * Trasitions other than raid 0 migration.
+				 * Like reshape, volume stopping etc.
+				 */
+				if (!temp_raid_device) {
+					if (block->raid_dev->sync_action !=
+						RAID_ACTION_RESHAPE)
+						/*
+						 * Fail state should be
+						 * released,because disk is in
+						 * reshape process.
+						 */
+						temp->ibpi =
+							IBPI_PATTERN_HOTSPARE;
+				} else {
+					/*
+					 * Drive is removed from volume,
+					 * but still exist in container. This
+					 * situation can be caused by bad
+					 * blocks or calling mdadm
+					 * --set-faulty.
+					 */
+					temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+				}
+			}
+		} else if (temp->raid_dev->type == DEVICE_TYPE_CONTAINER &&
+			   block->raid_dev->type == DEVICE_TYPE_VOLUME) {
+			/*
+			 * Disk was in container and is added to volume.
+			 * Release object for recreating.
+			 */
+			raid_device_fini(temp->raid_dev);
+			temp->raid_dev =
+				raid_device_duplicate(block->raid_dev);
+		}
+	}
+}
+
+/**
  * @brief Adds the block device to list.
  *
  * This is internal function of monitor service. The function adds a block
@@ -604,20 +729,7 @@ static void _add_block(struct block_device *block)
 			temp->ibpi = block->ibpi;
 		}
 
-		if (block->raid_path != NULL && temp->raid_path == NULL) {
-			temp->raid_path = strdup(block->raid_path);
-		} else if (block->raid_path == NULL &&
-				temp->raid_path != NULL) {
-			struct raid_device *related_raid;
-
-			list_for_each(sysfs_get_volumes(), related_raid) {
-				if (strcmp(related_raid->sysfs_path,
-					   temp->raid_path) == 0) {
-					temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
-					break;
-				}
-			}
-		}
+		_handle_fail_state(block, temp);
 
 		if (ibpi != temp->ibpi && ibpi <= IBPI_PATTERN_REMOVED) {
 			log_info("CHANGE %s: from '%s' to '%s'.",

@@ -92,4 +92,12 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num,
  */
 void raid_device_fini(struct raid_device *device);
 
+/**
+ */
+struct raid_device *raid_device_duplicate(struct raid_device *device);
+
+/**
+ */
+struct raid_device *find_raid_device(const struct list *raid_list,
+				     char *raid_sysfs_path);
 #endif				/* _RAID_H_INCLUDED_ */

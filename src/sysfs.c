@@ -526,9 +526,12 @@ static void _set_array_state(struct raid_device *raid,
  */
 static void _determine(struct slave_device *device)
 {
-	if (device->block->raid_path != NULL)
-		free(device->block->raid_path);
-	device->block->raid_path = strdup(device->raid->sysfs_path);
+	if (!device->block->raid_dev ||
+	     (device->block->raid_dev->type == DEVICE_TYPE_CONTAINER &&
+	      device->raid->type == DEVICE_TYPE_VOLUME)) {
+		raid_device_fini(device->block->raid_dev);
+		device->block->raid_dev = raid_device_duplicate(device->raid);
+	}
 
 	if ((device->state & SLAVE_STATE_FAULTY) != 0) {
 		_set_block_state(device->block, IBPI_PATTERN_FAILED_DRIVE);

@@ -125,7 +125,7 @@ static enum device_type _get_device_type(const char *path)
 	if (p != NULL) {
 		if (strlen(p) > 0) {
 			if (strncmp(p, "external:", 9) == 0) {
-				if (p[9] == '/')
+				if (p[9] == '/' || p[9] == '-')
 					result = DEVICE_TYPE_VOLUME;
 				else
 					result = DEVICE_TYPE_CONTAINER;

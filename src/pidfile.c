@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,9 +82,9 @@ int pidfile_remove(const char *name)
  */
 int ping_proc(pid_t pid)
 {
-	char buf[PATH_MAX];
-	sprintf(buf, "kill -n 10 %d 2>/dev/null", pid);
-	if (system(buf) == 0)
+	if (pid <= 0)
+		return STATUS_INVALID_PATH;
+	if (kill(pid, 1) == 0)
 		return STATUS_SUCCESS;
 	return STATUS_INVALID_PATH;
 }

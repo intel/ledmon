@@ -133,7 +133,8 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num,
 	const char *debug_dev;
 
 	state = _get_array_state(path);
-	if (state > RAID_STATE_CLEAR) {
+	if (state > RAID_STATE_INACTIVE ||
+	    (type == DEVICE_TYPE_CONTAINER && state > RAID_STATE_CLEAR)) {
 		device = malloc(sizeof(struct raid_device));
 		if (device) {
 			device->sysfs_path = strdup(path);

@@ -646,17 +646,7 @@ static void _handle_fail_state(struct block_device *block,
 				 * Trasitions other than raid 0 migration.
 				 * Like reshape, volume stopping etc.
 				 */
-				if (!temp_raid_device) {
-					if (block->raid_dev->sync_action !=
-						RAID_ACTION_RESHAPE)
-						/*
-						 * Fail state should be
-						 * released,because disk is in
-						 * reshape process.
-						 */
-						temp->ibpi =
-							IBPI_PATTERN_HOTSPARE;
-				} else {
+				if (temp_raid_device) {
 					/*
 					 * Drive is removed from volume,
 					 * but still exist in container. This

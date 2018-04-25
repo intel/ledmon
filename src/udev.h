@@ -23,6 +23,14 @@
 #include "list.h"
 
 /**
+ */
+enum udev_action {
+	UDEV_ACTION_UNKNOWN = 0,
+	UDEV_ACTION_ADD,
+	UDEV_ACTION_REMOVE
+};
+
+/**
  * @brief Deletes udev context and udev monitor.
  *
  * @return The function does not return a value..

@@ -1,0 +1,12 @@
+[Unit]
+Description=Enclosure LED Utilities
+After=mdmonitor.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=forking
+User=root
+ExecStart=/usr/sbin/ledmon --info
+Restart=on-failure

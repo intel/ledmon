@@ -170,8 +170,8 @@ static int parse_next(FILE *fd)
 			return -1;
 	} else if (!strncmp(s, "RAID_MEMBERS_ONLY=", 18)) {
 		s += 18;
-		conf.raid_memebers_only = parse_bool(s);
-		if (conf.raid_memebers_only < 0)
+		conf.raid_members_only = parse_bool(s);
+		if (conf.raid_members_only < 0)
 			return -1;
 	} else if (!strncmp(s, "WHITELIST=", 10)) {
 		s += 10;
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 	printf("BLINK_ON_MIGR: %d\n", conf.blink_on_migration);
 	printf("BLINK_ON_INIT: %d\n", conf.blink_on_init);
 	printf("REBUILD_BLINK_ON_ALL: %d\n", conf.rebuild_blink_on_all);
-	printf("RAID_MEMBERS_ONLY: %d\n", conf.raid_memebers_only);
+	printf("RAID_MEMBERS_ONLY: %d\n", conf.raid_members_only);
 
 	if (list_is_empty(&conf.cntrls_whitelist))
 		printf("WHITELIST: NONE\n");

@@ -880,7 +880,7 @@ static status_t _init_ledmon_conf(void)
 	conf.blink_on_init = 1;
 	conf.blink_on_migration = 1;
 	conf.rebuild_blink_on_all = 0;
-	conf.raid_memebers_only = 0;
+	conf.raid_members_only = 0;
 	conf.log_level = LOG_LEVEL_WARNING;
 	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
 	list_init(&conf.cntrls_whitelist, NULL);

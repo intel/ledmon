@@ -423,7 +423,7 @@ static void _scan_slave(void)
 		_link_raid_device(device, DEVICE_TYPE_VOLUME);
 	list_for_each(&cntnr_list, device)
 		_link_raid_device(device, DEVICE_TYPE_CONTAINER);
-	if (conf.raid_memebers_only) {
+	if (conf.raid_members_only) {
 		struct node *node;
 
 		list_for_each_node(&sysfs_block_list, node) {

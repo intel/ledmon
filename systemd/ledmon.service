@@ -1,0 +1,11 @@
+[Unit]
+Description=Enclosure LED Utilities
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=forking
+User=root
+ExecStart=/usr/sbin/ledmon
+Restart=on-failure

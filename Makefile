@@ -38,9 +38,13 @@ install: all
 	$(MAKE) -C src DESTDIR=$(DESTDIR) install
 	$(MAKE) -C doc DESTDIR=$(DESTDIR) install
 
+install-systemd:
+	$(MAKE) -C systemd DESTDIR=$(DESTDIR) install
+
 uninstall:
 	$(MAKE) -C src DESTDIR=$(DESTDIR) uninstall
 	$(MAKE) -C doc DESTDIR=$(DESTDIR) uninstall
+	$(MAKE) -C systemd DESTDIR=$(DESTDIR) uninstall
 
 clean:
 	$(MAKE) -C src clean

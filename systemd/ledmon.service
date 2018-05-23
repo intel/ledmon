@@ -7,5 +7,5 @@ WantedBy=multi-user.target
 [Service]
 Type=forking
 User=root
-ExecStart=/usr/sbin/ledmon --info
+ExecStart=/usr/sbin/ledmon
 Restart=on-failure

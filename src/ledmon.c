@@ -55,7 +55,6 @@
 #include "sysfs.h"
 #include "udev.h"
 #include "utils.h"
-#include "version.h"
 #include "vmdssd.h"
 
 /**

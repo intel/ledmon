@@ -1,0 +1,9 @@
+INTERVAL: 15
+LOG_LEVEL: 5
+LOG_PATH: /tmp/foo
+BLINK_ON_MIGR: 0
+BLINK_ON_INIT: 1
+REBUILD_BLINK_ON_ALL: true
+RAID_MEMBERS_ONLY: false
+WHITELIST: /sys/devices/foo
+BLACKLIST: /sys/devices/bar

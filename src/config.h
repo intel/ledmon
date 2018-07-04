@@ -23,10 +23,6 @@
 #include <features.h>
 
 /**
- */
-#define _HAVE_DMALLOC_H        0
-
-/**
  * @brief Sets errno variable and returns.
  *
  * This macro sets the errno variable and makes function return -1.

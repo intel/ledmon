@@ -1,11 +1,1 @@
-ledctl.8.gz
-ledmon.conf.5.gz
-ledmon.8.gz
-*.o
-_build
-ledmon
-ledctl
-*~
-*.bak
-.depend
-*.swp
+/build

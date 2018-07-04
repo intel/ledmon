@@ -1,0 +1,13 @@
+#!/bin/sh
+
+IAM="${0##*/}"
+
+if [ ! -d outputs ]; then
+        mkdir outputs
+fi
+
+ledmon_conf_test $top_srcdir/tests/inputs/$IAM >|outputs/$IAM 2>&1
+
+sed -i "s|$top_srcdir/tests/inputs/||g" outputs/$IAM
+diff -u $top_srcdir/tests/expected/$IAM outputs/$IAM
+exit $?

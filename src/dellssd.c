@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <linux/ipmi.h>
 
 #if _HAVE_DMALLOC_H

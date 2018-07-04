@@ -42,12 +42,12 @@
 #include "config.h"
 #include "config_file.h"
 #include "ibpi.h"
+#include "ibpi_logging.h"
 #include "list.h"
 #include "scsi.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
-#include "version.h"
 
 /**
  * @brief An IBPI state structure.
@@ -68,28 +68,6 @@ struct ibpi_state {
  * instance of each IBPI pattern on the list (no duplicates).
  */
 static struct list ibpi_list;
-
-/**
- * @brief IBPI pattern names.
- *
- * This is internal array holding names of IBPI pattern. Logging routines use
- * this entries to translate enumeration type values into the string.
- */
-const char *ibpi_str[] = {
-	[IBPI_PATTERN_UNKNOWN]        = "",
-	[IBPI_PATTERN_NORMAL]         = "NORMAL",
-	[IBPI_PATTERN_ONESHOT_NORMAL] = "",
-	[IBPI_PATTERN_DEGRADED]       = "ICA",
-	[IBPI_PATTERN_REBUILD]        = "REBUILD",
-	[IBPI_PATTERN_FAILED_ARRAY]   = "IFA",
-	[IBPI_PATTERN_HOTSPARE]       = "HOTSPARE",
-	[IBPI_PATTERN_PFA]            = "PFA",
-	[IBPI_PATTERN_FAILED_DRIVE]   = "FAILURE",
-	[IBPI_PATTERN_LOCATE]         = "LOCATE",
-	[IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF",
-	[IBPI_PATTERN_ADDED]          = "ADDED",
-	[IBPI_PATTERN_REMOVED]        = "REMOVED"
-};
 
 /**
  * Internal variable of ledctl utility. It is the pattern used to print out

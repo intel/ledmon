@@ -1,0 +1,5 @@
+option('debug_ibpi', type : 'boolean', value : false,
+	description : 'Enable IBPI debugging')
+
+option('use_dmalloc', type : 'boolean', value : false,
+	description : 'Enable dmalloc')

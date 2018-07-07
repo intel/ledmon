@@ -138,7 +138,7 @@ static void dump_p10(unsigned char *p)
 	printf("----------------------------------------------\n");
 	for (i = 0; i < 8; i++, p += 16) {
 		printf("%p: %02x %02x %02x %02x %02x %02x %02x " \
-		       "%02x %02x %02x %02x %02x %02x %02x %02x %02x\n", p,
+		       "%02x %02x %02x %02x %02x %02x %02x %02x %02x\n", (void *)p,
 		       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
 		       p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 	}
@@ -326,8 +326,9 @@ static enum ibpi_pattern ibpi_to_ses(enum ibpi_pattern ibpi)
 
 static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el)
 {
-	struct ses_slot_ctrl_elem msg = { 0 };
+	struct ses_slot_ctrl_elem msg;
 
+	memset(&msg, 0, sizeof(msg));
 	if (ibpi == IBPI_PATTERN_LOCATE_OFF) {
 		/*
 		 * For locate_off we don't set a new state, just clear the

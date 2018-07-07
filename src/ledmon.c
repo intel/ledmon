@@ -240,7 +240,7 @@ static void _ledmon_help(void)
 	print_opt("--config=PATH", "-c PATH",
 			  "Use alternate configuration file.");
 	print_opt("--log=PATH", "-l PATH",
-			  "Use local log file instead /var/log/ledmon.log");
+			  "Use local log file instead " LEDMON_DEF_LOG_FILE);
 	print_opt("--log-level=VALUE", "-l VALUE",
 			  "Allows user to set ledmon verbose level in logs.");
 	print_opt("--help", "-h", "Displays this help text.");

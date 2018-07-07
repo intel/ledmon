@@ -3,3 +3,21 @@ option('debug_ibpi', type : 'boolean', value : false,
 
 option('use_dmalloc', type : 'boolean', value : false,
 	description : 'Enable dmalloc')
+
+option('pid_dir_path', type : 'string', value : 'var/run/',
+	description : 'Default pid directory path (relative to prefix)')
+
+option('ledctl_log_path', type : 'string', value : 'var/log/ledcfg.log',
+	description : 'Default ledcfg log file path (relative to prefix)')
+
+option('ledmon_log_path', type : 'string', value : 'var/log/ledmon.log',
+	description : 'Default ledmon log file path (relative to prefix)')
+
+option('ledmon_conf_path', type : 'string', value : 'etc/ledmon.conf',
+	description : 'Default configuration file path (relative to prefix)')
+
+option('ledmon_def_sleep_interval', type : 'integer', min : 1, value : 10,
+	description : 'ledmon default sleep interval')
+
+option('ledmon_min_sleep_interval', type : 'integer', min : 1, value : 5,
+	description : 'ledmon minimum sleep interval')

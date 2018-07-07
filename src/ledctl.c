@@ -172,7 +172,7 @@ static void _ledctl_help(void)
 	print_opt("--list-controllers", "-L",
 			  "Displays list of controllers detected by ledmon.");
 	print_opt("--log=PATH", "-l PATH",
-			  "Use local log file instead /var/log/ledctl.log.");
+			  "Use local log file instead " LEDCTL_DEF_LOG_FILE);
 	print_opt("--help", "-h", "Displays this help text.");
 	print_opt("--version", "-v",
 			  "Displays version and license information.");

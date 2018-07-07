@@ -29,6 +29,30 @@ if get_option('use_dmalloc')
 	config_h.set('_HAVE_DMALLOC_H', 1)
 endif
 
+prefixdir = get_option('prefix')
+if not prefixdir.startswith('/')
+	error('Prefix is not absolute: "@0@"'.format(prefixdir))
+endif
+
+config_paths = [
+	['LEDCTL_DEF_LOG_FILE', 'ledctl_log_path'],
+	['LEDMON_DEF_LOG_FILE', 'ledmon_log_path'],
+	['LEDMON_DEF_CONF_FILE', 'ledmon_conf_path'],
+	['LEDMON_PID_PATH', 'pid_dir_path']
+]
+
+foreach cp : config_paths
+	file_path = get_option(cp[1])
+	if file_path.startswith('/')
+		config_h.set_quoted(cp[0], file_path)
+	else
+		config_h.set_quoted(cp[0], join_paths(prefixdir, file_path))
+	endif
+endforeach
+
+config_h.set('LEDMON_DEF_SLEEP_INTERVAL', get_option('ledmon_def_sleep_interval'))
+config_h.set('LEDMON_MIN_SLEEP_INTERVAL', get_option('ledmon_min_sleep_interval'))
+
 configure_file(
 	output : 'build_config.h',
 	configuration : config_h

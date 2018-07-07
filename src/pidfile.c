@@ -44,7 +44,7 @@ status_t pidfile_create(const char *name)
 	char buf[PATH_MAX];
 	int fd, count;
 
-	str_cpy(buf, "/var/run/", PATH_MAX);
+	str_cpy(buf, LEDMON_PID_PATH, PATH_MAX);
 	str_cat(buf, name, PATH_MAX);
 	str_cat(buf, ".pid", PATH_MAX);
 
@@ -67,7 +67,7 @@ int pidfile_remove(const char *name)
 {
 	char buf[PATH_MAX];
 
-	str_cpy(buf, "/var/run/", PATH_MAX);
+	str_cpy(buf, LEDMON_PID_PATH, PATH_MAX);
 	str_cat(buf, name, PATH_MAX);
 	str_cat(buf, ".pid", PATH_MAX);
 
@@ -96,7 +96,7 @@ status_t pidfile_check(const char *name, pid_t *pid)
 	char path[PATH_MAX], *p;
 	pid_t tp;
 
-	str_cpy(path, "/var/run/", PATH_MAX);
+	str_cpy(path, LEDMON_PID_PATH, PATH_MAX);
 	str_cat(path, name, PATH_MAX);
 	str_cat(path, ".pid", PATH_MAX);
 

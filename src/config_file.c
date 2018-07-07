@@ -82,7 +82,7 @@ static void parse_list(struct list *list, char *s)
 
 int _map_log_level(char *conf_log_level)
 {
-	int i = 1;
+	size_t i = 1;
 
 	while (i < sizeof(log_level_map)/sizeof(char *)) {
 		if (strcasecmp(log_level_map[i], conf_log_level) == 0)
@@ -188,7 +188,7 @@ static int parse_next(FILE *fd)
 	return 0;
 }
 
-void ledmon_free_config()
+void ledmon_free_config(void)
 {
 	list_erase(&conf.cntrls_blacklist);
 	list_erase(&conf.cntrls_whitelist);

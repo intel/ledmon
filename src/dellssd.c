@@ -78,7 +78,7 @@ static const unsigned int ibpi2ssd[] = {
 #define DELL_OEM_STORAGE_GETDRVMAP      0x07
 #define DELL_OEM_STORAGE_SETDRVSTATUS   0x04
 
-static int ipmi_open()
+static int ipmi_open(void)
 {
 	int fd;
 
@@ -230,14 +230,14 @@ static int ipmi_setled(int b, int d, int f, int state)
 	return 0;
 }
 
-char *dellssd_get_path(const char *path, const char *cntrl_path)
+char *dellssd_get_path(const char *cntrl_path)
 {
 	return strdup(cntrl_path);
 }
 
 int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-	int mask, bus, dev, fun;
+	unsigned int mask, bus, dev, fun;
 	char *t;
 
 	/* write only if state has changed */

@@ -24,7 +24,7 @@
 #include "ibpi.h"
 
 int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi);
-char *vmdssd_get_path(const char *path, const char *cntrl_path);
+char *vmdssd_get_path(const char *cntrl_path);
 struct pci_slot *vmdssd_find_pci_slot(char *device_path);
 
 #endif

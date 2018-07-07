@@ -100,7 +100,7 @@ void stop_udev_monitor(void)
 	}
 }
 
-int get_udev_monitor()
+int get_udev_monitor(void)
 {
 	if (udev_monitor)
 		return udev_monitor_get_fd(udev_monitor);

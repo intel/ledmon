@@ -148,8 +148,8 @@ static void ibpi_state_fini(struct ibpi_state *p)
  *
  * @return The function does not return a value.
  */
-static void _ledctl_fini(int __attribute__ ((unused)) status,
-			 void *__attribute__ ((unused)) ignore)
+static void _ledctl_fini(int status __attribute__ ((unused)),
+			 void *ignore __attribute__ ((unused)))
 {
 	sysfs_reset();
 	list_erase(&ibpi_list);
@@ -280,19 +280,19 @@ static void _determine(struct ibpi_state *state)
  * of IBPI states and calls _determine() function for each element. If the list
  * is empty the function logs a warning message and does nothing.
  *
- * @param[in]      ibpi_list      pointer to list of IBPI states.
+ * @param[in]      ibpi_local_list  pointer to list of IBPI states.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  *         The following status codes function returns:
  *
  *         STATUS_LIST_EMPTY      the specified list has no elements.
  */
-static status_t _ibpi_state_determine(struct list *ibpi_list)
+static status_t _ibpi_state_determine(struct list *ibpi_local_list)
 {
-	if (list_is_empty(ibpi_list) == 0) {
+	if (list_is_empty(ibpi_local_list) == 0) {
 		struct ibpi_state *state;
 
-		list_for_each(ibpi_list, state)
+		list_for_each(ibpi_local_list, state)
 			_determine(state);
 		return STATUS_SUCCESS;
 	}
@@ -300,12 +300,12 @@ static status_t _ibpi_state_determine(struct list *ibpi_list)
 	return STATUS_LIST_EMPTY;
 }
 
-static struct ibpi_state *_ibpi_find(const struct list *ibpi_list,
+static struct ibpi_state *_ibpi_find(const struct list *ibpi_local_list,
 				     enum ibpi_pattern ibpi)
 {
 	struct ibpi_state *state;
 
-	list_for_each(ibpi_list, state) {
+	list_for_each(ibpi_local_list, state) {
 		if (state->ibpi == ibpi)
 			return state;
 	}
@@ -628,16 +628,16 @@ static status_t _cmdline_parse(int argc, char *argv[])
  * @param[in]      sysfs          pointer to sysfs structure holding information
  *                                about the existing controllers, block devices,
  *                                and software RAID devices.
- * @param[in]      ibpi_list      TBD
+ * @param[in]      ibpi_local_list  TBD
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static status_t _ledctl_execute(struct list *ibpi_list)
+static status_t _ledctl_execute(struct list *ibpi_local_list)
 {
 	struct ibpi_state *state;
 	struct block_device *device;
 
-	if (_ibpi_state_determine(ibpi_list) != STATUS_SUCCESS)
+	if (_ibpi_state_determine(ibpi_local_list) != STATUS_SUCCESS)
 		return STATUS_IBPI_DETERMINE_ERROR;
 
 	if (!listed_only) {
@@ -645,7 +645,7 @@ static status_t _ledctl_execute(struct list *ibpi_list)
 			device->send_fn(device, IBPI_PATTERN_LOCATE_OFF);
 	}
 
-	list_for_each(ibpi_list, state)
+	list_for_each(ibpi_local_list, state)
 		list_for_each(&state->block_list, device)
 			device->send_fn(device, device->ibpi);
 

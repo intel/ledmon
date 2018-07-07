@@ -165,17 +165,17 @@ static struct option longopt[] = {
  * file and syslog. The function is registered as on_exit() handler.
  *
  * @param[in]     status          The function ignores this parameter.
- * @param[in]     progname        The name of the binary file. This argument
+ * @param[in]     program_name    The name of the binary file. This argument
  *                                is passed via on_exit() function.
  *
  * @return The function does not return a value.
  */
-static void _ledmon_fini(int __attribute__ ((unused)) status, void *progname)
+static void _ledmon_fini(int __attribute__ ((unused)) status, void *program_name)
 {
 	sysfs_reset();
 	list_erase(&ledmon_block_list);
 	log_close();
-	pidfile_remove(progname);
+	pidfile_remove(program_name);
 }
 
 /**
@@ -347,17 +347,17 @@ static status_t _set_verbose_level(int log_level)
  * on option struct.
  *
  * @param[in]     optarg          String containing value given by user in CLI.
- * @param[in]     longopt         Table of allowed CLI options.
+ * @param[in]     local_longopt   Table of allowed CLI options.
  *
  * @return integer id if successful, otherwise a -1.
  */
-static int _get_option_id(const char *optarg, struct option longopt[])
+static int _get_option_id(const char *optarg, struct option local_longopt[])
 {
-	struct option *i = longopt;
+	struct option *i = local_longopt;
 
 	while (i->name != NULL) {
 		if (strcmp(i->name, optarg) == 0)
-			return i-longopt;
+			return i-local_longopt;
 		i++;
 	}
 	return -1;

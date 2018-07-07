@@ -416,7 +416,7 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2->buf + 8);
 	int i;
 	struct ses_slot_ctrl_elem *desc_element = NULL;
-	element_type element_type = SES_UNSPECIFIED;
+	element_type local_element_type = SES_UNSPECIFIED;
 
 	for (i = 0; i < sp->page1_types_len; i++) {
 		struct type_descriptor_header *t = &sp->page1_types[i];
@@ -425,9 +425,9 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 
 		if (t->element_type == SES_DEVICE_SLOT ||
 		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
-			if (element_type < t->element_type &&
+			if (local_element_type < t->element_type &&
 			    t->num_of_elements > idx) {
-				element_type = t->element_type;
+				local_element_type = t->element_type;
 				desc_element = &descriptors[idx];
 			}
 		} else {
@@ -451,7 +451,7 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 		desc_element->common_control |= 0x80;
 
 		/* second byte is valid only for Array Device Slot */
-		if (element_type != SES_ARRAY_DEVICE_SLOT)
+		if (local_element_type != SES_ARRAY_DEVICE_SLOT)
 			desc_element->array_slot_control = 0;
 
 		return 0;

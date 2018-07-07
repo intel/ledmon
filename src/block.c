@@ -97,7 +97,7 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 	return result;
 }
 
-static int do_not_flush(struct block_device *device)
+static int do_not_flush(struct block_device *device __attribute__ ((unused)))
 {
 	return 1;
 }
@@ -139,9 +139,9 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 	else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI)
 		result = ahci_get_port_path(path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD)
-		result = dellssd_get_path(path, cntrl->sysfs_path);
+		result = dellssd_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_VMD)
-		result = vmdssd_get_path(path, cntrl->sysfs_path);
+		result = vmdssd_get_path(cntrl->sysfs_path);
 	return result;
 }
 

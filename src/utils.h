@@ -175,7 +175,7 @@ int scan_dir(const char *path, struct list *result);
  *
  * @return Number of bytes written if successful, otherwise -1 for an error.
  */
-int buf_write(const char *path, const char *buf);
+ssize_t buf_write(const char *path, const char *buf);
 
 /**
  * @brief Reads the content of a text file.

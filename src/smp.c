@@ -88,7 +88,7 @@ struct smp_read_response_frame_header {
 	uint8_t function;	/* =0x02 for read, 0x82 for write */
 	uint8_t function_result;
 	uint8_t reserved;
-	uint32_t read_data[0];	/* variable length of data */
+	uint32_t read_data[];	/* variable length of data */
 	/* uint32_t crc; */
 } __attribute__ ((__packed__));
 
@@ -117,7 +117,7 @@ struct smp_write_request_frame_header {
 	uint8_t register_index;
 	uint8_t register_count;
 	uint8_t reserved[3];
-	uint32_t data[0];	/* variable length of data */
+	uint32_t data[];	/* variable length of data */
 	/* uint32_t crc; */
 } __attribute__ ((__packed__));
 
@@ -287,7 +287,7 @@ static int _open_smp_device(const char *filename)
 	df = fopen(buf, "r");
 	if (!df)
 		return -1;
-	if (fgets(buf, sizeof(buf), df) < 0) {
+	if (fgets(buf, sizeof(buf), df) == NULL) {
 		fclose(df);
 		return -1;
 	}
@@ -540,7 +540,7 @@ int scsi_smp_write_buffer(struct block_device *device)
 
 /**
  */
-static void init_smp(const char *path, struct cntrl_device *device)
+static void init_smp(struct cntrl_device *device)
 {
 	struct _host_type *hosts;
 	int i;
@@ -632,6 +632,6 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 		closedir(d);
 		free(path2);
 	}
-	init_smp(path, cntrl);
+	init_smp(cntrl);
 	return port;
 }

@@ -561,11 +561,11 @@ static void _determine(struct slave_device *device)
 	}
 }
 
-static void _determine_slaves(struct list *slave_list)
+static void _determine_slaves(struct list *local_slave_list)
 {
 	struct slave_device *device;
 
-	list_for_each(slave_list, device)
+	list_for_each(local_slave_list, device)
 		_determine(device);
 }
 

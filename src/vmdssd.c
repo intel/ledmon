@@ -32,10 +32,10 @@
 #include "utils.h"
 #include "vmdssd.h"
 
-#define ATTENTION_OFF        0b1111 /* Attention Off, Power Off */
-#define ATTENTION_LOCATE     0b0111 /* Attention Off, Power On */
-#define ATTENTION_REBUILD    0b0101 /* Attention On, Power On */
-#define ATTENTION_FAILURE    0b1101 /* Attention On, Power Off */
+#define ATTENTION_OFF        0xF  /* (1111) Attention Off, Power Off */
+#define ATTENTION_LOCATE     0x7  /* (0111) Attention Off, Power On */
+#define ATTENTION_REBUILD    0x5  /* (0101) Attention On, Power On */
+#define ATTENTION_FAILURE    0xD  /* (1101) Attention On, Power Off */
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 
@@ -152,7 +152,7 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	get_ctrl(ibpi, &val);
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
 	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
-	if (buf_write(attention_path, buf) != strlen(buf)) {
+	if (buf_write(attention_path, buf) != (ssize_t) strlen(buf)) {
 		log_error("%s write error: %d\n", slot->sysfs_path, errno);
 		return -1;
 	}
@@ -163,7 +163,7 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	return 0;
 }
 
-char *vmdssd_get_path(const char *path, const char *cntrl_path)
+char *vmdssd_get_path(const char *cntrl_path)
 {
 	return strdup(cntrl_path);
 }

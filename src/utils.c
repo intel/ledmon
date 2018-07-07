@@ -21,6 +21,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <regex.h>
 #include <stdarg.h>
@@ -103,7 +104,7 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name)
 {
 	char *p = get_text(path, name);
 	if (p) {
-		sscanf(p, "0x%Lx", (long long unsigned int *)&defval);
+		sscanf(p, "%" SCNx64, &defval);
 		free(p);
 	}
 	return defval;
@@ -174,9 +175,10 @@ static int _is_virtual(int dev_type)
 
 /**
  */
-int buf_write(const char *path, const char *buf)
+ssize_t buf_write(const char *path, const char *buf)
 {
-	int fd, size = -1;
+	int fd;
+	ssize_t size = -1;
 
 	if (path == NULL)
 		__set_errno_and_return(EINVAL);
@@ -518,7 +520,7 @@ int match_string(const char *string, const char *pattern)
 
 	status = regcomp(&regex, pattern, REG_EXTENDED);
 	if (status != 0) {
-		log_debug("regecomp failed, ret=%d", __FUNCTION__, status);
+		log_debug("regecomp failed, ret=%d", status);
 		return 0;
 	}
 

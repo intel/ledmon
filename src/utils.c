@@ -346,9 +346,16 @@ char *str_cpy(char *dest, const char *src, size_t size)
  */
 char *str_dup(const char *src)
 {
-	if (src && (strlen(src) > 0))
-		return strdup(src);
-	return NULL;
+	char *ret;
+
+	if (!src)
+		return NULL;
+	ret = strdup(src);
+	if (!ret) {
+		log_error("Cannot duplicate string");
+		exit(EXIT_FAILURE);
+	}
+	return ret;
 }
 
 /**
@@ -364,7 +371,7 @@ char *str_cat(char *dest, const char *src, size_t size)
 
 char *get_path_hostN(const char *path)
 {
-	char *c = NULL, *s = NULL, *p = strdup(path);
+	char *c = NULL, *s = NULL, *p = str_dup(path);
 	if (!p)
 		return NULL;
 	c = strstr(p, "host");
@@ -374,7 +381,7 @@ char *get_path_hostN(const char *path)
 	if (!s)
 		goto end;
 	*s = 0;
-	s = strdup(c);
+	s = str_dup(c);
  end:
 	free(p);
 	return s;
@@ -383,7 +390,7 @@ char *get_path_hostN(const char *path)
 char *get_path_component_rev(const char *path, int index)
 {
 	int i;
-	char *c = NULL, *p = strdup(path);
+	char *c = NULL, *p = str_dup(path);
 	char *result = NULL;
 	for (i = 0; i <= index; i++) {
 		if (c)
@@ -391,7 +398,7 @@ char *get_path_component_rev(const char *path, int index)
 		c = strrchr(p, '/');
 	}
 	if (c)
-		result = strdup(c + 1);
+		result = str_dup(c + 1);
 	free(p);
 	return result;
 }
@@ -408,7 +415,7 @@ char *truncate_path_component_rev(const char *path, int index)
 			*c = '\0';
 		c = strrchr(p, '/');
 	}
-	c = strdup(p);
+	c = str_dup(p);
 	free(p);
 	return c;
 }
@@ -474,7 +481,7 @@ status_t set_log_path(const char *path)
 	/*
 	 * Extract directory from path
 	 */
-	cpath = strdup(path);
+	cpath = str_dup(path);
 	logdir = dirname(cpath);
 
 	/*
@@ -488,7 +495,7 @@ status_t set_log_path(const char *path)
 	}
 
 	free(cpath);
-	cpath = strdup(path);
+	cpath = str_dup(path);
 	logfile = basename(cpath);
 
 	snprintf(log_file, sizeof(log_file), "%s/%s",
@@ -497,7 +504,7 @@ status_t set_log_path(const char *path)
 
 	if (conf.log_path)
 		free(conf.log_path);
-	conf.log_path = strdup(log_file);
+	conf.log_path = str_dup(log_file);
 
 	return STATUS_SUCCESS;
 }

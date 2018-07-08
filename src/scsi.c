@@ -626,7 +626,7 @@ static char *_slot_find(const char *enclo_path, const char *device_path)
 	if (scan_dir(enclo_path, &dir) == 0) {
 		list_for_each(&dir, temp) {
 			if (_slot_match(temp, device_path)) {
-				result = strdup(temp);
+				result = str_dup(temp);
 				break;
 			}
 		}

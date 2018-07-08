@@ -582,7 +582,7 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 
 	/* Other case - just init controller. */
 	if (path && strstr(path, "port-")) {
-		path2 = strdup(path);
+		path2 = str_dup(path);
 		if (!path2)
 			return port;
 

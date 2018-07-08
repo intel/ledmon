@@ -369,7 +369,7 @@ struct cntrl_device *cntrl_device_init(const char *path)
 					device->hosts = NULL;
 				}
 				device->cntrl_type = type;
-				device->sysfs_path = strdup(path);
+				device->sysfs_path = str_dup(path);
 			}
 		} else {
 			log_error

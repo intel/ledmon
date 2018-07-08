@@ -72,7 +72,7 @@ static void parse_list(struct list *list, char *s)
 		if (sep)
 			*sep = '\0';
 
-		list_append(list, strdup(s));
+		list_append(list, str_dup(s));
 
 		if (sep)
 			s = sep + 1;

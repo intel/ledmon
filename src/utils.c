@@ -325,7 +325,7 @@ void set_invocation_name(char *invocation_name)
 	(void)invocation_name;
 	progname = program_invocation_short_name;
 #else
-	char *t = rindex(invocation_name, PATH_DELIM);
+	char *t = strrchr(invocation_name, PATH_DELIM);
 	if (t)
 		progname = t + 1;
 	else

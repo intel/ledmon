@@ -179,7 +179,7 @@ static void _slave_vol_add(const char *path, struct raid_device *raid)
 {
 	struct slave_device *device;
 
-	char *t = rindex(path, '/');
+	char *t = strrchr(path, '/');
 	if (strncmp(t + 1, "dev-", 4) == 0) {
 		device = slave_device_init(path, &sysfs_block_list);
 		if (device) {
@@ -240,7 +240,7 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 {
 	struct slave_device *device;
 
-	char *t = rindex(path, '/');
+	char *t = strrchr(path, '/');
 	if (strncmp(t + 1, "dev-", 4) == 0) {
 		device = slave_device_init(path, &sysfs_block_list);
 		if (device) {

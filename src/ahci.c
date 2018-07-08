@@ -34,10 +34,10 @@
 #include "utils.h"
 
 /**
- * Time interval in u-seconds to wait before enclosure management message is being
- * sent to AHCI controller.
+ * Time interval in nano seconds to wait before enclosure management message
+ * is being sent to AHCI controller.
  */
-#define EM_MSG_WAIT       1500
+#define EM_MSG_WAIT       1500000	/* 0.0015 seconds */
 
 /**
  * This array maps IBPI pattern to value recognized by AHCI driver. The driver
@@ -73,6 +73,10 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	char temp[WRITE_BUFFER_SIZE];
 	char path[PATH_MAX];
 	char *sysfs_path = device->cntrl_path;
+	const struct timespec waittime = {
+		.tv_sec = 0,
+		.tv_nsec = EM_MSG_WAIT
+	};
 
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
@@ -88,7 +92,7 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	str_cpy(path, sysfs_path, PATH_MAX);
 	str_cat(path, "/em_message", PATH_MAX);
 
-	usleep(EM_MSG_WAIT);
+	nanosleep(&waittime, NULL);
 	return buf_write(path, temp) > 0;
 }
 

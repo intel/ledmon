@@ -1,4 +1,4 @@
-This package contains the Enclosure LED Utilities, version 0.90
+This package contains the Enclosure LED Utilities
 
 Copyright (C) 2009-2018 Intel Corporation.
 
@@ -9,28 +9,14 @@ See http://www.gnu.org/ for details.
 1. Compiling the package.
 -------------------------
 
-Run "make" command to compile the package.
+Run "./configure && make" command to compile the package.
 
 Following packages are required for compiling:
 a. systemd-devel (libudev)
 b. sg3_utils-devel
+c. meson build system
 
-2. (Un)installing the package.
---------------------------
-
-Run "make install" to install the package. The default location for
-ledctl and ledmon applications is /usr/sbin directory. The default
-location for documentation is /usr/share/man directory.
-
-Run "make DESTDIR=<path> install" to prepend 'path' to the default
-install location. The ledctl and ledmon applications will be installed
-in $DESTDIR/usr/sbin directory and the manual pages will be installed
-in $DESTDIR/usr/share/man directory.
-
-Run "make uninstall" to uninstall the package from default location.
-Set DESTDIR variable to uninstall the package from non-default location.
-
-3. Release notes.
+2. Release notes.
 --------------------------
 
 a. Enclosure LED Utilities is meant as a part of RHEL and SLES linux

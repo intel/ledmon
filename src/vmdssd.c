@@ -42,9 +42,7 @@
 static char *get_slot_from_syspath(char *path)
 {
 	char *cur, *ret = NULL;
-	char *temp_path = strdup(path);
-	if (!temp_path)
-		return NULL;
+	char *temp_path = str_dup(path);
 
 	cur = strtok(temp_path, "/");
 	while (cur != NULL) {
@@ -57,7 +55,7 @@ static char *get_slot_from_syspath(char *path)
 
 	cur = strtok(cur, ".");
 	if (cur)
-		ret = strdup(cur);
+		ret = str_dup(cur);
 	free(temp_path);
 
 	return ret;
@@ -165,5 +163,5 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 char *vmdssd_get_path(const char *cntrl_path)
 {
-	return strdup(cntrl_path);
+	return str_dup(cntrl_path);
 }

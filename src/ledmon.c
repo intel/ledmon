@@ -266,7 +266,7 @@ static status_t _set_config_path(char **conf_path, const char *path)
 
 	if (*conf_path)
 		free(*conf_path);
-	*conf_path = strdup(path);
+	*conf_path = str_dup(path);
 
 	return STATUS_SUCCESS;
 }
@@ -661,7 +661,7 @@ static void _add_block(struct block_device *block)
 			log_info("NAME CHANGED %s to %s",
 				 temp->sysfs_path, block->sysfs_path);
 			free(temp->sysfs_path);
-			temp->sysfs_path = strdup(block->sysfs_path);
+			temp->sysfs_path = str_dup(block->sysfs_path);
 		}
 	} else {
 		/* Device not found, it's a new one! */

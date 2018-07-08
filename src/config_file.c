@@ -72,7 +72,7 @@ static void parse_list(struct list *list, char *s)
 		if (sep)
 			*sep = '\0';
 
-		list_append(list, strdup(s));
+		list_append(list, str_dup(s));
 
 		if (sep)
 			s = sep + 1;
@@ -247,7 +247,7 @@ static char *conf_list_to_str(struct list *list)
 		}
 	}
 
-	return strdup(buf);
+	return str_dup(buf);
 }
 
 int ledmon_write_shared_conf(void)

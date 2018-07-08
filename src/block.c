@@ -240,7 +240,7 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 			struct _host_type *hosts = cntrl ? cntrl->hosts : NULL;
 
 			device->cntrl = cntrl;
-			device->sysfs_path = strdup(link);
+			device->sysfs_path = str_dup(link);
 			device->cntrl_path = host;
 			device->ibpi = IBPI_PATTERN_UNKNOWN;
 			device->ibpi_prev = IBPI_PATTERN_NONE;
@@ -306,8 +306,8 @@ struct block_device *block_device_duplicate(struct block_device *block)
 	if (block) {
 		result = calloc(1, sizeof(*result));
 		if (result) {
-			result->sysfs_path = strdup(block->sysfs_path);
-			result->cntrl_path = strdup(block->cntrl_path);
+			result->sysfs_path = str_dup(block->sysfs_path);
+			result->cntrl_path = str_dup(block->cntrl_path);
 			if (block->ibpi != IBPI_PATTERN_UNKNOWN)
 				result->ibpi = block->ibpi;
 			else

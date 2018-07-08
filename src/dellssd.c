@@ -232,7 +232,7 @@ static int ipmi_setled(int b, int d, int f, int state)
 
 char *dellssd_get_path(const char *cntrl_path)
 {
-	return strdup(cntrl_path);
+	return str_dup(cntrl_path);
 }
 
 int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)

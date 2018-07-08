@@ -803,23 +803,6 @@ static status_t _init_ledmon_conf(void)
 	return set_log_path(LEDMON_DEF_LOG_FILE);
 }
 
-static void _close_parent_fds(void)
-{
-	struct list dir;
-
-	if (scan_dir("/proc/self/fd", &dir) == 0) {
-		char *elem;
-
-		list_for_each(&dir, elem) {
-			int fd = (int)strtol(basename(elem), NULL, 10);
-
-			if (fd != get_log_fd())
-				close(fd);
-		}
-		list_erase(&dir);
-	}
-}
-
 /**
  */
 int main(int argc, char *argv[])
@@ -864,31 +847,12 @@ int main(int argc, char *argv[])
 		return STATUS_LEDMON_RUNNING;
 	}
 
-	pid_t pid = fork();
-	if (pid < 0) {
-		log_debug("main(): fork() failed (errno=%d).", errno);
+	if (daemon(0, 0) != 0) {
+		log_debug("main(): daemon() failed (errno=%d).", errno);
 		exit(EXIT_FAILURE);
 	}
-	if (pid > 0)
-		exit(EXIT_SUCCESS);
-
-	pid_t sid = setsid();
-	if (sid < 0) {
-		log_debug("main(): setsid() failed (errno=%d).", errno);
-		exit(EXIT_FAILURE);
-	}
-
-	_close_parent_fds();
-
-	int t = open("/dev/null", O_RDWR);
-	dup(t);
-	dup(t);
 	umask(027);
 
-	if (chdir("/") < 0) {
-		log_debug("main(): chdir() failed (errno=%d).", errno);
-		exit(EXIT_FAILURE);
-	}
 	if (pidfile_create(progname)) {
 		log_debug("main(): pidfile_creat() failed.");
 		exit(EXIT_FAILURE);

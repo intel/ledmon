@@ -105,7 +105,7 @@ char *ahci_get_port_path(const char *path)
 	if (p == NULL)
 		return NULL;
 	*p = '\0';
-	s = rindex(tmp, PATH_DELIM);
+	s = strrchr(tmp, PATH_DELIM);
 	if (s == NULL)
 		return NULL;
 

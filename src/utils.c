@@ -288,7 +288,7 @@ int log_open(const char *path)
 {
 	if (s_log)
 		log_close();
-	char *t = rindex(path, PATH_DELIM);
+	char *t = strrchr(path, PATH_DELIM);
 	if (t)
 		*t = '\0';
 	int status = _mkdir(path);
@@ -419,7 +419,7 @@ void set_invocation_name(char *invocation_name)
 	(void)invocation_name;
 	progname = program_invocation_short_name;
 #else
-	char *t = rindex(invocation_name, PATH_DELIM);
+	char *t = strrchr(invocation_name, PATH_DELIM);
 	if (t)
 		progname = t + 1;
 	else

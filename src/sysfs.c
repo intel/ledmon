@@ -156,8 +156,7 @@ static void _get_id(const char *path, struct device_id *d_id)
 {
 	char temp[PATH_MAX];
 
-	str_cpy(temp, path, PATH_MAX);
-	str_cat(temp, "/dev", PATH_MAX);
+	snprintf(temp, sizeof(temp), "%s/dev", path);
 	get_id(temp, d_id);
 }
 
@@ -259,8 +258,7 @@ static void _link_raid_device(struct raid_device *device, enum device_type type)
 	char temp[PATH_MAX];
 	struct list dir;
 
-	str_cpy(temp, device->sysfs_path, PATH_MAX);
-	str_cat(temp, "/md", PATH_MAX - 1);
+	snprintf(temp, sizeof(temp), "%s/md", device->sysfs_path);
 
 	if (scan_dir(temp, &dir) == 0) {
 		const char *dir_path;
@@ -663,10 +661,9 @@ int sysfs_check_driver(const char *path, const char *driver)
 	char driver_path[PATH_MAX];
 	char *link;
 	int found = 0;
-	str_cpy(buf, path, PATH_MAX);
-	str_cat(buf, "/driver", PATH_MAX - 1);
-	snprintf(driver_path, PATH_MAX - 1, "/%s", driver);
 
+	snprintf(buf, sizeof(buf), "%s/driver", path);
+	snprintf(driver_path, sizeof(driver_path), "/%s", driver);
 	link = realpath(buf, NULL);
 	if (link && strstr(link, driver_path))
 		found = 1;

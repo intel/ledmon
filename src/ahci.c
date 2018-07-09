@@ -89,33 +89,39 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	sprintf(temp, "%u", ibpi2sgpio[ibpi]);
 
-	str_cpy(path, sysfs_path, PATH_MAX);
-	str_cat(path, "/em_message", PATH_MAX);
+	snprintf(path, sizeof(path), "%s/em_message", sysfs_path);
 
 	nanosleep(&waittime, NULL);
 	return buf_write(path, temp) > 0;
 }
 
+#define SCSI_HOST "/scsi_host"
 /*
  * The function return path to SATA port in sysfs tree. See ahci.h for details.
  */
+
 char *ahci_get_port_path(const char *path)
 {
-	char tmp[PATH_MAX], buf[BUFFER_MAX];
-	char *p, *s;
+	char *p;
+	char tmp[PATH_MAX];
+	char *buf;
+	size_t buf_size;
 
-	str_cpy(tmp, path, PATH_MAX);
-	p = strstr(tmp, "/target");
+	p = strstr(path, "/target");
 	if (p == NULL)
 		return NULL;
-	*p = '\0';
-	s = strrchr(tmp, PATH_DELIM);
-	if (s == NULL)
+
+	strncpy(tmp, path, p - path);
+	tmp[p - path] = '\0';
+	p = strrchr(tmp, PATH_DELIM);
+	if (p == NULL)
 		return NULL;
 
-	str_cpy(buf, s, BUFFER_MAX);
-	str_cat(tmp, "/scsi_host", PATH_MAX);
-	str_cat(tmp, buf, PATH_MAX);
+	buf_size = strlen(tmp) + strlen(p) + strlen(SCSI_HOST) + 1;
+	buf = malloc(buf_size);
+	if (buf == NULL)
+		return NULL;
 
-	return str_dup(tmp);
+	snprintf(buf, buf_size, "%s%s%s", tmp, SCSI_HOST, p);
+	return buf;
 }

@@ -301,25 +301,6 @@ char *str_cpy(char *dest, const char *src, size_t size);
 char *str_dup(const char *src);
 
 /**
- * @brief Concatenates text buffers.
- *
- * This function appends source buffer to destination buffer. It is similar to
- * strncat() standard C function except it always returns null-terminated
- * buffer. Second difference is that function calculates itself the amount
- * of free space in destination buffer. If source does not fit in dest
- * then as many bytes are copied as can be fit in destination buffer minus 1
- * for null-character. Otherwise the source is copied to destination
- * including null-character.
- *
- * @param[in,out]  dest            Pointer to destination buffer.
- * @param[in]      src             Pointer to source buffer.
- * @param[in]      size            Capacity of destination buffer.
- *
- * @return Pointer to destination buffer even if function failed.
- */
-char *str_cat(char *dest, const char *src, size_t size);
-
-/**
  */
 char *truncate_path_component_rev(const char *path, int index);
 

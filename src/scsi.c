@@ -607,8 +607,7 @@ static int _slot_match(const char *slot_path, const char *device_path)
 {
 	char temp[PATH_MAX], link[PATH_MAX];
 
-	str_cpy(temp, slot_path, PATH_MAX);
-	str_cat(temp, "/device", PATH_MAX);
+	snprintf(temp, sizeof(temp), "%s/device", slot_path);
 
 	if (realpath(temp, link) == NULL)
 		return 0;

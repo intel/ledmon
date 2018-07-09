@@ -71,10 +71,7 @@ char *get_text(const char *path, const char *name)
 {
 	char temp[PATH_MAX];
 
-	str_cpy(temp, path, PATH_MAX);
-	str_cat(temp, PATH_DELIM_STR, PATH_MAX);
-	str_cat(temp, name, PATH_MAX);
-
+	snprintf(temp, sizeof(temp), "%s/%s", path, name);
 	return buf_read(temp);
 }
 
@@ -356,17 +353,6 @@ char *str_dup(const char *src)
 		exit(EXIT_FAILURE);
 	}
 	return ret;
-}
-
-/**
- */
-char *str_cat(char *dest, const char *src, size_t size)
-{
-	int t = strlen(dest);
-	strncat(dest, src, size - t);
-	if (t + strlen(src) >= size)
-		dest[size - 1] = '\0';
-	return dest;
 }
 
 char *get_path_hostN(const char *path)

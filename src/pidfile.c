@@ -37,6 +37,9 @@
 #include "status.h"
 #include "utils.h"
 
+#define RUN_DIR "/var/run/"
+#define PID ".pid"
+
 /**
  */
 status_t pidfile_create(const char *name)
@@ -44,9 +47,7 @@ status_t pidfile_create(const char *name)
 	char buf[PATH_MAX];
 	int fd, count;
 
-	str_cpy(buf, "/var/run/", PATH_MAX);
-	str_cat(buf, name, PATH_MAX);
-	str_cat(buf, ".pid", PATH_MAX);
+	snprintf(buf, sizeof(buf), "%s/%s%s", RUN_DIR, name, PID);
 
 	fd = open(buf, O_WRONLY | O_CREAT, 0640);
 	if (fd < 0)
@@ -67,10 +68,7 @@ int pidfile_remove(const char *name)
 {
 	char buf[PATH_MAX];
 
-	str_cpy(buf, "/var/run/", PATH_MAX);
-	str_cat(buf, name, PATH_MAX);
-	str_cat(buf, ".pid", PATH_MAX);
-
+	snprintf(buf, sizeof(buf), "%s/%s%s", RUN_DIR, name, PID);
 	return unlink(buf);
 }
 
@@ -96,9 +94,7 @@ status_t pidfile_check(const char *name, pid_t *pid)
 	char path[PATH_MAX], *p;
 	pid_t tp;
 
-	str_cpy(path, "/var/run/", PATH_MAX);
-	str_cat(path, name, PATH_MAX);
-	str_cat(path, ".pid", PATH_MAX);
+	snprintf(path, sizeof(path), "%s/%s%s", RUN_DIR, name, PID);
 
 	p = buf_read(path);
 	if (p == NULL)

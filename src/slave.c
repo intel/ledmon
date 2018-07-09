@@ -96,8 +96,7 @@ static struct block_device *_get_block(const char *path, struct list *block_list
 	char link[PATH_MAX];
 	struct block_device *device;
 
-	str_cpy(temp, path, PATH_MAX);
-	str_cat(temp, "/block", PATH_MAX);
+	snprintf(temp, sizeof(temp), "%s/block", path);
 
 	if (!realpath(temp, link))
 		return NULL;

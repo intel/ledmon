@@ -245,7 +245,7 @@ static void print_page10(struct ses_pages *sp)
 		       i++, ((ai[0] & 0x80) >> 7), ((ai[0] & 0x10) >> 4),
 		       ai[0] & 0xf);
 		printf("\tDescriptor len (x-1): %d\n", ai[1] + 1);
-		eip = ai[0] && 0x10;
+		eip = ai[0] & 0x10;
 		if (eip)
 			printf("\tElement Index: %d\n", ai[3]);
 		len = ai[1] + 2;

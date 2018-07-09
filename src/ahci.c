@@ -89,8 +89,7 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	sprintf(temp, "%u", ibpi2sgpio[ibpi]);
 
-	str_cpy(path, sysfs_path, PATH_MAX);
-	str_cat(path, "/em_message", PATH_MAX);
+	snprintf(path, sizeof(path), "%s/%s", sysfs_path, "em_message");
 
 	nanosleep(&waittime, NULL);
 	return buf_write(path, temp) > 0;
@@ -112,10 +111,7 @@ char *ahci_get_port_path(const char *path)
 	s = strrchr(tmp, PATH_DELIM);
 	if (s == NULL)
 		return NULL;
-
-	str_cpy(buf, s, BUFFER_MAX);
-	str_cat(tmp, "/scsi_host", PATH_MAX);
-	str_cat(tmp, buf, PATH_MAX);
+	snprintf(tmp, sizeof(tmp), "%s/%s%s", s, "scsi_host", buf);
 
 	return str_dup(tmp);
 }

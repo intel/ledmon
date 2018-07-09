@@ -42,12 +42,14 @@
  *
  * @return SAS address of an enclosure if successful, otherwise 0.
  */
+#define sas_device "/sas_device"
 static uint64_t _get_sas_address(const char *path)
 {
-	char tmp[PATH_MAX], buf[BUFFER_MAX];
+	char tmp[strlen(path) + 1];
+	char buf[sizeof(tmp) + sizeof(sas_device)];
 	char *p, *s;
 
-	str_cpy(tmp, path, PATH_MAX);
+	str_cpy(tmp, path, sizeof(tmp));
 	p = strstr(tmp, "/expander");
 	if (p == NULL)
 		return 0;
@@ -55,12 +57,8 @@ static uint64_t _get_sas_address(const char *path)
 	if (s == NULL)
 		return 0;
 	*s = '\0';
-
-	str_cpy(buf, p, s - p + 1);
-	str_cat(tmp, "/sas_device", PATH_MAX);
-	str_cat(tmp, buf, PATH_MAX);
-
-	return get_uint64(tmp, 0, "sas_address");
+	snprintf(buf, sizeof(buf), "%s%s%s", tmp, sas_device, p);
+	return get_uint64(buf, 0, "sas_address");
 }
 
 #define SCSI_GEN "device/scsi_generic"

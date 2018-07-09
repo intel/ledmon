@@ -72,8 +72,7 @@ static int _is_ahci_cntrl(const char *path)
 {
 	char temp[PATH_MAX], link[PATH_MAX], *t;
 
-	str_cpy(temp, path, PATH_MAX);
-	str_cat(temp, "/driver", PATH_MAX);
+	snprintf(temp, sizeof(temp), "%s/%s", path, "driver");
 
 	if (realpath(temp, link) == NULL)
 		return 0;

@@ -61,3 +61,16 @@ configure_file(
 subdir ('doc')
 subdir ('src')
 subdir ('tests')
+
+systemd = dependency('systemd', required : false)
+if systemd.found()
+	unit_dir = systemd.get_pkgconfig_variable('systemdsystemunitdir')
+	subs = configuration_data()
+	subs.set('sbindir', join_paths(get_option('prefix'), get_option('sbindir')))
+	unit_file = configure_file(
+		input: 'systemd/ledmon.service.in',
+		output: 'ledmon.service',
+		configuration: subs
+	)
+	install_data(unit_file, install_dir: unit_dir)
+endif

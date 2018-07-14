@@ -592,7 +592,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		int log_level;
 
 		case 0:
-			switch (opt_index) {
+			switch (get_option_id(longopt[opt_index].name)) {
 			case OPT_LOG_LEVEL:
 				log_level = get_option_id(optarg);
 				if (log_level != -1)

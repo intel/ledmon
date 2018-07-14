@@ -5,7 +5,7 @@ Description=Enclosure LED Utilities
 WantedBy=multi-user.target
 
 [Service]
-Type=forking
+Type=simple
 User=root
-ExecStart=@sbindir@/ledmon
+ExecStart=@sbindir@/ledmon --foreground
 Restart=on-failure

@@ -85,6 +85,14 @@ static sig_atomic_t terminate;
 static char *ledmon_conf_path;
 
 /**
+ * @brief Boolean flag whether to run foreground or not.
+ *
+ * This flag is turned on with --foreground option. Primary use of this option
+ * is to use it in systemd service file.
+ */
+static int foreground;
+
+/**
  * @brief Name of IBPI patterns.
  *
  * This is internal array with names of IBPI patterns. Logging routines use this
@@ -134,6 +142,7 @@ static int possible_params[] = {
 	OPT_VERSION,
 	OPT_WARNING,
 	OPT_LOG_LEVEL,
+	OPT_FOREGROUND,
 };
 
 static int possible_params_size = sizeof(possible_params)
@@ -192,7 +201,6 @@ static void _ledmon_status(int status, void *ignore)
 
 	strncat(message, "exit status is", sizeof(message));
 	lli = &log_level_infos[log_level];
-
 	if (get_log_fd() >= 0)
 		_log(log_level, "%s %s.", message, strstatus(status));
 	else
@@ -241,6 +249,8 @@ static void _ledmon_help(void)
 			  "Use local log file instead /var/log/ledmon.log");
 	print_opt("--log-level=VALUE", "-l VALUE",
 			  "Allows user to set ledmon verbose level in logs.");
+	print_opt("--foreground", "",
+			  "Do not run as daemon.");
 	print_opt("--help", "-h", "Displays this help text.");
 	print_opt("--version", "-v",
 			  "Displays version and license information.");
@@ -358,13 +368,16 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		switch (opt) {
 		int log_level;
 		case 0:
-			switch (opt_index) {
+			switch (get_option_id(longopt[opt_index].name)) {
 			case OPT_LOG_LEVEL:
 				log_level = get_option_id(optarg);
 				if (log_level != -1)
 					status = set_verbose_level(log_level);
 				else
 					status = STATUS_CMDLINE_ERROR;
+				break;
+			case OPT_FOREGROUND:
+				foreground = 1;
 				break;
 			default:
 				status = set_verbose_level(
@@ -879,26 +892,31 @@ int main(int argc, char *argv[])
 		log_warning("daemon is running...");
 		return STATUS_LEDMON_RUNNING;
 	}
+	if (!foreground) {
+		pid_t pid = fork();
 
-	pid_t pid = fork();
-	if (pid < 0) {
-		log_debug("main(): fork() failed (errno=%d).", errno);
-		exit(EXIT_FAILURE);
+		if (pid < 0) {
+			log_debug("main(): fork() failed (errno=%d).", errno);
+			exit(EXIT_FAILURE);
+		}
+		if (pid > 0)
+			exit(EXIT_SUCCESS);
+
+		pid_t sid = setsid();
+
+		if (sid < 0) {
+			log_debug("main(): setsid() failed (errno=%d).", errno);
+			exit(EXIT_FAILURE);
+		}
+
+		_close_parent_fds();
+
+		int t = open("/dev/null", O_RDWR);
+
+		dup(t);
+		dup(t);
 	}
-	if (pid > 0)
-		exit(EXIT_SUCCESS);
 
-	pid_t sid = setsid();
-	if (sid < 0) {
-		log_debug("main(): setsid() failed (errno=%d).", errno);
-		exit(EXIT_FAILURE);
-	}
-
-	_close_parent_fds();
-
-	int t = open("/dev/null", O_RDWR);
-	dup(t);
-	dup(t);
 	umask(027);
 
 	if (chdir("/") < 0) {

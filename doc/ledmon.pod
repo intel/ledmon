@@ -81,6 +81,12 @@ everything. The levels are given in order. If user specifies more then one
 verbose option the last option comes into effect. The default level is
 'warning'. Verbose level also can be set by B<--log-level>=I<level>.
 
+=item B<--foreground>
+
+Run process foreground instead of a daemon. This option is useful in
+systemd service file. Another use case of this option is debugging with
+elevated B<--log-level>=I<level>.
+
 =item B<-h> or B<--help>
 
 Prints this text out and exits.

@@ -587,6 +587,7 @@ struct option longopt_all[] = {
 	[OPT_LOG_LEVEL]    = {"log-level", required_argument, NULL, '\0'},
 	[OPT_LIST_CTRL]    = {"list-controllers", no_argument, NULL, 'L'},
 	[OPT_LISTED_ONLY]  = {"listed-only", no_argument, NULL, 'x'},
+	[OPT_FOREGROUND]   = {"foreground", no_argument, NULL, FOREGROUND_OPT_VALUE},
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 

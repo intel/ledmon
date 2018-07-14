@@ -21,6 +21,7 @@
 #define _UTILS_H_INCLUDED_
 
 #include <getopt.h>
+#include <limits.h>
 #include "stdlib.h"
 #include "stdint.h"
 #include "list.h"
@@ -360,7 +361,12 @@ enum opt {
 	OPT_LOG_LEVEL,
 	OPT_LIST_CTRL,
 	OPT_LISTED_ONLY,
+	OPT_FOREGROUND,
 	OPT_NULL_ELEMENT
+};
+
+enum {
+	FOREGROUND_OPT_VALUE = CHAR_MAX + 1,
 };
 
 extern struct option longopt_all[];

@@ -85,6 +85,14 @@ static sig_atomic_t terminate;
 static char *ledmon_conf_path;
 
 /**
+ * @brief Boolean flag whether to run foreground or not.
+ *
+ * This flag is turned on with --foreground option. Primary use of this option
+ * is to use it in systemd service file.
+ */
+static int foreground;
+
+/**
  * @brief Name of IBPI patterns.
  *
  * This is internal array with names of IBPI patterns. Logging routines use this
@@ -134,6 +142,7 @@ static int possible_params[] = {
 	OPT_VERSION,
 	OPT_WARNING,
 	OPT_LOG_LEVEL,
+	OPT_FOREGROUND,
 };
 
 static int possible_params_size = sizeof(possible_params)
@@ -180,7 +189,7 @@ static void _ledmon_status(int status, void *ignore)
 {
 	if (*((int *)ignore) != 0)
 		log_info("exit status is %s.", strstatus(status));
-	else if (status != STATUS_SUCCESS)
+	else if (!foreground && status != STATUS_SUCCESS)
 		log_error("parent exit status is %s.", strstatus(status));
 }
 
@@ -226,6 +235,8 @@ static void _ledmon_help(void)
 			  "Use local log file instead /var/log/ledmon.log");
 	print_opt("--log-level=VALUE", "-l VALUE",
 			  "Allows user to set ledmon verbose level in logs.");
+	print_opt("--foreground", "",
+			  "Do not run as daemon.");
 	print_opt("--help", "-h", "Displays this help text.");
 	print_opt("--version", "-v",
 			  "Displays version and license information.");
@@ -361,6 +372,9 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			break;
 		case 't':
 			status = _set_sleep_interval(optarg);
+			break;
+		FOREGROUND_OPT_VALUE:
+			foreground = 1;
 			break;
 		}
 		opt_index = -1;
@@ -847,7 +861,7 @@ int main(int argc, char *argv[])
 		return STATUS_LEDMON_RUNNING;
 	}
 
-	if (daemon(0, 0) != 0) {
+	if (!foreground && daemon(0, 0) != 0) {
 		log_debug("main(): daemon() failed (errno=%d).", errno);
 		exit(EXIT_FAILURE);
 	}

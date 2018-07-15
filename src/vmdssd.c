@@ -88,7 +88,8 @@ static int check_slot_module(const char *slot_path)
 	snprintf(module_path, PATH_MAX, "%s/module", slot_path);
 	if (scan_dir(module_path, &dir) == 0) {
 		list_erase(&dir);
-		realpath(module_path, real_module_path);
+		if (realpath(module_path, real_module_path) == NULL)
+			return -1;
 		if (strcmp(real_module_path, SYSFS_PCIEHP) != 0)
 			__set_errno_and_return(EINVAL);
 	} else {

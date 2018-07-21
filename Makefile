@@ -37,8 +37,6 @@ all: ledmon ledctl man
 install: all
 	$(MAKE) -C src DESTDIR=$(DESTDIR) install
 	$(MAKE) -C doc DESTDIR=$(DESTDIR) install
-
-install-systemd:
 	$(MAKE) -C systemd DESTDIR=$(DESTDIR) install
 
 uninstall:

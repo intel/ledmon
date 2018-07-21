@@ -16,11 +16,13 @@
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Installation directory prefix.
+# Comment out, and uncomment empty if you do not want pkg-config path.
+SYSTEMD_SERVICE_INSTDIR=$(shell pkg-config --variable=systemdsystemunitdir systemd)
+#SYSTEMD_SERVICE_INSTDIR=
+ifeq ($(SYSTEMD_SERVICE_INSTDIR),)
 DESTDIR?=
-
-# Installation directory of ledmon systemd service unit.
 SYSTEMD_SERVICE_INSTDIR=$(DESTDIR)/etc/systemd/system
+endif
 
 default:
 

@@ -73,7 +73,7 @@ CPPFLAGS=$(DEFFLAGS)
 ALL_CPPFLAGS=$(CPPFLAGS) -I../config
 
 LDFLAGS=$(CXFLAGS)
-LDLIBS=-lsgutils2 -ludev
+LDLIBS=-lsgutils2 -ludev -lrt
 
 SOURCES:=$(shell find -name "*.[cC]" -print)
 

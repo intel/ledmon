@@ -933,6 +933,7 @@ int main(int argc, char *argv[])
 	if (status != STATUS_SUCCESS)
 		return status;
 
+	ledmon_write_shared_conf();
 	if(conf.log_path)
 		set_log_path(conf.log_path);
 
@@ -992,6 +993,7 @@ int main(int argc, char *argv[])
 			_invalidate_dev(device);
 		sysfs_reset();
 	}
+	ledmon_remove_shared_conf();
 	stop_udev_monitor();
 	exit(EXIT_SUCCESS);
 }

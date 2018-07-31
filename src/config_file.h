@@ -15,6 +15,7 @@
 
 #include "list.h"
 
+#define LEDMON_SHARE_MEM_FILE "/ledmon.conf"
 #define LEDMON_DEF_CONF_FILE "/etc/ledmon.conf"
 #define LEDMON_DEF_LOG_FILE "/var/log/ledmon.log"
 #define LEDCTL_DEF_LOG_FILE "/var/log/ledctl.log"
@@ -51,5 +52,7 @@ struct ledmon_conf {
 extern struct ledmon_conf conf;
 
 int ledmon_read_config(const char *filename);
+int ledmon_write_shared_conf(void);
+int ledmon_remove_shared_conf(void);
 
 #endif /* SRC_CONFIG_FILE_H_ */

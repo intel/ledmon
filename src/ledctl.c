@@ -350,6 +350,12 @@ static status_t _set_log_path(const char *path)
 	}
 	if (log_open(temp) < 0)
 		return STATUS_FILE_OPEN_ERROR;
+
+	if (conf.log_path) {
+		free(conf.log_path);
+		conf.log_path = str_dup(path);
+	}
+
 	return STATUS_SUCCESS;
 }
 
@@ -657,12 +663,23 @@ static status_t _ledctl_execute(struct list *ibpi_local_list)
 
 static status_t _init_ledctl_conf(void)
 {
+	status_t status;
+	char share_conf_path[PATH_MAX];
+
 	memset(&conf, 0, sizeof(struct ledmon_conf));
+	memset(share_conf_path, 0, sizeof(share_conf_path));
+	snprintf(share_conf_path, sizeof(share_conf_path), "/dev/shm%s",
+		 LEDMON_SHARE_MEM_FILE);
 
 	/* initialize with default values */
 	conf.log_level = LOG_LEVEL_WARNING;
 	list_init(&conf.cntrls_whitelist, NULL);
 	list_init(&conf.cntrls_blacklist, NULL);
+
+	status = ledmon_read_config(share_conf_path);
+	if (status != STATUS_SUCCESS)
+		return status;
+
 	return _set_log_path(LEDCTL_DEF_LOG_FILE);
 }
 

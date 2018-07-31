@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdint.h>
@@ -230,6 +231,81 @@ int ledmon_read_config(const char *filename)
 		log_warning("Both whitelist and blacklist are specified - ignoring blacklist.");
 
 	return STATUS_SUCCESS;
+}
+
+static char *conf_list_to_str(struct list *list)
+{
+	char buf[BUFSIZ];
+	char *elem;
+
+	memset(buf, 0, sizeof(buf));
+	list_for_each(list, elem) {
+		if (elem) {
+			int curr = strlen(buf);
+
+			snprintf(buf + curr, sizeof(buf) - curr, "%s,", elem);
+		}
+	}
+
+	return strdup(buf);
+}
+
+int ledmon_write_shared_conf(void)
+{
+	char buf[BUFSIZ];
+	char *whitelist = NULL;
+	char *blacklist = NULL;
+	void *shared_mem_ptr;
+	int fd = shm_open(LEDMON_SHARE_MEM_FILE, O_RDWR | O_CREAT, 0644);
+
+	if (fd == -1)
+		return STATUS_FILE_OPEN_ERROR;
+
+	ftruncate(fd, sizeof(buf));
+
+	shared_mem_ptr = mmap(NULL, sizeof(buf), PROT_WRITE, MAP_SHARED, fd, 0);
+	if (shared_mem_ptr == MAP_FAILED) {
+		close(fd);
+		return STATUS_FILE_WRITE_ERROR;
+	}
+
+	snprintf(buf, sizeof(buf),
+		 "BLINK_ON_INIT=%d\n", conf.blink_on_init);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "BLINK_ON_MIGR=%d\n", conf.blink_on_migration);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "LOG_LEVEL=%d\n", conf.log_level);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "LOG_PATH=%s\n", conf.log_path);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "RAID_MEMBERS_ONLY=%d\n", conf.raid_members_only);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "REBUILD_BLINK_ON_ALL=%d\n", conf.rebuild_blink_on_all);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "INTERVAL=%d\n", conf.scan_interval);
+	whitelist = conf_list_to_str(&conf.cntrls_whitelist);
+	if (whitelist) {
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			 "WHITELIST=%s\n", whitelist);
+		free(whitelist);
+	}
+	blacklist = conf_list_to_str(&conf.cntrls_blacklist);
+	if (blacklist) {
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			 "BLACKLIST=%s\n", blacklist);
+		free(blacklist);
+	}
+
+	memcpy(shared_mem_ptr, buf, strlen(buf));
+	munmap(shared_mem_ptr, strlen(buf));
+	close(fd);
+
+	return STATUS_SUCCESS;
+}
+
+int ledmon_remove_shared_conf(void)
+{
+	return shm_unlink(LEDMON_SHARE_MEM_FILE);
 }
 
 #ifdef _TEST_CONFIG

@@ -528,6 +528,8 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
  */
 static status_t _cmdline_ibpi_parse(int argc, char *argv[])
 {
+	status_t t_status, ret_status = STATUS_SUCCESS;
+
 	while (optind < argc) {
 		struct ibpi_state *state = NULL;
 		char *p = argv[optind++];
@@ -536,29 +538,35 @@ static status_t _cmdline_ibpi_parse(int argc, char *argv[])
 		if (*t != '\0') {
 			*(t++) = '\0';
 			state = _ibpi_state_get(p);
-			if (state != NULL) {
-				if (*t == '{') {
-					while ((t = argv[optind++]) != NULL) {
-						if (*t == '}')
-							break;
-						_ibpi_state_add_block(state, t);
-					}
-				} else {
-					while (*(p = t) != '\0') {
-						t = strchrnul(p, ',');
-						if (*t != '\0')
-							*(t++) = '\0';
-						_ibpi_state_add_block(state, p);
-					}
+			if (state == NULL) {
+				log_error("%s - unknown pattern name.", p);
+				return STATUS_INVALID_STATE;
+			}
+			if (*t == '{') {
+				while ((t = argv[optind++]) != NULL) {
+					if (*t == '}')
+						break;
+					t_status =
+					_ibpi_state_add_block(state, t);
+					if (t_status != STATUS_SUCCESS)
+						ret_status = t_status;
+				}
+			} else {
+				while (*(p = t) != '\0') {
+					t = strchrnul(p, ',');
+					if (*t != '\0')
+						*(t++) = '\0';
+					t_status =
+					_ibpi_state_add_block(state, p);
+					if (t_status != STATUS_SUCCESS)
+						ret_status = t_status;
 				}
 			}
 		}
-		if (state == NULL) {
-			log_error("%s - unknown pattern name.", p);
-			exit(STATUS_INVALID_STATE);
-		}
 	}
-	return STATUS_SUCCESS;
+	if (_ibpi_state_determine(&ibpi_list) != STATUS_SUCCESS)
+		ret_status = STATUS_IBPI_DETERMINE_ERROR;
+	return ret_status;
 }
 
 /**
@@ -643,9 +651,6 @@ static status_t _ledctl_execute(struct list *ibpi_local_list)
 	struct ibpi_state *state;
 	struct block_device *device;
 
-	if (_ibpi_state_determine(ibpi_local_list) != STATUS_SUCCESS)
-		return STATUS_IBPI_DETERMINE_ERROR;
-
 	if (!listed_only) {
 		list_for_each(sysfs_get_block_devices(), device)
 			device->send_fn(device, IBPI_PATTERN_LOCATE_OFF);
@@ -726,7 +731,7 @@ int main(int argc, char *argv[])
 	if (status != STATUS_SUCCESS) {
 		log_debug("main(): _ibpi_parse() failed (status=%s).",
 			  strstatus(status));
-		exit(STATUS_INVALID_STATE);
+		exit(status);
 	}
 	return _ledctl_execute(&ibpi_list);
 }

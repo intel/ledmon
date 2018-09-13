@@ -20,6 +20,7 @@
 #ifndef _UTILS_H_INCLUDED_
 #define _UTILS_H_INCLUDED_
 
+#include <getopt.h>
 #include "stdlib.h"
 #include "stdint.h"
 #include "list.h"
@@ -360,4 +361,30 @@ void print_opt(const char *long_opt, const char *short_opt, const char *desc);
  */
 status_t set_log_path(const char *path);
 
+/**
+ * Internal enumeration type. It is used to help parse command line arguments.
+ */
+enum opt {
+	OPT_ALL,
+	OPT_CONFIG,
+	OPT_DEBUG,
+	OPT_ERROR,
+	OPT_HELP,
+	OPT_INFO,
+	OPT_INTERVAL,
+	OPT_LOG,
+	OPT_QUIET,
+	OPT_VERSION,
+	OPT_WARNING,
+	OPT_LOG_LEVEL,
+	OPT_LIST_CTRL,
+	OPT_LISTED_ONLY,
+	OPT_NULL_ELEMENT
+};
+
+extern struct option longopt_all[];
+void setup_options(struct option **longopt, char **shortopt, int *options,
+			int options_nr);
+int get_option_id(const char *optarg);
+status_t set_verbose_level(int log_level);
 #endif				/* _UTILS_H_INCLUDED_ */

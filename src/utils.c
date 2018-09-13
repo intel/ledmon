@@ -574,3 +574,113 @@ status_t set_log_path(const char *path)
 
 	return STATUS_SUCCESS;
 }
+
+/**
+ * Internal array with option tokens. It is used to help parse command line
+ * long options.
+ */
+struct option longopt_all[] = {
+	[OPT_ALL]          = {"all", no_argument, NULL, '\0'},
+	[OPT_CONFIG]       = {"config", required_argument, NULL, 'c'},
+	[OPT_DEBUG]        = {"debug", no_argument, NULL, '\0'},
+	[OPT_ERROR]        = {"error", no_argument, NULL, '\0'},
+	[OPT_HELP]         = {"help", no_argument, NULL, 'h'},
+	[OPT_INFO]         = {"info", no_argument, NULL, '\0'},
+	[OPT_INTERVAL]     = {"interval", required_argument, NULL, 't'},
+	[OPT_LOG]          = {"log", required_argument, NULL, 'l'},
+	[OPT_QUIET]        = {"quiet", no_argument, NULL, '\0'},
+	[OPT_VERSION]      = {"version", no_argument, NULL, 'v'},
+	[OPT_WARNING]      = {"warning", no_argument, NULL, '\0'},
+	[OPT_LOG_LEVEL]    = {"log-level", required_argument, NULL, '\0'},
+	[OPT_LIST_CTRL]    = {"list-controllers", no_argument, NULL, 'L'},
+	[OPT_LISTED_ONLY]  = {"listed-only", no_argument, NULL, 'x'},
+	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
+};
+
+void setup_options(struct option **longopt, char **shortopt, int *options, int
+		options_nr)
+{
+	int i, j = 0;
+	struct option *opt;
+	*longopt = malloc(sizeof(struct option) * (options_nr + 1));
+	*shortopt = calloc(options_nr * 2 + 1, sizeof(char));
+	for (i = 0; i < options_nr; i++) {
+		opt = &longopt_all[options[i]];
+		(*longopt)[i] = *opt;
+		if (opt->val != '\0') {
+			(*shortopt)[j++] = (char) opt->val;
+			if (opt->has_arg)
+				(*shortopt)[j++] = ':';
+		}
+	}
+	longopt[i] = &longopt_all[OPT_NULL_ELEMENT];
+	shortopt[j] = '\0';
+}
+
+/**
+ * @brief Gets id for given CLI option which corresponds to value from longopt
+ * table.
+ *
+ * This is internal function of monitor service. The function maps given string
+ * to the value from longopt enum and returns id of matched element. Generic
+ * parameters allow to use this function for any CLI options-table which bases
+ * on option struct.
+ *
+ * @param[in]     optarg          String containing value given by user in CLI.
+ *
+ * @return integer id if successful, otherwise a -1.
+ */
+int get_option_id(const char *optarg)
+{
+	int i = 0;
+
+	while (longopt_all[i].name != NULL) {
+		if (strcmp(longopt_all[i].name, optarg) == 0)
+			return i;
+		i++;
+	}
+	return -1;
+}
+
+
+/**
+ * @brief Sets verbose variable to given level.
+ *
+ * This is internal function of monitor service. The function maps given level
+ * to the value from verbose_level enum and sets verbose value to ledmon
+ * configuration.
+ *
+ * @param[in]      log_level     required new log_level.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t set_verbose_level(int log_level)
+{
+	int new_verbose = -1;
+
+	switch (log_level) {
+	case OPT_ALL:
+		new_verbose = LOG_LEVEL_ALL;
+		break;
+	case OPT_DEBUG:
+		new_verbose = LOG_LEVEL_DEBUG;
+		break;
+	case OPT_ERROR:
+		new_verbose = LOG_LEVEL_ERROR;
+		break;
+	case OPT_INFO:
+		new_verbose = LOG_LEVEL_INFO;
+		break;
+	case OPT_QUIET:
+		new_verbose = LOG_LEVEL_QUIET;
+		break;
+	case OPT_WARNING:
+		new_verbose = LOG_LEVEL_WARNING;
+		break;
+	}
+	if (new_verbose != -1) {
+		conf.log_level = new_verbose;
+		return STATUS_SUCCESS;
+	}
+	return STATUS_CMDLINE_ERROR;
+}

@@ -117,12 +117,11 @@ static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d\n"
  * Internal variable of monitor service. It is used to help parse command line
  * short options.
  */
-static char *shortopt = "t:c:hvl:";
+static char *shortopt;
 
-/**
- * Internal enumeration type. It is used to help parse command line arguments.
- */
-enum longopt {
+struct option *longopt;
+
+static int possible_params[] = {
 	OPT_ALL,
 	OPT_CONFIG,
 	OPT_DEBUG,
@@ -137,25 +136,8 @@ enum longopt {
 	OPT_LOG_LEVEL,
 };
 
-/**
- * Internal array with option tokens. It is used to help parse command line
- * long options.
- */
-static struct option longopt[] = {
-	[OPT_ALL]      = {"all", no_argument, NULL, '\0'},
-	[OPT_CONFIG]   = {"config", required_argument, NULL, 'c'},
-	[OPT_DEBUG]    = {"debug", no_argument, NULL, '\0'},
-	[OPT_ERROR]    = {"error", no_argument, NULL, '\0'},
-	[OPT_HELP]     = {"help", no_argument, NULL, 'h'},
-	[OPT_INFO]     = {"info", no_argument, NULL, '\0'},
-	[OPT_INTERVAL] = {"interval", required_argument, NULL, 't'},
-	[OPT_LOG]      = {"log", required_argument, NULL, 'l'},
-	[OPT_QUIET]    = {"quiet", no_argument, NULL, '\0'},
-	[OPT_VERSION]  = {"version", no_argument, NULL, 'v'},
-	[OPT_WARNING]  = {"warning", no_argument, NULL, '\0'},
-	[OPT_LOG_LEVEL] = {"log-level", required_argument, NULL, '\0'},
-			 {NULL, no_argument, NULL, '\0'}
-};
+static int possible_params_size = sizeof(possible_params)
+		/ sizeof(possible_params[0]);
 
 /**
  * @brief Monitor service finalize function.
@@ -295,73 +277,6 @@ static status_t _set_sleep_interval(const char *optarg)
 	return STATUS_SUCCESS;
 }
 
-/**
- * @brief Sets verbose variable to given level.
- *
- * This is internal function of monitor service. The function maps given level
- * to the value from verbose_level enum and sets verbose value to ledmon
- * configuration.
- *
- * @param[in]      log_level     required new log_level.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-static status_t _set_verbose_level(int log_level)
-{
-	int new_verbose = -1;
-
-	switch (log_level) {
-	case OPT_ALL:
-		new_verbose = LOG_LEVEL_ALL;
-		break;
-	case OPT_DEBUG:
-		new_verbose = LOG_LEVEL_DEBUG;
-		break;
-	case OPT_ERROR:
-		new_verbose = LOG_LEVEL_ERROR;
-		break;
-	case OPT_INFO:
-		new_verbose = LOG_LEVEL_INFO;
-		break;
-	case OPT_QUIET:
-		new_verbose = LOG_LEVEL_QUIET;
-		break;
-	case OPT_WARNING:
-		new_verbose = LOG_LEVEL_WARNING;
-		break;
-	}
-	if (new_verbose != -1) {
-		conf.log_level = new_verbose;
-		return STATUS_SUCCESS;
-	}
-	return STATUS_CMDLINE_ERROR;
-}
-
-/**
- * @brief Gets id for given CLI option which corresponds to value from longopt
- * table.
- *
- * This is internal function of monitor service. The function maps given string
- * to the value from longopt enum and returns id of matched element. Generic
- * parameters allow to use this function for any CLI options-table which bases
- * on option struct.
- *
- * @param[in]     optarg          String containing value given by user in CLI.
- * @param[in]     local_longopt   Table of allowed CLI options.
- *
- * @return integer id if successful, otherwise a -1.
- */
-static int _get_option_id(const char *optarg, struct option local_longopt[])
-{
-	struct option *i = local_longopt;
-
-	while (i->name != NULL) {
-		if (strcmp(i->name, optarg) == 0)
-			return i-local_longopt;
-		i++;
-	}
-	return -1;
-}
 
 /**
  * @brief Reads config file path and checks if command line input contains
@@ -402,7 +317,6 @@ static status_t _cmdline_parse_non_daemonise(int argc, char *argv[])
 
 	return status;
 }
-
 /**
  * @brief Command line interface handler function.
  *
@@ -427,18 +341,19 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		if (opt == 'c')
 			continue;
 		switch (opt) {
-		int new_log_level;
+		int log_level;
 		case 0:
 			switch (opt_index) {
 			case OPT_LOG_LEVEL:
-				new_log_level = _get_option_id(optarg, longopt);
-				if (new_log_level != -1)
-					status = _set_verbose_level(new_log_level);
+				log_level = get_option_id(optarg);
+				if (log_level != -1)
+					status = set_verbose_level(log_level);
 				else
 					status = STATUS_CMDLINE_ERROR;
 				break;
 			default:
-				status = _set_verbose_level(opt);
+				status = set_verbose_level(
+						possible_params[opt_index]);
 			}
 			break;
 		case 'l':
@@ -911,6 +826,8 @@ int main(int argc, char *argv[])
 {
 	status_t status = STATUS_SUCCESS;
 
+	setup_options(&longopt, &shortopt, possible_params,
+			possible_params_size);
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
@@ -940,6 +857,8 @@ int main(int argc, char *argv[])
 	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
 
+	free(shortopt);
+	free(longopt);
 	if (pidfile_check(progname, NULL) == 0) {
 		log_warning("daemon is running...");
 		return STATUS_LEDMON_RUNNING;

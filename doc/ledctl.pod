@@ -266,6 +266,13 @@ ledmon and exits.
 With this option ledctl will change state only on devices listed in CLI. The
 rest of devices will not be touched.
 
+=item B<--quiet> or B<--error> or B<--warning> or B<--info> or B<--debug> or B<--all>
+
+Verbose level - 'quiet' means no logging at all and 'all' means to log
+everything. The levels are given in order. If user specifies more then one
+verbose option the last option comes into effect. The default level is
+'warning'. Verbose level also can be set by B<--log-level>=I<level>.
+
 =back
 
 =head1 FILES

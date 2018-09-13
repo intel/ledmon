@@ -102,31 +102,27 @@ static char *ledctl_version = "Intel(R) Enclosure LED Control Application %d.%d\
  * Internal variable of monitor service. It is used to help parse command line
  * short options.
  */
-static char *shortopt = "hLxvl:";
+static char *shortopt;
 
-/**
- * Internal enumeration type. It is used to help parse command line arguments.
- */
-enum longopt {
+struct option *longopt;
+
+static int possible_params[] = {
 	OPT_HELP,
 	OPT_LOG,
 	OPT_VERSION,
 	OPT_LIST_CTRL,
 	OPT_LISTED_ONLY,
+	OPT_ALL,
+	OPT_DEBUG,
+	OPT_ERROR,
+	OPT_INFO,
+	OPT_QUIET,
+	OPT_WARNING,
+	OPT_LOG_LEVEL,
 };
 
-/**
- * Internal array with option tokens. It is used to help parse command line
- * long options.
- */
-static struct option longopt[] = {
-	[OPT_HELP]    = {"help", no_argument, NULL, 'h'},
-	[OPT_LOG]     = {"log", required_argument, NULL, 'l'},
-	[OPT_VERSION] = {"version", no_argument, NULL, 'v'},
-	[OPT_LIST_CTRL] = {"list-controllers", no_argument, NULL, 'L'},
-	[OPT_LISTED_ONLY] = {"listed-only", no_argument, NULL, 'x'},
-			{NULL, no_argument, NULL, '\0'}
-};
+static const int possible_params_size = sizeof(possible_params)
+		/ sizeof(possible_params[0]);
 
 static int listed_only;
 
@@ -198,6 +194,8 @@ static void _ledctl_help(void)
 	print_opt("--help", "-h", "Displays this help text.");
 	print_opt("--version", "-v",
 			  "Displays version and license information.");
+	print_opt("--log-level=VALUE", "-l VALUE",
+			  "Allows user to set ledctl verbose level in logs.");
 	printf("\nPatterns:\n"
 	       "\tCommon patterns are:\n"
 	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""
@@ -591,6 +589,23 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		if (opt == -1)
 			break;
 		switch (opt) {
+		int log_level;
+
+		case 0:
+			switch (opt_index) {
+			case OPT_LOG_LEVEL:
+				log_level = get_option_id(optarg);
+				if (log_level != -1)
+					status = set_verbose_level(log_level);
+				else
+					status = STATUS_CMDLINE_ERROR;
+				break;
+			default:
+				status = set_verbose_level(
+						possible_params[opt_index]);
+
+			}
+			break;
 		case 'v':
 			_ledctl_version();
 			exit(EXIT_SUCCESS);
@@ -666,24 +681,26 @@ static status_t _ledctl_execute(struct list *ibpi_local_list)
 	return STATUS_SUCCESS;
 }
 
-static status_t _init_ledctl_conf(void)
+static status_t _read_shared_conf(void)
 {
 	status_t status;
 	char share_conf_path[PATH_MAX];
 
-	memset(&conf, 0, sizeof(struct ledmon_conf));
 	memset(share_conf_path, 0, sizeof(share_conf_path));
 	snprintf(share_conf_path, sizeof(share_conf_path), "/dev/shm%s",
 		 LEDMON_SHARE_MEM_FILE);
 
+	status = ledmon_read_config(share_conf_path);
+	return status;
+}
+
+static status_t _init_ledctl_conf(void)
+{
+	memset(&conf, 0, sizeof(struct ledmon_conf));
 	/* initialize with default values */
 	conf.log_level = LOG_LEVEL_WARNING;
 	list_init(&conf.cntrls_whitelist, NULL);
 	list_init(&conf.cntrls_blacklist, NULL);
-
-	status = ledmon_read_config(share_conf_path);
-	if (status != STATUS_SUCCESS)
-		return status;
 
 	return _set_log_path(LEDCTL_DEF_LOG_FILE);
 }
@@ -709,6 +726,8 @@ int main(int argc, char *argv[])
 {
 	status_t status;
 
+	setup_options(&longopt, &shortopt, possible_params,
+			possible_params_size);
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PERROR, LOG_USER);
 
@@ -724,6 +743,12 @@ int main(int argc, char *argv[])
 		exit(STATUS_ONEXIT_ERROR);
 	if (_cmdline_parse(argc, argv))
 		exit(STATUS_CMDLINE_ERROR);
+	free(shortopt);
+	free(longopt);
+	status = _read_shared_conf();
+	if (status != STATUS_SUCCESS)
+		return status;
+
 	list_init(&ibpi_list, (item_free_t)ibpi_state_fini);
 	sysfs_init();
 	sysfs_scan();

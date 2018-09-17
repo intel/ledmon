@@ -205,14 +205,14 @@ int ledmon_read_config(const char *filename)
 
 	if (!filename || (filename && access(filename, F_OK) < 0)) {
 		if (filename)
-			fprintf(stdout, "%s: does not exist, using global config file\n",
+			log_info("%s: does not exist, using global config file\n",
 				filename);
 		filename = LEDMON_DEF_CONF_FILE;
 	}
 
 	f = fopen(filename, "re");
 	if (!f) {
-		fprintf(stdout, "%s: does not exist, using built-in defaults\n",
+		log_info("%s: does not exist, using built-in defaults\n",
 			filename);
 	} else {
 		while (!feof(f)) {

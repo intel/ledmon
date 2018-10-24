@@ -28,15 +28,15 @@ RELEASE_VER?=0.90
 default: all
 
 ledmon.conf.5.gz: ledmon.conf.pod
-	pod2man -r "LEDMON.CONF Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
+	pod2man -r "LEDMON.CONF Version $(RELEASE_VER) $(BUILD_LABEL)" -d $(RELEASE_DATE) \
 		-s 5 -n ledmon.conf -c "Intel(R) Enclosure LED Utilities Config" $< | gzip -9f > $@
 
 ledmon.8.gz: ledmon.pod
-	pod2man -r "LEDMON Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
+	pod2man -r "LEDMON Version $(RELEASE_VER) $(BUILD_LABEL)" -d $(RELEASE_DATE) \
 		-s 8 -n ledmon -c "Intel(R) Enclosure LED Monitor Service" $< | gzip -9f > $@
 
 ledctl.8.gz: ledctl.pod
-	pod2man -r "LEDCTL Version $(RELEASE_VER)" -d $(RELEASE_DATE) \
+	pod2man -r "LEDCTL Version $(RELEASE_VER) $(BUILD_LABEL)" -d $(RELEASE_DATE) \
 		-s 8 -n ledctl -c "Intel(R) Enclosure LED Control Application" $< | gzip -9f > $@	
 
 install: all

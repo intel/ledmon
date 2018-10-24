@@ -110,7 +110,7 @@ const char *ibpi_str[] = {
  * Internal variable of monitor service. It is the pattern used to print out
  * information about the version of monitor service.
  */
-static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d\n"
+static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d %s\n"
 			      "Copyright (C) 2009-2018 Intel Corporation.\n";
 
 /**
@@ -195,7 +195,7 @@ static void _ledmon_status(int status, void *ignore)
  */
 static void _ledmon_version(void)
 {
-	printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR);
+	printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR, BUILD_LABEL);
 	printf("\nThis is free software; see the source for copying conditions."
 	       " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS"
 	       " FOR A PARTICULAR PURPOSE.\n\n");
@@ -213,7 +213,7 @@ static void _ledmon_version(void)
  */
 static void _ledmon_help(void)
 {
-	printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR);
+	printf(ledmon_version, VERSION_MAJOR, VERSION_MINOR, BUILD_LABEL);
 	printf("\nUsage: %s [OPTIONS]\n\n", progname);
 	printf("Mandatory arguments for long options are mandatory for short "
 	       "options, too.\n\n");

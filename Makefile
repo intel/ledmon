@@ -24,13 +24,13 @@ DESTDIR?=
 default: all
 
 ledmon: 
-	$(MAKE) -C src ledmon
+	$(MAKE) -C src BUILD_LABEL="$(BUILD_LABEL)" ledmon
 
 ledctl:
-	$(MAKE) -C src ledctl
+	$(MAKE) -C src BUILD_LABEL="$(BUILD_LABEL)" ledctl
 
 man:
-	$(MAKE) -C doc all
+	$(MAKE) -C doc BUILD_LABEL="$(BUILD_LABEL)" all
 
 all: ledmon ledctl man
 

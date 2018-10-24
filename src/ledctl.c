@@ -95,7 +95,7 @@ const char *ibpi_str[] = {
  * Internal variable of ledctl utility. It is the pattern used to print out
  * information about the version of ledctl utility.
  */
-static char *ledctl_version = "Intel(R) Enclosure LED Control Application %d.%d\n"
+static char *ledctl_version = "Intel(R) Enclosure LED Control Application %d.%d %s\n"
 			      "Copyright (C) 2009-2018 Intel Corporation.\n";
 
 /**
@@ -163,7 +163,7 @@ static void _ledctl_fini(int status __attribute__ ((unused)),
  */
 static void _ledctl_version(void)
 {
-	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
+	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR, BUILD_LABEL);
 	printf("\nThis is free software; see the source for copying conditions." \
 	       " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS" \
 	       " FOR A PARTICULAR PURPOSE.\n\n");
@@ -181,7 +181,7 @@ static void _ledctl_version(void)
  */
 static void _ledctl_help(void)
 {
-	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR);
+	printf(ledctl_version, VERSION_MAJOR, VERSION_MINOR, BUILD_LABEL);
 	printf("\nUsage: %s [OPTIONS] pattern=list_of_devices ...\n\n",
 	       progname);
 	printf("Mandatory arguments for long options are mandatory for short options, too.\n\n");

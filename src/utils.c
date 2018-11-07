@@ -40,7 +40,6 @@
 #endif
 
 #include "config.h"
-#include "config_file.h"
 #include "list.h"
 #include "status.h"
 #include "utils.h"
@@ -64,6 +63,19 @@ char *progname = NULL;
 /**
  */
 static FILE *s_log = NULL;
+
+struct log_level_info {
+	char prefix[10];
+	int priority;
+};
+
+struct log_level_info log_level_infos[] = {
+		[LOG_LEVEL_DEBUG] = {PREFIX_DEBUG, LOG_DEBUG},
+		[LOG_LEVEL_WARNING] = {PREFIX_WARNING, LOG_WARNING},
+		[LOG_LEVEL_INFO] = {PREFIX_INFO, LOG_INFO},
+		[LOG_LEVEL_ERROR] = {PREFIX_ERROR, LOG_ERR}
+
+};
 
 /*
  * Function returns a content of a text file. See utils.h for details.
@@ -316,88 +328,24 @@ void log_close(void)
 
 /**
  */
-void log_debug(const char *buf, ...)
+void _log(enum log_level_enum loglevel, const char *buf,  ...)
 {
 	va_list vl;
+	struct log_level_info *lli = &log_level_infos[loglevel];
 
 	if (s_log == NULL)
 		log_open(conf.log_path);
-	if (s_log && (conf.log_level >= LOG_LEVEL_DEBUG)) {
-		_log_timestamp();
-		fprintf(s_log, PREFIX_DEBUG);
-		va_start(vl, buf);
-		vfprintf(s_log, buf, vl);
-		va_end(vl);
-		fprintf(s_log, "\n");
-		fflush(s_log);
-		va_start(vl, buf);
-		vsyslog(LOG_DEBUG, buf, vl);
-		va_end(vl);
-	}
-}
 
-/**
- */
-void log_error(const char *buf, ...)
-{
-	va_list vl;
-
-	if (s_log == NULL)
-		log_open(conf.log_path);
-	if (s_log && (conf.log_level >= LOG_LEVEL_ERROR)) {
+	if (s_log && (conf.log_level >= loglevel)) {
 		_log_timestamp();
-		fprintf(s_log, PREFIX_ERROR);
+		fprintf(s_log, lli->prefix);
 		va_start(vl, buf);
 		vfprintf(s_log, buf, vl);
 		va_end(vl);
 		fprintf(s_log, END_LINE_STR);
 		fflush(s_log);
 		va_start(vl, buf);
-		vsyslog(LOG_ERR, buf, vl);
-		va_end(vl);
-	}
-}
-
-/**
- */
-void log_warning(const char *buf, ...)
-{
-	va_list vl;
-
-	if (s_log == NULL)
-		log_open(conf.log_path);
-	if (s_log && (conf.log_level >= LOG_LEVEL_WARNING)) {
-		_log_timestamp();
-		fprintf(s_log, PREFIX_WARNING);
-		va_start(vl, buf);
-		vfprintf(s_log, buf, vl);
-		va_end(vl);
-		fprintf(s_log, END_LINE_STR);
-		fflush(s_log);
-		va_start(vl, buf);
-		vsyslog(LOG_WARNING, buf, vl);
-		va_end(vl);
-	}
-}
-
-/**
- */
-void log_info(const char *buf, ...)
-{
-	va_list vl;
-
-	if (s_log == NULL)
-		log_open(conf.log_path);
-	if (s_log && (conf.log_level >= LOG_LEVEL_INFO)) {
-		_log_timestamp();
-		fprintf(s_log, PREFIX_INFO);
-		va_start(vl, buf);
-		vfprintf(s_log, buf, vl);
-		va_end(vl);
-		fprintf(s_log, END_LINE_STR);
-		fflush(s_log);
-		va_start(vl, buf);
-		vsyslog(LOG_INFO, buf, vl);
+		vsyslog(lli->priority, buf, vl);
 		va_end(vl);
 	}
 }

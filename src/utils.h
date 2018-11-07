@@ -21,6 +21,7 @@
 #define _UTILS_H_INCLUDED_
 
 #include <getopt.h>
+#include "config_file.h"
 #include "stdlib.h"
 #include "stdint.h"
 #include "list.h"
@@ -232,57 +233,23 @@ int log_open(const char *path);
 void log_close(void);
 
 /**
- * @brief Logs an error message.
+ * @brief Logs an message with given loglevel.
  *
- * The function logs a message at error level of verbosity.
+ * The function logs a message at given level of verbosity.
  *
+ * @param[in]      loglevel       Level of verbosity for a message.
  * @param[in]      buf            Buffer containing format of a message.
  * @param[in]      ...            Additional arguments according to format of
  *                                a message.
  *
  * @return The function does not return a value.
  */
-void log_error(const char *buf, ...);
+void _log(enum log_level_enum loglevel, const char *buf, ...);
 
-/**
- * @brief Logs a debug message.
- *
- * The function logs a message at debug level of verbosity.
- *
- * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of
- *                                a message.
- *
- * @return The function does not return a value.
- */
-void log_debug(const char *buf, ...);
-
-/**
- * @brief Logs a warning message.
- *
- * The function logs a message at warning level of verbosity.
- *
- * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of
- *                                a message.
- *
- * @return The function does not return a value.
- */
-void log_warning(const char *buf, ...);
-
-/**
- * @brief Logs a information message.
- *
- * The function logs a message at info level of verbosity.
- *
- * @param[in]      buf            Buffer containing format of a message.
- * @param[in]      ...            Additional arguments according to format of
- *                                a message.
- *
- * @return The function does not return a value.
- */
-void log_info(const char *buf, ...);
-
+#define log_error(buf, ...)	_log(LOG_LEVEL_ERROR, buf, ##__VA_ARGS__)
+#define log_debug(buf, ...)	_log(LOG_LEVEL_DEBUG, buf, ##__VA_ARGS__)
+#define log_info(buf, ...)	_log(LOG_LEVEL_INFO, buf, ##__VA_ARGS__)
+#define log_warning(buf, ...)	_log(LOG_LEVEL_WARNING, buf, ##__VA_ARGS__)
 /**
  */
 void set_invocation_name(char *invocation_name);

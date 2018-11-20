@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <libgen.h>
 #include <limits.h>
 #include <regex.h>
 #include <stdarg.h>
@@ -275,43 +276,15 @@ static void _log_timestamp(void)
 
 /**
  */
-static int _mkdir(const char *path)
-{
-	char temp[PATH_MAX];
-	int status = -1;
-	char *t = realpath(path, temp);
-	while (t) {
-		t = strchr(t + 1, PATH_DELIM);
-		if (t)
-			*t = '\0';
-		status = mkdir(temp, 0640);
-		if (t)
-			*t = PATH_DELIM;
-		if ((status < 0) && (errno != EEXIST))
-			break;
-		status = 0;
-	}
-	return status;
-}
-
-/**
- */
 int log_open(const char *path)
 {
 	if (s_log)
 		log_close();
-	char *t = rindex(path, PATH_DELIM);
-	if (t)
-		*t = '\0';
-	int status = _mkdir(path);
-	if (t)
-		*t = PATH_DELIM;
-	if (status == 0) {
-		s_log = fopen(path, "a");
-		if (s_log == NULL)
-			return -1;
-	}
-	return status;
+
+	s_log = fopen(path, "a");
+	if (s_log == NULL)
+		return -1;
+	return 0;
 }
 
 /**
@@ -508,17 +481,35 @@ void print_opt(const char *long_opt, const char *short_opt, const char *desc)
 status_t set_log_path(const char *path)
 {
 	char temp[PATH_MAX];
+	char *resolved, *logdir, *cpath;
 
-	if (realpath(path, temp) == NULL) {
-		if ((errno != ENOENT) && (errno != ENOTDIR))
-			return STATUS_INVALID_PATH;
+	/*
+	 * Extract directory from path
+	 */
+	cpath = strdup(path);
+	logdir = dirname(cpath);
+
+	/*
+	 * Check if directory exists
+	 */
+	resolved = realpath(logdir, temp);
+	if (resolved == NULL) {
+		printf("%s: %s\n", strerror(errno), logdir);
+		free(cpath);
+		return STATUS_INVALID_PATH;
 	}
-	if (log_open(temp) < 0)
+
+	free(cpath);
+	/*
+	 * Resolve path to log and open it
+	 */
+	resolved = realpath(path, temp);
+	if (log_open(resolved) < 0)
 		return STATUS_FILE_OPEN_ERROR;
 
 	if (conf.log_path)
 		free(conf.log_path);
-	conf.log_path = strdup(temp);
+	conf.log_path = strdup(resolved);
 
 	return STATUS_SUCCESS;
 }

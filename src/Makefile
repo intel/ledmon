@@ -84,10 +84,10 @@ CPPFLAGS += -DDEBUG_IBPI
 endif
 
 ledmon: $(OUTDIR)/.depend $(LEDMON_OBJECTS)
-	$(CC) $(LDFLAGS) $(LEDMON_OBJECTS) $(LDLIBS) -o $@
+	$(CC) $(LEDMON_OBJECTS) $(LDLIBS) -o $@ $(LDFLAGS)
 
 ledctl: $(OUTDIR)/.depend $(LEDCTL_OBJECTS)
-	$(CC) $(LDFLAGS) $(LEDCTL_OBJECTS) $(LDLIBS) -o $@
+	$(CC) $(LEDCTL_OBJECTS) $(LDLIBS) -o $@ $(LDFLAGS)
 
 test_config: ALL_CPPFLAGS += -D_TEST_CONFIG
 test_config: $(OUTDIR)/.depend $(TEST_CONFIG_OBJECTS)

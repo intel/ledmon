@@ -311,7 +311,7 @@ void _log(enum log_level_enum loglevel, const char *buf,  ...)
 
 	if (s_log && (conf.log_level >= loglevel)) {
 		_log_timestamp();
-		fprintf(s_log, lli->prefix);
+		fprintf(s_log, "%s", lli->prefix);
 		va_start(vl, buf);
 		vfprintf(s_log, buf, vl);
 		va_end(vl);

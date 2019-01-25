@@ -64,7 +64,7 @@ TEST_CONFIG_OBJECTS=\
 	$(OUTDIR)/list.o	\
 	$(OUTDIR)/utils.o
 
-CXFLAGS=-O0 -g -std=gnu99
+CXFLAGS+=-std=gnu99
 CWFLAGS=-Wall
 CFLAGS=$(CXFLAGS) $(CWFLAGS)
 

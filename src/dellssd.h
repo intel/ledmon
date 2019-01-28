@@ -21,3 +21,4 @@
 
 int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi);
 char *dellssd_get_path(const char *cntrl_path);
+int get_dell_server_type(void);

@@ -85,16 +85,21 @@ static int _is_ahci_cntrl(const char *path)
 	return get_uint64(path, 0, "vendor") == 0x8086L;
 }
 
+extern int get_dell_server_type(void);
+
 static int _is_dellssd_cntrl(const char *path)
 {
 	uint64_t vdr, dev, svdr, cls;
+	int gen;
 
+	gen = get_dell_server_type();
 	vdr = get_uint64(path, 0, "vendor");
 	dev = get_uint64(path, 0, "device");
 	cls = get_uint64(path, 0, "class");
 	svdr = get_uint64(path, 0, "subsystem_vendor");
 
 	return ((vdr == 0x1344L && dev == 0x5150L) || /* micron ssd */
+		(gen != 0 && cls == 0x10802) ||      /* Dell Server+NVME */
 	        (svdr == 0x1028 && cls == 0x10802));  /* nvmhci ssd */
 }
 

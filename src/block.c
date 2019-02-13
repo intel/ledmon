@@ -44,6 +44,7 @@
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
+#include "amd_sgpio.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
    device structure. See block.h for details. */
@@ -93,6 +94,8 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 		result = dellssd_write;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
 		result = vmdssd_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_AMD_SGPIO) {
+		result = amd_sgpio_write;
 	}
 	return result;
 }
@@ -142,6 +145,8 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 		result = dellssd_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_VMD)
 		result = vmdssd_get_path(cntrl->sysfs_path);
+	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD_SGPIO)
+		result = amd_sgpio_get_path(cntrl->sysfs_path);
 	return result;
 }
 

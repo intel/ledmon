@@ -82,6 +82,14 @@ static int _is_ahci_cntrl(const char *path)
 	if ((t != NULL) && (strcmp(t + 1, "ahci") != 0))
 		return 0;
 
+	return 1;
+}
+
+static int _is_intel_ahci_cntrl(const char *path)
+{
+	if (!_is_ahci_cntrl(path))
+		return 0;
+
 	return get_uint64(path, 0, "vendor") == 0x8086L;
 }
 
@@ -162,7 +170,7 @@ static enum cntrl_type _get_type(const char *path)
 	} else if (_is_dellssd_cntrl(path)) {
 		type = CNTRL_TYPE_DELLSSD;
 	} else if (_is_storage_controller(path)) {
-		if (_is_ahci_cntrl(path))
+		if (_is_intel_ahci_cntrl(path))
 			type = CNTRL_TYPE_AHCI;
 		else if (_is_isci_cntrl(path)
 				|| sysfs_enclosure_attached_to_cntrl(path)

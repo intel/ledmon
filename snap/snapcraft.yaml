@@ -1,0 +1,35 @@
+name: ledmon
+base: core18
+version: 'git'
+summary: Intel(R) LED monitor service for storage enclosures.
+description: |
+  The ledmon application is a daemon process used to monitor a state of software
+  RAID devices (md only) or a state of block devices. The state is visualizing
+  on LEDs associated to each slot in an enclosure or a drive bay.
+  
+  The ledmon application has been verified to work with Intel(R) storage controllers
+  (i.e. Intel(R) AHCI controller and Intel(R) SAS controller). The application might
+  work with storage controllers of other vendors (especially SAS/SCSI controllers).
+  However storage controllers of other vendors have not been tested.
+
+grade: stable
+confinement: classic
+
+parts:
+  ledmon:
+    plugin: make
+    source: .
+    build-packages:
+      - gcc
+      - libudev-dev
+      - libsgutils2-dev
+    stage-packages:
+      - libsgutils2-2
+
+apps:
+  ledmon:
+    command: usr/sbin/ledmon
+    daemon: forking
+    restart-condition: on-failure
+  ledctl:
+    command: usr/sbin/ledctl

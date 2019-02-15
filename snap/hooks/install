@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+touch /var/log/ledmon.log
+
+mkdir -p /usr/share/man/man5/
+cp $SNAP/usr/share/man/man5/ledmon.conf.5.gz /usr/share/man/man5/ledmon.conf.5.gz
+
+mkdir -p /usr/share/man/man8/
+cp $SNAP/usr/share/man/man8/ledctl.8.gz /usr/share/man/man8/ledctl.8.gz

@@ -454,7 +454,9 @@ int match_string(const char *string, const char *pattern)
 
 int get_log_fd(void)
 {
-	return fileno(s_log);
+	if (s_log)
+		return fileno(s_log);
+	return -1;
 }
 
 void print_opt(const char *long_opt, const char *short_opt, const char *desc)
@@ -481,7 +483,8 @@ void print_opt(const char *long_opt, const char *short_opt, const char *desc)
 status_t set_log_path(const char *path)
 {
 	char temp[PATH_MAX];
-	char *resolved, *logdir, *cpath;
+	char log_file[PATH_MAX];
+	char *resolved, *logdir, *logfile, *cpath;
 
 	/*
 	 * Extract directory from path
@@ -500,16 +503,16 @@ status_t set_log_path(const char *path)
 	}
 
 	free(cpath);
-	/*
-	 * Resolve path to log and open it
-	 */
-	resolved = realpath(path, temp);
-	if (log_open(resolved) < 0)
-		return STATUS_FILE_OPEN_ERROR;
+	cpath = strdup(path);
+	logfile = basename(cpath);
+
+	snprintf(log_file, sizeof(log_file), "%s/%s",
+		 resolved, logfile);
+	free(cpath);
 
 	if (conf.log_path)
 		free(conf.log_path);
-	conf.log_path = strdup(resolved);
+	conf.log_path = strdup(log_file);
 
 	return STATUS_SUCCESS;
 }

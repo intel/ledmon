@@ -32,7 +32,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -47,13 +46,6 @@
 
 /**
  */
-#define PREFIX_DEBUG          "  DEBUG: "
-#define PREFIX_WARNING        "WARNING: "
-#define PREFIX_INFO           "   INFO: "
-#define PREFIX_ERROR          "  ERROR: "
-
-/**
- */
 #define TIMESTAMP_PATTERN    "%b %d %T "
 
 /**
@@ -65,17 +57,11 @@ char *progname = NULL;
  */
 static FILE *s_log = NULL;
 
-struct log_level_info {
-	char prefix[10];
-	int priority;
-};
-
 struct log_level_info log_level_infos[] = {
 		[LOG_LEVEL_DEBUG] = {PREFIX_DEBUG, LOG_DEBUG},
 		[LOG_LEVEL_WARNING] = {PREFIX_WARNING, LOG_WARNING},
 		[LOG_LEVEL_INFO] = {PREFIX_INFO, LOG_INFO},
 		[LOG_LEVEL_ERROR] = {PREFIX_ERROR, LOG_ERR}
-
 };
 
 /*

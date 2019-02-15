@@ -461,7 +461,7 @@ static void _ledmon_wait(int seconds)
 			FD_SET(udev_fd, &rdfds);
 
 		res = pselect(max_fd, &rdfds, NULL, &exfds, &timeout, &sigset);
-		if (!FD_ISSET(udev_fd, &rdfds) ||
+		if (terminate || !FD_ISSET(udev_fd, &rdfds) ||
 		    handle_udev_event(&ledmon_block_list) <= 0)
 			break;
 	} while (res > 0);

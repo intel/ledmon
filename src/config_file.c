@@ -205,14 +205,14 @@ int ledmon_read_config(const char *filename)
 
 	if (!filename || (filename && access(filename, F_OK) < 0)) {
 		if (filename)
-			log_info("%s: does not exist, using global config file\n",
+			fprintf(stdout, "%s: does not exist, using global config file\n",
 				filename);
 		filename = LEDMON_DEF_CONF_FILE;
 	}
 
 	f = fopen(filename, "re");
 	if (!f) {
-		log_info("%s: does not exist, using built-in defaults\n",
+		fprintf(stdout, "%s: does not exist, using built-in defaults\n",
 			filename);
 	} else {
 		while (!feof(f)) {
@@ -228,7 +228,7 @@ int ledmon_read_config(const char *filename)
 
 	if (!list_is_empty(&conf.cntrls_whitelist) &&
 	    !list_is_empty(&conf.cntrls_blacklist))
-		log_warning("Both whitelist and blacklist are specified - ignoring blacklist.");
+		fprintf(stdout, "Both whitelist and blacklist are specified - ignoring blacklist.");
 
 	return STATUS_SUCCESS;
 }

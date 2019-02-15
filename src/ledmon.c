@@ -178,10 +178,25 @@ static void _ledmon_fini(int __attribute__ ((unused)) status, void *program_name
  */
 static void _ledmon_status(int status, void *ignore)
 {
-	if (*((int *)ignore) != 0)
-		log_info("exit status is %s.", strstatus(status));
-	else if (status != STATUS_SUCCESS)
-		log_error("parent exit status is %s.", strstatus(status));
+	struct log_level_info *lli;
+	int log_level;
+	char message[4096];
+
+	if (*((int *)ignore) != 0) {
+		log_level = LOG_LEVEL_INFO;
+	} else if (status != STATUS_SUCCESS) {
+		log_level = LOG_LEVEL_ERROR;
+		snprintf(message, sizeof(message), "parent ");
+	} else
+		return;
+
+	strncat(message, "exit status is", sizeof(message));
+	lli = &log_level_infos[log_level];
+
+	if (get_log_fd() >= 0)
+		_log(log_level, "%s %s.", message, strstatus(status));
+	else
+		syslog(lli->priority, "%s %s.", message, strstatus(status));
 }
 
 /**
@@ -831,6 +846,9 @@ int main(int argc, char *argv[])
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
+	if (on_exit(_ledmon_status, &terminate))
+		return STATUS_ONEXIT_ERROR;
+
 	if (_cmdline_parse_non_daemonise(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
 
@@ -843,19 +861,17 @@ int main(int argc, char *argv[])
 	if (status != STATUS_SUCCESS)
 		return status;
 
-	if (on_exit(_ledmon_status, &terminate))
-		return STATUS_ONEXIT_ERROR;
-
 	status = ledmon_read_config(ledmon_conf_path);
 	if (status != STATUS_SUCCESS)
 		return status;
 
-	ledmon_write_shared_conf();
-	if(conf.log_path)
-		set_log_path(conf.log_path);
-
 	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
+
+	ledmon_write_shared_conf();
+
+	if (log_open(conf.log_path) != STATUS_SUCCESS)
+		return STATUS_LOG_FILE_ERROR;
 
 	free(shortopt);
 	free(longopt);

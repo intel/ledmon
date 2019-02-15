@@ -70,6 +70,7 @@ char *strstatus(status_t scode)
 		_S_CODE(STATUS_ENCLO_LIST_ERROR);
 		_S_CODE(STATUS_SLOTS_LIST_ERROR);
 		_S_CODE(STATUS_CONFIG_FILE_ERROR);
+		_S_CODE(STATUS_LOG_FILE_ERROR);
 	default:
 		return "???";
 	}

@@ -26,6 +26,7 @@
 #include "stdint.h"
 #include "list.h"
 #include "status.h"
+#include "syslog.h"
 
 /**
  * Maximum number of bytes in temporary buffer. It is used for local variables.
@@ -45,6 +46,23 @@
 struct device_id {
 	int major, minor;
 };
+
+struct log_level_info {
+	char prefix[10];
+	int priority;
+};
+
+/**
+ */
+#define PREFIX_DEBUG          "  DEBUG: "
+#define PREFIX_WARNING        "WARNING: "
+#define PREFIX_INFO           "   INFO: "
+#define PREFIX_ERROR          "  ERROR: "
+
+/**
+ * This array describes a log levels priorities with message prefix .
+ */
+extern struct log_level_info log_level_infos[];
 
 /**
  * This global variable holds the name of binary file an application has been

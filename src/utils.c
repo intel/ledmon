@@ -296,7 +296,6 @@ void log_close(void)
 		fclose(s_log);
 		s_log = NULL;
 	}
-	closelog();
 }
 
 /**

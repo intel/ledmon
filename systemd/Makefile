@@ -20,7 +20,7 @@
 DESTDIR?=
 
 # Installation directory of ledmon systemd service unit.
-SYSTEMD_SERVICE_INSTDIR=$(DESTDIR)/etc/systemd/system
+SYSTEMD_SERVICE_INSTDIR=$(DESTDIR)$(shell pkg-config systemd --variable=systemdsystemunitdir)
 
 default:
 

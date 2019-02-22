@@ -311,23 +311,6 @@ static struct ibpi_state *_ibpi_find(const struct list *ibpi_local_list,
 }
 
 /**
- * @brief Sets the path to configuration file.
- *
- * This is internal function of monitor service. This function sets the path and
- * name of configuration file. The function is checking whether the given path
- * is valid or it is invalid and should be ignored.
- *
- * @param[in]      path           the new location and name of config file.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-static status_t _set_config_path(const char *path)
-{
-	(void)path;
-	return STATUS_SUCCESS;
-}
-
-/**
  * @brief Sets the path to local log file.
  *
  * This is internal function of ledctl utility. This function sets the path and
@@ -612,9 +595,6 @@ static status_t _cmdline_parse(int argc, char *argv[])
 		case 'h':
 			_ledctl_help();
 			exit(EXIT_SUCCESS);
-		case 'c':
-			status = _set_config_path(optarg);
-			break;
 		case 'l':
 			status = _set_log_path(optarg);
 			break;

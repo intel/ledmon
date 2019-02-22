@@ -191,6 +191,7 @@ static void _ledmon_status(int status, void *ignore)
 	int log_level;
 	char message[4096];
 
+	memset(message, 0, 4096);
 	if (*((int *)ignore) != 0) {
 		log_level = LOG_LEVEL_INFO;
 	} else if (status != STATUS_SUCCESS) {

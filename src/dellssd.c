@@ -203,7 +203,7 @@ int get_dell_server_type()
 	int rc, rlen;
 
 	/* Don't requery if we already know have ID */
-	if (!gen)
+	if (gen)
 		return gen;
 
 	/* Get Dell Generation */

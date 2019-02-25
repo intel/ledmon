@@ -311,36 +311,6 @@ static struct ibpi_state *_ibpi_find(const struct list *ibpi_local_list,
 }
 
 /**
- * @brief Sets the path to local log file.
- *
- * This is internal function of ledctl utility. This function sets the path and
- * file name of log file. The function checks if the specified path is valid. If
- * the path is invalid then the function does nothing.
- *
- * @param[in]      path           new location and name of log file.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-static status_t _set_log_path(const char *path)
-{
-	char temp[PATH_MAX];
-
-	if (realpath(path, temp) == NULL) {
-		if ((errno != ENOENT) && (errno != ENOTDIR))
-			return STATUS_INVALID_PATH;
-	}
-	if (log_open(temp) < 0)
-		return STATUS_FILE_OPEN_ERROR;
-
-	if (conf.log_path) {
-		free(conf.log_path);
-		conf.log_path = str_dup(path);
-	}
-
-	return STATUS_SUCCESS;
-}
-
-/**
  * @brief Gets a pointer to IBPI state structure.
  *
  * This is internal function of ledctl utility. The function retrieves an entry
@@ -596,7 +566,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			_ledctl_help();
 			exit(EXIT_SUCCESS);
 		case 'l':
-			status = _set_log_path(optarg);
+			status = set_log_path(optarg);
 			break;
 		case 'x':
 			status = STATUS_SUCCESS;
@@ -682,7 +652,7 @@ static status_t _init_ledctl_conf(void)
 	list_init(&conf.cntrls_whitelist, NULL);
 	list_init(&conf.cntrls_blacklist, NULL);
 
-	return _set_log_path(LEDCTL_DEF_LOG_FILE);
+	return set_log_path(LEDCTL_DEF_LOG_FILE);
 }
 
 /**
@@ -728,6 +698,9 @@ int main(int argc, char *argv[])
 	status = _read_shared_conf();
 	if (status != STATUS_SUCCESS)
 		return status;
+	status = log_open(conf.log_path);
+	if (status != STATUS_SUCCESS)
+		return STATUS_LOG_FILE_ERROR;
 
 	list_init(&ibpi_list, (item_free_t)ibpi_state_fini);
 	sysfs_init();

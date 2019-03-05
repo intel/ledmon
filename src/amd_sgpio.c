@@ -51,49 +51,49 @@
 #define MSG_TYPE_SGPIO	0x03
 
 struct sgpio_header_register {
-	uint8_t		reserved1:4;
-	uint8_t		msg_type:4;	/* 0x03 - SGPIO */
-	uint8_t		data_size;
-	uint8_t		msg_size;
-	uint8_t		reserved2:8;
+	uint32_t	reserved1:4;
+	uint32_t	msg_type:4;	/* 0x03 - SGPIO */
+	uint32_t	data_size:8;
+	uint32_t	msg_size:8;
+	uint32_t	reserved2:8;
 } __attribute__ ((__packed__));
 
 struct sgpio_request_register {
-	uint8_t		frame_type;
-	uint8_t		function;
-	uint8_t		reg_type;
-	uint8_t		reg_index;
+	uint32_t	frame_type:8;
+	uint32_t	function:8;
+	uint32_t	reg_type:8;
+	uint32_t	reg_index:8;
 
-	uint8_t		reg_count;
-	uint8_t		reserved[3];
+	uint32_t	reg_count:8;
+	uint32_t	reserved:24;
 } __attribute__ ((__packed__));
 
 struct sgpio_amd_register {
-	uint8_t		initiator:1;
-	uint8_t		reserved1:3;
-	uint8_t		polarity_flip:1;
-	uint8_t		bypass_enable:1;
-	uint8_t		return_to_normal:1;
-	uint8_t		unused:1;
-	uint8_t		reserved2[3];
+	uint32_t	initiator:1;
+	uint32_t	reserved1:3;
+	uint32_t	polarity_flip:1;
+	uint32_t	bypass_enable:1;
+	uint32_t	return_to_normal:1;
+	uint32_t	unused:1;
+	uint32_t	reserved2:24;
 } __attribute__ ((__packed__));
 
 struct sgpio_config_register {
-	uint8_t		reserved1:8;
-	uint8_t		reserved2:4;
-	uint8_t		version:4; /* default = 0 */
-	uint8_t		gp_reg_count:4; /* read only */
-	uint8_t		cfg_reg_count:3;
-	uint8_t		sgpio_enable:1;
-	uint8_t		drive_count;
+	uint32_t	reserved1:8;
+	uint32_t	reserved2:4;
+	uint32_t	version:4;	/* default = 0 */
+	uint32_t	gp_reg_count:4; /* read only */
+	uint32_t	cfg_reg_count:3;
+	uint32_t	sgpio_enable:1;
+	uint32_t	drive_count:8;
 
-	uint8_t		reserved3:8;
-	uint8_t		blink_gen_a:4;
-	uint8_t		blink_gen_b:4;
-	uint8_t		force_activity_off:4;
-	uint8_t		max_activity_on:4;
-	uint8_t		stretch_activity_off:4;
-	uint8_t		stretch_activity_on:4;
+	uint32_t	reserved3:8;
+	uint32_t	blink_gen_a:4;
+	uint32_t	blink_gen_b:4;
+	uint32_t	force_activity_off:4;
+	uint32_t	max_activity_on:4;
+	uint32_t	stretch_activity_off:4;
+	uint32_t	stretch_activity_on:4;
 } __attribute__ ((__packed__));
 
 struct drive_leds {
@@ -249,17 +249,20 @@ static int _send_sgpio_register(const char *em_buffer_path, void *reg,
 				int reg_len)
 {
 	int fd, count;
+	int saved_errno;
 	int retries = 3;
 
-	fd = open(em_buffer_path, O_WRONLY);
-	if (fd < 0) {
-		log_error("Couldn't open EM buffer %s: %s", em_buffer_path,
-			  strerror(errno));
-		return -1;
-	}
-
 	do {
+		fd = open(em_buffer_path, O_WRONLY);
+		if (fd < 0) {
+			log_error("Couldn't open EM buffer %s: %s",
+				  em_buffer_path, strerror(errno));
+			return -1;
+		}
+
 		count = write(fd, reg, reg_len);
+		saved_errno = errno;
+		close(fd);
 
 		/* Insert small sleep to ensure hardware has enough time to
 		 * see the register change and read it. Without the sleep
@@ -271,15 +274,13 @@ static int _send_sgpio_register(const char *em_buffer_path, void *reg,
 
 		if (count == reg_len || errno != EBUSY)
 			break;
-
-		sleep(1);
 	} while (--retries != 0);
 
 	close(fd);
 
 	if (count != reg_len) {
 		log_error("Couldn't write SGPIO register: %s",
-			  strerror(errno));
+			  strerror(saved_errno));
 		return -1;
 	}
 
@@ -444,8 +445,10 @@ static int _find_file_path(const char *start_path, const char *filename,
 			continue;
 
 		if (strncmp(dir_name, filename, strlen(filename)) == 0) {
-			strncpy(path, dir_path, path_len);
-			path = dirname(path);
+			char tmp[PATH_MAX];
+
+			strncpy(tmp, dir_path, path_len);
+			snprintf(path, path_len, "%s", dirname(tmp));
 
 			found = 1;
 			break;
@@ -511,18 +514,6 @@ static int _get_amd_drive(const char *start_path, struct amd_drive *drive)
 	return 0;
 }
 
-static void dup_cache_entry(struct cache_entry *src,
-			    struct cache_entry *dup)
-{
-	memcpy(dup, src, sizeof(*src));
-}
-
-static void restore_cache_entry(struct cache_entry *src,
-				struct cache_entry *dup)
-{
-	memcpy(src, dup, sizeof(*src));
-}
-
 static int _set_ibpi(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	int rc;
@@ -551,7 +542,8 @@ static int _set_ibpi(struct block_device *device, enum ibpi_pattern ibpi)
 	if (!cache)
 		return -EINVAL;
 
-	dup_cache_entry(cache, &cache_dup);
+	/* Save copy of cache entry */
+	memcpy(&cache_dup, cache, sizeof(cache_dup));
 
 	rc = _write_amd_register(device->cntrl_path, &drive);
 	if (rc)
@@ -566,8 +558,10 @@ static int _set_ibpi(struct block_device *device, enum ibpi_pattern ibpi)
 	rc = _write_tx_register(device->cntrl_path, &tx_reg);
 
 _set_ibpi_error:
-	if (rc)
-		restore_cache_entry(cache, &cache_dup);
+	if (rc) {
+		/* Restore saved cache entry */
+		memcpy(cache, &cache_dup, sizeof(*cache));
+	}
 
 	_put_cache();
 	return rc;
@@ -620,13 +614,17 @@ static int _amd_sgpio_init(const char *path)
 		return -1;
 	}
 
-	dup_cache_entry(cache, &cache_dup);
+	/* Save copy of cache entry */
+	memcpy(&cache_dup, cache, sizeof(cache_dup));
 
 	rc = _amd_sgpio_init_one(em_path, &drive, cache);
 	if (rc) {
 		log_error("SGPIO register init failed for bank %d, %s",
 			  drive.initiator, em_path);
-		restore_cache_entry(cache, &cache_dup);
+
+		/* Restore saved cache entry */
+		memcpy(cache, &cache_dup, sizeof(*cache));
+
 		goto _init_amd_sgpio_err;
 	}
 
@@ -654,13 +652,16 @@ static int _amd_sgpio_init(const char *path)
 		return -1;
 	}
 
-	dup_cache_entry(cache, &cache_dup);
+	/* Save copy of cache entry */
+	memcpy(&cache_dup, cache, sizeof(cache_dup));
 
 	rc = _amd_sgpio_init_one(em_path, &drive, cache);
 	if (rc) {
 		log_error("SGPIO register init failed for bank %d, %s",
 			  drive.initiator, em_path);
-		restore_cache_entry(cache, &cache_dup);
+
+		/* Restore saved cache entry */
+		memcpy(cache, &cache_dup, sizeof(*cache));
 	}
 
 _init_amd_sgpio_err:
@@ -739,8 +740,9 @@ int amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 char *amd_sgpio_get_path(const char *cntrl_path)
 {
-	int found;
+	int len, found;
 	char *em_buffer_path;
+	char tmp[PATH_MAX];
 
 	em_buffer_path = malloc(PATH_MAX);
 	if (!em_buffer_path) {
@@ -749,14 +751,18 @@ char *amd_sgpio_get_path(const char *cntrl_path)
 		return NULL;
 	}
 
-	found = _find_file_path(cntrl_path, "em_buffer", em_buffer_path,
-				PATH_MAX);
+	found = _find_file_path(cntrl_path, "em_buffer", tmp, PATH_MAX);
 	if (!found) {
 		log_error("Couldn't find EM buffer for %s\n", cntrl_path);
 		free(em_buffer_path);
 		return NULL;
 	}
 
-	strcat(em_buffer_path, "/em_buffer");
+	len = snprintf(em_buffer_path, PATH_MAX, "%s/em_buffer", tmp);
+	if (len < 0 || len >= PATH_MAX) {
+		free(em_buffer_path);
+		return NULL;
+	}
+
 	return em_buffer_path;
 }

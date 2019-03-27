@@ -32,7 +32,9 @@ ledctl:
 man:
 	$(MAKE) -C doc BUILD_LABEL="$(BUILD_LABEL)" all
 
-all: ledmon ledctl man
+all:
+	$(MAKE) -C src BUILD_LABEL="$(BUILD_LABEL)" all
+	$(MAKE) -C doc BUILD_LABEL="$(BUILD_LABEL)" all
 
 install: all
 	$(MAKE) -C src DESTDIR=$(DESTDIR) install

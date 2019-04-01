@@ -1,7 +1,7 @@
 /*
  * Intel(R) Enclosure LED Utilities
  *
- * Copyright (C) 2017-2018 Intel Corporation.
+ * Copyright (C) 2017-2019 Intel Corporation.
  * Copyright (C) 2009 Karel Zak <kzak@redhat.com>
  *
  * SPDX-License-Identifier: GPL-2.0

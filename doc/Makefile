@@ -1,6 +1,6 @@
 #
 #  Intel(R) Enclosure LED Utilities
-#  Copyright (C) 2009-2017 Intel Corporation.
+#  Copyright (C) 2009-2019 Intel Corporation.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms and conditions of the GNU General Public License,
@@ -22,8 +22,8 @@ MAN_INSTDIR=$(DESTDIR)/usr/share/man
 MAN8_INSTDIR=$(MAN_INSTDIR)/man8
 MAN5_INSTDIR=$(MAN_INSTDIR)/man5
 
-RELEASE_DATE?="February 2018"
-RELEASE_VER?=0.90
+RELEASE_DATE?="April 2019"
+RELEASE_VER?=0.91
 
 default: all
 

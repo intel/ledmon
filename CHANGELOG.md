@@ -1,3 +1,30 @@
+### v0.91 / 2019-04-01
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.90...v0.91)
+
+Enhancements
+
+* Ledmon systemd service file.
+* Shared configuration between ledmon and ledctl.
+* Log-level support for ledctl.
+* Build label support.
+* 13G/14G Dell Servers support.
+* Foreground option.
+
+Bug fixes
+
+* Udev action handling reimplementation.
+* Unify ping process method.
+* Recognize volumes under reshape.
+* Distinguish inactive state for volume and container.
+* Fix various gcc and clang warnings.
+* Fix ledctl exit status.
+* Logging method reimplementation.
+* Makefile fixes.
+* Change outdated functions and simplify string modifications.
+* Ommited errors handling.
+
+
 ### v0.90 / 2018-02-14
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.80...v0.90)

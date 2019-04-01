@@ -42,86 +42,121 @@
 #include "utils.h"
 #include "amd_sgpio.h"
 
+#define REG_FMT_2	"%23s: %-4x%23s: %-4x\n"
+#define REG_FMT_1	"%23s: %-4x\n"
+
 #define HOST_CAP_EMS	(1 << 6)
 
-#define REG_TYPE_CFG	0x00
-#define REG_TYPE_TX	0x03
-#define REG_TYPE_AMD	0xC0
+#define DECLARE_SGPIO(type, name, shift, mask)				\
+	uint32_t	_##type##_##name##_shift = shift;		\
+	uint64_t	_##type##_##name##_mask = mask << shift;	\
+									\
+	static void set_sgpio_##type##_##name(sgpio_##type##_t * hdr,	\
+					      sgpio_##type##_t val)	\
+	{								\
+		*hdr |= (val << _##type##_##name##_shift);		\
+	}								\
+									\
+	static uint32_t get_sgpio_##type##_##name(sgpio_##type##_t * hdr)\
+	{								\
+		return (*hdr & _##type##_##name##_mask)			\
+			>> _##type##_##name##_shift;			\
+	}
 
-#define MSG_TYPE_SGPIO	0x03
 
-struct sgpio_header_register {
-	uint32_t	reserved1:4;
-	uint32_t	msg_type:4;	/* 0x03 - SGPIO */
-	uint32_t	data_size:8;
-	uint32_t	msg_size:8;
-	uint32_t	reserved2:8;
-} __attribute__ ((__packed__));
+#define DECLARE_SGPIO_RO(type, name, shift, mask)			\
+	uint32_t	_##type##_##name##_shift = shift;		\
+	uint64_t	_##type##_##name##_mask = mask;			\
+									\
+	static uint32_t get_sgpio_##type##_##name(sgpio_##type##_t * hdr)\
+	{								\
+		return (*hdr & _##type##_##name##_mask)			\
+			>> _##type##_##name##_shift;			\
+	}
 
-struct sgpio_request_register {
-	uint32_t	frame_type:8;
-	uint32_t	function:8;
-	uint32_t	reg_type:8;
-	uint32_t	reg_index:8;
 
-	uint32_t	reg_count:8;
-	uint32_t	reserved:24;
-} __attribute__ ((__packed__));
+typedef uint32_t sgpio_hdr_t;
 
-struct sgpio_amd_register {
-	uint32_t	initiator:1;
-	uint32_t	reserved1:3;
-	uint32_t	polarity_flip:1;
-	uint32_t	bypass_enable:1;
-	uint32_t	return_to_normal:1;
-	uint32_t	unused:1;
-	uint32_t	reserved2:24;
-} __attribute__ ((__packed__));
+#define SGPIO_HDR_MSG_TYPE_SGPIO	0x03
 
-struct sgpio_config_register {
-	uint32_t	reserved1:8;
-	uint32_t	reserved2:4;
-	uint32_t	version:4;	/* default = 0 */
-	uint32_t	gp_reg_count:4; /* read only */
-	uint32_t	cfg_reg_count:3;
-	uint32_t	sgpio_enable:1;
-	uint32_t	drive_count:8;
+DECLARE_SGPIO(hdr, msg_type, 4, 0xF)
+DECLARE_SGPIO(hdr, data_size, 8, 0xFF)
+DECLARE_SGPIO(hdr, msg_size, 16, 0xFF)
 
-	uint32_t	reserved3:8;
-	uint32_t	blink_gen_a:4;
-	uint32_t	blink_gen_b:4;
-	uint32_t	force_activity_off:4;
-	uint32_t	max_activity_on:4;
-	uint32_t	stretch_activity_off:4;
-	uint32_t	stretch_activity_on:4;
-} __attribute__ ((__packed__));
+typedef uint64_t sgpio_req_t;
 
-struct drive_leds {
-	uint8_t		error:3;
-	uint8_t		locate:2;
-	uint8_t		activity:3;
-} __attribute__ ((__packed__));
+#define SGPIO_REQ_REG_TYPE_CFG		0x00
+#define SGPIO_REQ_REG_TYPE_TX		0x03
+#define SGPIO_REQ_REG_TYPE_AMD		0xC0
 
-struct sgpio_transmit_register {
-	struct drive_leds	drive[4];
-} __attribute__ ((__packed__));
+DECLARE_SGPIO(req, frame_type, 0, 0xFFL)
+DECLARE_SGPIO(req, function, 8, 0xFFL)
+DECLARE_SGPIO(req, reg_type, 16, 0xFFL)
+DECLARE_SGPIO(req, reg_index, 24, 0xFFL)
+DECLARE_SGPIO(req, reg_count, 32, 0xFFL)
+
+typedef uint32_t sgpio_amd_t;
+
+DECLARE_SGPIO(amd, initiator, 0, 0x1)
+DECLARE_SGPIO(amd, polarity_flip, 4, 0x1)
+DECLARE_SGPIO(amd, return_to_normal, 5, 0x1)
+DECLARE_SGPIO(amd, bypass_enable, 6, 0x1)
+
+typedef uint64_t sgpio_cfg_t;
+
+DECLARE_SGPIO_RO(cfg, version, 8, 0xF);
+DECLARE_SGPIO_RO(cfg, gp_reg_count, 16, 0xF);
+DECLARE_SGPIO_RO(cfg, cfg_reg_count, 20, 0x7);
+DECLARE_SGPIO(cfg, gpio_enable, 23, 0x1);
+DECLARE_SGPIO_RO(cfg, drive_count, 24, 0xFF);
+
+DECLARE_SGPIO(cfg, blink_gen_a, 40, 0xFL);
+DECLARE_SGPIO(cfg, blink_gen_b, 44, 0xFL);
+DECLARE_SGPIO(cfg, max_on, 48, 0xFL);
+DECLARE_SGPIO(cfg, force_off, 52, 0xFL);
+DECLARE_SGPIO(cfg, stretch_on, 56, 0xFL);
+DECLARE_SGPIO(cfg, stretch_off, 60, 0xFL);
+
+#define DECLARE_LED(name, shift, mask)					\
+	uint32_t	_led_##name##_shift = shift;			\
+	uint64_t	_led_##name##_mask = mask;			\
+									\
+	static void set_##name##_led(drive_led_t *hdr, uint32_t val)	\
+	{								\
+		*hdr |= (val << _led_##name##_shift);			\
+	}								\
+									\
+	static uint32_t get_##name##_led(drive_led_t *hdr)		\
+	{								\
+		return (*hdr & _led_##name##_mask) >> _led_##name##_shift;\
+	}
+
+typedef uint8_t drive_led_t;
+
+DECLARE_LED(error, 0, 0x07);
+DECLARE_LED(locate, 3, 0x18);
+DECLARE_LED(activity, 5, 0xE0);
+
+typedef struct sgpio_transmit_register {
+	drive_led_t	drive[4];
+} __attribute__ ((__packed__)) sgpio_tx_t;
 
 struct amd_register {
-	struct sgpio_header_register hdr;
-	struct sgpio_request_register req;
-	struct sgpio_amd_register amd;
+	sgpio_hdr_t	hdr;
+	sgpio_req_t	req;
+	sgpio_amd_t	amd;
 } __attribute__ ((__packed__));
 
 struct config_register {
-	struct sgpio_header_register hdr;
-	struct sgpio_request_register req;
-	struct sgpio_config_register cfg;
+	sgpio_hdr_t	hdr;
+	sgpio_req_t	req;
+	sgpio_cfg_t	cfg;
 } __attribute__ ((__packed__));
 
 struct transmit_register {
-	struct sgpio_header_register hdr;
-	struct sgpio_request_register req;
-	struct sgpio_transmit_register tx;
+	sgpio_hdr_t	hdr;
+	sgpio_req_t	req;
+	sgpio_tx_t	tx;
 } __attribute__ ((__packed__));
 
 static uint8_t ibpi_pattern[] = {
@@ -133,6 +168,12 @@ static uint8_t ibpi_pattern[] = {
 	[IBPI_PATTERN_LOCATE]		= 0x07,
 	[IBPI_PATTERN_LOCATE_OFF]	= 0x00
 };
+
+struct drive_leds {
+	drive_led_t	error;
+	drive_led_t	locate;
+	drive_led_t	activity;
+} __attribute__ ((__packed__));
 
 #define INIT_LED(e, l, a)	{.error = e, .locate = l, .activity = a}
 static struct drive_leds tx_leds_blink_gen_a[] = {
@@ -287,12 +328,112 @@ static int _send_sgpio_register(const char *em_buffer_path, void *reg,
 	return 0;
 }
 
+static void _init_sgpio_hdr(sgpio_hdr_t *hdr, int data_size, int msg_size)
+{
+	memset(hdr, 0, sizeof(*hdr));
+
+	set_sgpio_hdr_msg_type(hdr, SGPIO_HDR_MSG_TYPE_SGPIO);
+	set_sgpio_hdr_data_size(hdr, data_size);
+	set_sgpio_hdr_msg_size(hdr, msg_size);
+}
+
+static void _dump_sgpio_hdr(sgpio_hdr_t *hdr)
+{
+	log_debug("SGPIO Header\n");
+	log_debug(REG_FMT_2, "message type", get_sgpio_hdr_msg_type(hdr),
+		  "data size", get_sgpio_hdr_data_size(hdr));
+	log_debug(REG_FMT_1, "message size", get_sgpio_hdr_msg_size(hdr));
+}
+
+static void _init_sgpio_req(sgpio_req_t *req, int frame_type, int function,
+			    int reg_type, int reg_index, int reg_count)
+{
+	memset(req, 0, sizeof(*req));
+
+	set_sgpio_req_frame_type(req, frame_type);
+	set_sgpio_req_function(req, function);
+	set_sgpio_req_reg_type(req, reg_type);
+	set_sgpio_req_reg_index(req, reg_index);
+	set_sgpio_req_reg_count(req, reg_count);
+}
+
+static void _dump_sgpio_req(sgpio_req_t *req)
+{
+	log_debug("SGPIO Request Register:\n");
+	log_debug(REG_FMT_2, "frame type", get_sgpio_req_frame_type(req),
+		  "function", get_sgpio_req_function(req));
+	log_debug(REG_FMT_2, "register type", get_sgpio_req_reg_type(req),
+		  "register index", get_sgpio_req_reg_index(req));
+	log_debug(REG_FMT_1, "register count", get_sgpio_req_reg_count(req));
+}
+
+static void _init_sgpio_cfg(sgpio_cfg_t *cfg, int gpio_enable, int blink_a,
+			    int blink_b, int force_off, int max_on,
+			    int stretch_off, int stretch_on)
+{
+	memset(cfg, 0, sizeof(*cfg));
+
+	if (gpio_enable)
+		set_sgpio_cfg_gpio_enable(cfg, 1);
+
+	set_sgpio_cfg_blink_gen_a(cfg, blink_a);
+	set_sgpio_cfg_blink_gen_b(cfg, blink_b);
+	set_sgpio_cfg_max_on(cfg, max_on);
+	set_sgpio_cfg_force_off(cfg, force_off);
+	set_sgpio_cfg_stretch_on(cfg, stretch_on);
+	set_sgpio_cfg_stretch_off(cfg, stretch_off);
+}
+
+static void _dump_sgpio_cfg(sgpio_cfg_t *cfg)
+{
+	log_debug("SGPIO Configuration Register:\n");
+	log_debug(REG_FMT_2, "version", get_sgpio_cfg_version(cfg),
+		  "gp register count", get_sgpio_cfg_gp_reg_count(cfg));
+	log_debug(REG_FMT_2, "cfg register count",
+		  get_sgpio_cfg_cfg_reg_count(cfg), "gpio enabled",
+		  get_sgpio_cfg_gpio_enable(cfg));
+	log_debug(REG_FMT_2, "drive count", get_sgpio_cfg_drive_count(cfg),
+		  "blink gen rate A", get_sgpio_cfg_blink_gen_a(cfg));
+
+	log_debug(REG_FMT_2, "blink gen rate B",
+		  get_sgpio_cfg_blink_gen_b(cfg), "force activity off",
+		  get_sgpio_cfg_force_off(cfg));
+	log_debug(REG_FMT_2, "max activity on", get_sgpio_cfg_max_on(cfg),
+		  "stretch activity off", get_sgpio_cfg_stretch_off(cfg));
+	log_debug(REG_FMT_1, "stretch activity on",
+		  get_sgpio_cfg_stretch_on(cfg));
+}
+
+static void _init_sgpio_amd(sgpio_amd_t *amd, int initiator, int polarity,
+			    int bypass, int normal)
+{
+	memset(amd, 0, sizeof(*amd));
+
+	set_sgpio_amd_initiator(amd, initiator);
+	set_sgpio_amd_polarity_flip(amd, polarity);
+	set_sgpio_amd_bypass_enable(amd, bypass);
+	set_sgpio_amd_return_to_normal(amd, normal);
+}
+
+static void _dump_sgpio_amd(sgpio_amd_t *amd)
+{
+	log_debug("SGPIO AMD Register\n");
+	log_debug(REG_FMT_2, "initiator", get_sgpio_amd_initiator(amd),
+		  "polarity", get_sgpio_amd_polarity_flip(amd));
+	log_debug(REG_FMT_2, "bypass enable", get_sgpio_amd_bypass_enable(amd),
+		  "return to normal", get_sgpio_amd_return_to_normal(amd));
+}
+
 static void _dump_cfg_register(struct config_register *cfg_reg)
 {
 	uint32_t *reg = (uint32_t *)cfg_reg;
 
-	log_debug("\tCFG Register: %08x %08x %08x %08x %08x", reg[0],
-		  reg[1], reg[2], reg[3], reg[4]);
+	log_info("CFG Register: %08x %08x %08x %08x %08x",
+		 reg[0], reg[1], reg[2], reg[3], reg[4]);
+
+	_dump_sgpio_hdr(&cfg_reg->hdr);
+	_dump_sgpio_req(&cfg_reg->req);
+	_dump_sgpio_cfg(&cfg_reg->cfg);
 }
 
 static int _write_cfg_register(const char *em_buffer_path,
@@ -300,50 +441,51 @@ static int _write_cfg_register(const char *em_buffer_path,
 {
 	struct config_register cfg_reg;
 
-	memset(&cfg_reg, 0, sizeof(cfg_reg));
-
-	cfg_reg.hdr.msg_type = MSG_TYPE_SGPIO;
-	cfg_reg.hdr.msg_size = sizeof(cfg_reg);
-
-	cfg_reg.req.frame_type = 0x40;
-	cfg_reg.req.function = 0x82;
-	cfg_reg.req.reg_type = REG_TYPE_CFG;
-	cfg_reg.req.reg_count = 2;
-
-	cfg_reg.cfg.sgpio_enable = 1;
-	cfg_reg.cfg.force_activity_off = 1;
-	cfg_reg.cfg.max_activity_on = 2;
+	_init_sgpio_hdr(&cfg_reg.hdr, 0, sizeof(cfg_reg));
+	_init_sgpio_req(&cfg_reg.req, 0x40, 0x82, SGPIO_REQ_REG_TYPE_CFG, 0, 2);
 
 	if (cache->blink_gen_a)
 		cache->blink_gen_b = ibpi_pattern[ibpi];
 	else
 		cache->blink_gen_a = ibpi_pattern[ibpi];
 
-	cfg_reg.cfg.blink_gen_a = cache->blink_gen_a;
-	cfg_reg.cfg.blink_gen_b = cache->blink_gen_b;
+	_init_sgpio_cfg(&cfg_reg.cfg, 1, cache->blink_gen_a, cache->blink_gen_b,
+			2, 1, 0, 0);
 
 	_dump_cfg_register(&cfg_reg);
 	return _send_sgpio_register(em_buffer_path, &cfg_reg, sizeof(cfg_reg));
+}
+
+static void _dump_sgpio_tx(sgpio_tx_t *tx)
+{
+	int i;
+
+	log_debug("SGPIO TX Register:\n");
+	for (i = 0; i < 4; i++) {
+		log_debug("\tdrive %d: error %x, locate %x, activity %x\n", i,
+			  get_error_led(&tx->drive[i]),
+			  get_locate_led(&tx->drive[i]),
+			  get_activity_led(&tx->drive[i]));
+	}
 }
 
 static void _dump_tx_register(struct transmit_register *tx_reg)
 {
 	uint32_t *reg = (uint32_t *)tx_reg;
 
-	log_debug("\tTX Register:  %08x %08x %08x %08x", reg[0],
-		  reg[1], reg[2], reg[3]);
+	log_info("TX Register:  %08x %08x %08x %08x", reg[0], reg[1],
+		 reg[2], reg[3]);
+
+	_dump_sgpio_hdr(&tx_reg->hdr);
+	_dump_sgpio_req(&tx_reg->req);
+	_dump_sgpio_tx(&tx_reg->tx);
 }
 
 static int _write_tx_register(const char *em_buffer_path,
 			      struct transmit_register *tx_reg)
 {
-	tx_reg->hdr.msg_type = MSG_TYPE_SGPIO;
-	tx_reg->hdr.msg_size = sizeof(tx_reg);
-
-	tx_reg->req.frame_type = 0x40;
-	tx_reg->req.function = 0x82;
-	tx_reg->req.reg_type = REG_TYPE_TX;
-	tx_reg->req.reg_count = 1;
+	_init_sgpio_hdr(&tx_reg->hdr, 0, sizeof(*tx_reg));
+	_init_sgpio_req(&tx_reg->req, 0x40, 0x82, SGPIO_REQ_REG_TYPE_TX, 0, 1);
 
 	_dump_tx_register(tx_reg);
 	return _send_sgpio_register(em_buffer_path, tx_reg, sizeof(*tx_reg));
@@ -356,6 +498,8 @@ static void _set_tx_drive_leds(struct transmit_register *tx_reg,
 	int i;
 	struct drive_leds *leds;
 
+	memset(&tx_reg->tx, 0, sizeof(tx_reg->tx));
+
 	if (cache->blink_gen_a)
 		leds = &tx_leds_blink_gen_b[ibpi];
 	else
@@ -366,9 +510,9 @@ static void _set_tx_drive_leds(struct transmit_register *tx_reg,
 	cache->leds[drive_bay].activity = leds->activity;
 
 	for (i = 0; i < 4; i++) {
-		tx_reg->tx.drive[i].error = cache->leds[i].error;
-		tx_reg->tx.drive[i].locate = cache->leds[i].locate;
-		tx_reg->tx.drive[i].activity = cache->leds[i].activity;
+		set_error_led(&tx_reg->tx.drive[i], cache->leds[i].error);
+		set_locate_led(&tx_reg->tx.drive[i], cache->leds[i].locate);
+		set_activity_led(&tx_reg->tx.drive[i], cache->leds[i].activity);
 	}
 }
 
@@ -396,8 +540,12 @@ static void _dump_amd_register(struct amd_register *amd_reg)
 {
 	uint32_t *reg = (uint32_t *)amd_reg;
 
-	log_debug("\tAMD Register: %08x %08x %08x %08x", reg[0],
-		  reg[1], reg[2], reg[3]);
+	log_info("AMD Register: %08x %08x %08x %08x", reg[0], reg[1],
+		 reg[2], reg[3]);
+
+	_dump_sgpio_hdr(&amd_reg->hdr);
+	_dump_sgpio_req(&amd_reg->req);
+	_dump_sgpio_amd(&amd_reg->amd);
 }
 
 static int _write_amd_register(const char *em_buffer_path,
@@ -405,19 +553,9 @@ static int _write_amd_register(const char *em_buffer_path,
 {
 	struct amd_register amd_reg;
 
-	memset(&amd_reg, 0, sizeof(amd_reg));
-
-	amd_reg.hdr.msg_type = MSG_TYPE_SGPIO;
-	amd_reg.hdr.msg_size = sizeof(amd_reg);
-
-	amd_reg.req.frame_type = 0x40;
-	amd_reg.req.function = 0x82;
-	amd_reg.req.reg_type = REG_TYPE_AMD;
-	amd_reg.req.reg_count = 1;
-
-	amd_reg.amd.return_to_normal = 1;
-	amd_reg.amd.bypass_enable = 1;
-	amd_reg.amd.initiator = drive->initiator;
+	_init_sgpio_hdr(&amd_reg.hdr, 0, sizeof(amd_reg));
+	_init_sgpio_req(&amd_reg.req, 0x40, 0x82, SGPIO_REQ_REG_TYPE_AMD, 0, 1);
+	_init_sgpio_amd(&amd_reg.amd, drive->initiator, 0, 1, 1);
 
 	_dump_amd_register(&amd_reg);
 	return _send_sgpio_register(em_buffer_path, &amd_reg, sizeof(amd_reg));
@@ -522,7 +660,8 @@ static int _set_ibpi(struct block_device *device, enum ibpi_pattern ibpi)
 	struct cache_entry *cache;
 	struct cache_entry cache_dup;
 
-	log_debug("Setting %s:", ibpi_str[ibpi]);
+	log_info("\n");
+	log_info("Setting %s...", ibpi_str[ibpi]);
 	log_debug("\tdevice: ...%s", strstr(device->sysfs_path, "/ata"));
 	log_debug("\tbuffer: ...%s", strstr(device->cntrl_path, "/ata"));
 
@@ -733,7 +872,7 @@ int amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	if ((ibpi == IBPI_PATTERN_DEGRADED) ||
 	    (ibpi == IBPI_PATTERN_FAILED_ARRAY))
-		__set_errno_and_return(EOPNOTSUPP);
+		__set_errno_and_return(ENOTSUP);
 
 	return _set_ibpi(device, ibpi);
 }

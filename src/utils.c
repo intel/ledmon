@@ -520,24 +520,34 @@ struct option longopt_all[] = {
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 
-void setup_options(struct option **longopt, char **shortopt, int *options, int
+void setup_options(struct option **_longopt, char **_shortopt, int *options, int
 		options_nr)
 {
+	struct option *longopt;
+	char *shortopt;
 	int i, j = 0;
 	struct option *opt;
-	*longopt = malloc(sizeof(struct option) * (options_nr + 1));
-	*shortopt = calloc(options_nr * 2 + 1, sizeof(char));
+
+	longopt = malloc(sizeof(struct option) * (options_nr + 1));
+	shortopt = calloc(options_nr * 2 + 1, sizeof(char));
+	if (!longopt || !shortopt) {
+		fprintf(stderr, "Out of memory\n");
+		exit(STATUS_OUT_OF_MEMORY);
+	}
 	for (i = 0; i < options_nr; i++) {
 		opt = &longopt_all[options[i]];
-		(*longopt)[i] = *opt;
+		longopt[i] = *opt;
 		if (opt->val != '\0') {
-			(*shortopt)[j++] = (char) opt->val;
+			shortopt[j++] = (char) opt->val;
 			if (opt->has_arg)
-				(*shortopt)[j++] = ':';
+				shortopt[j++] = ':';
 		}
 	}
-	longopt[i] = &longopt_all[OPT_NULL_ELEMENT];
+	longopt[i] = longopt_all[OPT_NULL_ELEMENT];
 	shortopt[j] = '\0';
+
+	*_longopt = longopt;
+	*_shortopt = shortopt;
 }
 
 /**

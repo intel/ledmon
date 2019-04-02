@@ -111,6 +111,8 @@ char *ahci_get_port_path(const char *path)
 	if (p == NULL)
 		return NULL;
 
+	if (sizeof(tmp) <= (p - path))
+		return NULL;
 	strncpy(tmp, path, p - path);
 	tmp[p - path] = '\0';
 	p = strrchr(tmp, PATH_DELIM);

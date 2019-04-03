@@ -299,11 +299,10 @@ void _log(enum log_level_enum loglevel, const char *buf,  ...)
 		if (s_log) {
 			_log_timestamp();
 			fprintf(s_log, "%s", lli->prefix);
-			fprintf(s_log, msg);
-			fprintf(s_log, END_LINE_STR);
+			fprintf(s_log, "%s\n", msg);
 			fflush(s_log);
 		}
-		syslog(lli->priority, msg);
+		syslog(lli->priority, "%s", msg);
 	}
 }
 

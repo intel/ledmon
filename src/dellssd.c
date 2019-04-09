@@ -216,7 +216,7 @@ int get_dell_server_type()
 	rc = ipmicmd(BMC_SA, 0, APP_NETFN, APP_GET_SYSTEM_INFO, 4, data,
 		     20, &rlen, rdata);
 	if (rc) {
-		log_error("Unable to issue IPMI command GetSystemInfo\n");
+		log_debug("Unable to issue IPMI command GetSystemInfo\n");
 		return 0;
 	}
 	switch (rdata[10]) {

@@ -262,7 +262,7 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 				device->phy_index = cntrl_init_smp(link, cntrl);
 				if (!dev_directly_attached(link)
 						&& !scsi_get_enclosure(device)) {
-					log_warning("Device initialization failed for '%s'",
+					log_debug("Device initialization failed for '%s'",
 							path);
 					free(device->sysfs_path);
 					free(device->cntrl_path);

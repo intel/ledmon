@@ -1,3 +1,11 @@
+### v0.92 / 2019-04-12
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.91-fixed...v0.92)
+
+Bug fixes
+* Silence warning and error messages.
+
+
 ### v0.91 / 2019-04-01
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.90...v0.91)

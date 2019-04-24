@@ -46,7 +46,8 @@ OBJECTS=\
 	$(OUTDIR)/utils.o	\
 	$(OUTDIR)/pci_slot.o	\
         $(OUTDIR)/vmdssd.o      \
-        $(OUTDIR)/udev.o
+        $(OUTDIR)/udev.o	\
+        $(OUTDIR)/amd_sgpio.o
 
 # Build components of ledmon application.
 LEDMON_OBJECTS=\

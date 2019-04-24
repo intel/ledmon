@@ -36,6 +36,7 @@
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "amd_sgpio.h"
 
 /**
  * @brief Name of controllers types.
@@ -48,7 +49,8 @@ static const char * const ctrl_type_str[] = {
 	[CNTRL_TYPE_DELLSSD] = "Dell SSD",
 	[CNTRL_TYPE_VMD]     = "VMD",
 	[CNTRL_TYPE_SCSI]    = "SCSI",
-	[CNTRL_TYPE_AHCI]    = "AHCI"
+	[CNTRL_TYPE_AHCI]    = "AHCI",
+	[CNTRL_TYPE_AMD_SGPIO] = "AMD SGPIO"
 };
 
 /**
@@ -81,7 +83,23 @@ static int _is_ahci_cntrl(const char *path)
 	if ((t != NULL) && (strcmp(t + 1, "ahci") != 0))
 		return 0;
 
+	return 1;
+}
+
+static int _is_intel_ahci_cntrl(const char *path)
+{
+	if (!_is_ahci_cntrl(path))
+		return 0;
+
 	return get_uint64(path, 0, "vendor") == 0x8086L;
+}
+
+static int _is_amd_ahci_cntrl(const char *path)
+{
+	if (!_is_ahci_cntrl(path))
+		return 0;
+
+	return get_uint64(path, 0, "vendor") == 0x1022L;
 }
 
 extern int get_dell_server_type(void);
@@ -162,8 +180,10 @@ static enum cntrl_type _get_type(const char *path)
 	} else if (_is_dellssd_cntrl(path)) {
 		type = CNTRL_TYPE_DELLSSD;
 	} else if (_is_storage_controller(path)) {
-		if (_is_ahci_cntrl(path))
+		if (_is_intel_ahci_cntrl(path))
 			type = CNTRL_TYPE_AHCI;
+		else if (_is_amd_ahci_cntrl(path))
+			type = CNTRL_TYPE_AMD_SGPIO;
 		else if (_is_isci_cntrl(path)
 				|| sysfs_enclosure_attached_to_cntrl(path)
 				|| _is_smp_cntrl(path))
@@ -336,6 +356,9 @@ struct cntrl_device *cntrl_device_init(const char *path)
 			break;
 		case CNTRL_TYPE_AHCI:
 			em_enabled = _ahci_em_messages(path);
+			break;
+		case CNTRL_TYPE_AMD_SGPIO:
+			em_enabled = amd_sgpio_em_enabled(path);
 			break;
 		default:
 			em_enabled = 0;

@@ -267,7 +267,7 @@ static void _determine(struct ibpi_state *state)
 	} else {
 		log_warning
 		    ("IBPI %s: missing block device(s)... pattern ignored.",
-		     ibpi_str[state->ibpi]);
+		     ibpi2str(state->ibpi));
 	}
 }
 
@@ -458,7 +458,7 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 		list_append(&state->block_list, blk1);
 	else
 		log_info("%s: %s: device already on the list.",
-			 ibpi_str[state->ibpi], path);
+			 ibpi2str(state->ibpi), path);
 	return STATUS_SUCCESS;
 }
 

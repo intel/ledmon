@@ -661,7 +661,7 @@ static int _set_ibpi(struct block_device *device, enum ibpi_pattern ibpi)
 	struct cache_entry cache_dup;
 
 	log_info("\n");
-	log_info("Setting %s...", ibpi_str[ibpi]);
+	log_info("Setting %s...", ibpi2str(ibpi));
 	log_debug("\tdevice: ...%s", strstr(device->sysfs_path, "/ata"));
 	log_debug("\tbuffer: ...%s", strstr(device->cntrl_path, "/ata"));
 

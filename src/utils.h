@@ -27,6 +27,7 @@
 #include "list.h"
 #include "status.h"
 #include "syslog.h"
+#include "ibpi.h"
 
 /**
  * Maximum number of bytes in temporary buffer. It is used for local variables.
@@ -354,4 +355,7 @@ void setup_options(struct option **longopt, char **shortopt, int *options,
 			int options_nr);
 int get_option_id(const char *optarg);
 status_t set_verbose_level(int log_level);
+
+const char *ibpi2str(enum ibpi_pattern ibpi);
+
 #endif				/* _UTILS_H_INCLUDED_ */

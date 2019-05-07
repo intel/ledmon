@@ -487,7 +487,7 @@ static void _set_block_state(struct block_device *block, enum ibpi_pattern ibpi)
 	char *debug_dev = strrchr(block->sysfs_path, '/');
 	debug_dev = debug_dev ? debug_dev + 1 : block->sysfs_path;
 	log_debug("(%s): device: %s, state: %s", __func__, debug_dev,
-		  ibpi_str[ibpi]);
+		  ibpi2str(ibpi));
 	if (block->ibpi < ibpi)
 		block->ibpi = ibpi;
 }

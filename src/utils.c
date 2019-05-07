@@ -616,3 +616,21 @@ status_t set_verbose_level(int log_level)
 	}
 	return STATUS_CMDLINE_ERROR;
 }
+
+const char *ibpi2str(enum ibpi_pattern ibpi)
+{
+	static char buf[20];
+	const char *ret;
+
+	if (ibpi >= 0 && ibpi < ibpi_pattern_count)
+		ret = ibpi_str[ibpi];
+	else
+		ret = NULL;
+
+	if (!ret) {
+		snprintf(buf, sizeof(buf), "(unknown: %d)", ibpi);
+		ret = buf;
+	}
+
+	return ret;
+}

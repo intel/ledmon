@@ -667,8 +667,8 @@ static void _add_block(struct block_device *block)
 
 		if (ibpi != temp->ibpi && ibpi <= IBPI_PATTERN_REMOVED) {
 			log_info("CHANGE %s: from '%s' to '%s'.",
-				 temp->sysfs_path, ibpi_str[ibpi],
-				 ibpi_str[temp->ibpi]);
+				 temp->sysfs_path, ibpi2str(ibpi),
+				 ibpi2str(temp->ibpi));
 		}
 		/* Check if name of the device changed.*/
 		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
@@ -682,7 +682,7 @@ static void _add_block(struct block_device *block)
 		temp = block_device_duplicate(block);
 		if (temp != NULL) {
 			log_info("NEW %s: state '%s'.", temp->sysfs_path,
-				 ibpi_str[temp->ibpi]);
+				 ibpi2str(temp->ibpi));
 			list_append(&ledmon_block_list, temp);
 		}
 	}
@@ -714,8 +714,8 @@ static void _send_msg(struct block_device *block)
 	    block->ibpi == IBPI_PATTERN_REMOVED) {
 		if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
 			log_info("CHANGE %s: from '%s' to '%s'.",
-				 block->sysfs_path, ibpi_str[block->ibpi],
-				 ibpi_str[IBPI_PATTERN_FAILED_DRIVE]);
+				 block->sysfs_path, ibpi2str(block->ibpi),
+				 ibpi2str(IBPI_PATTERN_FAILED_DRIVE));
 			block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
 		} else {
 			char *host = strstr(block->sysfs_path, "host");

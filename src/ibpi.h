@@ -93,8 +93,9 @@ enum ibpi_pattern {
 	SES_REQ_DEV_OFF,
 	SES_REQ_FAULT,
 	SES_REQ_PRDFAIL,
+	ibpi_pattern_count,
 };
 
-extern const char *ibpi_str[];
+extern const char *ibpi_str[ibpi_pattern_count];
 
 #endif				/* _IBPI_H_INCLUDED_ */

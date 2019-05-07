@@ -673,7 +673,7 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if (ret) {
 		log_warning
 		    ("Unable to send %s message to %s. Device is missing?",
-		     ibpi_str[ibpi], strstr(device->sysfs_path, "host"));
+		     ibpi2str(ibpi), strstr(device->sysfs_path, "host"));
 		return ret;
 	}
 

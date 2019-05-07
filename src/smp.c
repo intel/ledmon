@@ -468,16 +468,16 @@ int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 		if (c++) {
 			log_debug
 			    ("pattern %s not supported for device (/dev/%s)",
-			     ibpi_str[ibpi], c);
+			     ibpi2str(ibpi), c);
 			fprintf(stderr,
 				"%s(): pattern %s not supported for device (/dev/%s)\n",
-				__func__, ibpi_str[ibpi], c);
+				__func__, ibpi2str(ibpi), c);
 		} else {
 			log_debug("pattern %s not supported for device %s",
-				  ibpi_str[ibpi], device->sysfs_path);
+				  ibpi2str(ibpi), device->sysfs_path);
 			fprintf(stderr,
 				"%s(): pattern %s not supported for device\n\t(%s)\n",
-				__func__, ibpi_str[ibpi], device->sysfs_path);
+				__func__, ibpi2str(ibpi), device->sysfs_path);
 		}
 		__set_errno_and_return(ENOTSUP);
 	}

@@ -178,34 +178,31 @@ static void _ledmon_fini(int __attribute__ ((unused)) status, void *program_name
  *
  * @param[in]     status            Status given in the last call to exit()
  *                                  function.
- * @param[in]     ignore            Pointer to placeholder where ignore flag is
- *                                  stored. If flag is set 0 then parent process
- *                                  is exiting, otherwise a child is exiting.
- *                                  This argument must not be NULL pointer.
+ * @param[in]     arg               Argument passed to on_exit().
  *
  * @return The function does not return a value.
  */
-static void _ledmon_status(int status, void *ignore)
+static void _ledmon_status(int status, void *arg)
 {
-	struct log_level_info *lli;
 	int log_level;
 	char message[4096];
+	int ignore = *((int *)arg);
 
-	memset(message, 0, 4096);
-	if (*((int *)ignore) != 0) {
-		log_level = LOG_LEVEL_INFO;
-	} else if (status != STATUS_SUCCESS) {
-		log_level = LOG_LEVEL_ERROR;
-		snprintf(message, sizeof(message), "parent ");
-	} else
+	if (ignore)
 		return;
 
-	strncat(message, "exit status is", sizeof(message));
-	lli = &log_level_infos[log_level];
-	if (get_log_fd() >= 0)
-		_log(log_level, "%s %s.", message, strstatus(status));
+	if (status == STATUS_SUCCESS)
+		log_level = LOG_LEVEL_INFO;
 	else
-		syslog(lli->priority, "%s %s.", message, strstatus(status));
+		log_level = LOG_LEVEL_ERROR;
+
+	snprintf(message, sizeof(message), "exit status is %s.",
+		 strstatus(status));
+
+	if (get_log_fd() >= 0)
+		_log(log_level, message);
+	else
+		syslog(log_level_infos[log_level].priority, message);
 }
 
 /**
@@ -854,13 +851,14 @@ static void _close_parent_fds(void)
 int main(int argc, char *argv[])
 {
 	status_t status = STATUS_SUCCESS;
+	int ignore = 0;
 
 	setup_options(&longopt, &shortopt, possible_params,
 			possible_params_size);
 	set_invocation_name(argv[0]);
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
-	if (on_exit(_ledmon_status, &terminate))
+	if (on_exit(_ledmon_status, &ignore))
 		return STATUS_ONEXIT_ERROR;
 
 	if (_cmdline_parse_non_daemonise(argc, argv) != STATUS_SUCCESS)
@@ -900,8 +898,10 @@ int main(int argc, char *argv[])
 			log_debug("main(): fork() failed (errno=%d).", errno);
 			exit(EXIT_FAILURE);
 		}
-		if (pid > 0)
+		if (pid > 0) {
+			ignore = 1; /* parent: don't print exit status */
 			exit(EXIT_SUCCESS);
+		}
 
 		pid_t sid = setsid();
 

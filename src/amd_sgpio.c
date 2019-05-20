@@ -265,7 +265,6 @@ static int _open_and_map_cache(void)
 static struct cache_entry *_get_cache(struct amd_drive *drive)
 {
 	int rc, index;
-	int base_port;
 
 	rc = _open_and_map_cache();
 	if (rc)
@@ -280,8 +279,8 @@ static struct cache_entry *_get_cache(struct amd_drive *drive)
 	 *	cache_entry[1] => drive 4 to drive 7
 	 *	cache_entry[n] => drive (4*n) to drive (4*n + 3)
 	 */
-	base_port = (drive->ata_port / 4) * 4;
-	index = base_port / 4;
+
+	index = (drive->ata_port / 4);
 
 	return &sgpio_cache[index];
 }
@@ -289,12 +288,13 @@ static struct cache_entry *_get_cache(struct amd_drive *drive)
 static int _send_sgpio_register(const char *em_buffer_path, void *reg,
 				int reg_len)
 {
-	int fd, count;
+	int count;
 	int saved_errno;
 	int retries = 3;
 
 	do {
-		fd = open(em_buffer_path, O_WRONLY);
+		int fd = open(em_buffer_path, O_WRONLY);
+
 		if (fd < 0) {
 			log_error("Couldn't open EM buffer %s: %s",
 				  em_buffer_path, strerror(errno));
@@ -313,11 +313,9 @@ static int _send_sgpio_register(const char *em_buffer_path, void *reg,
 		 */
 		usleep(1000);
 
-		if (count == reg_len || errno != EBUSY)
+		if (count == reg_len || saved_errno != EBUSY)
 			break;
 	} while (--retries != 0);
-
-	close(fd);
 
 	if (count != reg_len) {
 		log_error("Couldn't write SGPIO register: %s",
@@ -616,6 +614,7 @@ static int _get_amd_drive(const char *start_path, struct amd_drive *drive)
 
 	/* Start the search at the ataXX directory */
 	strncpy(ata_dir, start_path, PATH_MAX);
+	ata_dir[PATH_MAX - 1] = 0;
 	a = p = strstr(ata_dir, "ata");
 	if (!p) {
 		log_info("Couldn't find ata path for %s", start_path);
@@ -624,6 +623,8 @@ static int _get_amd_drive(const char *start_path, struct amd_drive *drive)
 
 	/* terminate the path after the ataXX/ part */
 	p = strchr(p, '/');
+	if (!p)
+		return 1;
 	*p = '\0';
 
 	/* skip past 'ata' to get the ata port number */
@@ -637,6 +638,9 @@ static int _get_amd_drive(const char *start_path, struct amd_drive *drive)
 	}
 
 	drive->port = get_int(path, -1, "port_no");
+
+	if (drive->port == -1)
+		return -1;
 
 	drive->drive_bay = 8 - drive->port;
 	if (drive->drive_bay < 4) {
@@ -822,7 +826,7 @@ int amd_sgpio_em_enabled(const char *path)
 		return 0;
 	}
 
-	/* Validate that enlosure management is supported */
+	/* Validate that enclosure management is supported */
 	p = get_text(em_path, "em_message_supported");
 	if (!p) {
 		log_info("Couldn't get 'em_messages_supported' for %s",

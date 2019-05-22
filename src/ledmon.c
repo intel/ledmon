@@ -202,7 +202,7 @@ static void _ledmon_status(int status, void *arg)
 	if (get_log_fd() >= 0)
 		_log(log_level, message);
 	else
-		syslog(log_level_infos[log_level].priority, message);
+		syslog(log_level_infos[log_level].priority, "%s", message);
 }
 
 /**

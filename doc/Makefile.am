@@ -16,40 +16,20 @@
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Installation directory
-DESTDIR?=
-MAN_INSTDIR=$(DESTDIR)/usr/share/man
-MAN8_INSTDIR=$(MAN_INSTDIR)/man8
-MAN5_INSTDIR=$(MAN_INSTDIR)/man5
+CLEANFILES = ledmon.conf.5.gz ledmon.8.gz ledctl.8.gz
+EXTRA_DIST = ledmon.conf.pod ledmon.pod ledctl.pod
 
-RELEASE_DATE?="April 2019"
-RELEASE_VER?=0.92
-
-default: all
+dist_man5_MANS = ledmon.conf.5.gz
+dist_man8_MANS = ledmon.8.gz ledctl.8.gz
 
 ledmon.conf.5.gz: ledmon.conf.pod
-	pod2man -r "LEDMON.CONF Version $(RELEASE_VER) $(BUILD_LABEL)" -d $(RELEASE_DATE) \
+	pod2man -r "LEDMON.CONF Version $(PACKAGE_VERSION) $(BUILD_LABEL)" -d "@PACKAGE_DATE@" \
 		-s 5 -n ledmon.conf -c "Intel(R) Enclosure LED Utilities Config" $< | gzip -9f > $@
 
 ledmon.8.gz: ledmon.pod
-	pod2man -r "LEDMON Version $(RELEASE_VER) $(BUILD_LABEL)" -d $(RELEASE_DATE) \
+	pod2man -r "LEDMON Version $(PACKAGE_VERSION) $(BUILD_LABEL)" -d "@PACKAGE_DATE@" \
 		-s 8 -n ledmon -c "Intel(R) Enclosure LED Monitor Service" $< | gzip -9f > $@
 
 ledctl.8.gz: ledctl.pod
-	pod2man -r "LEDCTL Version $(RELEASE_VER) $(BUILD_LABEL)" -d $(RELEASE_DATE) \
-		-s 8 -n ledctl -c "Intel(R) Enclosure LED Control Application" $< | gzip -9f > $@	
-
-install: all
-	install -D -m 644 ./ledmon.8.gz $(MAN8_INSTDIR)/ledmon.8.gz
-	install -D -m 644 ./ledctl.8.gz $(MAN8_INSTDIR)/ledctl.8.gz
-	install -D -m 644 ./ledmon.conf.5.gz $(MAN5_INSTDIR)/ledmon.conf.5.gz
-
-uninstall:
-	rm -f $(MAN8_INSTDIR)/ledmon.8.gz $(MAN8_INSTDIR)/ledctl.8.gz
-	rm -f $(MAN5_INSTDIR)/ledmon.conf.5.gz
-
-all: ledmon.conf.5.gz ledmon.8.gz ledctl.8.gz
-
-clean:
-	rm -f ledmon.8 ledmon.8.gz ledctl.8 ledctl.8.gz
-	rm -f ledmon.conf.5 ledmon.conf.5.gz
+	pod2man -r "LEDCTL Version $(PACKAGE_VERSION) $(BUILD_LABEL)" -d "@PACKAGE_DATE@" \
+		-s 8 -n ledctl -c "Intel(R) Enclosure LED Control Application" $< | gzip -9f > $@

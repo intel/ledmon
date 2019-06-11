@@ -619,6 +619,9 @@ status_t set_verbose_level(int log_level)
 
 const char *ibpi2str(enum ibpi_pattern ibpi)
 {
+#ifdef _TEST_CONFIG
+	return NULL;
+#else
 	static char buf[20];
 	const char *ret;
 
@@ -633,4 +636,5 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 	}
 
 	return ret;
+#endif
 }

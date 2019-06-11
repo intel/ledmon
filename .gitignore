@@ -9,3 +9,15 @@ ledctl
 *.bak
 .depend
 *.swp
+
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config.h.in
+build-aux/
+configure
+config_ac.h
+config.log
+config.status
+stamp-h1

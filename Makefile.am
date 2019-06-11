@@ -16,17 +16,10 @@
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Installation directory prefix.
-DESTDIR?=
+if SYSTEMD_CONDITION
+  OPTIONAL_SUBDIR = systemd
+endif
 
-# Installation directory of ledmon systemd service unit.
-SYSTEMD_SERVICE_INSTDIR=$(DESTDIR)$(shell pkg-config systemd --variable=systemdsystemunitdir)
-
-default:
-
-uninstall:
-	rm -f $(SYSTEMD_SERVICE_INSTDIR)/ledmon.service
-
-install:
-	install -D ./ledmon.service $(SYSTEMD_SERVICE_INSTDIR)/ledmon.service
-
+SUBDIRS = doc src $(OPTIONAL_SUBDIR)
+EXTRA_DIST = config/config.h systemd/ledmon.service
+dist_doc_DATA = README

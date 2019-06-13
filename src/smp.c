@@ -121,26 +121,6 @@ struct smp_write_request_frame_header {
 	/* uint32_t crc; */
 } __attribute__ ((__packed__));
 
-struct sgpio_cfg_0_frame {
-	uint8_t reserved;
-	uint8_t reserved1:4;
-	uint8_t version:4;
-	uint8_t gp_register_count:4;
-	uint8_t cfg_register_count:3;
-	uint8_t enable:1;
-	uint8_t supported_drive_cnt;
-} __attribute__ ((__packed__));
-
-struct sgpio_cfg_1_frame {
-	uint8_t reserved;
-	uint8_t blink_gen_a:4;
-	uint8_t blink_gen_b:4;
-	uint8_t forced_act_off:4;
-	uint8_t max_act_on:4;
-	uint8_t stretch_act_off:4;
-	uint8_t stretch_act_on:4;
-} __attribute__ ((__packed__));
-
 /**
  * to_sas_gpio_gp_bit - given the gpio frame data find the byte/bit position of 'od'
  * @od: od bit to find

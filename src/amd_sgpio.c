@@ -581,7 +581,7 @@ static int _find_file_path(const char *start_path, const char *filename,
 			continue;
 
 		if (strncmp(dir_name, filename, strlen(filename)) == 0) {
-			char tmp[PATH_MAX];
+			char tmp[PATH_MAX+1];
 
 			strncpy(tmp, dir_path, path_len);
 			snprintf(path, path_len, "%s", dirname(tmp));
@@ -738,12 +738,12 @@ static int _amd_sgpio_init_one(const char *path, struct amd_drive *drive,
 static int _amd_sgpio_init(const char *path)
 {
 	int rc;
-	char em_path[PATH_MAX];
+	char em_path[PATH_MAX+10]; /* 10 == strlen("/em_buffer") */
 	struct amd_drive drive;
 	struct cache_entry *cache;
 	struct cache_entry cache_dup;
 
-	snprintf(em_path, PATH_MAX, "%s/em_buffer", path);
+	snprintf(em_path, PATH_MAX+10, "%s/em_buffer", path);
 
 	rc = _get_amd_drive(em_path, &drive);
 	if (rc) {

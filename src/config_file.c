@@ -274,7 +274,7 @@ int ledmon_write_shared_conf(void)
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		 "BLINK_ON_MIGR=%d\n", conf.blink_on_migration);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "LOG_LEVEL=%d\n", conf.log_level);
+		 "LOG_LEVEL=%u\n", conf.log_level);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		 "LOG_PATH=%s\n", conf.log_path);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),

@@ -631,7 +631,7 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 		ret = NULL;
 
 	if (!ret) {
-		snprintf(buf, sizeof(buf), "(unknown: %d)", ibpi);
+		snprintf(buf, sizeof(buf), "(unknown: %u)", ibpi);
 		ret = buf;
 	}
 

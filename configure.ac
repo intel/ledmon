@@ -1,6 +1,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([ledmon], [0.92])
+AC_CONFIG_MACRO_DIR([m4])
 AC_SUBST([PACKAGE_DATE], "April 2019")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
@@ -12,6 +13,17 @@ AC_CONFIG_HEADERS([config_ac.h])
 
 AM_CFLAGS='-Wall -I../config'
 AM_CPPFLAGS='-D_DEBUG -D_GNU_SOURCE -D_DEFAULT_SOURCE -DDMALLOC_DISABLE -DBUILD_LABEL=\""$(BUILD_LABEL)"\"'
+
+
+AC_DEFUN([AX_AM_CFLAGS_ADD],[AX_CHECK_COMPILE_FLAG($1, AM_CFLAGS="$AM_CFLAGS $1")])
+AX_AM_CFLAGS_ADD([-Wformat -Werror=format-security])
+AX_AM_CFLAGS_ADD([-Werror=format-overflow=2])
+AX_AM_CFLAGS_ADD([-Werror=format-truncation=1])
+AX_AM_CFLAGS_ADD([-Werror=shift-negative-value])
+AX_AM_CFLAGS_ADD([-Werror=alloca])
+AX_AM_CFLAGS_ADD([-Werror=missing-field-initializers])
+AX_AM_CFLAGS_ADD([-Werror])
+AX_AM_CFLAGS_ADD([-Werror=format-signedness])
 
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CPPFLAGS])

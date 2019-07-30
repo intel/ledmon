@@ -243,7 +243,7 @@ static void print_page10(struct ses_pages *sp)
 	while (ai < sp->page10->buf + sp->page10->len) {
 		printf("%s()[%d]: Inv: %d, EIP: %d, Proto: 0x%04x\n", __func__,
 		       i++, ((ai[0] & 0x80) >> 7), ((ai[0] & 0x10) >> 4),
-		       ai[0] & 0xf);
+		       (unsigned int) (ai[0] & 0xf));
 		printf("\tDescriptor len (x-1): %d\n", ai[1] + 1);
 		eip = ai[0] & 0x10;
 		if (eip)
@@ -264,22 +264,23 @@ static void print_page10(struct ses_pages *sp)
 			}
 			sas += 2;
 			printf("\tDevice type: 0x%01x\n",
-			       ((sas[0] & 0x70) >> 4));
+				(unsigned int)((sas[0] & 0x70) >> 4));
 			printf("\tSMP Initiator Port: 0x%01x\n",
-			       ((sas[2] & 2) >> 1));
+				(unsigned int)((sas[2] & 2) >> 1));
 			printf("\tSTP Initiator Port: 0x%01x\n",
-			       ((sas[2] & 4) >> 2));
+				(unsigned int)((sas[2] & 4) >> 2));
 			printf("\tSSP Initiator Port: 0x%01x\n",
-			       ((sas[2] & 8) >> 3));
-			printf("\tSATA DEVICE: 0x%01x\n", (sas[3] & 1));
+				(unsigned int)((sas[2] & 8) >> 3));
+			printf("\tSATA DEVICE: 0x%01x\n",
+				(unsigned int)(sas[3] & 1));
 			printf("\tSMP Target Port: 0x%01x\n",
-			       ((sas[3] & 2) >> 1));
+				(unsigned int)((sas[3] & 2) >> 1));
 			printf("\tSTP Target Port: 0x%01x\n",
-			       ((sas[3] & 4) >> 2));
+				(unsigned int)((sas[3] & 4) >> 2));
 			printf("\tSSP Target Port: 0x%01x\n",
-			       ((sas[3] & 8) >> 3));
+				(unsigned int)((sas[3] & 8) >> 3));
 			printf("\tSATA Port Selector: 0x%01x\n",
-			       ((sas[3] & 0X80) >> 7));
+				(unsigned int)((sas[3] & 0X80) >> 7));
 			printf
 			    ("\tAttached SAS Address: 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
 			     sas[4], sas[5], sas[6], sas[7], sas[8], sas[9],
@@ -291,7 +292,7 @@ static void print_page10(struct ses_pages *sp)
 			printf("\tPHY Identified: 0x%01x\n", sas[20]);
 		} else
 			printf("\tProtocol not SAS: 0x%02x, skipping\n",
-			       (ai[0] & 0xf));
+				(unsigned int)(ai[0] & 0xf));
 		/* */
 		ai += len;
 	}

@@ -5,6 +5,7 @@ AC_SUBST([PACKAGE_DATE], "April 2019")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.
+AM_PROG_CC_C_O
 AC_PROG_CC_C99
 AC_PROG_INSTALL
 AC_CONFIG_HEADERS([config_ac.h])

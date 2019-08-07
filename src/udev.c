@@ -152,6 +152,7 @@ static void _clear_raid_dev_info(struct block_device *block, char *raid_dev)
 int handle_udev_event(struct list *ledmon_block_list)
 {
 	struct udev_device *dev;
+	int status = -1;
 
 	dev = udev_monitor_receive_device(udev_monitor);
 	if (dev) {
@@ -160,8 +161,10 @@ int handle_udev_event(struct list *ledmon_block_list)
 		const char *syspath = udev_device_get_syspath(dev);
 		struct block_device *block = NULL;
 
-		if (act == UDEV_ACTION_UNKNOWN)
-			return 1;
+		if (act == UDEV_ACTION_UNKNOWN) {
+			status = 1;
+			goto exit;
+		}
 
 		list_for_each(ledmon_block_list, block) {
 			if (_compare(block, syspath))
@@ -178,9 +181,11 @@ int handle_udev_event(struct list *ledmon_block_list)
 				log_debug("REMOVED %s", dev_name);
 				list_for_each(ledmon_block_list, block)
 					_clear_raid_dev_info(block, dev_name);
-				return 0;
+				status = 0;
+				goto exit;
 			}
-			return 1;
+			status = 1;
+			goto exit;
 		}
 
 		if (act == UDEV_ACTION_ADD) {
@@ -193,10 +198,15 @@ int handle_udev_event(struct list *ledmon_block_list)
 			block->ibpi = IBPI_PATTERN_REMOVED;
 		} else {
 			/* not interesting event */
-			return 1;
+			status = 1;
+			goto exit;
 		}
-		return 0;
+		status = 0;
 	} else {
 		return -1;
 	}
+
+exit:
+	udev_device_unref(dev);
+	return status;
 }

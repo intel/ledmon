@@ -160,7 +160,7 @@ ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	req.msg.data = data;
 	rc = ioctl(fd, IPMICTL_SEND_COMMAND, (void *)&req);
 	if (rc != 0) {
-		perror("send");
+		log_debug("send");
 		goto end;
 	}
 
@@ -169,7 +169,7 @@ ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	FD_SET(fd, &rfd);
 	rc = select(fd + 1, &rfd, NULL, NULL, NULL);
 	if (rc < 0) {
-		perror("select");
+		log_debug("select");
 		goto end;
 	}
 
@@ -180,14 +180,13 @@ ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	rcv.addr_len = sizeof(raddr);
 	rc = ioctl(fd, IPMICTL_RECEIVE_MSG_TRUNC, (void *)&rcv);
 	if (rc != 0 && errno == EMSGSIZE)
-		printf("too short..\n");
+		log_debug("too short..\n");
 	if (rc != 0 && errno != EMSGSIZE) {
-		fprintf(stderr, "%d ", errno);
-		perror("recv");
+		log_debug("recv %d", errno);
 		goto end;
 	}
 	if (rcv.msg.data[0])
-		printf("IPMI Error: %.2x\n", rcv.msg.data[0]);
+		log_debug("IPMI Error: %.2x\n", rcv.msg.data[0]);
 	rc = 0;
 	*rlen = rcv.msg.data_len - 1;
 	memcpy(resp, rcv.msg.data + 1, *rlen);
@@ -229,7 +228,7 @@ int get_dell_server_type()
 		gen = rdata[10];
 		return gen;
 	default:
-		log_error("Unable to determine Dell Server type\n");
+		log_debug("Unable to determine Dell Server type\n");
 		break;
 	}
 	return 0;

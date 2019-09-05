@@ -819,6 +819,17 @@ int amd_sgpio_em_enabled(const char *path)
 	uint32_t caps;
 	char em_path[PATH_MAX];
 
+	/* Check that libahci module was loaded with ahci_em_messages=1 */
+	p = get_text("/sys/module/libahci/parameters", "ahci_em_messages");
+	if (!p || (p && *p == 'N')) {
+		log_info("Kernel libahci module enclosure management messaging not enabled.\n");
+		if (p)
+			free(p);
+		return 0;
+	}
+
+	free(p);
+
 	/* Find base path for enclosure management */
 	found = _find_file_path(path, "em_buffer", em_path, PATH_MAX);
 	if (!found) {

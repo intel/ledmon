@@ -913,9 +913,8 @@ int main(int argc, char *argv[])
 		_close_parent_fds();
 
 		int t = open("/dev/null", O_RDWR);
-
-		dup(t);
-		dup(t);
+		UNUSED(dup(t));
+		UNUSED(dup(t));
 	}
 
 	umask(027);

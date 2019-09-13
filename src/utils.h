@@ -30,6 +30,12 @@
 #include "ibpi.h"
 
 /**
+ * Value is intentionally unused.
+ * Macro to prevent compiler from raising unused result warning.
+ */
+#define UNUSED(x) do { if (x); } while (0)
+
+/**
  * Maximum number of bytes in temporary buffer. It is used for local variables.
  */
 #define BUFFER_MAX          128

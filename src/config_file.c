@@ -261,7 +261,10 @@ int ledmon_write_shared_conf(void)
 	if (fd == -1)
 		return STATUS_FILE_OPEN_ERROR;
 
-	ftruncate(fd, sizeof(buf));
+	if (ftruncate(fd, sizeof(buf)) != 0) {
+		close(fd);
+		return STATUS_FILE_WRITE_ERROR;
+	}
 
 	shared_mem_ptr = mmap(NULL, sizeof(buf), PROT_WRITE, MAP_SHARED, fd, 0);
 	if (shared_mem_ptr == MAP_FAILED) {

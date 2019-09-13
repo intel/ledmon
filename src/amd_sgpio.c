@@ -248,8 +248,12 @@ static int _open_and_map_cache(void)
 	flock(cache_fd, LOCK_EX);
 
 	fstat(cache_fd, &sbuf);
-	if (sbuf.st_size == 0)
-		ftruncate(cache_fd, CACHE_SZ);
+	if (sbuf.st_size == 0) {
+		if (ftruncate(cache_fd, CACHE_SZ) != 0) {
+			log_error("Couldn't truncate SGPIO cache: %s", strerror(errno));
+			return -1;
+		}
+	}
 
 	sgpio_cache = mmap(NULL, CACHE_SZ, PROT_READ | PROT_WRITE,
 			   MAP_SHARED, cache_fd, 0);

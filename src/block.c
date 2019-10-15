@@ -227,7 +227,8 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 				return NULL;
 			host_name = get_path_hostN(link);
 			if (host_name) {
-				sscanf(host_name, "host%d", &host_id);
+				if (sscanf(host_name, "host%d", &host_id) != 1)
+					host_id = -1;
 				free(host_name);
 			}
 			flush_fn = _get_flush_fn(cntrl, link);

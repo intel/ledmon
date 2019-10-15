@@ -605,7 +605,9 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 				 * Y is real phy we need.
 				 * This can also be found
 				 * in phy_identifier file */
-				sscanf(de->d_name, "phy-%d:%d", &host, &port);
+				if (sscanf(de->d_name, "phy-%d:%d", &host, &port) != 2)
+					continue;
+
 				break;
 			}
 		}

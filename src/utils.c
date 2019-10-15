@@ -99,11 +99,14 @@ int get_bool(const char *path, int defval, const char *name)
 uint64_t get_uint64(const char *path, uint64_t defval, const char *name)
 {
 	char *p = get_text(path, name);
+	uint64_t retval = defval;
+
 	if (p) {
-		sscanf(p, "%" SCNx64, &defval);
+		if (sscanf(p, "%" SCNx64, &defval) == 1)
+			retval = defval;
 		free(p);
 	}
-	return defval;
+	return retval;
 }
 
 /*

@@ -1,3 +1,22 @@
+### v0.93 / 2019-10-17
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.92...v0.93)
+
+Enhancements
+
+* Support for AMD SGPIO enclosure management
+* Migration to GNU Autotools build system
+* Added more strict compilation flags
+
+Bug fixes
+
+* Fixed segfault when a value is missing from ibpi_str
+* Use proper format string with syslog()
+* Fixed issues reported by static analysis
+* Removed unused SGPIO structures
+* Added udev_device reference clean-up
+* Hidden ipmi error messages on non-dell platforms
+
 ### v0.92 / 2019-04-12
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.91-fixed...v0.92)

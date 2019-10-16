@@ -119,7 +119,7 @@ const char *ibpi_str[] = {
  * information about the version of monitor service.
  */
 static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %d.%d %s\n"
-			      "Copyright (C) 2009-2018 Intel Corporation.\n";
+			      "Copyright (C) 2009-2019 Intel Corporation.\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line

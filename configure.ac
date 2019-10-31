@@ -22,7 +22,6 @@ AX_AM_CFLAGS_ADD([-Werror=format-truncation=1])
 AX_AM_CFLAGS_ADD([-Werror=shift-negative-value])
 AX_AM_CFLAGS_ADD([-Werror=alloca])
 AX_AM_CFLAGS_ADD([-Werror=missing-field-initializers])
-AX_AM_CFLAGS_ADD([-Werror])
 AX_AM_CFLAGS_ADD([-Werror=format-signedness])
 
 AC_SUBST([AM_CFLAGS])

@@ -228,7 +228,7 @@ I<failure> or I<disk_failed> is translated to I<ses_fault>
 The application accepts a list of devices in two formats. The first
 format is a list with comma separated elements. The second format is S<a
 list> in curly braces and elements are separated by space. See examples
-section bellow for details.
+section below for details.
 
 A device is a path to file in /dev directory or in /sys/block directory.
 It may identify a block device, a RAID device or a container device.

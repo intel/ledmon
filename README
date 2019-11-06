@@ -6,7 +6,18 @@ All files in this package can be freely distributed and used according
 to the terms of the GNU General Public License, version 2.
 See http://www.gnu.org/ for details.
 
-1. Compiling the package.
+1. Configure package.
+-------------------------
+
+Run "autogen.sh" to generate compiling configurations:
+   ./autogen.sh
+   ./configure
+
+Run ./configure with:
+    --enable-systemd to configure with systemd service.
+    --enable-testconfig to configure with config file testing tool.
+
+2. Compiling the package.
 -------------------------
 
 Run "make" command to compile the package.
@@ -15,19 +26,16 @@ Following packages are required for building and compiling:
 a. systemd-devel (libudev)
 b. sg3_utils-devel
 
-2. (Un)installing the package.
+3. (Un)installing the package.
 --------------------------
 
 Run following commands to install package:
-   ./configure
-   make
    make install
 
-Run ./configure with:
-    --enable-systemd to configure with systemd service.
-    --enable-testconfig to configure with config file testing tool.
+Run following commands to uninstall package:
+   make uninstall
 
-3. Release notes.
+4. Release notes.
 --------------------------
 
 a. Enclosure LED Utilities is meant as a part of RHEL and SLES linux

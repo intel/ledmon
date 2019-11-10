@@ -7,5 +7,5 @@ WantedBy=multi-user.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/sbin/ledmon --foreground
+ExecStart=@sbindir@/ledmon --foreground
 Restart=on-failure

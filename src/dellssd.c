@@ -46,6 +46,7 @@
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "ipmi.h"
 
 #define BP_PRESENT       (1L << 0)
 #define BP_ONLINE        (1L << 1)
@@ -71,8 +72,6 @@ static const unsigned int ibpi2ssd[] = {
 	[IBPI_PATTERN_LOCATE_OFF]     = BP_ONLINE
 };
 
-#define BMC_SA                              0x20
-
 #define DELL_OEM_NETFN                      0x30
 
 #define DELL_OEM_STORAGE_CMD                0xD5
@@ -95,105 +94,6 @@ enum {
   DELL_14G_MONOLITHIC = 0x30,
   DELL_14G_MODULAR    = 0x31,
 };
-
-static int ipmi_open(void)
-{
-	int fd;
-
-	fd = open("/dev/ipmi0", O_RDWR);
-	if (fd >= 0)
-		return fd;
-	fd = open("/dev/ipmidev/0", O_RDWR);
-	if (fd >= 0)
-		return fd;
-	fd = open("/dev/ipmidev0", O_RDWR);
-	if (fd >= 0)
-		return fd;
-	fd = open("/dev/bmc", O_RDWR);
-	if (fd >= 0)
-		return fd;
-	return -1;
-}
-
-static int
-ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
-	int resplen, int *rlen, void *resp)
-{
-	static int msgid;
-	struct ipmi_system_interface_addr saddr;
-	struct ipmi_ipmb_addr iaddr;
-	struct ipmi_addr raddr;
-	struct ipmi_req req;
-	struct ipmi_recv rcv;
-	fd_set rfd;
-	int fd, rc;
-	uint8_t tresp[resplen + 1];
-
-	fd = ipmi_open();
-	if (fd < 0)
-		return -1;
-
-	memset(&req, 0, sizeof(req));
-	memset(&rcv, 0, sizeof(rcv));
-	if (sa == BMC_SA) {
-		memset(&saddr, 0, sizeof(saddr));
-		saddr.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
-		saddr.channel = IPMI_BMC_CHANNEL;
-		saddr.lun = 0;
-		req.addr = (void *)&saddr;
-		req.addr_len = sizeof(saddr);
-	} else {
-		memset(&iaddr, 0, sizeof(iaddr));
-		iaddr.addr_type = IPMI_IPMB_ADDR_TYPE;
-		iaddr.channel = 0;
-		iaddr.slave_addr = sa;
-		iaddr.lun = lun;
-		req.addr = (void *)&iaddr;
-		req.addr_len = sizeof(iaddr);
-	}
-
-	/* Issue command */
-	req.msgid = ++msgid;
-	req.msg.netfn = netfn;
-	req.msg.cmd = cmd;
-	req.msg.data_len = datalen;
-	req.msg.data = data;
-	rc = ioctl(fd, IPMICTL_SEND_COMMAND, (void *)&req);
-	if (rc != 0) {
-		log_debug("send");
-		goto end;
-	}
-
-	/* Wait for Response */
-	FD_ZERO(&rfd);
-	FD_SET(fd, &rfd);
-	rc = select(fd + 1, &rfd, NULL, NULL, NULL);
-	if (rc < 0) {
-		log_debug("select");
-		goto end;
-	}
-
-	/* Get response */
-	rcv.msg.data = tresp;
-	rcv.msg.data_len = resplen + 1;
-	rcv.addr = (void *)&raddr;
-	rcv.addr_len = sizeof(raddr);
-	rc = ioctl(fd, IPMICTL_RECEIVE_MSG_TRUNC, (void *)&rcv);
-	if (rc != 0 && errno == EMSGSIZE)
-		log_debug("too short..\n");
-	if (rc != 0 && errno != EMSGSIZE) {
-		log_debug("recv %d", errno);
-		goto end;
-	}
-	if (rcv.msg.data[0])
-		log_debug("IPMI Error: %.2x\n", rcv.msg.data[0]);
-	rc = 0;
-	*rlen = rcv.msg.data_len - 1;
-	memcpy(resp, rcv.msg.data + 1, *rlen);
- end:
-	close(fd);
-	return rc;
-}
 
 int get_dell_server_type()
 {

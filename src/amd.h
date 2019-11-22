@@ -26,6 +26,24 @@ struct amd_drive {
 	int		initiator;
 };
 
+enum amd_led_interfaces {
+	AMD_INTF_UNSET,
+	AMD_INTF_SGPIO,
+	AMD_INTF_IPMI,
+};
+
+extern enum amd_led_interfaces amd_interface;
+
+enum amd_platforms {
+	AMD_PLATFORM_UNSET,
+	AMD_PLATFORM_ETHANOL_X,
+	AMD_PLATFORM_DAYTONA_X,
+	AMD_PLATFORM_GRANDSTAND,
+	AMD_PLATFORM_SPEEDWAY,
+};
+
+extern enum amd_platforms amd_platform;
+
 int amd_em_enabled(const char *path);
 int amd_write(struct block_device *device, enum ibpi_pattern ibpi);
 char *amd_get_path(const char *cntrl_path);

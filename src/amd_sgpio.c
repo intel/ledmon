@@ -40,6 +40,7 @@
 #include "ibpi.h"
 #include "list.h"
 #include "utils.h"
+#include "amd.h"
 #include "amd_sgpio.h"
 
 #define REG_FMT_2	"%23s: %-4x%23s: %-4x\n"
@@ -198,13 +199,6 @@ static struct drive_leds tx_leds_blink_gen_b[] = {
 	[IBPI_PATTERN_LOCATE] =		INIT_LED(0b110, 0, 0b110),
 	[IBPI_PATTERN_LOCATE_OFF] =	INIT_LED(0, 0, 0b101),
 	[99] = INIT_LED(0, 0, 0b101),
-};
-
-struct amd_drive {
-	int ata_port;
-	int port;
-	int drive_bay;
-	int initiator;
 };
 
 #define CACHE_SZ	1024
@@ -553,53 +547,8 @@ static int _write_amd_register(const char *em_buffer_path,
 	return _send_sgpio_register(em_buffer_path, &amd_reg, sizeof(amd_reg));
 }
 
-static int _find_file_path(const char *start_path, const char *filename,
-			   char *path, size_t path_len)
-{
-	int rc, found;
-	struct stat sbuf;
-	struct list dir;
-	char *dir_name;
-	const char *dir_path;
-
-	rc = scan_dir(start_path, &dir);
-	if (rc) {
-		log_info("Failed to scan %s", start_path);
-		return 0;
-	}
-
-	found = 0;
-	list_for_each(&dir, dir_path) {
-		dir_name = strrchr(dir_path, '/');
-		if (!dir_name++)
-			continue;
-
-		if (strncmp(dir_name, filename, strlen(filename)) == 0) {
-			char tmp[PATH_MAX+1];
-
-			strncpy(tmp, dir_path, path_len);
-			snprintf(path, path_len, "%s", dirname(tmp));
-
-			found = 1;
-			break;
-		}
-
-		if (lstat(dir_path, &sbuf) == -1)
-			continue;
-
-		if (S_ISDIR(sbuf.st_mode)) {
-			found = _find_file_path(dir_path, filename,
-						path, path_len);
-			if (found)
-				break;
-		}
-	}
-
-	list_erase(&dir);
-	return found;
-}
-
-static int _get_amd_drive(const char *start_path, struct amd_drive *drive)
+static int _get_amd_sgpio_drive(const char *start_path,
+				struct amd_drive *drive)
 {
 	char *a, *p;
 	int found;
@@ -671,7 +620,7 @@ static int _set_ibpi(struct block_device *device, enum ibpi_pattern ibpi)
 	 * we can calculate the correct bits to set in the register for
 	 * that drive.
 	 */
-	rc = _get_amd_drive(device->sysfs_path, &drive);
+	rc = _get_amd_sgpio_drive(device->sysfs_path, &drive);
 	if (rc)
 		return rc;
 
@@ -739,7 +688,7 @@ static int _amd_sgpio_init(const char *path)
 
 	snprintf(em_path, PATH_MAX+10, "%s/em_buffer", path);
 
-	rc = _get_amd_drive(em_path, &drive);
+	rc = _get_amd_sgpio_drive(em_path, &drive);
 	if (rc) {
 		log_error("Couldn't find drive info for %s\n", em_path);
 		return rc;
@@ -806,7 +755,7 @@ _init_amd_sgpio_err:
 	return rc;
 }
 
-int amd_sgpio_em_enabled(const char *path)
+int _amd_sgpio_em_enabled(const char *path)
 {
 	char *p;
 	int rc, found;
@@ -870,7 +819,7 @@ int amd_sgpio_em_enabled(const char *path)
 	return rc ? 0 : 1;
 }
 
-int amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
+int _amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
@@ -886,7 +835,7 @@ int amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	return _set_ibpi(device, ibpi);
 }
 
-char *amd_sgpio_get_path(const char *cntrl_path)
+char *_amd_sgpio_get_path(const char *cntrl_path)
 {
 	int len, found;
 	char *em_buffer_path;

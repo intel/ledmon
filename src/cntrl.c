@@ -36,7 +36,7 @@
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
-#include "amd_sgpio.h"
+#include "amd.h"
 
 /**
  * @brief Name of controllers types.
@@ -50,7 +50,7 @@ static const char * const ctrl_type_str[] = {
 	[CNTRL_TYPE_VMD]     = "VMD",
 	[CNTRL_TYPE_SCSI]    = "SCSI",
 	[CNTRL_TYPE_AHCI]    = "AHCI",
-	[CNTRL_TYPE_AMD_SGPIO] = "AMD SGPIO"
+	[CNTRL_TYPE_AMD]     = "AMD"
 };
 
 /**
@@ -183,7 +183,7 @@ static enum cntrl_type _get_type(const char *path)
 		if (_is_intel_ahci_cntrl(path))
 			type = CNTRL_TYPE_AHCI;
 		else if (_is_amd_ahci_cntrl(path))
-			type = CNTRL_TYPE_AMD_SGPIO;
+			type = CNTRL_TYPE_AMD;
 		else if (_is_isci_cntrl(path)
 				|| sysfs_enclosure_attached_to_cntrl(path)
 				|| _is_smp_cntrl(path))
@@ -357,8 +357,8 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		case CNTRL_TYPE_AHCI:
 			em_enabled = _ahci_em_messages(path);
 			break;
-		case CNTRL_TYPE_AMD_SGPIO:
-			em_enabled = amd_sgpio_em_enabled(path);
+		case CNTRL_TYPE_AMD:
+			em_enabled = amd_em_enabled(path);
 			break;
 		default:
 			em_enabled = 0;

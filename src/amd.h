@@ -19,11 +19,16 @@
 
 #include "block.h"
 
+enum amd_device_type {AMD_NO_DEVICE, AMD_SATA_DEVICE, AMD_NVME_DEVICE};
+
 struct amd_drive {
 	int		ata_port;
 	int		port;
 	int		drive_bay;
 	int		initiator;
+	uint8_t		channel;
+	uint8_t		slave_addr;
+	enum amd_device_type dev;
 };
 
 enum amd_led_interfaces {
@@ -46,7 +51,11 @@ extern enum amd_platforms amd_platform;
 
 int amd_em_enabled(const char *path);
 int amd_write(struct block_device *device, enum ibpi_pattern ibpi);
-char *amd_get_path(const char *cntrl_path);
+char *amd_get_path(const char *cntrl_path, const char *sysfs_path);
 
 int _find_file_path(const char *start_path, const char *filename,
 		    char *path, size_t path_len);
+
+/* Register dump formats used for debug output */
+#define REG_FMT_2	"%23s: %-4x%23s: %-4x\n"
+#define REG_FMT_1	"%23s: %-4x\n"

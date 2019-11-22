@@ -70,7 +70,7 @@ static int _is_isci_cntrl(const char *path)
 
 /**
  */
-static int _is_ahci_cntrl(const char *path)
+static int _is_cntrl(const char *path, const char *type)
 {
 	char temp[PATH_MAX], link[PATH_MAX], *t;
 
@@ -80,10 +80,20 @@ static int _is_ahci_cntrl(const char *path)
 		return 0;
 
 	t = strrchr(link, '/');
-	if ((t != NULL) && (strcmp(t + 1, "ahci") != 0))
+	if ((t != NULL) && (strcmp(t + 1, type) != 0))
 		return 0;
 
 	return 1;
+}
+
+static int _is_ahci_cntrl(const char *path)
+{
+	return _is_cntrl(path, "ahci");
+}
+
+static int _is_nvme_cntrl(const char *path)
+{
+	return _is_cntrl(path, "nvme");
 }
 
 static int _is_intel_ahci_cntrl(const char *path)
@@ -100,6 +110,35 @@ static int _is_amd_ahci_cntrl(const char *path)
 		return 0;
 
 	return get_uint64(path, 0, "vendor") == 0x1022L;
+}
+
+static int _is_amd_nvme_cntrl(const char *path)
+{
+	char tmp[PATH_MAX];
+	char *t;
+
+	if (!_is_nvme_cntrl(path))
+		return 0;
+
+	sprintf(tmp, "%s", path);
+	t = strrchr(tmp, '/');
+	if (!t)
+		return 0;
+
+	t++;
+	*t = '\0';
+	return get_uint64(tmp, 0, "vendor") == 0x1022L;
+}
+
+static int _is_amd_cntrl(const char *path)
+{
+	if (_is_amd_ahci_cntrl(path))
+		return 1;
+
+	if (_is_amd_nvme_cntrl(path))
+		return 1;
+
+	return 0;
 }
 
 extern int get_dell_server_type(void);
@@ -182,7 +221,7 @@ static enum cntrl_type _get_type(const char *path)
 	} else if (_is_storage_controller(path)) {
 		if (_is_intel_ahci_cntrl(path))
 			type = CNTRL_TYPE_AHCI;
-		else if (_is_amd_ahci_cntrl(path))
+		else if (_is_amd_cntrl(path))
 			type = CNTRL_TYPE_AMD;
 		else if (_is_isci_cntrl(path)
 				|| sysfs_enclosure_attached_to_cntrl(path)

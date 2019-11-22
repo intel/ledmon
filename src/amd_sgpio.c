@@ -43,9 +43,6 @@
 #include "amd.h"
 #include "amd_sgpio.h"
 
-#define REG_FMT_2	"%23s: %-4x%23s: %-4x\n"
-#define REG_FMT_1	"%23s: %-4x\n"
-
 #define HOST_CAP_EMS	(1 << 6)
 
 #define DECLARE_SGPIO(type, name, shift, mask)				\

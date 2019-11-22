@@ -42,6 +42,7 @@
 #include "utils.h"
 #include "amd.h"
 #include "amd_sgpio.h"
+#include "amd_ipmi.h"
 
 enum amd_led_interfaces amd_interface = AMD_INTF_UNSET;
 enum amd_platforms amd_platform = AMD_PLATFORM_UNSET;
@@ -131,8 +132,7 @@ int amd_em_enabled(const char *path)
 		rc = _amd_sgpio_em_enabled(path);
 		break;
 	case AMD_INTF_IPMI:
-		log_error("IPMI not supported\n");
-		rc = -EOPNOTSUPP;
+		rc = _amd_ipmi_em_enabled(path);
 		break;
 	default:
 		log_error("Unsupported AMD interface\n");
@@ -156,8 +156,7 @@ int amd_write(struct block_device *device, enum ibpi_pattern ibpi)
 		rc = _amd_sgpio_write(device, ibpi);
 		break;
 	case AMD_INTF_IPMI:
-		log_error("IPMI not supported\n");
-		rc = -EOPNOTSUPP;
+		rc = _amd_ipmi_write(device, ibpi);
 		break;
 	case AMD_INTF_UNSET:
 	default:
@@ -169,17 +168,16 @@ int amd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	return rc;
 }
 
-char *amd_get_path(const char *cntrl_path)
+char *amd_get_path(const char *cntrl_path, const char *sysfs_path)
 {
 	char *path;
 
 	switch (amd_interface) {
 	case AMD_INTF_SGPIO:
-		path = _amd_sgpio_get_path(cntrl_path);
+		path = _amd_sgpio_get_path(sysfs_path);
 		break;
 	case AMD_INTF_IPMI:
-		log_error("IPMI not supported\n");
-		path = NULL;
+		path = _amd_ipmi_get_path(cntrl_path, sysfs_path);
 		break;
 	case AMD_INTF_UNSET:
 	default:

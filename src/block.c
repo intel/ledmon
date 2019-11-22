@@ -146,7 +146,7 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 	else if (cntrl->cntrl_type == CNTRL_TYPE_VMD)
 		result = vmdssd_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD)
-		result = amd_get_path(cntrl->sysfs_path);
+		result = amd_get_path(path, cntrl->sysfs_path);
 	return result;
 }
 

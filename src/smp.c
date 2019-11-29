@@ -61,8 +61,8 @@
 #define LED_ON	1
 #define LED_4HZ	2
 #define LED_I4HZ	3
-#define LED_SOF	4
-#define LED_EOF	5
+#define LED_EOF	4
+#define LED_SOF	5
 #define LED_2HZ	6
 #define LED_I2HZ	7
 

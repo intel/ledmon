@@ -330,112 +330,114 @@ static int _send_sgpio_register(const char *em_buffer_path, void *reg,
 	return 0;
 }
 
-static void _init_sgpio_hdr(sgpio_hdr_t *hdr, int data_size, int msg_size)
+static sgpio_hdr_t _init_sgpio_hdr(int data_size, int msg_size)
 {
-	memset(hdr, 0, sizeof(*hdr));
+	sgpio_hdr_t hdr = 0;
 
-	set_sgpio_hdr_msg_type(hdr, SGPIO_HDR_MSG_TYPE_SGPIO);
-	set_sgpio_hdr_data_size(hdr, data_size);
-	set_sgpio_hdr_msg_size(hdr, msg_size);
+	set_sgpio_hdr_msg_type(&hdr, SGPIO_HDR_MSG_TYPE_SGPIO);
+	set_sgpio_hdr_data_size(&hdr, data_size);
+	set_sgpio_hdr_msg_size(&hdr, msg_size);
+
+	return hdr;
 }
 
-static void _dump_sgpio_hdr(sgpio_hdr_t *hdr)
+static void _dump_sgpio_hdr(const char *type, sgpio_hdr_t hdr)
 {
-	log_debug("SGPIO Header\n");
-	log_debug(REG_FMT_2, "message type", get_sgpio_hdr_msg_type(hdr),
-		  "data size", get_sgpio_hdr_data_size(hdr));
-	log_debug(REG_FMT_1, "message size", get_sgpio_hdr_msg_size(hdr));
+	log_debug("%s SGPIO Header: %08x\n", type, hdr);
+	log_debug(REG_FMT_2, "message type", get_sgpio_hdr_msg_type(&hdr),
+		  "data size", get_sgpio_hdr_data_size(&hdr));
+	log_debug(REG_FMT_1, "message size", get_sgpio_hdr_msg_size(&hdr));
 }
 
-static void _init_sgpio_req(sgpio_req_t *req, int frame_type, int function,
-			    int reg_type, int reg_index, int reg_count)
+static sgpio_req_t _init_sgpio_req(int frame_type, int function,
+				   int reg_type, int reg_index,
+				   int reg_count)
 {
-	memset(req, 0, sizeof(*req));
+	sgpio_req_t req = 0;
 
-	set_sgpio_req_frame_type(req, frame_type);
-	set_sgpio_req_function(req, function);
-	set_sgpio_req_reg_type(req, reg_type);
-	set_sgpio_req_reg_index(req, reg_index);
-	set_sgpio_req_reg_count(req, reg_count);
+	set_sgpio_req_frame_type(&req, frame_type);
+	set_sgpio_req_function(&req, function);
+	set_sgpio_req_reg_type(&req, reg_type);
+	set_sgpio_req_reg_index(&req, reg_index);
+	set_sgpio_req_reg_count(&req, reg_count);
+
+	return req;
 }
 
-static void _dump_sgpio_req(sgpio_req_t *req)
+static void _dump_sgpio_req(const char *type, sgpio_req_t req)
 {
-	log_debug("SGPIO Request Register:\n");
-	log_debug(REG_FMT_2, "frame type", get_sgpio_req_frame_type(req),
-		  "function", get_sgpio_req_function(req));
-	log_debug(REG_FMT_2, "register type", get_sgpio_req_reg_type(req),
-		  "register index", get_sgpio_req_reg_index(req));
-	log_debug(REG_FMT_1, "register count", get_sgpio_req_reg_count(req));
+	uint32_t *r = (uint32_t *)&req;
+
+	log_debug("%s SGPIO Request Register: %08x %08x\n", type, r[0], r[1]);
+	log_debug(REG_FMT_2, "frame type", get_sgpio_req_frame_type(&req),
+		  "function", get_sgpio_req_function(&req));
+	log_debug(REG_FMT_2, "register type", get_sgpio_req_reg_type(&req),
+		  "register index", get_sgpio_req_reg_index(&req));
+	log_debug(REG_FMT_1, "register count", get_sgpio_req_reg_count(&req));
 }
 
-static void _init_sgpio_cfg(sgpio_cfg_t *cfg, int gpio_enable, int blink_a,
-			    int blink_b, int force_off, int max_on,
-			    int stretch_off, int stretch_on)
+static sgpio_cfg_t _init_sgpio_cfg(int gpio_enable, int blink_a,
+				   int blink_b, int force_off, int max_on,
+				   int stretch_off, int stretch_on)
 {
-	memset(cfg, 0, sizeof(*cfg));
+	sgpio_cfg_t cfg = 0;
 
 	if (gpio_enable)
-		set_sgpio_cfg_gpio_enable(cfg, 1);
+		set_sgpio_cfg_gpio_enable(&cfg, 1);
 
-	set_sgpio_cfg_blink_gen_a(cfg, blink_a);
-	set_sgpio_cfg_blink_gen_b(cfg, blink_b);
-	set_sgpio_cfg_max_on(cfg, max_on);
-	set_sgpio_cfg_force_off(cfg, force_off);
-	set_sgpio_cfg_stretch_on(cfg, stretch_on);
-	set_sgpio_cfg_stretch_off(cfg, stretch_off);
+	set_sgpio_cfg_blink_gen_a(&cfg, blink_a);
+	set_sgpio_cfg_blink_gen_b(&cfg, blink_b);
+	set_sgpio_cfg_max_on(&cfg, max_on);
+	set_sgpio_cfg_force_off(&cfg, force_off);
+	set_sgpio_cfg_stretch_on(&cfg, stretch_on);
+	set_sgpio_cfg_stretch_off(&cfg, stretch_off);
+
+	return cfg;
 }
 
-static void _dump_sgpio_cfg(sgpio_cfg_t *cfg)
+static void _dump_sgpio_cfg(const char *type, sgpio_cfg_t cfg)
 {
-	log_debug("SGPIO Configuration Register:\n");
-	log_debug(REG_FMT_2, "version", get_sgpio_cfg_version(cfg),
-		  "gp register count", get_sgpio_cfg_gp_reg_count(cfg));
+	uint32_t *r = (uint32_t *)&cfg;
+
+	log_debug("%s SGPIO Configuration Register: %08x %08x\n", type,
+		  r[0], r[1]);
+	log_debug(REG_FMT_2, "version", get_sgpio_cfg_version(&cfg),
+		  "gp register count", get_sgpio_cfg_gp_reg_count(&cfg));
 	log_debug(REG_FMT_2, "cfg register count",
-		  get_sgpio_cfg_cfg_reg_count(cfg), "gpio enabled",
-		  get_sgpio_cfg_gpio_enable(cfg));
-	log_debug(REG_FMT_2, "drive count", get_sgpio_cfg_drive_count(cfg),
-		  "blink gen rate A", get_sgpio_cfg_blink_gen_a(cfg));
+		  get_sgpio_cfg_cfg_reg_count(&cfg), "gpio enabled",
+		  get_sgpio_cfg_gpio_enable(&cfg));
+	log_debug(REG_FMT_2, "drive count", get_sgpio_cfg_drive_count(&cfg),
+		  "blink gen rate A", get_sgpio_cfg_blink_gen_a(&cfg));
 
 	log_debug(REG_FMT_2, "blink gen rate B",
-		  get_sgpio_cfg_blink_gen_b(cfg), "force activity off",
-		  get_sgpio_cfg_force_off(cfg));
-	log_debug(REG_FMT_2, "max activity on", get_sgpio_cfg_max_on(cfg),
-		  "stretch activity off", get_sgpio_cfg_stretch_off(cfg));
+		  get_sgpio_cfg_blink_gen_b(&cfg), "force activity off",
+		  get_sgpio_cfg_force_off(&cfg));
+	log_debug(REG_FMT_2, "max activity on", get_sgpio_cfg_max_on(&cfg),
+		  "stretch activity off", get_sgpio_cfg_stretch_off(&cfg));
 	log_debug(REG_FMT_1, "stretch activity on",
-		  get_sgpio_cfg_stretch_on(cfg));
+		  get_sgpio_cfg_stretch_on(&cfg));
 }
 
-static void _init_sgpio_amd(sgpio_amd_t *amd, int initiator, int polarity,
-			    int bypass, int normal)
+static sgpio_amd_t _init_sgpio_amd(int initiator, int polarity,
+				   int bypass, int normal)
 {
-	memset(amd, 0, sizeof(*amd));
+	sgpio_amd_t amd = 0;
 
-	set_sgpio_amd_initiator(amd, initiator);
-	set_sgpio_amd_polarity_flip(amd, polarity);
-	set_sgpio_amd_bypass_enable(amd, bypass);
-	set_sgpio_amd_return_to_normal(amd, normal);
+	set_sgpio_amd_initiator(&amd, initiator);
+	set_sgpio_amd_polarity_flip(&amd, polarity);
+	set_sgpio_amd_bypass_enable(&amd, bypass);
+	set_sgpio_amd_return_to_normal(&amd, normal);
+
+	return amd;
 }
 
-static void _dump_sgpio_amd(sgpio_amd_t *amd)
+static void _dump_sgpio_amd(const char *type, sgpio_amd_t amd)
 {
-	log_debug("SGPIO AMD Register\n");
-	log_debug(REG_FMT_2, "initiator", get_sgpio_amd_initiator(amd),
-		  "polarity", get_sgpio_amd_polarity_flip(amd));
-	log_debug(REG_FMT_2, "bypass enable", get_sgpio_amd_bypass_enable(amd),
-		  "return to normal", get_sgpio_amd_return_to_normal(amd));
-}
-
-static void _dump_cfg_register(struct config_register *cfg_reg)
-{
-	uint32_t *reg = (uint32_t *)cfg_reg;
-
-	log_info("CFG Register: %08x %08x %08x %08x %08x",
-		 reg[0], reg[1], reg[2], reg[3], reg[4]);
-
-	_dump_sgpio_hdr(&cfg_reg->hdr);
-	_dump_sgpio_req(&cfg_reg->req);
-	_dump_sgpio_cfg(&cfg_reg->cfg);
+	log_debug("%s SGPIO AMD Register: %08x\n", type, amd);
+	log_debug(REG_FMT_2, "initiator", get_sgpio_amd_initiator(&amd),
+		  "polarity", get_sgpio_amd_polarity_flip(&amd));
+	log_debug(REG_FMT_2, "bypass enable", get_sgpio_amd_bypass_enable(&amd),
+		  "return to normal", get_sgpio_amd_return_to_normal(&amd));
 }
 
 static int _write_cfg_register(const char *em_buffer_path,
@@ -443,53 +445,49 @@ static int _write_cfg_register(const char *em_buffer_path,
 {
 	struct config_register cfg_reg;
 
-	_init_sgpio_hdr(&cfg_reg.hdr, 0, sizeof(cfg_reg));
-	_init_sgpio_req(&cfg_reg.req, 0x40, 0x82, SGPIO_REQ_REG_TYPE_CFG, 0, 2);
+	cfg_reg.hdr = _init_sgpio_hdr(0, sizeof(cfg_reg));
+	cfg_reg.req = _init_sgpio_req(0x40, 0x82, SGPIO_REQ_REG_TYPE_CFG,
+				      0, 2);
 
 	if (cache->blink_gen_a)
 		cache->blink_gen_b = ibpi_pattern[ibpi];
 	else
 		cache->blink_gen_a = ibpi_pattern[ibpi];
 
-	_init_sgpio_cfg(&cfg_reg.cfg, 1, cache->blink_gen_a, cache->blink_gen_b,
-			2, 1, 0, 0);
+	cfg_reg.cfg = _init_sgpio_cfg(1, cache->blink_gen_a,
+				      cache->blink_gen_b, 2, 1, 0, 0);
 
-	_dump_cfg_register(&cfg_reg);
+	_dump_sgpio_hdr("CFG", cfg_reg.hdr);
+	_dump_sgpio_req("CFG", cfg_reg.req);
+	_dump_sgpio_cfg("CFG", cfg_reg.cfg);
+
 	return _send_sgpio_register(em_buffer_path, &cfg_reg, sizeof(cfg_reg));
 }
 
-static void _dump_sgpio_tx(sgpio_tx_t *tx)
+static void _dump_sgpio_tx(const char *type, sgpio_tx_t tx)
 {
 	int i;
 
-	log_debug("SGPIO TX Register:\n");
+	log_debug("%s SGPIO TX Register: %08x\n", type, tx);
 	for (i = 0; i < 4; i++) {
 		log_debug("\tdrive %d: error %x, locate %x, activity %x\n", i,
-			  get_error_led(&tx->drive[i]),
-			  get_locate_led(&tx->drive[i]),
-			  get_activity_led(&tx->drive[i]));
+			  get_error_led(&tx.drive[i]),
+			  get_locate_led(&tx.drive[i]),
+			  get_activity_led(&tx.drive[i]));
 	}
-}
-
-static void _dump_tx_register(struct transmit_register *tx_reg)
-{
-	uint32_t *reg = (uint32_t *)tx_reg;
-
-	log_info("TX Register:  %08x %08x %08x %08x", reg[0], reg[1],
-		 reg[2], reg[3]);
-
-	_dump_sgpio_hdr(&tx_reg->hdr);
-	_dump_sgpio_req(&tx_reg->req);
-	_dump_sgpio_tx(&tx_reg->tx);
 }
 
 static int _write_tx_register(const char *em_buffer_path,
 			      struct transmit_register *tx_reg)
 {
-	_init_sgpio_hdr(&tx_reg->hdr, 0, sizeof(*tx_reg));
-	_init_sgpio_req(&tx_reg->req, 0x40, 0x82, SGPIO_REQ_REG_TYPE_TX, 0, 1);
+	tx_reg->hdr = _init_sgpio_hdr(0, sizeof(*tx_reg));
+	tx_reg->req = _init_sgpio_req(0x40, 0x82, SGPIO_REQ_REG_TYPE_TX,
+				      0, 1);
 
-	_dump_tx_register(tx_reg);
+	_dump_sgpio_hdr("TX", tx_reg->hdr);
+	_dump_sgpio_req("TX", tx_reg->req);
+	_dump_sgpio_tx("TX", tx_reg->tx);
+
 	return _send_sgpio_register(em_buffer_path, tx_reg, sizeof(*tx_reg));
 }
 
@@ -538,28 +536,20 @@ static int _init_tx_drive_leds(struct transmit_register *tx_reg,
 	return init_done;
 }
 
-static void _dump_amd_register(struct amd_register *amd_reg)
-{
-	uint32_t *reg = (uint32_t *)amd_reg;
-
-	log_info("AMD Register: %08x %08x %08x %08x", reg[0], reg[1],
-		 reg[2], reg[3]);
-
-	_dump_sgpio_hdr(&amd_reg->hdr);
-	_dump_sgpio_req(&amd_reg->req);
-	_dump_sgpio_amd(&amd_reg->amd);
-}
-
 static int _write_amd_register(const char *em_buffer_path,
 			       struct amd_drive *drive)
 {
 	struct amd_register amd_reg;
 
-	_init_sgpio_hdr(&amd_reg.hdr, 0, sizeof(amd_reg));
-	_init_sgpio_req(&amd_reg.req, 0x40, 0x82, SGPIO_REQ_REG_TYPE_AMD, 0, 1);
-	_init_sgpio_amd(&amd_reg.amd, drive->initiator, 0, 1, 1);
+	amd_reg.hdr = _init_sgpio_hdr(0, sizeof(amd_reg));
+	amd_reg.req = _init_sgpio_req(0x40, 0x82, SGPIO_REQ_REG_TYPE_AMD,
+				      0, 1);
+	amd_reg.amd = _init_sgpio_amd(drive->initiator, 0, 1, 1);
 
-	_dump_amd_register(&amd_reg);
+	_dump_sgpio_hdr("AMD", amd_reg.hdr);
+	_dump_sgpio_req("AMD", amd_reg.req);
+	_dump_sgpio_amd("AMD", amd_reg.amd);
+
 	return _send_sgpio_register(em_buffer_path, &amd_reg, sizeof(amd_reg));
 }
 

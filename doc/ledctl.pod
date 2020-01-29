@@ -62,7 +62,7 @@ according to SFF-8489 specification.
 
 =item B<locate>
 
-Turns Locate LED associated with the given device(s) or empty slot(s) on.
+Turns Locate LED associated with the given device(s) on.
 
 =item B<locate_off>
 

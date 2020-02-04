@@ -36,7 +36,9 @@
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "amd_sgpio.h"
 #include "amd.h"
+#include "npem.h"
 
 /**
  * @brief Name of controllers types.
@@ -50,7 +52,9 @@ static const char * const ctrl_type_str[] = {
 	[CNTRL_TYPE_VMD]     = "VMD",
 	[CNTRL_TYPE_SCSI]    = "SCSI",
 	[CNTRL_TYPE_AHCI]    = "AHCI",
-	[CNTRL_TYPE_AMD]     = "AMD"
+	[CNTRL_TYPE_AMD_SGPIO] = "AMD SGPIO",
+	[CNTRL_TYPE_NPEM]    = "NPEM",
+	[CNTRL_TYPE_AMD]     = "AMD",
 };
 
 /**
@@ -197,6 +201,11 @@ static int _is_vmd_cntrl(const char *path)
 	return sysfs_check_driver(path, "vmd");
 }
 
+static int _is_npem_cntrl(const char *path)
+{
+	return is_npem_capable(path);
+}
+
 /**
  * @brief Determines the type of controller.
  *
@@ -213,8 +222,9 @@ static int _is_vmd_cntrl(const char *path)
 static enum cntrl_type _get_type(const char *path)
 {
 	enum cntrl_type type = CNTRL_TYPE_UNKNOWN;
-
-	if (_is_vmd_cntrl(path)) {
+	if (_is_npem_cntrl(path)) {
+		type = CNTRL_TYPE_NPEM;
+	} else if (_is_vmd_cntrl(path)) {
 		type = CNTRL_TYPE_VMD;
 	} else if (_is_dellssd_cntrl(path)) {
 		type = CNTRL_TYPE_DELLSSD;
@@ -391,6 +401,7 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		case CNTRL_TYPE_DELLSSD:
 		case CNTRL_TYPE_SCSI:
 		case CNTRL_TYPE_VMD:
+		case CNTRL_TYPE_NPEM:
 			em_enabled = 1;
 			break;
 		case CNTRL_TYPE_AHCI:

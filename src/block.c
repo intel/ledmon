@@ -44,6 +44,8 @@
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
+#include "amd_sgpio.h"
+#include "npem.h"
 #include "amd.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
@@ -94,6 +96,10 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 		result = dellssd_write;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
 		result = vmdssd_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_AMD_SGPIO) {
+		result = amd_sgpio_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_NPEM) {
+		result = npem_write;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_AMD) {
 		result = amd_write;
 	}
@@ -145,21 +151,30 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 		result = dellssd_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_VMD)
 		result = vmdssd_get_path(cntrl->sysfs_path);
+	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD_SGPIO)
+		result = amd_sgpio_get_path(cntrl->sysfs_path);
+	else if (cntrl->cntrl_type == CNTRL_TYPE_NPEM)
+		result = npem_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD)
 		result = amd_get_path(path, cntrl->sysfs_path);
+  
 	return result;
 }
 
-static int is_dellssd(const struct block_device *bd)
+static int is_host_id_supported(const struct block_device *bd)
 {
-	return (bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_DELLSSD);
-}
+	if (!bd->cntrl)
+		return 0;
 
-static int is_vmd(const struct block_device *bd)
-{
-	return ((bd->cntrl && bd->cntrl->cntrl_type == CNTRL_TYPE_VMD));
+	switch (bd->cntrl->cntrl_type) {
+	case CNTRL_TYPE_DELLSSD:
+	case CNTRL_TYPE_VMD:
+	case CNTRL_TYPE_NPEM:
+		return 0;
+	default:
+		return 1;
+	}
 }
-
 /**
  * @brief Determines a storage controller.
  *
@@ -176,13 +191,17 @@ static int is_vmd(const struct block_device *bd)
 struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *path)
 {
 	struct cntrl_device *cntrl;
+	struct cntrl_device *non_npem_cntrl = NULL;
 
 	list_for_each(cntrl_list, cntrl) {
 		if (strncmp(cntrl->sysfs_path, path,
-			    strlen(cntrl->sysfs_path)) == 0)
-			return cntrl;
+			    strlen(cntrl->sysfs_path)) == 0) {
+			if (cntrl->cntrl_type == CNTRL_TYPE_NPEM)
+				return cntrl;
+			non_npem_cntrl = cntrl;
+		}
 	}
-	return NULL;
+	return non_npem_cntrl;
 }
 
 struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
@@ -340,12 +359,12 @@ int block_compare(const struct block_device *bd_old,
 {
 	int i = 0;
 
-	if (!is_dellssd(bd_old) && !is_vmd(bd_old) && bd_old->host_id == -1) {
+	if (is_host_id_supported(bd_old) && bd_old->host_id == -1) {
 		log_debug("Device %s : No host_id!",
 			  strstr(bd_old->sysfs_path, "host"));
 		return 0;
 	}
-	if (!is_dellssd(bd_new) && !is_vmd(bd_new) && bd_new->host_id == -1) {
+	if (is_host_id_supported(bd_new) && bd_new->host_id == -1) {
 		log_debug("Device %s : No host_id!",
 			  strstr(bd_new->sysfs_path, "host"));
 		return 0;
@@ -392,6 +411,11 @@ int block_compare(const struct block_device *bd_old,
 			if (old_slot && new_slot)
 				i = (strcmp(old_slot->address, new_slot->address) == 0);
 		}
+		break;
+
+	case CNTRL_TYPE_NPEM:
+		/* check controller to determine slot. */
+		i = (strcmp(bd_old->cntrl_path, bd_new->cntrl_path) == 0);
 		break;
 
 	case CNTRL_TYPE_DELLSSD:

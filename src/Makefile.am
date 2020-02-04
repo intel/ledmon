@@ -19,11 +19,12 @@
 COMMON_SRCS      = ahci.c block.c cntrl.c config_file.c enclosure.c list.c \
                    raid.c scsi.c slave.c status.c sysfs.c smp.c dellssd.c \
                    utils.c pci_slot.c vmdssd.c udev.c amd.c amd_sgpio.c amd_ipmi.c\
-                   ipmi.c\
+                   ipmi.c npem.c\
                    ahci.h amd_sgpio.h block.h cntrl.h config_file.h dellssd.h \
                    enclosure.h ibpi.h list.h pci_slot.h pidfile.h raid.h scsi.h \
                    ses.h slave.h smp.h status.h sysfs.h udev.h utils.h version.h \
-                   vmdssd.h ipmi.h amd.h amd_ipmi.h
+                   vmdssd.h ipmi.h amd.h amd_ipmi.h npem.h
+
 LEDMON_SRCS      = ledmon.c pidfile.c $(COMMON_SRCS)
 LEDCTL_SRCS      = ledctl.c $(COMMON_SRCS)
 TEST_CONFIG_SRCS = config_file.c list.c utils.c
@@ -33,7 +34,11 @@ sbin_PROGRAMS  = ledmon ledctl
 ledmon_SOURCES = $(LEDMON_SRCS)
 ledctl_SOURCES = $(LEDCTL_SRCS)
 
+ledmon_LDADD = $(LIBPCI_LIBS) $(LIBUDEV_LIBS)
+ledctl_LDADD = $(LIBPCI_LIBS) $(LIBUDEV_LIBS)
 
+ledmon_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS) $(LIBUDEV_CFLAGS)
+ledctl_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS) $(LIBUDEV_CFLAGS)
 if TESTCONFIG_CONDITION
 
 noinst_PROGRAMS       = test_config

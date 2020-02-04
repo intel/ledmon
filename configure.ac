@@ -30,10 +30,13 @@ AC_SUBST([AM_CPPFLAGS])
 # Automake 1.11 - silent build rules
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+PKG_PROG_PKG_CONFIG
+
 # Checks for libraries.
 AC_CHECK_LIB([rt], [shm_unlink], [], [AC_MSG_ERROR(librt not found)])
 AC_CHECK_LIB([sgutils2], [sg_ll_send_diag], [], [AC_MSG_ERROR(libsgutils not found)])
-AC_CHECK_LIB([udev], [udev_new], [], [AC_MSG_ERROR(libudev not found)])
+PKG_CHECK_MODULES([LIBUDEV], [libudev])
+PKG_CHECK_MODULES([LIBPCI], [libpci])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h sys/file.h sys/ioctl.h sys/param.h sys/time.h syslog.h unistd.h])

@@ -36,7 +36,6 @@
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
-#include "amd_sgpio.h"
 #include "amd.h"
 #include "npem.h"
 
@@ -52,7 +51,6 @@ static const char * const ctrl_type_str[] = {
 	[CNTRL_TYPE_VMD]     = "VMD",
 	[CNTRL_TYPE_SCSI]    = "SCSI",
 	[CNTRL_TYPE_AHCI]    = "AHCI",
-	[CNTRL_TYPE_AMD_SGPIO] = "AMD SGPIO",
 	[CNTRL_TYPE_NPEM]    = "NPEM",
 	[CNTRL_TYPE_AMD]     = "AMD",
 };

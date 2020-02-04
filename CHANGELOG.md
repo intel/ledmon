@@ -1,3 +1,19 @@
+### v0.94 / 2020-02-04
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.93...v0.94)
+
+Enhancements
+
+* Support for AMD IPMI enclosure management
+* Support for NPEM
+
+Bug fixes
+
+* Documentation updates
+* Fix activity indicator state for SMP
+* Fix for GCC 9 compilation
+* Update ipbi pattern for drives with previous pattern unknown
+
 ### v0.93 / 2019-10-17
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.92...v0.93)

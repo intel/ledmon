@@ -211,10 +211,9 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	reg = read_npem_register(pdev, PCI_NPEM_CAP_REG);
 	if ((reg & ibpi_to_npem_capability[ibpi]) == 0) {
-		log_error("NPEM: Controller %s doesn't support %s pattern\n",
+		log_debug("NPEM: Controller %s doesn't support %s pattern\n",
 			  npem_cntrl->sysfs_path, ibpi_str[ibpi]);
-		err = -EPERM;
-		goto exit;
+		ibpi = IBPI_PATTERN_NORMAL;
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);

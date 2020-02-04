@@ -1,6 +1,5 @@
 /*
- * AMD SGPIO LED control
- * Copyright (C) 2019, Advanced Micro Devices, Inc.
+ * Generic IPMI Interface
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -17,8 +16,7 @@
  *
  */
 
-#include "block.h"
+#define BMC_SA 0x20
 
-int _amd_sgpio_em_enabled(const char *path);
-int _amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi);
-char *_amd_sgpio_get_path(const char *cntrl_path);
+int ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
+	    int resplen, int *rlen, void *resp);

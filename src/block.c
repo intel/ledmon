@@ -46,6 +46,7 @@
 #include "vmdssd.h"
 #include "amd_sgpio.h"
 #include "npem.h"
+#include "amd.h"
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
    device structure. See block.h for details. */
@@ -99,6 +100,8 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 		result = amd_sgpio_write;
 	} else if (cntrl->cntrl_type == CNTRL_TYPE_NPEM) {
 		result = npem_write;
+	} else if (cntrl->cntrl_type == CNTRL_TYPE_AMD) {
+		result = amd_write;
 	}
 	return result;
 }
@@ -152,6 +155,9 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 		result = amd_sgpio_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_NPEM)
 		result = npem_get_path(cntrl->sysfs_path);
+	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD)
+		result = amd_get_path(path, cntrl->sysfs_path);
+  
 	return result;
 }
 

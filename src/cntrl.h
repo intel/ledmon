@@ -31,6 +31,7 @@ enum cntrl_type {
 	CNTRL_TYPE_AHCI,
 	CNTRL_TYPE_AMD_SGPIO,
 	CNTRL_TYPE_NPEM,
+	CNTRL_TYPE_AMD,
 };
 
 /**

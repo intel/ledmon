@@ -1,5 +1,5 @@
 /*
- * AMD SGPIO LED control
+ * AMD IPMI LED control
  * Copyright (C) 2019, Advanced Micro Devices, Inc.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,6 +19,6 @@
 
 #include "block.h"
 
-int _amd_sgpio_em_enabled(const char *path);
-int _amd_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi);
-char *_amd_sgpio_get_path(const char *cntrl_path);
+int _amd_ipmi_em_enabled(const char *path);
+int _amd_ipmi_write(struct block_device *device, enum ibpi_pattern ibpi);
+char *_amd_ipmi_get_path(const char *cntrl_path, const char *sysfs_path);

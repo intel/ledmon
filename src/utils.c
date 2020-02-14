@@ -428,6 +428,7 @@ int match_string(const char *string, const char *pattern)
 	}
 
 	status = regexec(&regex, string, 0, NULL, 0);
+	regfree(&regex);
 	if (status != 0)
 		return 0;
 

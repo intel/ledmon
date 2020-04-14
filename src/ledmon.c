@@ -292,7 +292,12 @@ static status_t _set_config_path(char **conf_path, const char *path)
  */
 static status_t _set_sleep_interval(const char *optarg)
 {
-	conf.scan_interval = atoi(optarg);
+	errno = 0;
+	conf.scan_interval = strtol(optarg, NULL, 10);
+	if (errno != 0) {
+		log_error("Cannot parse sleep interval");
+		return STATUS_CMDLINE_ERROR;
+	}
 	if (conf.scan_interval < LEDMON_MIN_SLEEP_INTERVAL) {
 		log_warning("sleep interval too small... using default.");
 		conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;

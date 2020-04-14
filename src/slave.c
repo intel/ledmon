@@ -82,7 +82,7 @@ static unsigned int _get_slot(const char *path)
 	char *p = get_text(path, "slot");
 	if (p) {
 		if (strcmp(p, "none") != 0)
-			result = atoi(p);
+			result = strtol(p, NULL, 10);
 		free(p);
 	}
 	return result;

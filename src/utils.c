@@ -117,7 +117,7 @@ int get_int(const char *path, int defval, const char *name)
 {
 	char *p = get_text(path, name);
 	if (p) {
-		defval = atoi(p);
+		defval = strtol(p, NULL, 10);
 		free(p);
 	}
 	return defval;
@@ -235,8 +235,8 @@ void get_id(const char *path, struct device_id *did)
 			t = strchr(p, ':');
 			if (t) {
 				*(t++) = '\0';
-				did->major = atoi(p);
-				did->minor = atoi(t);
+				did->major = strtol(p, NULL, 10);
+				did->minor = strtol(t, NULL, 10);
 			}
 			free(p);
 		}

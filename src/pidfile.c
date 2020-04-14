@@ -99,7 +99,7 @@ status_t pidfile_check(const char *name, pid_t *pid)
 	p = buf_read(path);
 	if (p == NULL)
 		return STATUS_INVALID_PATH;
-	tp = atoi(p);
+	tp = strtol(p, NULL, 10);
 	if (pid)
 		*pid = tp;
 	free(p);

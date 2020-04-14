@@ -521,6 +521,41 @@ static status_t _cmdline_ibpi_parse(int argc, char *argv[])
 }
 
 /**
+ * @brief Command line parser - checks if command line input contains
+ * options which don't require to run ledctl as root.
+ *
+ * The function parses options of ledctl application.
+ * It handles option to print version and help.
+ *
+ * @param[in]      argc           number of elements in argv array.
+ * @param[in]      argv           command line arguments.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+static status_t _cmdline_parse_non_root(int argc, char *argv[])
+{
+	int opt_index, opt = -1;
+	status_t status = STATUS_SUCCESS;
+
+	do {
+		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
+		switch (opt) {
+		case 'v':
+			_ledctl_version();
+			exit(EXIT_SUCCESS);
+		case 'h':
+			_ledctl_help();
+			exit(EXIT_SUCCESS);
+		case ':':
+		case '?':
+			return STATUS_CMDLINE_ERROR;
+		}
+	} while (opt >= 0);
+
+	return status;
+}
+
+/**
  * @brief Command line parser - options.
  *
  * This is internal function of ledctl utility. The function parses options of
@@ -559,12 +594,6 @@ static status_t _cmdline_parse(int argc, char *argv[])
 
 			}
 			break;
-		case 'v':
-			_ledctl_version();
-			exit(EXIT_SUCCESS);
-		case 'h':
-			_ledctl_help();
-			exit(EXIT_SUCCESS);
 		case 'l':
 			status = set_log_path(optarg);
 			break;
@@ -679,6 +708,10 @@ int main(int argc, char *argv[])
 	setup_options(&longopt, &shortopt, possible_params,
 			possible_params_size);
 	set_invocation_name(argv[0]);
+
+	if (_cmdline_parse_non_root(argc, argv) != STATUS_SUCCESS)
+		return STATUS_CMDLINE_ERROR;
+
 	openlog(progname, LOG_PERROR, LOG_USER);
 
 	if (getuid() != 0) {

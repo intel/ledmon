@@ -182,6 +182,11 @@ static int parse_next(FILE *fd)
 		s += 10;
 		if (*s)
 			parse_list(&conf.cntrls_blacklist, s);
+	} else if (!strncmp(s, "IGNORE_RAID_STATUS=", 18)) {
+		s += 18;
+		conf.ignore_raid_status = parse_bool(s);
+		if (conf.ignore_raid_status < 0)
+			return -1;
 	} else {
 		fprintf(stderr, "config file: unknown option '%s'.\n", s);
 		return -1;
@@ -285,6 +290,8 @@ int ledmon_write_shared_conf(void)
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		 "REBUILD_BLINK_ON_ALL=%d\n", conf.rebuild_blink_on_all);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		 "IGNORE_RAID_STATUS=%d\n", conf.ignore_raid_status);
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		 "INTERVAL=%d\n", conf.scan_interval);
 	whitelist = conf_list_to_str(&conf.cntrls_whitelist);
 	if (whitelist) {
@@ -334,6 +341,7 @@ int main(int argc, char *argv[])
 	printf("BLINK_ON_INIT: %d\n", conf.blink_on_init);
 	printf("REBUILD_BLINK_ON_ALL: %d\n", conf.rebuild_blink_on_all);
 	printf("RAID_MEMBERS_ONLY: %d\n", conf.raid_members_only);
+	printf("IGNORE_RAID_STATUS: %d\n", conf.ignore_raid_status);
 
 	if (list_is_empty(&conf.cntrls_whitelist))
 		printf("WHITELIST: NONE\n");

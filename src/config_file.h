@@ -43,6 +43,7 @@ struct ledmon_conf {
 	int blink_on_init;
 	int rebuild_blink_on_all;
 	int raid_members_only;
+	int ignore_raid_status;
 
 	/* whitelist and blacklist of controllers for blinking */
 	struct list cntrls_whitelist;

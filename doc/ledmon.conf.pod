@@ -79,6 +79,11 @@ is set to false - only the drive that the RAID is rebuilding to will be marked
 with appropriate LED pattern. If value is set to true all drives from RAID
 that is during rebuild will blink during this operation.
 
+B<IGNORE_RAID_STATUS> - Flag is to prevent override of ibpi request because of
+RAID process exposed via sysfs. When is set to true - requesetd pattern is forced
+upon disk instead of overriding with RAID status exposed via sysfs scan.
+Flag is applicable to ledctl only. The default value is set to false.
+
 B<WHITELIST> - Ledmon will limit changing LED state to controllers listed on
 whitelist. If any whitelist is set, only devices from list will be scanned by
 ledmon. The controllers should be separated by comma (B<,>) character.

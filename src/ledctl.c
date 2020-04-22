@@ -453,6 +453,9 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 		log_error("%s: device not supported", name);
 		return STATUS_NOT_SUPPORTED;
 	}
+	if (conf.ignore_raid_status) {
+		blk1->ibpi = state->ibpi;
+	}
 	blk2 = _block_device_search(&state->block_list, path);
 	if (blk2 == NULL)
 		list_append(&state->block_list, blk1);

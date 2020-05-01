@@ -45,7 +45,7 @@
 #include "amd_ipmi.h"
 
 enum amd_led_interfaces amd_interface = AMD_INTF_UNSET;
-enum amd_platforms amd_platform = AMD_PLATFORM_UNSET;
+enum amd_ipmi_platforms amd_ipmi_platform = AMD_PLATFORM_UNSET;
 
 int _find_file_path(const char *start_path, const char *filename,
 		    char *path, size_t path_len)
@@ -96,36 +96,29 @@ int _find_file_path(const char *start_path, const char *filename,
 	return found;
 }
 
-static void _get_amd_led_interface(void)
-{
-	char *name;
-
-	name = get_text("/sys/class/dmi/id", "product_name");
-	if (!name)
-		return;
-
-	if (!strncmp(name, "ETHANOL_X", 9)) {
-		amd_interface = AMD_INTF_IPMI;
-		amd_platform = AMD_PLATFORM_ETHANOL_X;
-	} else if (!strncmp(name, "DAYTONA_X", 9)) {
-		amd_interface = AMD_INTF_IPMI;
-		amd_platform = AMD_PLATFORM_DAYTONA_X;
-	} else if (!strncmp(name, "GRANDSTAND", 10)) {
-		amd_interface = AMD_INTF_SGPIO;
-		amd_platform = AMD_PLATFORM_GRANDSTAND;
-	} else if (!strncmp(name, "Speedway", 8)) {
-		amd_interface = AMD_INTF_SGPIO;
-		amd_platform = AMD_PLATFORM_SPEEDWAY;
-	}
-
-	free(name);
-}
-
+/* For AMD platforms to use IPMI for LED control we need to know
+ * the platform we're running on. This enables us to select the
+ * proper channel and slave address when making IPMI requests.
+ * Platforms not checked for IPMI enablement default to using SGPIO.
+ */
 int amd_em_enabled(const char *path)
 {
+	char *platform;
 	int rc;
 
-	_get_amd_led_interface();
+	/* Default to SGPIO interface */
+	amd_interface = AMD_INTF_SGPIO;
+
+	platform = get_text("/sys/class/dmi/id", "product_name");
+
+	/* Check IPMI platforms */
+	if (!strncmp(platform, "ETHANOL_X", 9)) {
+		amd_interface = AMD_INTF_IPMI;
+		amd_ipmi_platform = AMD_PLATFORM_ETHANOL_X;
+	} else if (!strncmp(platform, "DAYTONA_X", 9)) {
+		amd_interface = AMD_INTF_IPMI;
+		amd_ipmi_platform = AMD_PLATFORM_DAYTONA_X;
+	}
 
 	switch (amd_interface) {
 	case AMD_INTF_SGPIO:
@@ -135,7 +128,8 @@ int amd_em_enabled(const char *path)
 		rc = _amd_ipmi_em_enabled(path);
 		break;
 	default:
-		log_error("Unsupported AMD interface\n");
+		log_error("Unknown interface for AMD %s platform\n",
+			  platform);
 		rc = -EOPNOTSUPP;
 		break;
 	}

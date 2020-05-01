@@ -39,15 +39,13 @@ enum amd_led_interfaces {
 
 extern enum amd_led_interfaces amd_interface;
 
-enum amd_platforms {
+enum amd_ipmi_platforms {
 	AMD_PLATFORM_UNSET,
 	AMD_PLATFORM_ETHANOL_X,
 	AMD_PLATFORM_DAYTONA_X,
-	AMD_PLATFORM_GRANDSTAND,
-	AMD_PLATFORM_SPEEDWAY,
 };
 
-extern enum amd_platforms amd_platform;
+extern enum amd_ipmi_platforms amd_ipmi_platform;
 
 int amd_em_enabled(const char *path);
 int amd_write(struct block_device *device, enum ibpi_pattern ibpi);

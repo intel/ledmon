@@ -105,7 +105,7 @@ static int _get_ipmi_nvme_port(char *path)
 	/* Some platfroms require an adjustment to the port value based
 	 * on how they are numbered by the BIOS.
 	 */
-	switch (amd_platform) {
+	switch (amd_ipmi_platform) {
 	case AMD_PLATFORM_DAYTONA_X:
 		port -= 2;
 		break;
@@ -202,7 +202,7 @@ static int _ipmi_platform_channel(struct amd_drive *drive)
 {
 	int rc = 0;
 
-	switch (amd_platform) {
+	switch (amd_ipmi_platform) {
 	case AMD_PLATFORM_ETHANOL_X:
 		drive->channel =  0xd;
 		break;
@@ -222,7 +222,7 @@ static int _ipmi_platform_slave_address(struct amd_drive *drive)
 {
 	int rc = 0;
 
-	switch (amd_platform) {
+	switch (amd_ipmi_platform) {
 	case AMD_PLATFORM_ETHANOL_X:
 		drive->slave_addr = 0xc0;
 		break;
@@ -375,12 +375,12 @@ int _amd_ipmi_em_enabled(const char *path)
 		     &data_sz, &status);
 
 	if (rc) {
-		log_error("Can't determine MG9098 Status\n");
+		log_error("Can't determine MG9098 Status for AMD platform\n");
 		return 0;
 	}
 
 	if (status != 98) {
-		log_error("Not a MG9098\n");
+		log_error("Platform %s does not have a MG9098 controller\n");
 		return 0;
 	}
 

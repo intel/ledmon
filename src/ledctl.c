@@ -261,7 +261,7 @@ static void _determine(struct ibpi_state *state)
 		struct block_device *block;
 
 		list_for_each(&state->block_list, block) {
-			if (block->ibpi < state->ibpi)
+			if (block->ibpi != state->ibpi)
 				block->ibpi = state->ibpi;
 		}
 	} else {
@@ -426,7 +426,7 @@ static struct block_device *_block_device_search(const struct list *block_list,
  *
  * @param[in]      state          pointer to IBPI state structure the block
  *                                device will be added to.
- * @param[in]      block          pointer to block device structure.
+ * @param[in]      name           path to block device.
  *
  * @return The function does not return a value.
  */
@@ -627,18 +627,17 @@ static status_t _cmdline_parse(int argc, char *argv[])
 }
 
 /**
- * @brief Determine and send IBPI pattern.
+ * @brief Send IBPI pattern.
  *
- * This is internal function of ledctl utility. The function determines a state
- * of block device based on ibpi_list list. Then it sends a LED control message
- * to controller to visualize the pattern.
+ * This is internal function of ledctl utility. The function set a requested
+ * ibpi_state for devices linked with this ibpi_state on ibpi_local_list.
+ * For other devices IBPI_PATTERN_LOCATE_OFF might be set - depending on
+ * listed_only parameter. Then it sends a LED control message to controller
+ * to visualize the pattern.
  *
- * @param[in]      sysfs          pointer to sysfs structure holding information
- *                                about the existing controllers, block devices,
- *                                and software RAID devices.
- * @param[in]      ibpi_local_list  TBD
+ * @param[in]      ibpi_local_list	    pointer to list of ipbi_state.
  *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * @return STATUS_SUCCESS if successful, otherwise STATUS_IBPI_DETERMINE_ERROR
  */
 static status_t _ledctl_execute(struct list *ibpi_local_list)
 {
@@ -651,8 +650,15 @@ static status_t _ledctl_execute(struct list *ibpi_local_list)
 	}
 
 	list_for_each(ibpi_local_list, state)
-		list_for_each(&state->block_list, device)
+		list_for_each(&state->block_list, device) {
+			if (state->ibpi != device->ibpi) {
+				log_debug("Mismatch detected for %s, ibpi state: %s, device state %s\n",
+					  device->sysfs_path, state->ibpi,
+					  device->ibpi);
+				return STATUS_IBPI_DETERMINE_ERROR;
+			}
 			device->send_fn(device, device->ibpi);
+		}
 
 	list_for_each(sysfs_get_block_devices(), device)
 		device->flush_fn(device);

@@ -572,6 +572,8 @@ static status_t _cmdline_parse(int argc, char *argv[])
 	int opt, opt_index = -1;
 	status_t status = STATUS_SUCCESS;
 
+	optind = 1;
+
 	do {
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
 		if (opt == -1)

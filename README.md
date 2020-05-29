@@ -12,8 +12,8 @@ See http://www.gnu.org/ for details.
 
 -------------------------
 
-Following packages are required for building and compiling:
-pkgconfig
+Following packages are required to compile:
+
 |RHEL|SLES|Debian/Ubuntu|
 |:---:|:---:|:---:|
 | `RHEL8: pkgconf`, `RHEL7: pkgconfig`  | `pkg-config` | `pkg-config` |

@@ -22,4 +22,4 @@ endif
 
 SUBDIRS = doc src $(OPTIONAL_SUBDIR)
 EXTRA_DIST = config/config.h systemd/ledmon.service.in
-dist_doc_DATA = README
+dist_doc_DATA = README.md

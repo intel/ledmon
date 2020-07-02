@@ -110,6 +110,8 @@ int amd_em_enabled(const char *path)
 	amd_interface = AMD_INTF_SGPIO;
 
 	platform = get_text("/sys/class/dmi/id", "product_name");
+	if (!platform)
+		return 0;
 
 	/* Check IPMI platforms */
 	if (!strncmp(platform, "ETHANOL_X", 9)) {

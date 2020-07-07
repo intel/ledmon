@@ -19,6 +19,8 @@ Following packages are required to compile:
 | `RHEL8: pkgconf`, `RHEL7: pkgconfig`  | `pkg-config` | `pkg-config` |
 | `automake` | `automake`   | `automake`   |
 | `autoconf` | `autoconf`   | `autoconf`   |
+| `gcc` | `gcc` | `gcc` |
+| `make` | `make` | `make` |
 | `sg3_utils-devel`| `libsgutils-devel`  | `libsgutils2-dev` |
 | `systemd-devel`  | `libudev-devel`     | `libudev-dev`     |
 | `pciutils-devel` | `pciutils-devel`    | `libpci-dev`      |

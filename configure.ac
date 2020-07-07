@@ -6,6 +6,10 @@ AC_SUBST([PACKAGE_DATE], "February 2020")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.
+
+AX_CHECK_PROG([gcc])
+AX_CHECK_PROG([make])
+
 AM_PROG_CC_C_O
 AC_PROG_CC_C99
 AC_PROG_INSTALL

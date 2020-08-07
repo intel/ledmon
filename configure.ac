@@ -30,6 +30,7 @@ AX_AM_CFLAGS_ADD([-Werror=format-signedness])
 
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CPPFLAGS])
+AC_PREFIX_DEFAULT(/usr)
 
 # Automake 1.11 - silent build rules
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])

@@ -24,17 +24,17 @@
 #include "ibpi.h"
 
 /**
- * @brief Gets a path to slot of an enclosure.
+ * @brief Gets the sas host path of the device.
  *
- * This function returns a sysfs path to component of enclosure the device
+ * This function returns a sysfs path to the sas host that the device
  * belongs to.
  *
  * @param[in]      path           Canonical sysfs path to block device.
  *
- * @return A sysfs path to enclosure's component associated with the given
+ * @return A sysfs path to host device associated with the given
  *         block device if successful, otherwise NULL pointer.
  */
-char *scsi_get_slot_path(const char *path, const char *cntrl_path);
+char *scsi_get_host_path(const char *path, const char *cntrl_path);
 
 /**
  * @brief Prepares SES message based on ibpi pattern.

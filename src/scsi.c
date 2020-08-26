@@ -110,14 +110,17 @@ static struct ses_pages *ses_init(void)
 		return NULL;
 	sp->page1 = calloc(1, sizeof(struct ses_page));
 	if (!sp->page1)
-		goto sp1;
+		goto out;
 	sp->page2 = calloc(1, sizeof(struct ses_page));
 	if (!sp->page2)
-		goto sp2;
+		goto out;
+	sp->page10 = calloc(1, sizeof(struct ses_page));
+	if (!sp->page10)
+		goto out;
 	return sp;
- sp2:
+out:
+	free(sp->page2);
 	free(sp->page1);
- sp1:
 	free(sp);
 	return NULL;
 }
@@ -184,47 +187,17 @@ static int enclosure_load_pages(struct enclosure_device *enclosure)
 
 	/* Get Enclosure Status */
 	ret = get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS);
+	if (ret)
+		goto end;
+
+	/* Additional Element Status */
+	ret = get_ses_page(fd, sp->page10, ENCL_ADDITIONAL_EL_STATUS);
 end:
 	close(fd);
 	if (ret)
 		ses_free(sp);
 	else
 		enclosure->ses_pages = sp;
-	return ret;
-}
-
-static int enclosure_load_page10(struct enclosure_device *enclosure)
-{
-	int ret;
-	int fd;
-	struct ses_page *p;
-
-	if (enclosure->ses_pages && enclosure->ses_pages->page10)
-		return 0;
-
-	ret = enclosure_load_pages(enclosure);
-	if (ret)
-		return ret;
-
-	fd = enclosure_open(enclosure);
-	if (fd == -1)
-		return 1;
-
-	p = calloc(1, sizeof(struct ses_page));
-	if (!p) {
-		ret = 1;
-		goto end;
-	}
-
-	/* Additional Element Status */
-	ret = get_ses_page(fd, p, ENCL_ADDITIONAL_EL_STATUS);
-end:
-	close(fd);
-	if (ret)
-		free(p);
-	else
-		enclosure->ses_pages->page10 = p;
-
 	return ret;
 }
 
@@ -447,6 +420,9 @@ static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 		int ret = ses_set_message(ibpi, desc_element);
 		if (ret)
 			return ret;
+
+		sp->changes++;
+
 		/* keep PRDFAIL, clear rest */
 		desc_element->common_control &= 0x40;
 		/* set select */
@@ -525,31 +501,16 @@ static uint64_t get_drive_sas_addr(const char *path)
 	return ret;
 }
 
-static int get_encl_slot(struct block_device *device)
+int enclosure_device_init_slots(struct enclosure_device *enclosure)
 {
 	struct ses_pages *sp;
 	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
-	uint64_t addr, addr_cmp;
-	int idx;
 
-	/* try to get slot from sysfs */
-	idx = get_int(device->cntrl_path, -1, "slot");
-	if (idx != -1)
-		return idx;
-
-	/*
-	 * Older kernels may not have the "slot" sysfs attribute,
-	 * fallback to Page10 method.
-	 */
-	if (enclosure_load_page10(device->enclosure))
+	if (enclosure_load_pages(enclosure))
 		return -1;
-	sp = device->enclosure->ses_pages;
-
-	addr = get_drive_sas_addr(device->sysfs_path);
-	if (!addr)
-		return -1;
+	sp = enclosure->ses_pages;
 
 	if (debug)
 		print_page10(sp);
@@ -561,14 +522,21 @@ static int get_encl_slot(struct block_device *device)
 
 		if (t->element_type == SES_DEVICE_SLOT ||
 		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
+			enclosure->slots_count = t->num_of_elements;
+			enclosure->slots = calloc(enclosure->slots_count, sizeof(*enclosure->slots));
+			if (!enclosure->slots)
+				return -1;
+
 			for (j = 0; j < t->num_of_elements; j++, ap += len) {
 				if (debug)
 					dump_p10(ap);
 				/* Get Additional Element Status Descriptor */
 				/* length (x-1) */
 				len = ap[1] + 2;
-				if ((ap[0] & 0xf) != SCSI_PROTOCOL_SAS)
+				if ((ap[0] & 0xf) != SCSI_PROTOCOL_SAS) {
+					enclosure->slots[j].index = -1;
 					continue;	/* need SAS PROTO */
+				}
 				/* It is a SAS protocol, go on */
 				if ((ap[0] & 0x10))	/* Check EIP */
 					addr_p = ap + 8;
@@ -577,20 +545,19 @@ static int get_encl_slot(struct block_device *device)
 				/* Process only PHY 0 descriptor. */
 
 				/* Convert be64 to le64 */
-				addr_cmp = ((uint64_t)addr_p[12] << 8*7) |
-					   ((uint64_t)addr_p[13] << 8*6) |
-					   ((uint64_t)addr_p[14] << 8*5) |
-					   ((uint64_t)addr_p[15] << 8*4) |
-					   ((uint64_t)addr_p[16] << 8*3) |
-					   ((uint64_t)addr_p[17] << 8*2) |
-					   ((uint64_t)addr_p[18] << 8*1) |
-					   ((uint64_t)addr_p[19]);
+				enclosure->slots[j].sas_addr =
+					((uint64_t)addr_p[12] << 8*7) |
+					((uint64_t)addr_p[13] << 8*6) |
+					((uint64_t)addr_p[14] << 8*5) |
+					((uint64_t)addr_p[15] << 8*4) |
+					((uint64_t)addr_p[16] << 8*3) |
+					((uint64_t)addr_p[17] << 8*2) |
+					((uint64_t)addr_p[18] << 8*1) |
+					((uint64_t)addr_p[19]);
 
-				if (addr == addr_cmp) {
-					idx = ap[0] & 0x10 ? ap[3] : j;
-					return idx;
-				}
+				enclosure->slots[j].index = ap[0] & 0x10 ? ap[3] : j;
 			}
+			return 0;
 		} else {
 			/*
 			 * Device Slot and Array Device Slot elements are
@@ -602,63 +569,37 @@ static int get_encl_slot(struct block_device *device)
 	return -1;
 }
 
-/**
- */
-static int _slot_match(const char *slot_path, const char *device_path)
-{
-	char temp[PATH_MAX], link[PATH_MAX];
-
-	snprintf(temp, sizeof(temp), "%s/device", slot_path);
-
-	if (realpath(temp, link) == NULL)
-		return 0;
-
-	return strncmp(link, device_path, strlen(link)) == 0;
-}
-
-/**
- */
-static char *_slot_find(const char *enclo_path, const char *device_path)
-{
-	struct list dir;
-	char *temp, *result = NULL;
-
-	if (scan_dir(enclo_path, &dir) == 0) {
-		list_for_each(&dir, temp) {
-			if (_slot_match(temp, device_path)) {
-				result = str_dup(temp);
-				break;
-			}
-		}
-		list_erase(&dir);
-	}
-	return result;
-}
-
 int scsi_get_enclosure(struct block_device *device)
 {
 	struct enclosure_device *encl;
+	uint64_t addr;
 
 	if (!device || !device->sysfs_path)
 		return 0;
 
+	addr = get_drive_sas_addr(device->sysfs_path);
+	if (!addr)
+		return 0;
+
 	list_for_each(sysfs_get_enclosure_devices(), encl) {
-		if (_slot_match(encl->sysfs_path, device->cntrl_path)) {
-			device->enclosure = encl;
-			device->encl_index = get_encl_slot(device);
-			break;
+		int i;
+
+		for (i = 0; i < encl->slots_count; i++) {
+			if (encl->slots[i].sas_addr == addr) {
+				device->enclosure = encl;
+				device->encl_index = device->enclosure->slots[i].index;
+				return 1;
+			}
 		}
 	}
 
-	return (device->enclosure != NULL && device->encl_index != -1);
+	return 0;
 }
 
 /**
  */
 int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-	int ret;
-
 	if (!device || !device->sysfs_path || !device->enclosure ||
 	    device->encl_index == -1)
 		__set_errno_and_return(EINVAL);
@@ -670,14 +611,6 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
-	ret = enclosure_load_pages(device->enclosure);
-	if (ret) {
-		log_warning
-		    ("Unable to send %s message to %s. Device is missing?",
-		     ibpi2str(ibpi), strstr(device->sysfs_path, "host"));
-		return ret;
-	}
-
 	return ses_write_msg(ibpi, device);
 }
 
@@ -688,7 +621,8 @@ int scsi_ses_flush(struct block_device *device)
 	if (!device || !device->enclosure)
 		return 1;
 
-	if (!device->enclosure->ses_pages)
+	if (!device->enclosure->ses_pages ||
+	    !device->enclosure->ses_pages->changes)
 		return 0;
 
 	ret = ses_send_diag(device->enclosure);
@@ -697,18 +631,7 @@ int scsi_ses_flush(struct block_device *device)
 	return ret;
 }
 
-/**
- * @brief Gets a path to slot of sas controller.
- *
- * This function returns a sysfs path to component of enclosure the device
- * belongs to.
- *
- * @param[in]      path           Canonical sysfs path to block device.
- *
- * @return A sysfs path to controller device associated with the given
- *         block device if successful, otherwise NULL pointer.
- */
-static char *sas_get_slot_path(const char *path, const char *ctrl_path)
+char *scsi_get_host_path(const char *path, const char *ctrl_path)
 {
 	char *host;
 	char host_path[PATH_MAX] = { 0 };
@@ -723,31 +646,4 @@ static char *sas_get_slot_path(const char *path, const char *ctrl_path)
 		free(host);
 	}
 	return str_dup(host_path);
-}
-
-/**
- */
-static char *_get_enc_slot_path(const char *path)
-{
-	struct enclosure_device *device;
-	char *result = NULL;
-
-	list_for_each(sysfs_get_enclosure_devices(), device) {
-		result = _slot_find(device->sysfs_path, path);
-		if (result != NULL)
-			break;
-	}
-	return result;
-}
-
-/**
- */
-char *scsi_get_slot_path(const char *path, const char *ctrl_path)
-{
-	char *result = NULL;
-
-	result = _get_enc_slot_path(path);
-	if (!result)
-		result = sas_get_slot_path(path, ctrl_path);
-	return result;
 }

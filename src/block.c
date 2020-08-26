@@ -141,7 +141,7 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 	char *result = NULL;
 
 	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI)
-		result = scsi_get_slot_path(path, cntrl->sysfs_path);
+		result = scsi_get_host_path(path, cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI)
 		result = ahci_get_port_path(path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD)

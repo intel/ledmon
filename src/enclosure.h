@@ -48,6 +48,13 @@ struct enclosure_device {
 	char *dev_path;
 
 	struct ses_pages *ses_pages;
+
+	struct {
+		int index;
+		uint64_t sas_addr;
+	} *slots;
+
+	int slots_count;
 };
 
 /**

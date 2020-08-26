@@ -156,6 +156,7 @@ struct ses_pages {
 	struct ses_page *page10;
 	struct type_descriptor_header *page1_types;
 	int page1_types_len;
+	int changes;
 };
 
 struct ses_slot_ctrl_elem {

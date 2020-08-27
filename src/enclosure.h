@@ -47,7 +47,7 @@ struct enclosure_device {
    */
 	char *dev_path;
 
-	struct ses_pages *ses_pages;
+	struct ses_pages ses_pages;
 
 	struct {
 		int index;

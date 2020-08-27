@@ -71,11 +71,11 @@ static int process_page1(struct ses_pages *sp)
 	int i = 0;
 
 	/* How many enclosures is in the main enclosure? */
-	num_encl = sp->page1->buf[1] + 1;
+	num_encl = sp->page1.buf[1] + 1;
 	/* Go to Enclosure Descriptor */
-	ed = sp->page1->buf + 8;
+	ed = sp->page1.buf + 8;
 	for (i = 0; i < num_encl; i++, ed += len) {
-		if (ed + 3 > sp->page1->buf + sp->page1->len) {
+		if (ed + 3 > sp->page1.buf + sp->page1.len) {
 			log_debug
 			    ("SES: Error, response pare 1 truncated at %d\n",
 			     i);
@@ -94,45 +94,12 @@ static int process_page1(struct ses_pages *sp)
 
 	/* ed is on type descr header */
 	for (i = 0; i < sum_headers; i++, ed += 4) {
-		if (ed > sp->page1->buf + sp->page1->len) {
+		if (ed > sp->page1.buf + sp->page1.len) {
 			log_debug("SES: Response page 1 truncated at %d\n", i);
 			return 1;
 		}
 	}
 	return 0;
-}
-
-static struct ses_pages *ses_init(void)
-{
-	struct ses_pages *sp;
-	sp = calloc(1, sizeof(*sp));
-	if (!sp)
-		return NULL;
-	sp->page1 = calloc(1, sizeof(struct ses_page));
-	if (!sp->page1)
-		goto out;
-	sp->page2 = calloc(1, sizeof(struct ses_page));
-	if (!sp->page2)
-		goto out;
-	sp->page10 = calloc(1, sizeof(struct ses_page));
-	if (!sp->page10)
-		goto out;
-	return sp;
-out:
-	free(sp->page2);
-	free(sp->page1);
-	free(sp);
-	return NULL;
-}
-
-static void ses_free(struct ses_pages *sp)
-{
-	if (!sp)
-		return;
-	free(sp->page1);
-	free(sp->page2);
-	free(sp->page10);
-	free(sp);
 }
 
 static void dump_p10(unsigned char *p)
@@ -157,27 +124,18 @@ static int enclosure_open(const struct enclosure_device *enclosure)
 	return fd;
 }
 
-static int enclosure_load_pages(struct enclosure_device *enclosure)
+int enclosure_load_pages(struct enclosure_device *enclosure)
 {
 	int ret;
 	int fd;
-	struct ses_pages *sp;
-
-	if (enclosure->ses_pages)
-		return 0;
+	struct ses_pages *sp = &enclosure->ses_pages;
 
 	fd = enclosure_open(enclosure);
 	if (fd == -1)
 		return 1;
 
-	sp = ses_init();
-	if (!sp) {
-		ret = 1;
-		goto end;
-	}
-
 	/* Read configuration. */
-	ret = get_ses_page(fd, sp->page1, ENCL_CFG_DIAG_STATUS);
+	ret = get_ses_page(fd, &sp->page1, ENCL_CFG_DIAG_STATUS);
 	if (ret)
 		goto end;
 
@@ -186,34 +144,24 @@ static int enclosure_load_pages(struct enclosure_device *enclosure)
 		goto end;
 
 	/* Get Enclosure Status */
-	ret = get_ses_page(fd, sp->page2, ENCL_CTRL_DIAG_STATUS);
+	ret = get_ses_page(fd, &sp->page2, ENCL_CTRL_DIAG_STATUS);
 	if (ret)
 		goto end;
 
 	/* Additional Element Status */
-	ret = get_ses_page(fd, sp->page10, ENCL_ADDITIONAL_EL_STATUS);
+	ret = get_ses_page(fd, &sp->page10, ENCL_ADDITIONAL_EL_STATUS);
 end:
 	close(fd);
-	if (ret)
-		ses_free(sp);
-	else
-		enclosure->ses_pages = sp;
 	return ret;
-}
-
-static void enclosure_free_pages(struct enclosure_device *enclosure)
-{
-	ses_free(enclosure->ses_pages);
-	enclosure->ses_pages = NULL;
 }
 
 static void print_page10(struct ses_pages *sp)
 {
-	unsigned char *ai = sp->page10->buf + 8;
+	unsigned char *ai = sp->page10.buf + 8;
 	int i = 0, len = 0, eip = 0;
 	unsigned char *sas = NULL;
 
-	while (ai < sp->page10->buf + sp->page10->len) {
+	while (ai < sp->page10.buf + sp->page10.len) {
 		printf("%s()[%d]: Inv: %d, EIP: %d, Proto: 0x%04x\n", __func__,
 		       i++, ((ai[0] & 0x80) >> 7), ((ai[0] & 0x10) >> 4),
 		       (unsigned int) (ai[0] & 0xf));
@@ -385,16 +333,16 @@ static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el
 
 static int ses_write_msg(enum ibpi_pattern ibpi, struct block_device *device)
 {
-	struct ses_pages *sp = device->enclosure->ses_pages;
+	struct ses_pages *sp = &device->enclosure->ses_pages;
 	int idx = device->encl_index;
 	/* Move do descriptors */
-	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2->buf + 8);
+	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2.buf + 8);
 	int i;
 	struct ses_slot_ctrl_elem *desc_element = NULL;
 	element_type local_element_type = SES_UNSPECIFIED;
 
 	for (i = 0; i < sp->page1_types_len; i++) {
-		struct type_descriptor_header *t = &sp->page1_types[i];
+		const struct type_descriptor_header *t = &sp->page1_types[i];
 
 		descriptors++; /* At first, skip overall header. */
 
@@ -448,8 +396,8 @@ static int ses_send_diag(struct enclosure_device *enclosure)
 		return 1;
 
 	ret = sg_ll_send_diag(fd, 0, 1, 0, 0, 0, 0,
-			      enclosure->ses_pages->page2->buf,
-			      enclosure->ses_pages->page2->len,
+			      enclosure->ses_pages.page2.buf,
+			      enclosure->ses_pages.page2.len,
 			      0, debug);
 	close(fd);
 	return ret;
@@ -508,17 +456,15 @@ int enclosure_device_init_slots(struct enclosure_device *enclosure)
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
 
-	if (enclosure_load_pages(enclosure))
-		return -1;
-	sp = enclosure->ses_pages;
+	sp = &enclosure->ses_pages;
 
 	if (debug)
 		print_page10(sp);
 
 	/* Check Page10 for address. Extract index. */
-	ap = add_desc = sp->page10->buf + 8;
+	ap = add_desc = sp->page10.buf + 8;
 	for (i = 0; i < sp->page1_types_len; i++) {
-		struct type_descriptor_header *t = &sp->page1_types[i];
+		const struct type_descriptor_header *t = &sp->page1_types[i];
 
 		if (t->element_type == SES_DEVICE_SLOT ||
 		    t->element_type == SES_ARRAY_DEVICE_SLOT) {
@@ -621,13 +567,11 @@ int scsi_ses_flush(struct block_device *device)
 	if (!device || !device->enclosure)
 		return 1;
 
-	if (!device->enclosure->ses_pages ||
-	    !device->enclosure->ses_pages->changes)
+	if (!device->enclosure->ses_pages.changes)
 		return 0;
 
 	ret = ses_send_diag(device->enclosure);
 
-	enclosure_free_pages(device->enclosure);
 	return ret;
 }
 

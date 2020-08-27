@@ -103,6 +103,7 @@ static char *_get_dev_sg(const char *encl_path)
 }
 
 extern int enclosure_device_init_slots(struct enclosure_device *enclosure); // TODO: move here
+extern int enclosure_load_pages(struct enclosure_device *enclosure);
 
 /*
  * Allocates memory for enclosure device structure and initializes fields of
@@ -111,25 +112,34 @@ extern int enclosure_device_init_slots(struct enclosure_device *enclosure); // T
 struct enclosure_device *enclosure_device_init(const char *path)
 {
 	char temp[PATH_MAX];
-	struct enclosure_device *result = NULL;
+	struct enclosure_device *enclosure;
+	int ret;
 
-	if (realpath(path, temp)) {
-		result = calloc(1, sizeof(struct enclosure_device));
-		if (result == NULL)
-			goto out;
-		result->sysfs_path = str_dup(temp);
-		result->sas_address = _get_sas_address(temp);
-		result->dev_path = _get_dev_sg(temp);
+	if (!realpath(path, temp))
+		return NULL;
 
-		if (enclosure_device_init_slots(result) != 0) {
-			enclosure_device_fini(result);
-			result = NULL;
-		}
+	enclosure = calloc(1, sizeof(struct enclosure_device));
+	if (enclosure == NULL) {
+		ret = 1;
+		goto out;
 	}
+
+	enclosure->sysfs_path = str_dup(temp);
+	enclosure->sas_address = _get_sas_address(temp);
+	enclosure->dev_path = _get_dev_sg(temp);
+
+	ret = enclosure_load_pages(enclosure);
+	if (ret)
+		goto out;
+
+	ret = enclosure_device_init_slots(enclosure);
 out:
-	if (!result)
+	if (ret) {
 		log_warning("failed to initialize enclosure_device %s\n", path);
-	return result;
+		enclosure_device_fini(enclosure);
+		enclosure = NULL;
+	}
+	return enclosure;
 }
 
 /*

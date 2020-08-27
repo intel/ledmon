@@ -18,10 +18,12 @@
  */
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #if _HAVE_DMALLOC_H
@@ -102,9 +104,6 @@ static char *_get_dev_sg(const char *encl_path)
 	return ret;
 }
 
-extern int enclosure_device_init_slots(struct enclosure_device *enclosure); // TODO: move here
-extern int enclosure_load_pages(struct enclosure_device *enclosure);
-
 /*
  * Allocates memory for enclosure device structure and initializes fields of
  * the structure.
@@ -114,6 +113,7 @@ struct enclosure_device *enclosure_device_init(const char *path)
 	char temp[PATH_MAX];
 	struct enclosure_device *enclosure;
 	int ret;
+	int fd;
 
 	if (!realpath(path, temp))
 		return NULL;
@@ -128,11 +128,18 @@ struct enclosure_device *enclosure_device_init(const char *path)
 	enclosure->sas_address = _get_sas_address(temp);
 	enclosure->dev_path = _get_dev_sg(temp);
 
-	ret = enclosure_load_pages(enclosure);
+	fd = enclosure_open(enclosure);
+	if (fd == -1) {
+		ret = 1;
+		goto out;
+	}
+
+	ret = ses_load_pages(fd, &enclosure->ses_pages);
+	close(fd);
 	if (ret)
 		goto out;
 
-	ret = enclosure_device_init_slots(enclosure);
+	ret = ses_get_slots(&enclosure->ses_pages, &enclosure->slots, &enclosure->slots_count);
 out:
 	if (ret) {
 		log_warning("failed to initialize enclosure_device %s\n", path);
@@ -154,4 +161,14 @@ void enclosure_device_fini(struct enclosure_device *enclosure)
 		free(enclosure->dev_path);
 		free(enclosure);
 	}
+}
+
+int enclosure_open(const struct enclosure_device *enclosure)
+{
+	int fd = -1;
+
+	if (enclosure->dev_path)
+		fd = open(enclosure->dev_path, O_RDWR);
+
+	return fd;
 }

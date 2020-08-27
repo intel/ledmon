@@ -49,11 +49,7 @@ struct enclosure_device {
 
 	struct ses_pages ses_pages;
 
-	struct {
-		int index;
-		uint64_t sas_addr;
-	} *slots;
-
+	struct ses_slot *slots;
 	int slots_count;
 };
 
@@ -84,5 +80,7 @@ struct enclosure_device *enclosure_device_init(const char *path);
  * @return The function does not return a value.
  */
 void enclosure_device_fini(struct enclosure_device *enclosure);
+
+int enclosure_open(const struct enclosure_device *enclosure);
 
 #endif				/* _ENCLOSURE_H_INCLUDED_ */

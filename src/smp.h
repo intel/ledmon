@@ -64,21 +64,6 @@ struct gpio_tx_register_byte {
 } __attribute__ ((__packed__));
 
 /**
- * @brief Sends message to SES processor of an enclosure.
- *
- * This function send a message to an enclosure in order to control LEDs of
- * the given slot/component. It uses interface of ENCLOSURE kernel module to
- * control LEDs.
- *
- * @param[in]      device         Path to an enclosure device in sysfs.
- * @param[in]      ibpi           IBPI pattern to visualize.
- *
- * @return Number of characters written if successful or -1 in case of error
- *         and errno is set to appropriate error code.
- */
-int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi);
-
-/**
  * @brief Write message to outbound raw byte stream buffer.
  *
  * @param[in]      device         Path to a smp device in sysfs.

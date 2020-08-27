@@ -22,121 +22,16 @@
 
 #include <asm/types.h>
 
+#include "ibpi.h"
+
 /* Size of buffer for SES-2 Messages. */
 #define SES_ALLOC_BUFF 4096
-
-#define ENCL_CFG_DIAG_STATUS		0x01
-#define ENCL_CTRL_DIAG_STATUS		0x02
-#define ENCL_CTRL_DIAG_CFG		0x02
-#define ENCL_EL_DESCR_STATUS		0x07
-#define ENCL_ADDITIONAL_EL_STATUS	0x0a
-#define SCSI_PROTOCOL_SAS		6
 
 typedef enum __attribute__((packed)) {
 	SES_UNSPECIFIED		= 0x00,
 	SES_DEVICE_SLOT		= 0x01,
 	SES_ARRAY_DEVICE_SLOT	= 0x17,
 } element_type;
-
-static inline void _set_prdfail(unsigned char *u)
-{
-	u[0] |= (1 << 6);
-}
-
-static inline void _set_abrt(unsigned char *u)
-{
-	u[1] |= (1 << 0);
-}
-
-static inline void _set_rebuild(unsigned char *u)
-{
-	u[1] |= (1 << 1);
-}
-
-static inline void _set_ifa(unsigned char *u)
-{
-	u[1] |= (1 << 2);
-}
-
-static inline void _set_ica(unsigned char *u)
-{
-	u[1] |= (1 << 3);
-}
-
-static inline void _set_cons_check(unsigned char *u)
-{
-	u[1] |= (1 << 4);
-}
-
-static inline void _set_hspare(unsigned char *u)
-{
-	u[1] |= (1 << 5);
-}
-
-static inline void _set_rsvd_dev(unsigned char *u)
-{
-	u[1] |= (1 << 6);
-}
-
-static inline void _set_ok(unsigned char *u)
-{
-	u[1] |= (1 << 7);
-}
-
-static inline void _set_ident(unsigned char *u)
-{
-	u[2] |= (1 << 1);
-}
-
-static inline void _clr_ident(unsigned char *u)
-{
-	u[2] &= ~(1 << 1);
-}
-
-static inline void _set_rm(unsigned char *u)
-{
-	u[2] |= (1 << 2);
-}
-
-static inline void _set_ins(unsigned char *u)
-{
-	u[2] |= (1 << 3);
-}
-
-static inline void _set_miss(unsigned char *u)
-{
-	u[2] |= (1 << 4);
-}
-
-static inline void _set_dnr(unsigned char *u)
-{
-	u[2] |= (1 << 6);
-}
-
-static inline void _set_actv(unsigned char *u)
-{
-	u[2] |= (1 << 7);
-}
-
-static inline void _set_enbb(unsigned char *u)
-{
-	u[3] |= (1 << 2);
-}
-
-static inline void _set_enba(unsigned char *u)
-{
-	u[3] |= (1 << 3);
-}
-
-static inline void _set_off(unsigned char *u)
-{
-	u[3] |= (1 << 4);
-}
-
-static inline void _set_fault(unsigned char *u)
-{
-	u[3] |= (1 << 5);
-}
 
 struct ses_page {
 	unsigned char buf[SES_ALLOC_BUFF];
@@ -170,5 +65,15 @@ struct ses_slot_ctrl_elem {
 		__u8 b[4];
 	};
 };
+
+struct ses_slot {
+	int index;
+	uint64_t sas_addr;
+};
+
+int ses_load_pages(int fd, struct ses_pages *sp);
+int ses_write_msg(enum ibpi_pattern ibpi, struct ses_pages *sp, int idx);
+int ses_send_diag(int fd, struct ses_pages *sp);
+int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count);
 
 #endif

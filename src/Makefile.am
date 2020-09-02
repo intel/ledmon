@@ -22,7 +22,7 @@ COMMON_SRCS      = ahci.c block.c cntrl.c config_file.c enclosure.c list.c \
                    ipmi.c npem.c ses.c \
                    ahci.h amd_sgpio.h block.h cntrl.h config_file.h dellssd.h \
                    enclosure.h ibpi.h list.h pci_slot.h pidfile.h raid.h scsi.h \
-                   ses.h slave.h smp.h status.h sysfs.h udev.h utils.h version.h \
+                   ses.h slave.h smp.h status.h sysfs.h udev.h utils.h \
                    vmdssd.h ipmi.h amd.h amd_ipmi.h npem.h
 
 LEDMON_SRCS      = ledmon.c pidfile.c $(COMMON_SRCS)

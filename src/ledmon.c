@@ -869,7 +869,7 @@ int main(int argc, char *argv[])
 	if (_cmdline_parse_non_daemonise(argc, argv) != STATUS_SUCCESS)
 		return STATUS_CMDLINE_ERROR;
 
-	if (getuid() != 0) {
+	if (geteuid() != 0) {
 		fprintf(stderr, "Only root can run this application.\n");
 		return STATUS_NOT_A_PRIVILEGED_USER;
 	}

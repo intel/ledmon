@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
 
 	openlog(progname, LOG_PERROR, LOG_USER);
 
-	if (getuid() != 0) {
+	if (geteuid() != 0) {
 		fprintf(stderr, "Only root can run this application.\n");
 		return STATUS_NOT_A_PRIVILEGED_USER;
 	}

@@ -27,7 +27,6 @@ COMMON_SRCS      = ahci.c block.c cntrl.c config_file.c enclosure.c list.c \
 
 LEDMON_SRCS      = ledmon.c pidfile.c $(COMMON_SRCS)
 LEDCTL_SRCS      = ledctl.c $(COMMON_SRCS)
-TEST_CONFIG_SRCS = config_file.c list.c utils.c
 
 
 sbin_PROGRAMS  = ledmon ledctl
@@ -39,11 +38,3 @@ ledctl_LDADD = $(LIBPCI_LIBS) $(LIBUDEV_LIBS)
 
 ledmon_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS) $(LIBUDEV_CFLAGS)
 ledctl_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS) $(LIBUDEV_CFLAGS)
-if TESTCONFIG_CONDITION
-
-noinst_PROGRAMS       = test_config
-test_config_SOURCES   = $(TEST_CONFIG_SRCS)
-test_config_CPPFLAGS  = $(AM_CPPFLAGS) -D_TEST_CONFIG
-
-endif
-

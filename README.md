@@ -35,7 +35,6 @@ Run `autogen.sh` to generate compiling configurations:
 
 Run ./configure with:  
     `--enable-systemd` to configure with systemd service.  
-    `--enable-testconfig` to configure with config file testing tool.
 
 ## 3. Compiling the package
 

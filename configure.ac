@@ -66,13 +66,10 @@ AC_CHECK_FUNCS([ftruncate memset munmap realpath regcomp select strcasecmp strch
 
 # configure options
 AC_ARG_ENABLE(systemd, AS_HELP_STRING([--enable-systemd], [install ledmon systemd service]))
-AC_ARG_ENABLE(testconfig, AS_HELP_STRING([--enable-testconfig], [build test_config tool]))
 
 AS_IF([test "x$enable_systemd" = xyes], [SYSTEMD_STR=yes], [SYSTEMD_STR=no])
-AS_IF([test "x$enable_testconfig" = xyes], [TESTCONFIG_STR=yes], [TESTCONFIG_STR=no])
 
 AM_CONDITIONAL([SYSTEMD_CONDITION], [test "$SYSTEMD_STR" = yes])
-AM_CONDITIONAL([TESTCONFIG_CONDITION], [test "$TESTCONFIG_STR" = yes])
 
 # target directory for ledmon service file
 AC_SUBST([SYSTEMD_PATH], "$(pkg-config systemd --variable=systemdsystemunitdir)")
@@ -90,5 +87,4 @@ $PACKAGE_NAME $VERSION configuration:
   C compiler flags:        ${AM_CFLAGS} ${CFLAGS}
   Common install location: ${prefix}
   configure parameters:    --enable-systemd=${SYSTEMD_STR}
-                           --enable-testconfig=${TESTCONFIG_STR}
 ])

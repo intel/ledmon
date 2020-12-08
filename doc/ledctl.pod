@@ -12,7 +12,7 @@
 #  more details.
 #
 #  You should have received a copy of the GNU General Public License along with
-#  this program; if not, write to the Free Software Foundation, Inc., 
+#  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 =head1 NAME
@@ -32,14 +32,33 @@ User must have root privileges to use this application.
 
 There are two types of systems: 2-LEDs systems (Activity LED, Status LED)
 and 3-LEDs systems (Activity LED, Locate LED, Fail LED).
-The ledctl application uses SGPIO and SES-2 protocol to control LEDs.
-The program implements IBPI patterns of SFF-8489 specification for SGPIO.
-Please note some enclosures do not stick close to SFF-8489 specification.
-It might happen that enclosure's processor will accept an IBPI pattern but it will
-blink the LEDs at variance with SFF-8489 specification or it has limited number
-of patterns supported.
 
-LED management (AHCI) and S<SAF-TE> protocols are not supported.
+The ledctl application supports LED management of the SAS/SATA and PCIe
+storages.
+
+=head4 Supported protocols/methods for LED management are:
+
+=over
+
+=item * B<SES-2 and SMP> for SAS devices,
+
+=item B<LED messages over SGPIO> for SATA,
+
+=item B<VMD and NPEM> for PCIe.
+
+=back
+
+B<SAF-TE> protocol is not supported.
+
+For SAS/SATA storages supporting controllers may transmit LED management
+information to the backplane controllers via the SGPIO interface. The SGPIO
+bus carries bit patterns, which translate into LED blink patterns in
+accordance with the International Blinking Pattern Interpretation (IBPI)
+of SFF-8489 specification for SGPIO.
+Please note some enclosures do not stick close to the SFF-8489
+specification. It might happen that the enclosure processor will accept
+the IBPI pattern but it will blink LEDs not according to SFF-8489
+specification or it has a limited number of patterns supported.
 
 The ledctl application has been verified to work with Intel(R) storage
 controllers (i.e. Intel(R) AHCI controller and Intel(R) SAS controller).
@@ -52,6 +71,30 @@ It means that some patterns set by ledctl may have no effect if ledmon is runnin
 (except Locate pattern).
 
 The ledctl application is a part of Intel(R) Enclosure LED Utilities.
+
+=head4 The ledctl utilizes the following documents as references:
+
+=over
+
+=item * SGPIO (Serial GPIO) - SFF-8485
+
+=item IBPI (International Blinking Pattern Interpretation) - SFF-8489
+
+=item LED Enclosure management messages - AHCI specification rev 1.3,
+section 12.2.1.
+
+=item SAS (Serial Attached SCSI) - T10/1760-D
+
+=item SES-2 (SCSI Enclosure Services-2) - T10/1559-D
+
+=item SMP (Serial Management Protocol) - T10/1760-D
+
+=item NPEM (Native PCIe Enclosure Management) - PCIe base specification rev 4.0
+
+=item VMD (Intel(R) Volume Management Device) - Intel(R) VROC (VMD NVMe RAID) Quick
+Configuration Guide rev 1.2
+
+=back
 
 =head2 Pattern Names
 
@@ -187,7 +230,7 @@ translation is being done.
 
 =item B<locate>
 
-I<locate> is translated to I<ses_ident> 
+I<locate> is translated to I<ses_ident>
 
 =item B<locate_off>
 
@@ -314,7 +357,7 @@ example uses the first format of device list.
 
 =head1 LICENSE
 
-Copyright (c) 2009-2017 Intel Corporation.
+Copyright (c) 2009-2020 Intel Corporation.
 
 This program is distributed under the terms of the GNU General Public License
 as published by the Free Software Foundation. See the built-in help for

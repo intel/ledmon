@@ -40,11 +40,17 @@ storages.
 
 =over
 
-=item * B<SES-2 and SMP> for SAS devices,
+=item
 
-=item B<LED messages over SGPIO> for SATA,
+B<SES-2 and SMP> for SAS devices,
 
-=item B<VMD and NPEM> for PCIe.
+=item
+
+B<LED messages over SGPIO> for SATA,
+
+=item
+
+B<VMD and NPEM> for PCIe.
 
 =back
 
@@ -80,22 +86,38 @@ single instance of the application is allowed.
 
 =over
 
-=item * SGPIO (Serial GPIO) - SFF-8485
+=item
 
-=item IBPI (International Blinking Pattern Interpretation) - SFF-8489
+SGPIO (Serial GPIO) - SFF-8485
 
-=item LED Enclosure management messages - AHCI specification rev 1.3,
+=item
+
+IBPI (International Blinking Pattern Interpretation) - SFF-8489
+
+=item
+
+LED Enclosure management messages - AHCI specification rev 1.3,
 section 12.2.1.
 
-=item SAS (Serial Attached SCSI) - T10/1760-D
+=item
 
-=item SES-2 (SCSI Enclosure Services-2) - T10/1559-D
+SAS (Serial Attached SCSI) - T10/1760-D
 
-=item SMP (Serial Management Protocol) - T10/1760-D
+=item
 
-=item NPEM (Native PCIe Enclosure Management) - PCIe base specification rev 4.0
+SES-2 (SCSI Enclosure Services-2) - T10/1559-D
 
-=item VMD (Intel(R) Volume Management Device) - Intel(R) VROC (VMD NVMe RAID) Quick
+=item
+
+SMP (Serial Management Protocol) - T10/1760-D
+
+=item
+
+NPEM (Native PCIe Enclosure Management) - PCIe base specification rev 4.0
+
+=item
+
+VMD (Intel(R) Volume Management Device) - Intel(R) VROC (VMD NVMe RAID) Quick
 Configuration Guide rev 1.2
 
 =back

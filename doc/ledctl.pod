@@ -297,9 +297,6 @@ list> in curly braces and elements are separated by space. See examples
 section below for details.
 
 A device is a path to file in /dev directory or in /sys/block directory.
-It may identify a block device, a RAID device or a container device.
-In case of a RAID device or a container device a state will be set for all
-block devices associated, respectively.
 
 The LEDs of devices listed in I<list_of_devices> are set to the given
 pattern I<pattern_name> and all other LEDs are turned off (unless --listed-only
@@ -354,29 +351,40 @@ to user defined file use I<-l> option switch.
 
 =head1 EXAMPLES
 
-The following example illustrates how to locate a single block device.
+The following example illustrates how to set I<locate> on a single
+block device.
 
     ledctl locate=/dev/sda
 
-The following example illustrates how to turn Locate LED off for the same block device.
+The following example illustrates how to set I<locate_off> on a single
+block device.
 
     ledctl locate_off=/dev/sda
 
-The following example illustrates how to locate disks of a RAID device and
-how to set rebuild pattern for two block devices at the same time. This example
-uses both formats of device list.
-
-     ledctl locate=/dev/md127 rebuild={ /sys/block/sd[a-b] }
-
-The following example illustrates how to turn Status LED and Failure LED off for
-the given device(s).
+The following example illustrates how to set I<off> on the given devices. It
+uses second format of device list.
 
      ledctl off={ /dev/sda /dev/sdb }
 
-The following example illustrates how to locate a three block devices. This
-example uses the first format of device list.
+The following example illustrates how to set I<locate> and I<rebuild> on
+different devices at the same time. It uses the second format of device list.
+
+     ledctl locate={ /dev/sdb } rebuild={ /sys/block/sdc }
+
+The following example illustrates how to I<locate> on three block devices. It
+uses the first format of device list.
 
      ledctl locate=/dev/sda,/dev/sdb,/dev/sdc
+
+The following example illustrates how to set I<locate> and I<rebuild> on
+different devices at the same time. It uses the first format of device list.
+
+     ledctl locate=/dev/sdb rebuild=/sys/block/sdc
+
+The following example illustrates how to set I<locate> and I<rebuild> on
+different devices at the same time. It uses the both formats of device list.
+
+     ledctl locate={ /dev/sdb } rebuild=/sys/block/sdc
 
 =head1 LICENSE
 

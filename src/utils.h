@@ -308,6 +308,71 @@ char *str_cpy(char *dest, const char *src, size_t size);
 char *str_dup(const char *src);
 
 /**
+ * @brief Converts string to long integer.
+ *
+ * This function works similar to strtol.
+ * Writes to destination only if successfully read the number.
+ * Destination can be NULL if endptr is set.
+ *
+ * @param[in]      dest            Pointer to destination.
+ * @param[in]      strptr          Pointer to source string.
+ * @param[in]      endptr          Pointer to the next character in string after parsed value.
+ * @param[in]      base            Base of the numerical value in string.
+ *
+ * @return 0 if operation was successful, otherwise 1.
+ */
+int str_tol(signed long *dest, const char *strptr, char **endptr, int base);
+
+/**
+ * @brief Converts string to unsigned long integer.
+ *
+ * This function works similar to strtoul. Skips + and - characters.
+ * Writes to destination only if successfully read the number.
+ * Destination can be NULL if endptr is set.
+ *
+ * @param[in]      dest            Pointer to destination.
+ * @param[in]      strptr          Pointer to source string.
+ * @param[in]      endptr          Pointer to the next character in string after parsed value.
+ * @param[in]      base            Base of the numerical value in string.
+ *
+ * @return 0 if operation was successful, otherwise 1.
+ */
+int str_toul(unsigned long *dest, const char *strptr, char **endptr, int base);
+
+/**
+ * @brief Converts string to integer.
+ *
+ * This function works similar to strtol, but for int.
+ * Writes to destination only if successfully read the number.
+ * Destination can be NULL if endptr is set.
+ *
+ * @param[in]      dest            Pointer to destination.
+ * @param[in]      strptr          Pointer to source string.
+ * @param[in]      endptr          Pointer to the next character in string after parsed value.
+ * @param[in]      base            Base of the numerical value in string.
+ *
+ * @return 0 if operation was successful, otherwise 1.
+ */
+int str_toi(signed int *dest, const char *strptr, char **endptr, int base);
+
+/**
+ * @brief Converts string to unsigned integer.
+ *
+ * This function works similar to strtoul, but for unsigned int.
+ * Skips + and - characters.
+ * Writes to destination only if successfully read the number.
+ * Destination can be NULL if endptr is set.
+ *
+ * @param[in]      dest            Pointer to destination.
+ * @param[in]      strptr          Pointer to source string.
+ * @param[in]      endptr          Pointer to the next character in string after parsed value.
+ * @param[in]      base            Base of the numerical value in string.
+ *
+ * @return 0 if operation was successful, otherwise 1.
+ */
+int str_toui(unsigned int *dest, const char *strptr, char **endptr, int base);
+
+/**
  */
 char *truncate_path_component_rev(const char *path, int index);
 

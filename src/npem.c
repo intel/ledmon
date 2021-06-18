@@ -84,11 +84,16 @@ static struct pci_dev *get_pci_dev(struct pci_access *pacc, const char *path)
 {
 	unsigned int domain, bus, dev, fn;
 	char *p = strrchr(path, '/');
+	int ret = 0;
 
 	if (!p)
 		return NULL;
 
-	if (sscanf(p + 1, "%x:%x:%x.%x", &domain, &bus, &dev, &fn) != 4)
+	ret += str_toui(&domain, p + 1, &p, 16);
+	ret += str_toui(&bus, p + 1, &p, 16);
+	ret += str_toui(&dev, p + 1, &p, 16);
+	ret += str_toui(&fn, p + 1, &p, 16);
+	if (ret != 0)
 		return NULL;
 
 	return pci_get_dev(pacc, domain, bus, dev, fn);

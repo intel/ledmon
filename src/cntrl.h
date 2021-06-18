@@ -20,6 +20,8 @@
 #ifndef _CNTRL_H_INCLUDED_
 #define _CNTRL_H_INCLUDED_
 
+#include <limits.h>
+
 /**
  * This enumeration type lists all supported storage controller types.
  */
@@ -42,7 +44,7 @@ struct cntrl_device {
 	/**
 	* Path to the device in sysfs tree.
 	*/
-	char *sysfs_path;
+	char sysfs_path[PATH_MAX];
 
 	/**
 	 * Type of storage controller device.

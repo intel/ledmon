@@ -441,7 +441,7 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 	if (strstr(temp, "/dev/") != NULL) {
 		if (stat(temp, &st) < 0)
 			return STATUS_STAT_ERROR;
-		sprintf(temp, "/sys/dev/block/%u:%u", major(st.st_rdev),
+		snprintf(temp, PATH_MAX, "/sys/dev/block/%u:%u", major(st.st_rdev),
 			minor(st.st_rdev));
 		if ((realpath(temp, path) == NULL) && (errno != ENOTDIR))
 			return STATUS_INVALID_PATH;

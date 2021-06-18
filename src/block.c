@@ -190,7 +190,7 @@ struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *p
 
 	list_for_each(cntrl_list, cntrl) {
 		if (strncmp(cntrl->sysfs_path, path,
-			    strlen(cntrl->sysfs_path)) == 0) {
+			    strnlen(cntrl->sysfs_path, PATH_MAX)) == 0) {
 			if (cntrl->cntrl_type == CNTRL_TYPE_NPEM)
 				return cntrl;
 			non_npem_cntrl = cntrl;

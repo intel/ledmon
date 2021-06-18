@@ -21,6 +21,7 @@
 #define _ENCLOSURE_H_INCLUDED_
 
 #include <stdint.h>
+#include <limits.h>
 
 #include "ses.h"
 
@@ -35,7 +36,7 @@ struct enclosure_device {
    * Path to an enclosure device in sysfs tree. This is controller base
    * canonical path.
    */
-	char *sysfs_path;
+	char sysfs_path[PATH_MAX];
 
   /**
    * SAS address as identifier of an enclosure.

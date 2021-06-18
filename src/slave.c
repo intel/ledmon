@@ -75,17 +75,21 @@ static unsigned int _get_errors(const char *path)
 
 /**
  */
-static unsigned int _get_slot(const char *path)
+static int _get_slot(const char *path, unsigned int *dest)
 {
-	unsigned int result = -1;
-
+	int ret = 1;
+	unsigned int n;
 	char *p = get_text(path, "slot");
+
 	if (p) {
 		if (strcmp(p, "none") != 0)
-			result = strtol(p, NULL, 10);
+			if (str_toui(&n, p, NULL, 10) == 0) {
+				*dest = n;
+				ret = 0;
+			}
 		free(p);
 	}
-	return result;
+	return ret;
 }
 
 /**
@@ -130,12 +134,14 @@ struct slave_device *slave_device_init(const char *path, struct list *block_list
 	block = _get_block(path, block_list);
 	if (block) {
 		device = malloc(sizeof(struct slave_device));
-		if (device) {
+		if (device && _get_slot(path, &device->slot) == 0) {
 			device->raid = NULL;
 			device->state = _get_state(path);
-			device->slot = _get_slot(path);
 			device->errors = _get_errors(path);
 			device->block = block;
+		} else {
+			free(device);
+			device = NULL;
 		}
 	}
 	return device;

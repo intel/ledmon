@@ -151,7 +151,7 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	get_ctrl(ibpi, &val);
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
 	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
-	if (buf_write(attention_path, buf) != (ssize_t) strlen(buf)) {
+	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
 		log_error("%s write error: %d\n", slot->sysfs_path, errno);
 		return -1;
 	}

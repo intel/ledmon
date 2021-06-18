@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -92,34 +93,27 @@ int get_bool(const char *path, int defval, const char *name)
 	return defval;
 }
 
-/*
- * Function returns 64-bit unsigned integer value read from a text file. See
- * utils.h for details.
- */
 uint64_t get_uint64(const char *path, uint64_t defval, const char *name)
 {
 	char *p = get_text(path, name);
-	uint64_t retval = defval;
 
-	if (p) {
-		if (sscanf(p, "%" SCNx64, &defval) == 1)
-			retval = defval;
-		free(p);
-	}
-	return retval;
+	if (!p)
+		return defval;
+
+	str_toul(&defval, p, NULL, 16);
+	free(p);
+	return defval;
 }
 
-/*
- * Function returns integer value read from a text file.
- * See utils.h for details.
- */
 int get_int(const char *path, int defval, const char *name)
 {
 	char *p = get_text(path, name);
-	if (p) {
-		defval = strtol(p, NULL, 10);
-		free(p);
-	}
+
+	if (!p)
+		return defval;
+
+	str_toi(&defval, p, NULL, 10);
+	free(p);
 	return defval;
 }
 
@@ -181,11 +175,13 @@ ssize_t buf_write(const char *path, const char *buf)
 
 	if (path == NULL)
 		__set_errno_and_return(EINVAL);
-	if ((buf == NULL) || (strlen(buf) == 0))
+
+	if (buf == NULL || strnlen(buf, WRITE_BUFFER_SIZE) == 0)
 		__set_errno_and_return(ENODATA);
+
 	fd = open(path, O_WRONLY);
 	if (fd >= 0) {
-		size = write(fd, buf, strlen(buf));
+		size = write(fd, buf, strnlen(buf, WRITE_BUFFER_SIZE));
 		close(fd);
 	}
 	return size;
@@ -235,8 +231,8 @@ void get_id(const char *path, struct device_id *did)
 			t = strchr(p, ':');
 			if (t) {
 				*(t++) = '\0';
-				did->major = strtol(p, NULL, 10);
-				did->minor = strtol(t, NULL, 10);
+				str_toi(&did->major, p, NULL, 10);
+				str_toi(&did->minor, t, NULL, 10);
 			}
 			free(p);
 		}
@@ -358,6 +354,71 @@ char *str_dup(const char *src)
 	}
 	return ret;
 }
+
+static int _str_to_num(const char *strptr, char **endptr, int base, unsigned long *n, int is_signed)
+{
+	char *c;
+	int sign_occured = 0;
+
+	assert(n);
+	if (!strptr)
+		return 1;
+	errno = 0;
+	if (is_signed)
+		*n = (unsigned long)strtol(strptr, &c, base);
+	else {
+		while ((*strptr == '-' || *strptr == '+' || isspace(*strptr)) &&
+				*strptr != '\0' && !sign_occured) {
+			if (*strptr == '-' || *strptr == '+')
+				sign_occured = 1;
+			strptr++;
+		}
+		*n = strtoul(strptr, &c, base);
+	}
+	if (errno != 0 || strptr == c)
+		return 1;
+	if (endptr)
+		*endptr = c;
+	return 0;
+}
+
+static int _str_to_num_signed(const char *strptr, char **endptr, int base, unsigned long *n)
+{
+	return _str_to_num(strptr, endptr, base, n, 1);
+}
+
+static int _str_to_num_unsigned(const char *strptr, char **endptr, int base, unsigned long *n)
+{
+	return _str_to_num(strptr, endptr, base, n, 0);
+}
+
+static inline int value_in_range_signed(long value, long min, long max)
+{
+	return (value >= min && value <= max);
+}
+
+static inline int value_in_range_unsigned(unsigned long value, unsigned long min, unsigned long max)
+{
+	return (value >= min && value <= max);
+}
+
+#define _DECL_STR_TO_NUM(name, sign, type, min, max) \
+int name(sign type * dest, const char *strptr, char **endptr, int base) \
+{ \
+	unsigned long n; \
+	if ((!dest && !endptr) || _str_to_num_##sign(strptr, endptr, base, &n)) \
+		return 1; \
+	if (!value_in_range_##sign(n, min, max)) \
+		return 1; \
+	if (dest)\
+		*dest = (sign type)n; \
+	return 0; \
+}
+
+_DECL_STR_TO_NUM(str_tol, signed, long, LONG_MIN, LONG_MAX)
+_DECL_STR_TO_NUM(str_toul, unsigned, long, 0, ULONG_MAX)
+_DECL_STR_TO_NUM(str_toi, signed, int, INT_MIN, INT_MAX)
+_DECL_STR_TO_NUM(str_toui, unsigned, int, 0, UINT_MAX)
 
 char *get_path_hostN(const char *path)
 {

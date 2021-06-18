@@ -87,7 +87,7 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 
-	sprintf(temp, "%u", ibpi2sgpio[ibpi]);
+	snprintf(temp, WRITE_BUFFER_SIZE, "%u", ibpi2sgpio[ibpi]);
 
 	snprintf(path, sizeof(path), "%s/em_message", sysfs_path);
 
@@ -102,28 +102,30 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 char *ahci_get_port_path(const char *path)
 {
-	char *p;
-	char tmp[PATH_MAX];
+	char *target_p, *host_p;
+	size_t host_length, length_to_target;
 	char *buf;
-	size_t buf_size;
 
-	p = strstr(path, "/target");
-	if (p == NULL)
+	host_p = strstr(path, "/host");
+	if (host_p == NULL)
 		return NULL;
 
-	if (sizeof(tmp) <= (p - path))
-		return NULL;
-	strncpy(tmp, path, p - path);
-	tmp[p - path] = '\0';
-	p = strrchr(tmp, PATH_DELIM);
-	if (p == NULL)
+	target_p = strstr(host_p, "/target");
+	if (target_p == NULL)
 		return NULL;
 
-	buf_size = strlen(tmp) + strlen(p) + strlen(SCSI_HOST) + 1;
-	buf = malloc(buf_size);
+	length_to_target = target_p - path;
+	host_length = target_p - host_p;
+
+	if (host_length + length_to_target + strlen(SCSI_HOST) > PATH_MAX - 1)
+		return NULL;
+
+	buf = calloc(PATH_MAX, sizeof(char));
 	if (buf == NULL)
 		return NULL;
 
-	snprintf(buf, buf_size, "%s%s%s", tmp, SCSI_HOST, p);
+	strncpy(buf, path, length_to_target);
+	strncat(buf, SCSI_HOST, strlen(SCSI_HOST) + 1);
+	strncat(buf, host_p, host_length);
 	return buf;
 }

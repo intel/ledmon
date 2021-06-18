@@ -143,8 +143,8 @@ static int parse_next(FILE *fd)
 	if (!strncmp(s, "INTERVAL=", 9)) {
 		s += 9;
 		if (*s) {
-			if (sscanf(s, "%d", &conf.scan_interval) != 1 ||
-			    conf.scan_interval < LEDMON_MIN_SLEEP_INTERVAL)
+			if (str_toi(&conf.scan_interval, s, NULL, 10) != 0 ||
+				conf.scan_interval < LEDMON_MIN_SLEEP_INTERVAL)
 				conf.scan_interval = LEDMON_MIN_SLEEP_INTERVAL;
 		}
 	} else if (!strncmp(s, "LOG_LEVEL=", 10)) {

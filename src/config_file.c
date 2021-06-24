@@ -240,11 +240,8 @@ static char *conf_list_to_str(struct list *list)
 
 	memset(buf, 0, sizeof(buf));
 	list_for_each(list, elem) {
-		if (elem) {
-			int curr = strlen(buf);
-
-			snprintf(buf + curr, sizeof(buf) - curr, "%s,", elem);
-		}
+		int curr = strlen(buf);
+		snprintf(buf + curr, sizeof(buf) - curr, "%s,", elem);
 	}
 
 	return str_dup(buf);

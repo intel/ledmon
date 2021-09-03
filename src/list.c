@@ -59,6 +59,11 @@ void list_insert(struct list *list, void *item, struct node *after)
 	struct node *new;
 	struct node **x;
 
+	if (!item) {
+		log_error("Failed to insert item into list. NULL cannot be inserted.");
+		exit(1);
+	}
+
 	new = malloc(sizeof(struct node));
 	if (!new) {
 		log_error("Failed to allocate memory for list node.");

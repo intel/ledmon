@@ -292,9 +292,7 @@ static status_t _set_config_path(char **conf_path, const char *path)
  */
 static status_t _set_sleep_interval(const char *optarg)
 {
-	errno = 0;
-	conf.scan_interval = strtol(optarg, NULL, 10);
-	if (errno != 0) {
+	if (str_toi(&conf.scan_interval, optarg, NULL, 10) != 0) {
 		log_error("Cannot parse sleep interval");
 		return STATUS_CMDLINE_ERROR;
 	}
@@ -842,7 +840,10 @@ static void _close_parent_fds(void)
 		char *elem;
 
 		list_for_each(&dir, elem) {
-			int fd = (int)strtol(basename(elem), NULL, 10);
+			int fd;
+
+			if (str_toi(&fd, basename(elem), NULL, 10) != 0)
+				continue;
 
 			if (fd != get_log_fd())
 				close(fd);

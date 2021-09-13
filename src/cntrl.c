@@ -119,10 +119,12 @@ static int _is_amd_nvme_cntrl(const char *path)
 	char tmp[PATH_MAX];
 	char *t;
 
+	memset(&tmp, 0, sizeof(tmp));
+
 	if (!_is_nvme_cntrl(path))
 		return 0;
 
-	sprintf(tmp, "%s", path);
+	strncpy(tmp, path, PATH_MAX - 1);
 	t = strrchr(tmp, '/');
 	if (!t)
 		return 0;
@@ -435,7 +437,7 @@ struct cntrl_device *cntrl_device_init(const char *path)
 			em_enabled = 0;
 		}
 		if (em_enabled) {
-			device = malloc(sizeof(struct cntrl_device));
+			device = calloc(1, sizeof(struct cntrl_device));
 			if (device) {
 				if (type == CNTRL_TYPE_SCSI) {
 					device->isci_present = _is_isci_cntrl(path);
@@ -445,7 +447,7 @@ struct cntrl_device *cntrl_device_init(const char *path)
 					device->hosts = NULL;
 				}
 				device->cntrl_type = type;
-				device->sysfs_path = str_dup(path);
+				strncpy(device->sysfs_path, path, PATH_MAX - 1);
 			}
 		} else {
 			log_error
@@ -463,7 +465,6 @@ struct cntrl_device *cntrl_device_init(const char *path)
 void cntrl_device_fini(struct cntrl_device *device)
 {
 	if (device) {
-		free(device->sysfs_path);
 		free_hosts(device->hosts);
 		free(device);
 	}

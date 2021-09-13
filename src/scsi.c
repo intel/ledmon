@@ -157,7 +157,7 @@ char *scsi_get_host_path(const char *path, const char *ctrl_path)
 {
 	char *host;
 	char host_path[PATH_MAX] = { 0 };
-	size_t ctrl_path_len = strlen(ctrl_path);
+	size_t ctrl_path_len = strnlen(ctrl_path, PATH_MAX);
 
 	if (strncmp(path, ctrl_path, ctrl_path_len) != 0)
 		return NULL;

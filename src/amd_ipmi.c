@@ -95,7 +95,8 @@ static int _get_ipmi_nvme_port(char *path)
 			char *dname = strrchr(dir_path, '/');
 
 			dname++;
-			port = strtol(dname, NULL, 0);
+			if (str_toi(&port, dname, NULL, 0) != 0)
+				return -1;
 			break;
 		}
 	}
@@ -148,7 +149,8 @@ static int _get_ipmi_sata_port(const char *start_path)
 
 	/* skip past 'ata' to get the ata port number */
 	t += 3;
-	port = strtoul(t, NULL, 10);
+	if (str_toi(&port, t, NULL, 10) != 0)
+		return -1;
 
 	return port;
 }
@@ -380,7 +382,7 @@ int _amd_ipmi_em_enabled(const char *path)
 	}
 
 	if (status != 98) {
-		log_error("Platform %s does not have a MG9098 controller\n");
+		log_error("Platform does not have a MG9098 controller\n");
 		return 0;
 	}
 

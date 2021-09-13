@@ -553,7 +553,7 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 {
 	char *path2 = NULL;
 	char *c;
-	int host, port = 0;
+	int port = 0;
 	struct dirent *de;
 	DIR *d;
 
@@ -604,8 +604,11 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 				/* Need link called "phy-XX:Y
 				 * Y is real phy we need.
 				 * This can also be found
-				 * in phy_identifier file */
-				if (sscanf(de->d_name, "phy-%d:%d", &host, &port) != 2)
+				 * in phy_identifier file
+				 */
+				char *s = strstr(de->d_name, ":") + 1;
+
+				if (str_toi(&port, s, NULL, 10) != 0)
 					continue;
 
 				break;

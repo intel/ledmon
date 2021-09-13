@@ -110,7 +110,7 @@ static char *_get_dev_sg(const char *encl_path)
  */
 struct enclosure_device *enclosure_device_init(const char *path)
 {
-	char temp[PATH_MAX];
+	char temp[PATH_MAX] = "\0";
 	struct enclosure_device *enclosure;
 	int ret;
 	int fd;
@@ -124,7 +124,7 @@ struct enclosure_device *enclosure_device_init(const char *path)
 		goto out;
 	}
 
-	enclosure->sysfs_path = str_dup(temp);
+	memccpy(enclosure->sysfs_path, temp, '\0', PATH_MAX - 1);
 	enclosure->sas_address = _get_sas_address(temp);
 	enclosure->dev_path = _get_dev_sg(temp);
 
@@ -157,7 +157,6 @@ void enclosure_device_fini(struct enclosure_device *enclosure)
 {
 	if (enclosure) {
 		free(enclosure->slots);
-		free(enclosure->sysfs_path);
 		free(enclosure->dev_path);
 		free(enclosure);
 	}

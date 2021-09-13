@@ -645,9 +645,8 @@ int sysfs_enclosure_attached_to_cntrl(const char *path)
 	struct enclosure_device *device;
 
 	list_for_each(&enclo_list, device) {
-		if ((device->sysfs_path != NULL) &&
-		    (strncmp(device->sysfs_path, path, strlen(path)) == 0))
-			return 1;
+			if (strncmp(device->sysfs_path, path, strnlen(path, PATH_MAX)) == 0)
+				return 1;
 	}
 	return 0;
 }

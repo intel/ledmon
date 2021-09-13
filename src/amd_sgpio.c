@@ -569,7 +569,8 @@ static int _get_amd_sgpio_drive(const char *start_path,
 
 	/* skip past 'ata' to get the ata port number */
 	a += 3;
-	drive->ata_port = strtoul(a, NULL, 10);
+	if (str_toi(&drive->ata_port, a, NULL, 10) != 0)
+		return -1;
 
 	found = _find_file_path(ata_dir, "port_no", path, PATH_MAX);
 	if (!found) {

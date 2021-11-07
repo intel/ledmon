@@ -50,6 +50,7 @@
 #define SYSFS_CLASS_ENCLOSURE   "/sys/class/enclosure"
 #define SYSFS_PCI_DEVICES       "/sys/bus/pci/devices"
 #define SYSFS_PCI_SLOTS         "/sys/bus/pci/slots"
+#define NVME_PCI_CLASS_CODE     "0x010802"
 
 /**
  * This is internal variable global to sysfs module only. It is a list of
@@ -284,6 +285,17 @@ static void _block_add(const char *path)
 
 /**
  */
+static void _nvme_dev_add(const char *path)
+{
+	struct block_device *device = block_device_init(&cntrl_list, path);
+	if (device) {
+		list_append(&sysfs_block_list, device);
+		log_debug("%s is added as block device", path);
+	}
+}
+
+/**
+ */
 static void _volum_add(const char *path, unsigned int device_num)
 {
 	struct raid_device *device =
@@ -377,6 +389,31 @@ static void _check_enclo(const char *path)
 		_enclo_add(link);
 }
 
+static int _try_dev_nvme_add(const char *path)
+{
+	char *file_name, *value = NULL;
+	size_t len;
+	len = strlen(path) + 2 + 5;
+	file_name = malloc(len);
+	if (!file_name) {
+		log_error("try_dev_nvme(): Error allocating memory");
+		return -1;
+	}
+	snprintf(file_name, len, "%s/class", path);
+	value = buf_read(file_name);
+	if (value == NULL) {
+		log_error("try_dev_nvme(): Error reading %s file", file_name);
+		free (file_name);
+		return -1;
+	}
+	free (file_name);
+	if (strcmp(value, NVME_PCI_CLASS_CODE) == 0) {
+		_nvme_dev_add(path);
+	}
+	free(value);
+	return 0;
+}
+
 static void _scan_block(void)
 {
 	struct list dir;
@@ -388,6 +425,19 @@ static void _scan_block(void)
 		list_erase(&dir);
 	}
 }
+
+static void _scan_dev_nvme(void)
+{
+	struct list dir;
+	if (scan_dir(SYSFS_PCI_DEVICES, &dir) == 0) {
+		const char *dir_path;
+
+		list_for_each(&dir, dir_path)
+			_try_dev_nvme_add(dir_path);
+		list_erase(&dir);
+	}
+}
+
 
 static void _scan_raid(void)
 {
@@ -595,6 +645,7 @@ void sysfs_scan(void)
 	_scan_cntrl();
 	_scan_slots();
 	_scan_block();
+	_scan_dev_nvme();
 	_scan_raid();
 	_scan_slave();
 

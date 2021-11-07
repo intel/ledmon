@@ -50,6 +50,11 @@ static char *get_slot_from_syspath(char *path)
 
 		if ((next != NULL) && strcmp(next, "nvme") == 0)
 			break;
+		
+		// When PCI Path is provided, last token is valid
+		// PCI path that ends with function.
+		if ((next == NULL) && (strchr(cur, '.') != NULL))
+			break;
 		cur = next;
 	}
 

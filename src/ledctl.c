@@ -436,8 +436,10 @@ static status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 	char temp[PATH_MAX], path[PATH_MAX];
 	struct block_device *blk1, *blk2;
 
-	if ((realpath(name, temp) == NULL) && (errno != ENOTDIR))
+	if ((realpath(name, temp) == NULL) && (errno != ENOTDIR)) {
+		log_error("%s is not a valid device path.", name);
 		return STATUS_INVALID_PATH;
+	}
 	if (strstr(temp, "/dev/") != NULL) {
 		if (stat(temp, &st) < 0)
 			return STATUS_STAT_ERROR;

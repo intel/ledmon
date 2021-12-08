@@ -45,6 +45,7 @@ See also the examples section.
 B<BLACKLIST> - Ledmon will exclude scanning controllers listed on blacklist.
 When whitelist is also set in config file, the blacklist will be ignored.
 The controllers should be separated by comma (B<,>) character.
+The B<XBD Extended Regular Expressions> are supported.
 
 B<BLINK_ON_INIT> - Related with RAID Initialization (resync), Verify (check)
 and Verify and Fix (repair) processes. If value is set to true - status LEDs of
@@ -82,6 +83,7 @@ that is during rebuild will blink during this operation.
 B<WHITELIST> - Ledmon will limit changing LED state to controllers listed on
 whitelist. If any whitelist is set, only devices from list will be scanned by
 ledmon. The controllers should be separated by comma (B<,>) character.
+The B<XBD Extended Regular Expressions> are supported.
 
 =head1 EXAMPLES
 

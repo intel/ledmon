@@ -425,20 +425,16 @@ int _amd_ipmi_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 char *_amd_ipmi_get_path(const char *cntrl_path, const char *sysfs_path)
 {
-	char *p, *t;
+	char *t;
 
 	/* For NVMe devices we can just dup the path sysfs path */
-	p = strstr(cntrl_path, "nvme");
-	if (p)
+	if (strstr(cntrl_path, "nvme"))
 		return strdup(sysfs_path);
 
-	/* For SATA devices we need everything up to 'ataXX/' in the path */
-	p = strdup(cntrl_path);
-	if (!p)
-		return NULL;
-
-	/* Find the beginning of the ataXX piece of the path */
-	t = strstr(p, "ata");
+	/*
+	 * For SATA devices we need everything up to 'ataXX/' in the path
+	 */
+	t = strstr(cntrl_path, "ata");
 	if (!t)
 		return NULL;
 
@@ -449,8 +445,6 @@ char *_amd_ipmi_get_path(const char *cntrl_path, const char *sysfs_path)
 	if (!t)
 		return NULL;
 
-	*++t = '\0';
-
-	return p;
+	return strndup(cntrl_path, (t - cntrl_path) + 1);
 }
 

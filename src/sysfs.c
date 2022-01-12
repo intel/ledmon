@@ -240,6 +240,10 @@ static void _slave_cnt_add(const char *path, struct raid_device *raid)
 	struct slave_device *device;
 
 	char *t = strrchr(path, '/');
+
+	if (!t)
+		return;
+
 	if (strncmp(t + 1, "dev-", 4) == 0) {
 		device = slave_device_init(path, &sysfs_block_list);
 		if (device) {
@@ -355,6 +359,10 @@ static void _slots_add(const char *path)
 static void _check_raid(const char *path)
 {
 	char *t = strrchr(path, '/');
+
+	if (!t)
+		return;
+
 	if (strncmp(t + 1, "md", 2) == 0)
 		_raid_add(path);
 }

@@ -299,7 +299,7 @@ section below for details.
 A device is a path to file in /dev directory or in /sys/block directory.
 
 The LEDs of devices listed in I<list_of_devices> are set to the given
-pattern I<pattern_name> and all other LEDs are turned off (unless --listed-only
+pattern I<pattern_name> and all other LEDs, on all devices, are turned off (unless --listed-only
 option is given).
 
 =head1 OPTIONS
@@ -352,39 +352,39 @@ to user defined file use I<-l> option switch.
 =head1 EXAMPLES
 
 The following example illustrates how to set I<locate> on a single
-block device.
+block device. Note that all remaining LEDs, on all devices, will be turned off.
 
     ledctl locate=/dev/sda
 
 The following example illustrates how to set I<locate_off> on a single
 block device.
 
-    ledctl locate_off=/dev/sda
+    ledctl --listed-only locate_off=/dev/sda
 
 The following example illustrates how to set I<off> on the given devices. It
 uses second format of device list.
 
-     ledctl off={ /dev/sda /dev/sdb }
+     ledctl --listed-only off={ /dev/sda /dev/sdb }
 
 The following example illustrates how to set I<locate> and I<rebuild> on
 different devices at the same time. It uses the second format of device list.
 
-     ledctl locate={ /dev/sdb } rebuild={ /sys/block/sdc }
+     ledctl --listed-only locate={ /dev/sdb } rebuild={ /sys/block/sdc }
 
 The following example illustrates how to I<locate> on three block devices. It
 uses the first format of device list.
 
-     ledctl locate=/dev/sda,/dev/sdb,/dev/sdc
+     ledctl --listed-only locate=/dev/sda,/dev/sdb,/dev/sdc
 
 The following example illustrates how to set I<locate> and I<rebuild> on
 different devices at the same time. It uses the first format of device list.
 
-     ledctl locate=/dev/sdb rebuild=/sys/block/sdc
+     ledctl --listed-only locate=/dev/sdb rebuild=/sys/block/sdc
 
 The following example illustrates how to set I<locate> and I<rebuild> on
 different devices at the same time. It uses the both formats of device list.
 
-     ledctl locate={ /dev/sdb } rebuild=/sys/block/sdc
+     ledctl --listed-only locate={ /dev/sdb } rebuild=/sys/block/sdc
 
 =head1 LICENSE
 

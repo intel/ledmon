@@ -30,7 +30,7 @@
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
+#include "config/config.h"
 #include "enclosure.h"
 #include "utils.h"
 

@@ -40,7 +40,7 @@
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
+#include "config/config.h"
 #include "list.h"
 #include "status.h"
 #include "utils.h"

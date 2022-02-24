@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "config.h"
+#include "config/config.h"
 #include "list.h"
 #include "pci_slot.h"
 #include "status.h"

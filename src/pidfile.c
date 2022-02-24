@@ -32,7 +32,7 @@
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
+#include "config/config.h"
 #include "pidfile.h"
 #include "status.h"
 #include "utils.h"

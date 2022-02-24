@@ -36,7 +36,7 @@
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
+#include "config/config.h"
 #include "ibpi.h"
 #include "list.h"
 #include "utils.h"
@@ -57,7 +57,7 @@ static uint8_t amd_ibpi_ipmi_register[] = {
  *                                      ^^^^^^^^^^
  * We need to retrieve the address from the path (indicated above)
  * then use it to find the corresponding address for a slot in
- * /sys/bus/pci_slots to determine the icorrect port for the NVMe device.
+ * /sys/bus/pci/slots to determine the correct port for the NVMe device.
  */
 static int _get_ipmi_nvme_port(char *path)
 {

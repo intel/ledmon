@@ -28,7 +28,7 @@
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
+#include "config/config.h"
 #include "ibpi.h"
 #include "list.h"
 #include "slave.h"

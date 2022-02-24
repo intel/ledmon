@@ -30,7 +30,7 @@
 #endif
 
 #include "ahci.h"
-#include "config.h"
+#include "config/config.h"
 #include "utils.h"
 
 /**

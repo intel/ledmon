@@ -35,7 +35,7 @@
 
 #include "ahci.h"
 #include "cntrl.h"
-#include "config.h"
+#include "config/config.h"
 #include "dellssd.h"
 #include "ibpi.h"
 #include "list.h"

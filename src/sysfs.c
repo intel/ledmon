@@ -32,7 +32,7 @@
 
 #include "block.h"
 #include "cntrl.h"
-#include "config.h"
+#include "config/config.h"
 #include "config_file.h"
 #include "enclosure.h"
 #include "ibpi.h"

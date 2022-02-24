@@ -23,7 +23,7 @@
 #include <pci/pci.h>
 #include <time.h>
 
-#include "config.h"
+#include "config/config.h"
 #include "cntrl.h"
 #include "npem.h"
 #include "utils.h"

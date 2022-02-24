@@ -27,7 +27,7 @@
 #endif
 
 #include "block.h"
-#include "config.h"
+#include "config/config.h"
 #include "ibpi.h"
 #include "list.h"
 #include "raid.h"

@@ -33,7 +33,7 @@
 
 #include "ahci.h"
 #include "block.h"
-#include "config.h"
+#include "config/config.h"
 #include "dellssd.h"
 #include "pci_slot.h"
 #include "raid.h"

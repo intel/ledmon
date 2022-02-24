@@ -29,7 +29,7 @@
 #endif
 
 #include "cntrl.h"
-#include "config.h"
+#include "config/config.h"
 #include "config_file.h"
 #include "list.h"
 #include "smp.h"

@@ -31,7 +31,7 @@
 #endif
 
 #include "cntrl.h"
-#include "config.h"
+#include "config/config.h"
 #include "enclosure.h"
 #include "list.h"
 #include "scsi.h"

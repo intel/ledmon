@@ -39,7 +39,7 @@
 
 #include "block.h"
 #include "cntrl.h"
-#include "config.h"
+#include "config/config.h"
 #include "enclosure.h"
 #include "ibpi.h"
 #include "list.h"

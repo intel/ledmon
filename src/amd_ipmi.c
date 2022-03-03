@@ -52,6 +52,17 @@ static uint8_t amd_ibpi_ipmi_register[] = {
 	[IBPI_PATTERN_HOTSPARE] = 0x47,
 };
 
+#define MG9098_CHIP_ID_REG	0x63
+
+#define AMD_IPMI_NETFN		0x06
+#define AMD_IPMI_CMD		0x52
+
+#define AMD_ETHANOL_X_CHANNEL	0x0d
+#define AMD_DAYTONA_X_CHANNEL	0x17
+
+#define AMD_BASE_SLAVE_ADDR	0xc0
+#define AMD_NVME_SLAVE_ADDR	0xc4
+
 /* The path we are given should be similar to
  * /sys/devices/pci0000:e0/0000:e0:03.3/0000:e3:00.0
  *                                      ^^^^^^^^^^
@@ -206,10 +217,10 @@ static int _ipmi_platform_channel(struct amd_drive *drive)
 
 	switch (amd_ipmi_platform) {
 	case AMD_PLATFORM_ETHANOL_X:
-		drive->channel =  0xd;
+		drive->channel = AMD_ETHANOL_X_CHANNEL;
 		break;
 	case AMD_PLATFORM_DAYTONA_X:
-		drive->channel = 0x17;
+		drive->channel = AMD_DAYTONA_X_CHANNEL;
 		break;
 	default:
 		rc = -1;
@@ -226,27 +237,27 @@ static int _ipmi_platform_slave_address(struct amd_drive *drive)
 
 	switch (amd_ipmi_platform) {
 	case AMD_PLATFORM_ETHANOL_X:
-		drive->slave_addr = 0xc0;
+		drive->slave_addr = AMD_BASE_SLAVE_ADDR;
 		break;
 	case AMD_PLATFORM_DAYTONA_X:
 		if (drive->dev == AMD_NO_DEVICE) {
 			/* Assume base slave address, we may not be able
 			 * to retrieve a valid amd_drive yet.
 			 */
-			drive->slave_addr = 0xc0;
+			drive->slave_addr = AMD_BASE_SLAVE_ADDR;
 		} else if (drive->dev == AMD_NVME_DEVICE) {
 			/* On DaytonaX systems only drive bays 19 - 24
 			 * support NVMe devices so use the slave address
 			 * for the corresponding MG9098 chip.
 			 */
-			drive->slave_addr = 0xc4;
+			drive->slave_addr = AMD_NVME_SLAVE_ADDR;
 		} else {
 			if (drive->port <= 8)
-				drive->slave_addr = 0xc0;
+				drive->slave_addr = AMD_BASE_SLAVE_ADDR;
 			else if (drive->port > 8 && drive->port < 17)
-				drive->slave_addr = 0xc2;
+				drive->slave_addr = AMD_BASE_SLAVE_ADDR + 2;
 			else
-				drive->slave_addr = 0xc4;
+				drive->slave_addr = AMD_NVME_SLAVE_ADDR;
 		}
 
 		break;
@@ -287,8 +298,8 @@ static int _set_ipmi_register(int enable, uint8_t reg,
 	log_debug(REG_FMT_2, "channel", cmd_data[0], "slave addr", cmd_data[1]);
 	log_debug(REG_FMT_2, "len", cmd_data[2], "register", cmd_data[3]);
 
-	rc = ipmicmd(BMC_SA, 0x0, 0x6, 0x52, 4, &cmd_data, 1, &data_sz,
-		     &status);
+	rc = ipmicmd(BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 4, &cmd_data,
+		     1, &data_sz, &status);
 	if (rc) {
 		log_error("Could not determine current register %x setting\n",
 			  reg);
@@ -312,8 +323,8 @@ static int _set_ipmi_register(int enable, uint8_t reg,
 	log_debug(REG_FMT_2, "len", cmd_data[2], "register", cmd_data[3]);
 	log_debug(REG_FMT_1, "status", cmd_data[4]);
 
-	rc = ipmicmd(BMC_SA, 0x0, 0x6, 0x52, 5, &cmd_data, 1, &data_sz,
-		     &status);
+	rc = ipmicmd(BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 5, &cmd_data,
+		     1, &data_sz, &status);
 	if (rc) {
 		log_error("Could not enable register %x\n", reg);
 		return rc;
@@ -370,17 +381,18 @@ int _amd_ipmi_em_enabled(const char *path)
 	cmd_data[0] = drive.channel;
 	cmd_data[1] = drive.slave_addr;
 	cmd_data[2] = 0x1;
-	cmd_data[3] = 0x63;
+	cmd_data[3] = MG9098_CHIP_ID_REG;
 
 	status = 0;
-	rc = ipmicmd(BMC_SA, 0x0, 0x6, 0x52, 4, &cmd_data, 1,
-		     &data_sz, &status);
+	rc = ipmicmd(BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 4, &cmd_data,
+		     1, &data_sz, &status);
 
 	if (rc) {
 		log_error("Can't determine MG9098 Status for AMD platform\n");
 		return 0;
 	}
 
+	/* Status return of 98 indicates MG9098 backplane */
 	if (status != 98) {
 		log_error("Platform does not have a MG9098 controller\n");
 		return 0;

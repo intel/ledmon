@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (c) 2016-2019, Intel Corporation
+ * Copyright (c) 2016-2022, Intel Corporation
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -76,6 +76,30 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
 	default:
 		*new = ATTENTION_OFF;
 		break;
+	}
+}
+
+/**
+ * @brief Returns IBPI pattern based on attention state
+ *
+ * @param[in]       attention       Attention state.
+ *
+ * @return Enum with IBPI value.
+ */
+enum ibpi_pattern attention_to_ibpi(const int attention)
+{
+	switch (attention) {
+	case ATTENTION_FAILURE:
+		return IBPI_PATTERN_FAILED_DRIVE;
+	case ATTENTION_LOCATE:
+		return IBPI_PATTERN_LOCATE;
+	case ATTENTION_REBUILD:
+		return IBPI_PATTERN_REBUILD;
+	case ATTENTION_OFF:
+		return IBPI_PATTERN_LOCATE_OFF;
+	default:
+		log_debug("Attention %d cannot be transferred to IBPI state.", attention);
+		return IBPI_PATTERN_UNKNOWN;
 	}
 }
 

@@ -20,6 +20,9 @@
 #ifndef PCI_SLOT_H_INCLUDED_
 #define PCI_SLOT_H_INCLUDED_
 
+#include "slot.h"
+#include "status.h"
+
 /**
  * @brief PCI hotplug slot structure.
  *
@@ -68,5 +71,19 @@ struct pci_slot *pci_slot_init(const char *path);
  * @return The function does not return a value.
  */
 void pci_slot_fini(struct pci_slot *slot);
+
+/**
+ * @brief Gets led state for slot.
+ *
+ * This function finds slot connected to given identifier
+ * and fills slot response related to the slot.
+ *
+ * @param[in]         device         Requested device name.
+ * @param[in]         slot_num       Requested identifier of the slot.
+ * @param[in]         slot_res       Pointer to the slot response.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
 
 #endif // PCI_SLOT_H_INCLUDED_

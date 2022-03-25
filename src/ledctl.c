@@ -42,12 +42,12 @@
 #include "cntrl.h"
 #include "config.h"
 #include "config_file.h"
-#include "ibpi.h"
+#include "slot.h"
 #include "list.h"
+#include "pci_slot.h"
 #include "scsi.h"
 #include "status.h"
 #include "sysfs.h"
-#include "utils.h"
 
 /**
  * @brief An IBPI state structure.
@@ -68,6 +68,56 @@ struct ibpi_state {
  * instance of each IBPI pattern on the list (no duplicates).
  */
 static struct list ibpi_list;
+
+/**
+ * @brief Pointer to a get slot function.
+ *
+ * The pointer to a function which will print slot details.
+ *
+ * @param[in]         device        Name of the device.
+ * @param[in]         slot          Unique identifier of the slot.
+ * @param[in]         res           Pointer to slot response.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+typedef status_t (*get_slot_t) (char *device, char *slot, struct slot_response *res);
+
+/**
+ * @brief slot request parametres
+ *
+ * This structure contains all possible parameters for slot related commands.
+ */
+struct slot_request {
+	/**
+	 * Option given in the request.
+	 */
+	int chosen_opt;
+
+	/**
+	 * Name of the device.
+	 */
+	char device[PATH_MAX];
+
+	/**
+	 * Unique slot identifier.
+	 */
+	char slot[PATH_MAX];
+
+	/**
+	 * Type of the controller.
+	 */
+	char ctrl_type[BUFFER_MAX];
+
+	/**
+	 * IBPI state.
+	 */
+	enum ibpi_pattern state;
+
+	/**
+	 * Pointer to the get slot function.
+	 */
+	get_slot_t get_slot_fn;
+};
 
 /**
  * @brief IBPI pattern names.
@@ -131,6 +181,26 @@ static const int possible_params_size = sizeof(possible_params)
 		/ sizeof(possible_params[0]);
 
 static int listed_only;
+
+/**
+ * @brief Determines a get slot function.
+ *
+ * This function determines get slot function based on
+ * controller type.
+ *
+ * @param[in]       ctrl_type       Controller type.
+ *
+ * @return Pointer to get slot function if successful, otherwise
+ *         the function returns NULL pointer.
+ */
+static get_slot_t _get_slot_ctrl_fn(const char *ctrl_type)
+{
+	if (strcasecmp(ctrl_type, "vmd") == 0)
+		return pci_get_slot;
+	log_error("The controller type %s does not support slots managing.", ctrl_type);
+
+	return NULL;
+}
 
 static void ibpi_state_fini(struct ibpi_state *p)
 {
@@ -571,6 +641,62 @@ static status_t _cmdline_parse_non_root(int argc, char *argv[])
 }
 
 /**
+ * @brief Inits slot request structure with initial values.
+ *
+ * @param[in]       slot_req       structure with slot request
+ *
+ * @return This function does not return a value.
+ */
+void slot_request_init(struct slot_request slot_req)
+{
+	memset(&slot_req, 0, sizeof(struct slot_request));
+
+	slot_req.chosen_opt = OPT_NULL_ELEMENT;
+	slot_req.state = IBPI_PATTERN_UNKNOWN;
+}
+
+/**
+ * @brief Inits slot response structure with initial values.
+ *
+ * @param[in]       slot_res       structure with slot response
+ *
+ * @return This function does not return a value.
+ */
+void slot_response_init(struct slot_response slot_res)
+{
+	memset(&slot_res, 0, sizeof(struct slot_response));
+
+	slot_res.state = IBPI_PATTERN_UNKNOWN;
+}
+
+/**
+ * @brief Executes proper slot mode function.
+ *
+ * @param[in]       slot_req       Structure with slot request.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t slot_execute(struct slot_request *slot_req)
+{
+	struct slot_response slot_res;
+	status_t status = STATUS_SUCCESS;
+
+	slot_response_init(slot_res);
+
+	switch (slot_req->chosen_opt) {
+	case OPT_GET_SLOT:
+		if (slot_req->get_slot_fn) {
+			status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
+			if (status == STATUS_SUCCESS)
+				print_slot_state(&slot_res);
+			return status;
+		}
+	default:
+		return STATUS_DATA_ERROR;
+	}
+}
+
+/**
  * @brief Command line parser - options.
  *
  * This is internal function of ledctl utility. The function parses options of
@@ -582,7 +708,7 @@ static status_t _cmdline_parse_non_root(int argc, char *argv[])
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static status_t _cmdline_parse(int argc, char *argv[])
+static status_t _cmdline_parse(int argc, char *argv[], struct slot_request *req)
 {
 	int opt, opt_index = -1;
 	status_t status = STATUS_SUCCESS;
@@ -629,6 +755,19 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			sysfs_reset();
 			exit(EXIT_SUCCESS);
 		}
+		case 'G':
+			req->chosen_opt = OPT_GET_SLOT;
+			break;
+		case 'c':
+			strncpy(req->ctrl_type, optarg, BUFFER_MAX - 1);
+			req->get_slot_fn = _get_slot_ctrl_fn(req->ctrl_type);
+			break;
+		case 'd':
+			strncpy(req->device, optarg, PATH_MAX - 1);
+			break;
+		case 'p':
+			strncpy(req->slot, optarg, PATH_MAX - 1);
+			break;
 		case ':':
 		case '?':
 		default:
@@ -727,6 +866,7 @@ static status_t _init_ledctl_conf(void)
 int main(int argc, char *argv[])
 {
 	status_t status;
+	struct slot_request slot_req;
 
 	setup_options(&longopt, &shortopt, possible_params,
 			possible_params_size);
@@ -747,7 +887,9 @@ int main(int argc, char *argv[])
 		return status;
 	if (on_exit(_ledctl_fini, progname))
 		exit(STATUS_ONEXIT_ERROR);
-	if (_cmdline_parse(argc, argv))
+	slot_request_init(slot_req);
+	status = _cmdline_parse(argc, argv, &slot_req);
+	if (status != STATUS_SUCCESS)
 		exit(STATUS_CMDLINE_ERROR);
 	free(shortopt);
 	free(longopt);
@@ -761,6 +903,9 @@ int main(int argc, char *argv[])
 	list_init(&ibpi_list, (item_free_t)ibpi_state_fini);
 	sysfs_init();
 	sysfs_scan();
+	if (slot_req.chosen_opt != OPT_NULL_ELEMENT) {
+		return slot_execute(&slot_req);
+	}
 	status = _cmdline_ibpi_parse(argc, argv);
 	if (status != STATUS_SUCCESS) {
 		log_debug("main(): _ibpi_parse() failed (status=%s).",

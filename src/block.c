@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2021 Intel Corporation.
+ * Copyright (C) 2009-2022 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -213,6 +213,20 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 		hosts = hosts->next;
 	}
 	return hosts;
+}
+
+struct block_device *find_block_device_by_sub_path(char *sub_path)
+{
+	struct block_device *device;
+
+	list_for_each(sysfs_get_block_devices(), device) {
+		if (device->sysfs_path) {
+			if (strstr(device->sysfs_path, sub_path))
+				return device;
+		}
+	}
+
+	return NULL;
 }
 
 /*

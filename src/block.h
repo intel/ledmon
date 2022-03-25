@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2018 Intel Corporation.
+ * Copyright (C) 2009-2022 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -226,5 +226,17 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id);
  */
 int block_compare(const struct block_device *bd_old,
 		  const struct block_device *bd_new);
+
+/**
+ * @brief Finds block device name containing sub-path.
+ *
+ * This function scans block devices and checks their sysfs path
+ * to find any which contains PCI address specified for device in path.
+ *
+ * @param[in]        sub_path        Sub path.
+ *
+ * @return first block device containing sub-path if any, otherwise NULL.
+ */
+struct block_device *find_block_device_by_sub_path(char *sub_path);
 
 #endif				/* _BLOCK_H_INCLUDED_ */

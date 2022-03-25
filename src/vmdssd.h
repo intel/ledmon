@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (c) 2016-2019, Intel Corporation
+ * Copyright (c) 2016-2022, Intel Corporation
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -26,5 +26,6 @@
 int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi);
 char *vmdssd_get_path(const char *cntrl_path);
 struct pci_slot *vmdssd_find_pci_slot(char *device_path);
+enum ibpi_pattern attention_to_ibpi(const int attention);
 
 #endif

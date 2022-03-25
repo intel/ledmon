@@ -26,7 +26,7 @@ COMMON_SRCS      = ahci.c block.c cntrl.c config_file.c enclosure.c list.c \
                    vmdssd.h ipmi.h amd.h amd_ipmi.h npem.h
 
 LEDMON_SRCS      = ledmon.c pidfile.c $(COMMON_SRCS)
-LEDCTL_SRCS      = ledctl.c $(COMMON_SRCS)
+LEDCTL_SRCS      = ledctl.c slot.h $(COMMON_SRCS)
 
 
 sbin_PROGRAMS  = ledmon ledctl

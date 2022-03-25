@@ -70,6 +70,17 @@ void pci_slot_fini(struct pci_slot *slot)
 }
 
 /**
+ * Finds slot identifier in sysfs path.
+ */
+char *pci_get_slot_number_from_path(const char *sysfs_path)
+{
+	if (sysfs_path)
+		return strrchr(sysfs_path, '/') + 1;
+
+	return NULL;
+}
+
+/**
  * @brief Finds PCI slot by number of the slot.
  *
  * @param[in]       slot_number       Number of the slot
@@ -82,11 +93,9 @@ static struct pci_slot *find_pci_slot_by_number(char *slot_number)
 	char *temp;
 
 	list_for_each(sysfs_get_pci_slots(), slot) {
-		if (slot->sysfs_path) {
-			temp = strrchr(slot->sysfs_path, '/') + 1;
-			if (temp && strncmp(temp, slot_number, PATH_MAX) == 0)
-				return slot;
-		}
+		temp = pci_get_slot_number_from_path(slot->sysfs_path);
+		if (temp && strncmp(temp, slot_number, PATH_MAX) == 0)
+			return slot;
 	}
 	return NULL;
 }
@@ -103,15 +112,13 @@ static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response 
 	struct block_device *bl_device;
 
 	slot_res->state = attention_to_ibpi(get_int(slot->sysfs_path, -1, "attention"));
-	if (slot->sysfs_path) {
-		char* slot_num = strrchr(slot->sysfs_path, '/') + 1;
+	char* slot_num = pci_get_slot_number_from_path(slot->sysfs_path);
 
-		if (!slot_num) {
-			log_debug("Could not parse sysfs path of the pci slot.");
-			return STATUS_NULL_POINTER;
-		}
-		snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
+	if (!slot_num) {
+		log_debug("Could not parse sysfs path of the pci slot.");
+		return STATUS_NULL_POINTER;
 	}
+	snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
 
 	bl_device = find_block_device_by_sub_path(slot->address);
 	if (bl_device && bl_device->sysfs_path) {
@@ -134,7 +141,7 @@ status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_r
 	struct pci_slot *slot = NULL;
 	struct block_device *block_device = NULL;
 
-	if (device[0] != '\0') {
+	if (device && device[0] != '\0') {
 		char *sub_path = strrchr(device, '/') + 1;
 
 		block_device = find_block_device_by_sub_path(sub_path);
@@ -146,13 +153,13 @@ status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_r
 		}
 	}
 
-	if (device[0] != '\0')
+	if (slot_num && slot_num[0] != '\0')
 		slot = find_pci_slot_by_number(slot_num);
 
 	if (slot) {
 		return set_slot_parameters(slot, slot_res);
 	} else {
-		log_error("Slot %s not found.", slot_num);
+		log_error("Specified slot was not found.");
 		return STATUS_NULL_POINTER;
 	}
 }

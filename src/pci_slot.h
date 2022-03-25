@@ -86,4 +86,13 @@ void pci_slot_fini(struct pci_slot *slot);
  */
 status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
 
+/**
+ * @brief Finds slot identifier in sysfs path.
+ *
+ * @param[in]         sysfs_path     Path to the slot in sysfs.
+ *
+ * @return Slot identifier.
+ */
+char *pci_get_slot_number_from_path(const char *sysfs_path);
+
 #endif // PCI_SLOT_H_INCLUDED_

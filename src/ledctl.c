@@ -197,7 +197,7 @@ static get_slot_t _get_slot_ctrl_fn(const char *ctrl_type)
 {
 	if (strcasecmp(ctrl_type, "vmd") == 0)
 		return pci_get_slot;
-	log_error("The controller type %s does not support slots managing.", ctrl_type);
+	log_debug("The controller type %s does not support slots managing.", ctrl_type);
 
 	return NULL;
 }
@@ -647,7 +647,7 @@ static status_t _cmdline_parse_non_root(int argc, char *argv[])
  *
  * @return This function does not return a value.
  */
-void slot_request_init(struct slot_request slot_req)
+static void slot_request_init(struct slot_request slot_req)
 {
 	memset(&slot_req, 0, sizeof(struct slot_request));
 
@@ -662,11 +662,73 @@ void slot_request_init(struct slot_request slot_req)
  *
  * @return This function does not return a value.
  */
-void slot_response_init(struct slot_response slot_res)
+static void slot_response_init(struct slot_response slot_res)
 {
 	memset(&slot_res, 0, sizeof(struct slot_response));
 
 	slot_res.state = IBPI_PATTERN_UNKNOWN;
+}
+
+/**
+ * @brief Verifies slot request parameters.
+ *
+ * @param[in]       slot_req       structure with slot request
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+static status_t slot_verify_request(struct slot_request *slot_req)
+{
+	if (!slot_req->ctrl_type || slot_req->ctrl_type[0] == '\0') {
+		log_error("Invalid controller in the request.");
+		return STATUS_INVALID_CONTROLLER;
+	}
+	if ((slot_req->chosen_opt == OPT_GET_SLOT || slot_req->chosen_opt == OPT_LIST_SLOTS)
+	     && !slot_req->get_slot_fn) {
+		log_error("The controller type %s does not support slots managing.",
+			  slot_req->ctrl_type);
+		return STATUS_DATA_ERROR;
+	}
+
+	return STATUS_SUCCESS;
+}
+
+/**
+ * @brief List slots connected to given controller
+ *
+ * This function scans all available slots connected to given controller
+ * and prints their led states and names of the connected devices (if exist).
+ *
+ * @param[in]       slot_req       Structure with slot request.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+static status_t list_slots(struct slot_request *slot_req)
+{
+	struct pci_slot *slot;
+	status_t status = STATUS_SUCCESS;
+
+	if (strcasecmp(slot_req->ctrl_type, "vmd") == 0) {
+		list_for_each(sysfs_get_pci_slots(), slot) {
+			struct slot_response slot_res;
+
+			slot_response_init(slot_res);
+			char *slot_num = pci_get_slot_number_from_path(slot->sysfs_path);
+
+			if (slot_num) {
+				status = slot_req->get_slot_fn(NULL, slot_num, &slot_res);
+				if (status == STATUS_SUCCESS)
+					print_slot_state(&slot_res);
+				else
+					return status;
+			} else {
+				return STATUS_NULL_POINTER;
+			}
+		}
+		return status;
+	}
+
+	log_debug("The controller type %s does not support slots managing.", slot_req->ctrl_type);
+	return STATUS_NOT_SUPPORTED;
 }
 
 /**
@@ -685,14 +747,14 @@ status_t slot_execute(struct slot_request *slot_req)
 
 	switch (slot_req->chosen_opt) {
 	case OPT_GET_SLOT:
-		if (slot_req->get_slot_fn) {
-			status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
-			if (status == STATUS_SUCCESS)
-				print_slot_state(&slot_res);
-			return status;
-		}
+		status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
+		if (status == STATUS_SUCCESS)
+			print_slot_state(&slot_res);
+		return status;
+	case OPT_LIST_SLOTS:
+		return list_slots(slot_req);
 	default:
-		return STATUS_DATA_ERROR;
+		return STATUS_NOT_SUPPORTED;
 	}
 }
 
@@ -757,6 +819,9 @@ static status_t _cmdline_parse(int argc, char *argv[], struct slot_request *req)
 		}
 		case 'G':
 			req->chosen_opt = OPT_GET_SLOT;
+			break;
+		case 'P':
+			req->chosen_opt = OPT_LIST_SLOTS;
 			break;
 		case 'c':
 			strncpy(req->ctrl_type, optarg, BUFFER_MAX - 1);
@@ -904,7 +969,11 @@ int main(int argc, char *argv[])
 	sysfs_init();
 	sysfs_scan();
 	if (slot_req.chosen_opt != OPT_NULL_ELEMENT) {
-		return slot_execute(&slot_req);
+		status = slot_verify_request(&slot_req);
+		if (status == STATUS_SUCCESS)
+			return slot_execute(&slot_req);
+		else
+			exit(status);
 	}
 	status = _cmdline_ibpi_parse(argc, argv);
 	if (status != STATUS_SUCCESS) {

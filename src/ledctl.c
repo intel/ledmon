@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2021 Intel Corporation.
+ * Copyright (C) 2009-2022 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -96,7 +96,7 @@ const char *ibpi_str[] = {
  * information about the version of ledctl utility.
  */
 static char *ledctl_version = "Intel(R) Enclosure LED Control Application %s %s\n"
-			      "Copyright (C) 2009-2021 Intel Corporation.\n";
+			      "Copyright (C) 2009-2022 Intel Corporation.\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line
@@ -112,6 +112,12 @@ static int possible_params[] = {
 	OPT_VERSION,
 	OPT_LIST_CTRL,
 	OPT_LISTED_ONLY,
+	OPT_LIST_SLOTS,
+	OPT_GET_SLOT,
+	OPT_SET_SLOT,
+	OPT_CONTROLLER,
+	OPT_DEVICE,
+	OPT_SLOT,
 	OPT_ALL,
 	OPT_DEBUG,
 	OPT_ERROR,
@@ -186,16 +192,25 @@ static void _ledctl_help(void)
 	       progname);
 	printf("Mandatory arguments for long options are mandatory for short options, too.\n\n");
 	print_opt("--listed-only", "-x",
-			  "Ledctl will change state only for given devices.");
+		  "Ledctl will change state only for given devices.");
 	print_opt("--list-controllers", "-L",
-			  "Displays list of controllers detected by ledmon.");
+		  "Displays list of controllers detected by ledmon.");
+	print_opt("--list-slots --controller CONTROLLER", "-P -c CONTROLLER",
+		  "List slots under the controller, their led states, slot numbers and "
+		  "devnodes connected.");
+	print_opt("--get-slot --controller CONTROLLER --device DEVNODE / --slot SLOT",
+		  "-G -c CONTROLLER -d DEVNODE / -p SLOT",
+		  "Prints slot information, its led state, slot number and devnode.");
+	print_opt("--set-slot --controller CONTROLLER --slot SLOT --state STATE",
+		  "-S -c CONTROLLER -p SLOT -s STATE", "Sets given state for chosen slot "
+		  "under the controller.");
 	print_opt("--log=PATH", "-l PATH",
-			  "Use local log file instead /var/log/ledctl.log.");
+		  "Use local log file instead /var/log/ledctl.log.");
 	print_opt("--help", "-h", "Displays this help text.");
 	print_opt("--version", "-v",
-			  "Displays version and license information.");
+		  "Displays version and license information.");
 	print_opt("--log-level=VALUE", "-l VALUE",
-			  "Allows user to set ledctl verbose level in logs.");
+		  "Allows user to set ledctl verbose level in logs.");
 	printf("\nPatterns:\n"
 	       "\tCommon patterns are:\n"
 	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""

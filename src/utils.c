@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2021 Intel Corporation.
+ * Copyright (C) 2009-2022 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -505,7 +505,7 @@ int get_log_fd(void)
 
 void print_opt(const char *long_opt, const char *short_opt, const char *desc)
 {
-	printf("%-20s%-10s%s\n", long_opt, short_opt, desc);
+	printf("%-70s%-40s%s\n", long_opt, short_opt, desc);
 }
 
 /**
@@ -581,6 +581,13 @@ struct option longopt_all[] = {
 	[OPT_LIST_CTRL]    = {"list-controllers", no_argument, NULL, 'L'},
 	[OPT_LISTED_ONLY]  = {"listed-only", no_argument, NULL, 'x'},
 	[OPT_FOREGROUND]   = {"foreground", no_argument, NULL, '\0'},
+	[OPT_LIST_SLOTS]   = {"list-slots", no_argument, NULL, 'P'},
+	[OPT_GET_SLOT]     = {"get-slot", no_argument, NULL, 'G'},
+	[OPT_SET_SLOT]     = {"set-slot", no_argument, NULL, 'S'},
+	[OPT_CONTROLLER]   = {"controller", required_argument, NULL, 'c'},
+	[OPT_DEVICE]       = {"device", required_argument, NULL, 'd'},
+	[OPT_SLOT]         = {"slot", required_argument, NULL, 'p'},
+	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 

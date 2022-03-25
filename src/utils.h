@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2019 Intel Corporation.
+ * Copyright (C) 2009-2022 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -418,6 +418,13 @@ enum opt {
 	OPT_LIST_CTRL,
 	OPT_LISTED_ONLY,
 	OPT_FOREGROUND,
+	OPT_LIST_SLOTS,
+	OPT_GET_SLOT,
+	OPT_SET_SLOT,
+	OPT_CONTROLLER,
+	OPT_DEVICE,
+	OPT_SLOT,
+	OPT_STATE,
 	OPT_NULL_ELEMENT
 };
 

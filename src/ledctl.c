@@ -83,6 +83,19 @@ static struct list ibpi_list;
 typedef status_t (*get_slot_t) (char *device, char *slot, struct slot_response *res);
 
 /**
+ * @brief Pointer to a set slot function.
+ *
+ * The pointer to a function which will set slot details.
+ *
+ * @param[in]         device        Name of the device.
+ * @param[in]         slot          Unique identifier of the slot.
+ * @param[in]         state         IBPI state based on slot request.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+typedef status_t (*set_slot_t) (char *device, char *slot, enum ibpi_pattern state);
+
+/**
  * @brief slot request parametres
  *
  * This structure contains all possible parameters for slot related commands.
@@ -117,6 +130,11 @@ struct slot_request {
 	 * Pointer to the get slot function.
 	 */
 	get_slot_t get_slot_fn;
+
+	/**
+	 * Pointer to the set slot function.
+	 */
+	set_slot_t set_slot_fn;
 };
 
 /**
@@ -168,6 +186,7 @@ static int possible_params[] = {
 	OPT_CONTROLLER,
 	OPT_DEVICE,
 	OPT_SLOT,
+	OPT_STATE,
 	OPT_ALL,
 	OPT_DEBUG,
 	OPT_ERROR,
@@ -198,6 +217,26 @@ static get_slot_t _get_slot_ctrl_fn(const char *ctrl_type)
 	if (strcasecmp(ctrl_type, "vmd") == 0)
 		return pci_get_slot;
 	log_debug("The controller type %s does not support slots managing.", ctrl_type);
+
+	return NULL;
+}
+
+/**
+ * @brief Determines a set slot function.
+ *
+ * This function determines set slot function based on
+ * controller type.
+ *
+ * @param[in]       ctrl_type       Controller type.
+ *
+ * @return Pointer to set slot function if successful, otherwise
+ *         the function returns NULL pointer.
+ */
+static set_slot_t _set_slot_ctrl_fn(const char *ctrl_type)
+{
+	if (strcasecmp(ctrl_type, "vmd") == 0)
+		return pci_set_slot;
+	log_error("The controller type %s does not support slots managing.", ctrl_type);
 
 	return NULL;
 }
@@ -682,9 +721,18 @@ static status_t slot_verify_request(struct slot_request *slot_req)
 		log_error("Invalid controller in the request.");
 		return STATUS_INVALID_CONTROLLER;
 	}
+	if (slot_req->chosen_opt == OPT_SET_SLOT && slot_req->state == IBPI_PATTERN_UNKNOWN) {
+		log_error("Invalid IBPI state in the request.");
+		return STATUS_INVALID_STATE;
+	}
 	if ((slot_req->chosen_opt == OPT_GET_SLOT || slot_req->chosen_opt == OPT_LIST_SLOTS)
 	     && !slot_req->get_slot_fn) {
 		log_error("The controller type %s does not support slots managing.",
+			  slot_req->ctrl_type);
+		return STATUS_DATA_ERROR;
+	}
+	if (slot_req->chosen_opt == OPT_SET_SLOT && !slot_req->set_slot_fn) {
+		log_debug("The controller type %s doesn't support set slot functionality.",
 			  slot_req->ctrl_type);
 		return STATUS_DATA_ERROR;
 	}
@@ -746,13 +794,17 @@ status_t slot_execute(struct slot_request *slot_req)
 	slot_response_init(slot_res);
 
 	switch (slot_req->chosen_opt) {
+	case OPT_LIST_SLOTS:
+		return list_slots(slot_req);
+	case OPT_SET_SLOT:
+		status = slot_req->set_slot_fn(slot_req->device, slot_req->slot, slot_req->state);
+		if (status != STATUS_SUCCESS)
+			return status;
 	case OPT_GET_SLOT:
 		status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
 		if (status == STATUS_SUCCESS)
 			print_slot_state(&slot_res);
 		return status;
-	case OPT_LIST_SLOTS:
-		return list_slots(slot_req);
 	default:
 		return STATUS_NOT_SUPPORTED;
 	}
@@ -823,10 +875,23 @@ static status_t _cmdline_parse(int argc, char *argv[], struct slot_request *req)
 		case 'P':
 			req->chosen_opt = OPT_LIST_SLOTS;
 			break;
+		case 'S':
+			req->chosen_opt = OPT_SET_SLOT;
+			break;
 		case 'c':
 			strncpy(req->ctrl_type, optarg, BUFFER_MAX - 1);
 			req->get_slot_fn = _get_slot_ctrl_fn(req->ctrl_type);
+			req->set_slot_fn = _set_slot_ctrl_fn(req->ctrl_type);
 			break;
+		case 's':
+		{
+			struct ibpi_state *state = _ibpi_state_get(optarg);
+
+			if (state)
+				req->state = state->ibpi;
+			free(state);
+			break;
+		}
 		case 'd':
 			strncpy(req->device, optarg, PATH_MAX - 1);
 			break;

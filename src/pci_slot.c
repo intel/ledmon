@@ -163,3 +163,41 @@ status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_r
 		return STATUS_NULL_POINTER;
 	}
 }
+
+status_t pci_set_slot(char *device, char *slot_num, enum ibpi_pattern state)
+{
+	struct slot_response *slot_res;
+	struct pci_slot *slot = NULL;
+	status_t status = STATUS_SUCCESS;
+
+	slot_res = calloc(1, sizeof(struct slot_response));
+	if (slot_res == NULL)
+		return STATUS_NULL_POINTER;
+
+	status = pci_get_slot(device, slot_num, slot_res);
+
+	if (status != STATUS_SUCCESS)
+		goto error;
+
+	if (slot_res->state == state) {
+		log_warning("Led state: %s is already set for the slot.", ibpi2str(state));
+		status = STATUS_INVALID_STATE;
+		goto error;
+	}
+
+	slot = find_pci_slot_by_number(slot_res->slot);
+	if (slot) {
+		status = vmdssd_write_attention_buf(slot, state);
+		if (status != STATUS_SUCCESS)
+			goto error;
+		sysfs_scan();
+	} else {
+		log_error("Slot %s not found.", slot_num);
+		status = STATUS_NULL_POINTER;
+		goto error;
+	}
+
+error:
+	free(slot_res);
+	return status;
+}

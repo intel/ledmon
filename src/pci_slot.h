@@ -20,6 +20,7 @@
 #ifndef PCI_SLOT_H_INCLUDED_
 #define PCI_SLOT_H_INCLUDED_
 
+#include "ibpi.h"
 #include "slot.h"
 #include "status.h"
 
@@ -95,4 +96,17 @@ status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_r
  */
 char *pci_get_slot_number_from_path(const char *sysfs_path);
 
+/**
+ * @brief Sets led state for slot.
+ *
+ * This function finds slot connected to given number or device name
+ * and set given led state.
+ *
+ * @param[in]         device         Requested device name.
+ * @param[in]         slot_num       Requested number of the slot.
+ * @param[in]         state          IBPI state based on slot request.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t pci_set_slot(char *device, char *slot_num, enum ibpi_pattern state);
 #endif // PCI_SLOT_H_INCLUDED_

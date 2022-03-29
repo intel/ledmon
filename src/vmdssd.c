@@ -144,11 +144,25 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 	return slot;
 }
 
-int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibpi)
 {
 	char attention_path[PATH_MAX];
 	char buf[WRITE_BUFFER_SIZE];
 	uint16_t val;
+
+	get_ctrl(ibpi, &val);
+	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
+	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
+	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
+		log_error("%s write error: %d\n", slot->sysfs_path, errno);
+		return STATUS_FILE_WRITE_ERROR;
+	}
+
+	return STATUS_SUCCESS;
+}
+
+int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+{
 	struct pci_slot *slot;
 	char *short_name = strrchr(device->sysfs_path, '/');
 
@@ -172,13 +186,8 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	log_debug("%s before: 0x%x\n", short_name,
 		  get_int(slot->sysfs_path, 0, "attention"));
 
-	get_ctrl(ibpi, &val);
-	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
-	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
-	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
-		log_error("%s write error: %d\n", slot->sysfs_path, errno);
+	if (vmdssd_write_attention_buf(slot, ibpi) != STATUS_SUCCESS)
 		return -1;
-	}
 
 	log_debug("%s after: 0x%x\n", short_name,
 		  get_int(slot->sysfs_path, 0, "attention"));

@@ -778,6 +778,23 @@ static status_t list_slots(struct slot_request *slot_req)
 		}
 		return status;
 	}
+	if (strcasecmp(slot_req->ctrl_type, "npem") == 0) {
+		struct cntrl_device *ctrl_dev;
+
+		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
+			struct slot_response slot_res;
+
+			slot_response_init(&slot_res);
+			if (is_npem_capable(ctrl_dev->sysfs_path)) {
+				status = slot_req->get_slot_fn(NULL, ctrl_dev->sysfs_path, &slot_res);
+				if (status == STATUS_SUCCESS)
+					print_slot_state(&slot_res);
+				else
+					return status;
+			}
+		}
+		return status;
+	}
 
 	log_debug("The controller type %s does not support slots managing.", slot_req->ctrl_type);
 	return STATUS_NOT_SUPPORTED;

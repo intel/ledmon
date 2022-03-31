@@ -21,9 +21,24 @@
 #define NPEM_H_INCLUDED_
 #include "block.h"
 #include "ibpi.h"
+#include "slot.h"
+#include "status.h"
 
 int is_npem_capable(const char *path);
 int npem_write(struct block_device *device, enum ibpi_pattern ibpi);
 char *npem_get_path(const char *cntrl_path);
 
+/**
+ * @brief Gets led state for slot.
+ *
+ * This function finds slot connected to given identifier
+ * and fills slot response related to the slot.
+ *
+ * @param[in]         device         Requested device name.
+ * @param[in]         slot_num       Requested identifier of the slot.
+ * @param[in]         slot_res       Pointer to the slot response.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t npem_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
 #endif // NPEM_H_INCLUDED_

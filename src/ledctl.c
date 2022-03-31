@@ -44,6 +44,7 @@
 #include "config_file.h"
 #include "slot.h"
 #include "list.h"
+#include "npem.h"
 #include "pci_slot.h"
 #include "scsi.h"
 #include "status.h"
@@ -144,7 +145,7 @@ struct slot_request {
  * this entries to translate enumeration type values into the string.
  */
 const char *ibpi_str[] = {
-	[IBPI_PATTERN_UNKNOWN]        = "",
+	[IBPI_PATTERN_UNKNOWN]        = "UNKNOWN",
 	[IBPI_PATTERN_NORMAL]         = "NORMAL",
 	[IBPI_PATTERN_ONESHOT_NORMAL] = "",
 	[IBPI_PATTERN_DEGRADED]       = "ICA",
@@ -214,8 +215,11 @@ static int listed_only;
  */
 static get_slot_t _get_slot_ctrl_fn(const char *ctrl_type)
 {
-	if (strcasecmp(ctrl_type, "vmd") == 0)
+	if (strcasecmp(ctrl_type, "vmd") == 0) {
 		return pci_get_slot;
+	} else if (strcasecmp(ctrl_type, "npem") == 0) {
+		return npem_get_slot;
+	}
 	log_debug("The controller type %s does not support slots managing.", ctrl_type);
 
 	return NULL;

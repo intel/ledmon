@@ -119,21 +119,9 @@ static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response 
 		return STATUS_NULL_POINTER;
 	}
 	snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
-
 	bl_device = find_block_device_by_sub_path(slot->address);
-	if (bl_device && bl_device->sysfs_path) {
-		char *dev_name = strrchr(bl_device->sysfs_path, '/') + 1;
 
-		if (!dev_name) {
-			log_debug("Could not parse sysfs path of the block device.");
-			return STATUS_NULL_POINTER;
-		}
-		snprintf(slot_res->device, PATH_MAX, "/dev/%s", dev_name);
-	} else {
-		snprintf(slot_res->device, PATH_MAX, "(empty)");
-	}
-
-	return STATUS_SUCCESS;
+	return fill_block_device_name(bl_device, slot_res->device);
 }
 
 status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_res)

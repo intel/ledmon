@@ -435,3 +435,19 @@ int block_compare(const struct block_device *bd_old,
 	}
 	return i;
 }
+
+status_t fill_block_device_name(const struct block_device *device, char *device_name)
+{
+	if (device && device->sysfs_path) {
+		char *dev_name = strrchr(device->sysfs_path, '/') + 1;
+
+		if (!dev_name) {
+			log_debug("Could not parse sysfs path of the block device.");
+			return STATUS_NULL_POINTER;
+		}
+		snprintf(device_name, PATH_MAX, "/dev/%s", dev_name);
+	} else {
+		snprintf(device_name, PATH_MAX, "(empty)");
+	}
+	return STATUS_SUCCESS;
+}

@@ -686,12 +686,12 @@ static status_t _cmdline_parse_non_root(int argc, char *argv[])
  *
  * @return This function does not return a value.
  */
-static void slot_request_init(struct slot_request slot_req)
+static void slot_request_init(struct slot_request *slot_req)
 {
-	memset(&slot_req, 0, sizeof(struct slot_request));
+	memset(slot_req, 0, sizeof(struct slot_request));
 
-	slot_req.chosen_opt = OPT_NULL_ELEMENT;
-	slot_req.state = IBPI_PATTERN_UNKNOWN;
+	slot_req->chosen_opt = OPT_NULL_ELEMENT;
+	slot_req->state = IBPI_PATTERN_UNKNOWN;
 }
 
 /**
@@ -701,11 +701,11 @@ static void slot_request_init(struct slot_request slot_req)
  *
  * @return This function does not return a value.
  */
-static void slot_response_init(struct slot_response slot_res)
+static void slot_response_init(struct slot_response *slot_res)
 {
-	memset(&slot_res, 0, sizeof(struct slot_response));
+	memset(slot_res, 0, sizeof(struct slot_response));
 
-	slot_res.state = IBPI_PATTERN_UNKNOWN;
+	slot_res->state = IBPI_PATTERN_UNKNOWN;
 }
 
 /**
@@ -759,7 +759,7 @@ static status_t list_slots(struct slot_request *slot_req)
 		list_for_each(sysfs_get_pci_slots(), slot) {
 			struct slot_response slot_res;
 
-			slot_response_init(slot_res);
+			slot_response_init(&slot_res);
 			char *slot_num = pci_get_slot_number_from_path(slot->sysfs_path);
 
 			if (slot_num) {
@@ -791,7 +791,7 @@ status_t slot_execute(struct slot_request *slot_req)
 	struct slot_response slot_res;
 	status_t status = STATUS_SUCCESS;
 
-	slot_response_init(slot_res);
+	slot_response_init(&slot_res);
 
 	switch (slot_req->chosen_opt) {
 	case OPT_LIST_SLOTS:
@@ -1017,7 +1017,7 @@ int main(int argc, char *argv[])
 		return status;
 	if (on_exit(_ledctl_fini, progname))
 		exit(STATUS_ONEXIT_ERROR);
-	slot_request_init(slot_req);
+	slot_request_init(&slot_req);
 	status = _cmdline_parse(argc, argv, &slot_req);
 	if (status != STATUS_SUCCESS)
 		exit(STATUS_CMDLINE_ERROR);

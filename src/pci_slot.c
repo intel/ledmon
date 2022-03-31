@@ -130,9 +130,13 @@ status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_r
 	struct block_device *block_device = NULL;
 
 	if (device && device[0] != '\0') {
-		char *sub_path = strrchr(device, '/') + 1;
+		char *sub_path = strrchr(device, '/');
+		if (sub_path == NULL) {
+			log_error("Device name %s is invalid.", device);
+			return STATUS_CMDLINE_ERROR;
+		}
 
-		block_device = find_block_device_by_sub_path(sub_path);
+		block_device = find_block_device_by_sub_path(sub_path + 1);
 		if (block_device) {
 			slot = vmdssd_find_pci_slot(block_device->sysfs_path);
 		} else {

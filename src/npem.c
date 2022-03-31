@@ -298,3 +298,50 @@ status_t npem_get_slot(char *device, char *slot_num, struct slot_response *slot_
 	return STATUS_SUCCESS;
 }
 
+status_t npem_set_slot(char *device, char *slot_num, enum ibpi_pattern state)
+{
+	struct slot_response *slot_res;
+	struct pci_dev *pdev = NULL;
+	struct pci_access pacc;
+	status_t status = STATUS_SUCCESS;
+	u32 val;
+	u32 reg;
+
+	slot_res = calloc(1, sizeof(struct slot_response));
+	if (slot_res == NULL)
+		return STATUS_NULL_POINTER;
+
+	status = npem_get_slot(device, slot_num, slot_res);
+
+	if (status != STATUS_SUCCESS)
+		goto exit;
+
+	if (slot_res->state == state) {
+		log_warning("Led state: %s is already set for the slot.", ibpi2str(state));
+		status = STATUS_INVALID_STATE;
+		goto exit;
+	}
+
+	pdev = get_pci_dev_by_path(slot_res->slot, &pacc);
+
+	if (pdev) {
+		reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
+		val = (reg & PCI_NPEM_RESERVED);
+		val = (val | PCI_NPEM_CAP | ibpi_to_npem_capability[state]);
+
+		write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
+		if (npem_wait_command(pdev)) {
+			log_error("NPEM: Write timeout for %s\n", slot_res->slot);
+			status = STATUS_FILE_WRITE_ERROR;
+			goto exit;
+		}
+	} else {
+		log_error("NPEM: Unable to get pci device for %s\n", slot_res->slot);
+		status = STATUS_NULL_POINTER;
+	}
+exit:
+	if (pdev)
+		pci_free_dev(pdev);
+	free(slot_res);
+	return status;
+}

@@ -238,8 +238,11 @@ static get_slot_t _get_slot_ctrl_fn(const char *ctrl_type)
  */
 static set_slot_t _set_slot_ctrl_fn(const char *ctrl_type)
 {
-	if (strcasecmp(ctrl_type, "vmd") == 0)
+	if (strcasecmp(ctrl_type, "vmd") == 0) {
 		return pci_set_slot;
+	} else if (strcasecmp(ctrl_type, "npem") == 0) {
+		return npem_set_slot;
+	}
 	log_error("The controller type %s does not support slots managing.", ctrl_type);
 
 	return NULL;

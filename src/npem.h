@@ -41,4 +41,18 @@ char *npem_get_path(const char *cntrl_path);
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
 status_t npem_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
+
+/**
+ * @brief Sets led state for slot.
+ *
+ * This function finds slot connected to given number or device name
+ * and set given led state.
+ *
+ * @param[in]         device         Requested device name.
+ * @param[in]         slot_num       Requested number of the slot.
+ * @param[in]         state          IBPI state based on slot request.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t npem_set_slot(char *device, char *slot_num, enum ibpi_pattern state);
 #endif // NPEM_H_INCLUDED_

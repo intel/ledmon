@@ -25,7 +25,9 @@
 
 #include "config.h"
 #include "cntrl.h"
+#include "list.h"
 #include "npem.h"
+#include "sysfs.h"
 #include "utils.h"
 
 #define PCI_EXT_CAP_ID_NPEM	0x29	/* Native PCIe Enclosure Management */
@@ -261,41 +263,46 @@ status_t npem_get_slot(char *device, char *slot_num, struct slot_response *slot_
 	struct pci_dev *pdev = NULL;
 	struct block_device *block_device = NULL;
 	struct pci_access pacc;
+	status_t status = STATUS_SUCCESS;
 	char *path = NULL;
 	u32 reg;
 
 	if (device && device[0] != '\0') {
-		char *sub_path = strrchr(device, '/');
-		if (sub_path == NULL) {
-			log_error("Device name: %s is invalid.", device);
-			return STATUS_CMDLINE_ERROR;
-		}
-
-		block_device = find_block_device_by_sub_path(sub_path + 1);
+		block_device = get_block_device_from_sysfs_path(basename(device));
 		if (block_device)
 			path = block_device->cntrl->sysfs_path;
 	}
 	if (slot_num && slot_num[0] != '\0') {
-		if (is_npem_capable(slot_num))
-			path = slot_num;
+		struct cntrl_device *ctrl_dev;
+
+		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
+			if (!is_npem_capable(ctrl_dev->sysfs_path))
+				continue;
+			if (strcmp(basename(ctrl_dev->sysfs_path), slot_num) != 0)
+				continue;
+			path = ctrl_dev->sysfs_path;
+			block_device = get_block_device_from_sysfs_path(path);
+			break;
+		}
 	}
+	if (block_device)
+		status = get_block_device_name(block_device, slot_res->device);
+	else
+		snprintf(slot_res->device, PATH_MAX, "(empty)");
 
 	if (path)
-		block_device = find_block_device_by_sub_path(path);
-
-	pdev = get_pci_dev_by_path(path, &pacc);
+		pdev = get_pci_dev_by_path(path, &pacc);
 	if (pdev) {
 		reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 		slot_res->state = npem_capability_to_ibpi(reg);
 		snprintf(slot_res->slot, PATH_MAX, "%s", path);
-		fill_block_device_name(block_device, slot_res->device);
 		pci_free_dev(pdev);
 	} else {
 		log_error("NPEM: Unable to get pci device for %s\n", path);
 		return STATUS_NULL_POINTER;
 	}
 
-	return STATUS_SUCCESS;
+	return status;
 }
 
 status_t npem_set_slot(char *device, char *slot_num, enum ibpi_pattern state)

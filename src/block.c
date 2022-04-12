@@ -215,7 +215,7 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 	return hosts;
 }
 
-struct block_device *find_block_device_by_sub_path(char *sub_path)
+struct block_device *get_block_device_from_sysfs_path(char *sub_path)
 {
 	struct block_device *device;
 
@@ -436,18 +436,11 @@ int block_compare(const struct block_device *bd_old,
 	return i;
 }
 
-status_t fill_block_device_name(const struct block_device *device, char *device_name)
+status_t get_block_device_name(const struct block_device *device, char *device_name)
 {
-	if (device && device->sysfs_path) {
-		char *dev_name = strrchr(device->sysfs_path, '/') + 1;
+	if (device_name == NULL)
+		return STATUS_NULL_POINTER;
+	snprintf(device_name, PATH_MAX, "/dev/%s", basename(device->sysfs_path));
 
-		if (!dev_name) {
-			log_debug("Could not parse sysfs path of the block device.");
-			return STATUS_NULL_POINTER;
-		}
-		snprintf(device_name, PATH_MAX, "/dev/%s", dev_name);
-	} else {
-		snprintf(device_name, PATH_MAX, "(empty)");
-	}
 	return STATUS_SUCCESS;
 }

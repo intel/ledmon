@@ -110,49 +110,50 @@ static struct pci_slot *find_pci_slot_by_number(char *slot_number)
 static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response *slot_res)
 {
 	struct block_device *bl_device;
+	status_t status = STATUS_SUCCESS;
 
 	slot_res->state = attention_to_ibpi(get_int(slot->sysfs_path, -1, "attention"));
-	char* slot_num = pci_get_slot_number_from_path(slot->sysfs_path);
+	char* slot_num = basename(slot->sysfs_path);
 
-	if (!slot_num) {
-		log_debug("Could not parse sysfs path of the pci slot.");
-		return STATUS_NULL_POINTER;
-	}
 	snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
-	bl_device = find_block_device_by_sub_path(slot->address);
+	bl_device = get_block_device_from_sysfs_path(slot->address);
+	if (bl_device)
+		status = get_block_device_name(bl_device, slot_res->device);
+	else
+		snprintf(slot_res->device, PATH_MAX, "(empty)");
 
-	return fill_block_device_name(bl_device, slot_res->device);
+	return status;
 }
 
-status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_res)
+status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_res)
 {
 	struct pci_slot *slot = NULL;
 	struct block_device *block_device = NULL;
 
 	if (device && device[0] != '\0') {
-		char *sub_path = strrchr(device, '/');
+		char *sub_path = basename(device);
 		if (sub_path == NULL) {
 			log_error("Device name %s is invalid.", device);
 			return STATUS_CMDLINE_ERROR;
 		}
 
-		block_device = find_block_device_by_sub_path(sub_path + 1);
+		block_device = get_block_device_from_sysfs_path(sub_path + 1);
 		if (block_device) {
 			slot = vmdssd_find_pci_slot(block_device->sysfs_path);
 		} else {
 			log_error("Device %s not found.", device);
-			return STATUS_NULL_POINTER;
+			return STATUS_DATA_ERROR;
 		}
 	}
 
-	if (slot_num && slot_num[0] != '\0')
-		slot = find_pci_slot_by_number(slot_num);
+	if (slot_path && slot_path[0] != '\0')
+		slot = find_pci_slot_by_number(basename(slot_path));
 
 	if (slot) {
 		return set_slot_parameters(slot, slot_res);
 	} else {
 		log_error("Specified slot was not found.");
-		return STATUS_NULL_POINTER;
+		return STATUS_DATA_ERROR;
 	}
 }
 

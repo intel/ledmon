@@ -229,7 +229,7 @@ int block_compare(const struct block_device *bd_old,
 		  const struct block_device *bd_new);
 
 /**
- * @brief Finds block device name containing sub-path.
+ * @brief Finds block device which name contains sub-path.
  *
  * This function scans block devices and checks their sysfs path
  * to find any which contains PCI address specified for device in path.
@@ -238,7 +238,7 @@ int block_compare(const struct block_device *bd_old,
  *
  * @return first block device containing sub-path if any, otherwise NULL.
  */
-struct block_device *find_block_device_by_sub_path(char *sub_path);
+struct block_device *get_block_device_from_sysfs_path(char *sub_path);
 
 /**
  * @brief Fills block device name based on sysfs path to the device.
@@ -248,5 +248,5 @@ struct block_device *find_block_device_by_sub_path(char *sub_path);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t fill_block_device_name(const struct block_device *device, char *device_name);
+status_t get_block_device_name(const struct block_device *device, char *device_name);
 #endif				/* _BLOCK_H_INCLUDED_ */

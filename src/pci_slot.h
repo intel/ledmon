@@ -39,11 +39,6 @@ struct pci_slot {
  * PCI hotplug slot address.
  */
 	char *address;
-
- /**
- * State of the Amber LED of the PCI slot.
- */
-	int attention;
 };
 
 /**
@@ -86,15 +81,6 @@ void pci_slot_fini(struct pci_slot *slot);
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
 status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
-
-/**
- * @brief Finds slot identifier in sysfs path.
- *
- * @param[in]         sysfs_path     Path to the slot in sysfs.
- *
- * @return Slot identifier.
- */
-char *pci_get_slot_number_from_path(const char *sysfs_path);
 
 /**
  * @brief Sets led state for slot.

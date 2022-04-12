@@ -46,12 +46,6 @@ struct pci_slot *pci_slot_init(const char *path)
 		return NULL;
 	result->sysfs_path = str_dup(path);
 	result->address = get_text(path, "address");
-	result->attention = get_int(path, -1, "attention");
-
-	if (result->attention == -1) {
-		pci_slot_fini(result);
-		return NULL;
-	}
 
 	return result;
 }
@@ -67,17 +61,6 @@ void pci_slot_fini(struct pci_slot *slot)
 		free(slot->address);
 		free(slot);
 	}
-}
-
-/**
- * Finds slot identifier in sysfs path.
- */
-char *pci_get_slot_number_from_path(const char *sysfs_path)
-{
-	if (sysfs_path)
-		return strrchr(sysfs_path, '/') + 1;
-
-	return NULL;
 }
 
 /**

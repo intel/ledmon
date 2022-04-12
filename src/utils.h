@@ -46,6 +46,8 @@
  */
 #define WRITE_BUFFER_SIZE   1024
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 /**
  * This structure describes a device identifier. It consists of major and minor
  * attributes of device.
@@ -57,6 +59,10 @@ struct device_id {
 struct log_level_info {
 	char prefix[10];
 	int priority;
+};
+
+struct ibpi_value {
+	int ibpi, value;
 };
 
 /**

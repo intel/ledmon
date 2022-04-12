@@ -37,6 +37,13 @@
 #define ATTENTION_REBUILD    0x5  /* (0101) Attention On, Power On */
 #define ATTENTION_FAILURE    0xD  /* (1101) Attention On, Power Off */
 
+struct ibpi_value ibpi_to_attention[] = {
+	{IBPI_PATTERN_LOCATE, ATTENTION_LOCATE},
+	{IBPI_PATTERN_FAILED_DRIVE, ATTENTION_FAILURE},
+	{IBPI_PATTERN_REBUILD, ATTENTION_REBUILD},
+	{IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF}
+};
+
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 
 static char *get_slot_from_syspath(char *path)
@@ -63,20 +70,17 @@ static char *get_slot_from_syspath(char *path)
 
 static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
 {
-	switch (ibpi) {
-	case IBPI_PATTERN_LOCATE:
-		*new = ATTENTION_LOCATE;
-		break;
-	case IBPI_PATTERN_FAILED_DRIVE:
-		*new = ATTENTION_FAILURE;
-		break;
-	case IBPI_PATTERN_REBUILD:
-		*new = ATTENTION_REBUILD;
-		break;
-	default:
-		*new = ATTENTION_OFF;
-		break;
+	const struct ibpi_value *tmp = NULL;
+	int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(ibpi_to_attention); i++) {
+		tmp = &ibpi_to_attention[i];
+		if (tmp->ibpi == ibpi) {
+			*new = tmp->value;
+			return;
+		}
 	}
+	*new = ATTENTION_OFF;
 }
 
 /**
@@ -88,19 +92,15 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
  */
 enum ibpi_pattern attention_to_ibpi(const int attention)
 {
-	switch (attention) {
-	case ATTENTION_FAILURE:
-		return IBPI_PATTERN_FAILED_DRIVE;
-	case ATTENTION_LOCATE:
-		return IBPI_PATTERN_LOCATE;
-	case ATTENTION_REBUILD:
-		return IBPI_PATTERN_REBUILD;
-	case ATTENTION_OFF:
-		return IBPI_PATTERN_LOCATE_OFF;
-	default:
-		log_debug("Attention %d cannot be transferred to IBPI state.", attention);
-		return IBPI_PATTERN_UNKNOWN;
+	const struct ibpi_value *tmp = NULL;
+	int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(ibpi_to_attention); i++) {
+		tmp = &ibpi_to_attention[i];
+		if (attention == tmp->value)
+			return tmp->ibpi;
 	}
+	return IBPI_PATTERN_UNKNOWN;
 }
 
 static int check_slot_module(const char *slot_path)
@@ -164,6 +164,7 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibp
 int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	struct pci_slot *slot;
+	status_t status = STATUS_SUCCESS;
 	char *short_name = strrchr(device->sysfs_path, '/');
 
 	if (short_name)
@@ -186,13 +187,14 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	log_debug("%s before: 0x%x\n", short_name,
 		  get_int(slot->sysfs_path, 0, "attention"));
 
-	if (vmdssd_write_attention_buf(slot, ibpi) != STATUS_SUCCESS)
-		return -1;
+	status = vmdssd_write_attention_buf(slot, ibpi);
+	if (status != STATUS_SUCCESS)
+		return status;
 
 	log_debug("%s after: 0x%x\n", short_name,
 		  get_int(slot->sysfs_path, 0, "attention"));
 
-	return 0;
+	return STATUS_SUCCESS;
 }
 
 char *vmdssd_get_path(const char *cntrl_path)

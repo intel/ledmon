@@ -59,32 +59,44 @@
 
 #define PCI_NPEM_STATUS_CC	0x01  /* NPEM Command Completed */
 
-const int ibpi_to_npem_capability[] = {
-	[IBPI_PATTERN_NORMAL]		= PCI_NPEM_OK_CAP,
-	[IBPI_PATTERN_ONESHOT_NORMAL]	= PCI_NPEM_OK_CAP,
-	[IBPI_PATTERN_DEGRADED]		= PCI_NPEM_CRA_CAP,
-	[IBPI_PATTERN_HOTSPARE]		= PCI_NPEM_HOT_SPARE_CAP,
-	[IBPI_PATTERN_REBUILD]		= PCI_NPEM_REBUILD_CAP,
-	[IBPI_PATTERN_FAILED_ARRAY]	= PCI_NPEM_FA_CAP,
-	[IBPI_PATTERN_PFA]		= PCI_NPEM_PFA_CAP,
-	[IBPI_PATTERN_FAILED_DRIVE]	= PCI_NPEM_FAIL_CAP,
-	[IBPI_PATTERN_LOCATE]		= PCI_NPEM_LOCATE_CAP,
-	[IBPI_PATTERN_LOCATE_OFF]	= PCI_NPEM_OK_CAP,
+const struct ibpi_value ibpi_to_npem_capability[] = {
+	{IBPI_PATTERN_NORMAL, PCI_NPEM_OK_CAP},
+	{IBPI_PATTERN_ONESHOT_NORMAL, PCI_NPEM_OK_CAP},
+	{IBPI_PATTERN_DEGRADED, PCI_NPEM_CRA_CAP},
+	{IBPI_PATTERN_HOTSPARE, PCI_NPEM_HOT_SPARE_CAP},
+	{IBPI_PATTERN_REBUILD, PCI_NPEM_REBUILD_CAP},
+	{IBPI_PATTERN_FAILED_ARRAY, PCI_NPEM_FA_CAP},
+	{IBPI_PATTERN_PFA, PCI_NPEM_PFA_CAP},
+	{IBPI_PATTERN_FAILED_DRIVE, PCI_NPEM_FAIL_CAP},
+	{IBPI_PATTERN_LOCATE, PCI_NPEM_LOCATE_CAP},
+	{IBPI_PATTERN_LOCATE_OFF, PCI_NPEM_OK_CAP},
+	{IBPI_PATTERN_UNKNOWN}
 };
-
-static const int ibpi_to_npem_cap_size = sizeof(ibpi_to_npem_capability)
-		/ sizeof(ibpi_to_npem_capability[0]);
 
 static enum ibpi_pattern npem_capability_to_ibpi(const u32 reg)
 {
+	const struct ibpi_value *tmp = NULL;
 	int i = 0;
 
-	while (i < ibpi_to_npem_cap_size) {
-		if (reg & ibpi_to_npem_capability[i])
-			return i;
-		i++;
+	for (i = 0; i < ARRAY_SIZE(ibpi_to_npem_capability); i++) {
+		tmp = &ibpi_to_npem_capability[i];
+		if (reg & tmp->value)
+			return tmp->ibpi;
 	}
 	return IBPI_PATTERN_UNKNOWN;
+}
+
+static u32 ibpi_to_npem(const enum ibpi_pattern ibpi)
+{
+	const struct ibpi_value *tmp = NULL;
+	int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(ibpi_to_npem_capability); i++) {
+		tmp = &ibpi_to_npem_capability[i];
+		if (tmp->ibpi == ibpi)
+			return tmp->value;
+	}
+	return PCI_NPEM_OK_CAP;
 }
 
 static struct pci_access *get_pci_access()
@@ -230,7 +242,7 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CAP_REG);
-	if ((reg & ibpi_to_npem_capability[ibpi]) == 0) {
+	if ((reg & ibpi_to_npem(ibpi)) == 0) {
 		log_debug("NPEM: Controller %s doesn't support %s pattern\n",
 			  npem_cntrl->sysfs_path, ibpi_str[ibpi]);
 		ibpi = IBPI_PATTERN_NORMAL;
@@ -238,7 +250,7 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
-	val = (val | PCI_NPEM_CAP | ibpi_to_npem_capability[ibpi]);
+	val = (val | PCI_NPEM_CAP | ibpi_to_npem(ibpi));
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
 	if (npem_wait_command(pdev)) {
@@ -307,48 +319,29 @@ status_t npem_get_slot(char *device, char *slot_num, struct slot_response *slot_
 
 status_t npem_set_slot(char *device, char *slot_num, enum ibpi_pattern state)
 {
-	struct slot_response *slot_res;
 	struct pci_dev *pdev = NULL;
 	struct pci_access pacc;
 	status_t status = STATUS_SUCCESS;
 	u32 val;
 	u32 reg;
 
-	slot_res = calloc(1, sizeof(struct slot_response));
-	if (slot_res == NULL)
-		return STATUS_NULL_POINTER;
-
-	status = npem_get_slot(device, slot_num, slot_res);
-
-	if (status != STATUS_SUCCESS)
-		goto exit;
-
-	if (slot_res->state == state) {
-		log_warning("Led state: %s is already set for the slot.", ibpi2str(state));
-		status = STATUS_INVALID_STATE;
-		goto exit;
-	}
-
-	pdev = get_pci_dev_by_path(slot_res->slot, &pacc);
-
+	pdev = get_pci_dev_by_path(slot_num, &pacc);
 	if (pdev) {
 		reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 		val = (reg & PCI_NPEM_RESERVED);
-		val = (val | PCI_NPEM_CAP | ibpi_to_npem_capability[state]);
+		val = (val | PCI_NPEM_CAP | ibpi_to_npem(state));
 
 		write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
 		if (npem_wait_command(pdev)) {
-			log_error("NPEM: Write timeout for %s\n", slot_res->slot);
+			log_error("NPEM: Write timeout for %s\n", slot_num);
 			status = STATUS_FILE_WRITE_ERROR;
-			goto exit;
 		}
 	} else {
-		log_error("NPEM: Unable to get pci device for %s\n", slot_res->slot);
+		log_error("NPEM: Unable to get pci device for %s\n", slot_num);
 		status = STATUS_NULL_POINTER;
 	}
-exit:
+
 	if (pdev)
 		pci_free_dev(pdev);
-	free(slot_res);
 	return status;
 }

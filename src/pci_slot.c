@@ -76,7 +76,7 @@ static struct pci_slot *find_pci_slot_by_number(char *slot_number)
 	char *temp;
 
 	list_for_each(sysfs_get_pci_slots(), slot) {
-		temp = pci_get_slot_number_from_path(slot->sysfs_path);
+		temp = basename(slot->sysfs_path);
 		if (temp && strncmp(temp, slot_number, PATH_MAX) == 0)
 			return slot;
 	}
@@ -140,40 +140,20 @@ status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_
 	}
 }
 
-status_t pci_set_slot(char *device, char *slot_num, enum ibpi_pattern state)
+status_t pci_set_slot(char *device, char *slot_path, enum ibpi_pattern state)
 {
-	struct slot_response *slot_res;
 	struct pci_slot *slot = NULL;
 	status_t status = STATUS_SUCCESS;
 
-	slot_res = calloc(1, sizeof(struct slot_response));
-	if (slot_res == NULL)
-		return STATUS_NULL_POINTER;
-
-	status = pci_get_slot(device, slot_num, slot_res);
-
-	if (status != STATUS_SUCCESS)
-		goto error;
-
-	if (slot_res->state == state) {
-		log_warning("Led state: %s is already set for the slot.", ibpi2str(state));
-		status = STATUS_INVALID_STATE;
-		goto error;
-	}
-
-	slot = find_pci_slot_by_number(slot_res->slot);
+	slot = find_pci_slot_by_number(basename(slot_path));
 	if (slot) {
 		status = vmdssd_write_attention_buf(slot, state);
 		if (status != STATUS_SUCCESS)
-			goto error;
-		sysfs_scan();
+			return status;
 	} else {
-		log_error("Slot %s not found.", slot_num);
-		status = STATUS_NULL_POINTER;
-		goto error;
+		log_error("Slot %s not found.", slot_path);
+		return STATUS_NULL_POINTER;
 	}
 
-error:
-	free(slot_res);
 	return status;
 }

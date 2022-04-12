@@ -747,6 +747,19 @@ static status_t slot_verify_request(struct slot_request *slot_req)
 	return STATUS_SUCCESS;
 }
 
+static status_t get_state_for_slot(char *slot, struct slot_request *slot_req)
+{
+	struct slot_response slot_res;
+	status_t status = STATUS_SUCCESS;
+
+	slot_response_init(&slot_res);
+	status = slot_req->get_slot_fn(NULL, slot, &slot_res);
+	if (status == STATUS_SUCCESS)
+		print_slot_state(&slot_res);
+	
+	return status;
+}
+
 /**
  * @brief List slots connected to given controller
  *
@@ -759,42 +772,22 @@ static status_t slot_verify_request(struct slot_request *slot_req)
  */
 static status_t list_slots(struct slot_request *slot_req)
 {
-	struct pci_slot *slot;
 	status_t status = STATUS_SUCCESS;
 
 	if (strcasecmp(slot_req->ctrl_type, "vmd") == 0) {
-		list_for_each(sysfs_get_pci_slots(), slot) {
-			struct slot_response slot_res;
+		struct pci_slot *slot;
 
-			slot_response_init(&slot_res);
-			char *slot_num = pci_get_slot_number_from_path(slot->sysfs_path);
-
-			if (slot_num) {
-				status = slot_req->get_slot_fn(NULL, slot_num, &slot_res);
-				if (status == STATUS_SUCCESS)
-					print_slot_state(&slot_res);
-				else
-					return status;
-			} else {
-				return STATUS_NULL_POINTER;
-			}
-		}
+		list_for_each(sysfs_get_pci_slots(), slot)
+			status = get_state_for_slot(slot->sysfs_path, slot_req);
 		return status;
 	}
 	if (strcasecmp(slot_req->ctrl_type, "npem") == 0) {
 		struct cntrl_device *ctrl_dev;
 
 		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
-			struct slot_response slot_res;
-
-			slot_response_init(&slot_res);
-			if (is_npem_capable(ctrl_dev->sysfs_path)) {
-				status = slot_req->get_slot_fn(NULL, ctrl_dev->sysfs_path, &slot_res);
-				if (status == STATUS_SUCCESS)
-					print_slot_state(&slot_res);
-				else
-					return status;
-			}
+			if (!is_npem_capable(ctrl_dev->sysfs_path))
+				continue;
+			status = get_state_for_slot(basename(ctrl_dev->sysfs_path), slot_req);
 		}
 		return status;
 	}
@@ -821,7 +814,15 @@ status_t slot_execute(struct slot_request *slot_req)
 	case OPT_LIST_SLOTS:
 		return list_slots(slot_req);
 	case OPT_SET_SLOT:
-		status = slot_req->set_slot_fn(slot_req->device, slot_req->slot, slot_req->state);
+		status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
+		if (slot_res.state == slot_req->state) {
+			log_warning("Led state: %s is already set for the slot.",
+				    ibpi2str(slot_req->state));
+			return STATUS_SUCCESS;
+		}
+		if (status == STATUS_SUCCESS)
+			status = slot_req->set_slot_fn(slot_res.device,
+						       slot_res.slot, slot_req->state);
 		if (status != STATUS_SUCCESS)
 			return status;
 	case OPT_GET_SLOT:

@@ -240,13 +240,4 @@ int block_compare(const struct block_device *bd_old,
  */
 struct block_device *get_block_device_from_sysfs_path(char *sub_path);
 
-/**
- * @brief Fills block device name based on sysfs path to the device.
- *
- * @param[in]         device          Block device.
- * @param[in]         device_name     Pointer to the block device name.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-status_t get_block_device_name(const struct block_device *device, char *device_name);
 #endif				/* _BLOCK_H_INCLUDED_ */

@@ -220,10 +220,8 @@ struct block_device *get_block_device_from_sysfs_path(char *sub_path)
 	struct block_device *device;
 
 	list_for_each(sysfs_get_block_devices(), device) {
-		if (device->sysfs_path) {
 			if (strstr(device->sysfs_path, sub_path))
 				return device;
-		}
 	}
 
 	return NULL;
@@ -434,13 +432,4 @@ int block_compare(const struct block_device *bd_old,
 		break;
 	}
 	return i;
-}
-
-status_t get_block_device_name(const struct block_device *device, char *device_name)
-{
-	if (device_name == NULL)
-		return STATUS_NULL_POINTER;
-	snprintf(device_name, PATH_MAX, "/dev/%s", basename(device->sysfs_path));
-
-	return STATUS_SUCCESS;
 }

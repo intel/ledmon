@@ -203,49 +203,28 @@ static const int possible_params_size = sizeof(possible_params)
 static int listed_only;
 
 /**
- * @brief Determines a get slot function.
+ * @brief Determines a slot functions based on controller.
  *
- * This function determines get slot function based on
+ * This function determines slot functions based on
  * controller type.
  *
  * @param[in]       ctrl_type       Controller type.
+ * @param[in]       slot_req        Pointer to the slot request.
  *
- * @return Pointer to get slot function if successful, otherwise
- *         the function returns NULL pointer.
+ * @return This function does not return a value.
  */
-static get_slot_t _get_slot_ctrl_fn(const char *ctrl_type)
+static void _get_slot_ctrl_fn(const char *ctrl_type, struct slot_request *slot_req)
 {
 	if (strcasecmp(ctrl_type, "vmd") == 0) {
-		return pci_get_slot;
+		slot_req->get_slot_fn = pci_get_slot;
+		slot_req->set_slot_fn = pci_set_slot;
 	} else if (strcasecmp(ctrl_type, "npem") == 0) {
-		return npem_get_slot;
+		slot_req->get_slot_fn = npem_get_slot;
+		slot_req->set_slot_fn = npem_set_slot;
+	} else {
+		log_debug("Slot functions could not be set because the controller type %s does not "
+			  "support slots managing.", ctrl_type);
 	}
-	log_debug("The controller type %s does not support slots managing.", ctrl_type);
-
-	return NULL;
-}
-
-/**
- * @brief Determines a set slot function.
- *
- * This function determines set slot function based on
- * controller type.
- *
- * @param[in]       ctrl_type       Controller type.
- *
- * @return Pointer to set slot function if successful, otherwise
- *         the function returns NULL pointer.
- */
-static set_slot_t _set_slot_ctrl_fn(const char *ctrl_type)
-{
-	if (strcasecmp(ctrl_type, "vmd") == 0) {
-		return pci_set_slot;
-	} else if (strcasecmp(ctrl_type, "npem") == 0) {
-		return npem_set_slot;
-	}
-	log_error("The controller type %s does not support slots managing.", ctrl_type);
-
-	return NULL;
 }
 
 static void ibpi_state_fini(struct ibpi_state *p)
@@ -724,7 +703,7 @@ static void slot_response_init(struct slot_response *slot_res)
  */
 static status_t slot_verify_request(struct slot_request *slot_req)
 {
-	if (!slot_req->ctrl_type || slot_req->ctrl_type[0] == '\0') {
+	if (slot_req->ctrl_type[0] == '\0') {
 		log_error("Invalid controller in the request.");
 		return STATUS_INVALID_CONTROLLER;
 	}
@@ -732,14 +711,8 @@ static status_t slot_verify_request(struct slot_request *slot_req)
 		log_error("Invalid IBPI state in the request.");
 		return STATUS_INVALID_STATE;
 	}
-	if ((slot_req->chosen_opt == OPT_GET_SLOT || slot_req->chosen_opt == OPT_LIST_SLOTS)
-	     && !slot_req->get_slot_fn) {
-		log_error("The controller type %s does not support slots managing.",
-			  slot_req->ctrl_type);
-		return STATUS_DATA_ERROR;
-	}
-	if (slot_req->chosen_opt == OPT_SET_SLOT && !slot_req->set_slot_fn) {
-		log_debug("The controller type %s doesn't support set slot functionality.",
+	if (!slot_req->get_slot_fn && !slot_req->set_slot_fn) {
+		log_error("The controller type %s doesn't support slot functionality.",
 			  slot_req->ctrl_type);
 		return STATUS_DATA_ERROR;
 	}
@@ -787,12 +760,11 @@ static status_t list_slots(struct slot_request *slot_req)
 		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
 			if (!is_npem_capable(ctrl_dev->sysfs_path))
 				continue;
-			status = get_state_for_slot(basename(ctrl_dev->sysfs_path), slot_req);
+			status = get_state_for_slot(ctrl_dev->sysfs_path, slot_req);
 		}
 		return status;
 	}
 
-	log_debug("The controller type %s does not support slots managing.", slot_req->ctrl_type);
 	return STATUS_NOT_SUPPORTED;
 }
 
@@ -905,8 +877,7 @@ static status_t _cmdline_parse(int argc, char *argv[], struct slot_request *req)
 			break;
 		case 'c':
 			strncpy(req->ctrl_type, optarg, BUFFER_MAX - 1);
-			req->get_slot_fn = _get_slot_ctrl_fn(req->ctrl_type);
-			req->set_slot_fn = _set_slot_ctrl_fn(req->ctrl_type);
+			_get_slot_ctrl_fn(req->ctrl_type, req);
 			break;
 		case 's':
 		{

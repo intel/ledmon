@@ -101,7 +101,7 @@ static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response 
 	snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
 	bl_device = get_block_device_from_sysfs_path(slot->address);
 	if (bl_device)
-		status = get_block_device_name(bl_device, slot_res->device);
+		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(bl_device->sysfs_path));
 	else
 		snprintf(slot_res->device, PATH_MAX, "(empty)");
 

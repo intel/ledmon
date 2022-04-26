@@ -294,12 +294,12 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
 			if (!is_npem_capable(ctrl_dev->sysfs_path))
 				continue;
-			if (strcmp(basename(ctrl_dev->sysfs_path), slot_path) != 0)
+			if (strcmp(basename(ctrl_dev->sysfs_path), basename(slot_path)) != 0)
 				continue;
 			path = ctrl_dev->sysfs_path;
+			block_device = get_block_device_from_sysfs_path(path);
 			break;
 		}
-		block_device = get_block_device_from_sysfs_path(path);
 	}
 	if (block_device)
 		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));

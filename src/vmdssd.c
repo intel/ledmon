@@ -73,13 +73,15 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
 	const struct ibpi_value *tmp = NULL;
 	int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(ibpi_to_attention); i++) {
+	while (i < ARRAY_SIZE(ibpi_to_attention)) {
 		tmp = &ibpi_to_attention[i];
 		if (tmp->ibpi == ibpi) {
 			*new = tmp->value;
 			return;
 		}
+		i++;
 	}
+
 	*new = ATTENTION_OFF;
 }
 
@@ -95,11 +97,13 @@ enum ibpi_pattern attention_to_ibpi(const int attention)
 	const struct ibpi_value *tmp = NULL;
 	int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(ibpi_to_attention); i++) {
+	while (i < ARRAY_SIZE(ibpi_to_attention)) {
 		tmp = &ibpi_to_attention[i];
 		if (attention == tmp->value)
 			return tmp->ibpi;
+		i++;
 	}
+
 	return IBPI_PATTERN_UNKNOWN;
 }
 

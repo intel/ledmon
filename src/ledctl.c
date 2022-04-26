@@ -88,13 +88,12 @@ typedef status_t (*get_slot_t) (char *device, char *slot, struct slot_response *
  *
  * The pointer to a function which will set slot details.
  *
- * @param[in]         device        Name of the device.
  * @param[in]         slot          Unique identifier of the slot.
  * @param[in]         state         IBPI state based on slot request.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-typedef status_t (*set_slot_t) (char *device, char *slot, enum ibpi_pattern state);
+typedef status_t (*set_slot_t) (char *slot, enum ibpi_pattern state);
 
 /**
  * @brief slot request parametres
@@ -793,8 +792,7 @@ status_t slot_execute(struct slot_request *slot_req)
 			return STATUS_SUCCESS;
 		}
 		if (status == STATUS_SUCCESS)
-			status = slot_req->set_slot_fn(slot_res.device,
-						       slot_res.slot, slot_req->state);
+			status = slot_req->set_slot_fn(slot_res.slot, slot_req->state);
 		if (status != STATUS_SUCCESS)
 			return status;
 	case OPT_GET_SLOT:

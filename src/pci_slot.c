@@ -75,6 +75,9 @@ static struct pci_slot *find_pci_slot_by_number(char *slot_number)
 	struct pci_slot *slot = NULL;
 	char *temp;
 
+	if (slot_number == NULL)
+		return NULL;
+
 	list_for_each(sysfs_get_pci_slots(), slot) {
 		temp = basename(slot->sysfs_path);
 		if (temp && strncmp(temp, slot_number, PATH_MAX) == 0)
@@ -94,8 +97,12 @@ static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response 
 {
 	struct block_device *bl_device;
 	status_t status = STATUS_SUCCESS;
+	int attention = get_int(slot->sysfs_path, -1, "attention");
 
-	slot_res->state = attention_to_ibpi(get_int(slot->sysfs_path, -1, "attention"));
+	if (attention == -1)
+		return STATUS_INVALID_STATE;
+
+	slot_res->state = attention_to_ibpi(attention);
 	char* slot_num = basename(slot->sysfs_path);
 
 	snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
@@ -117,43 +124,37 @@ status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_
 		char *sub_path = basename(device);
 		if (sub_path == NULL) {
 			log_error("Device name %s is invalid.", device);
-			return STATUS_CMDLINE_ERROR;
+			return STATUS_DATA_ERROR;
 		}
 
 		block_device = get_block_device_from_sysfs_path(sub_path + 1);
-		if (block_device) {
-			slot = vmdssd_find_pci_slot(block_device->sysfs_path);
-		} else {
+		if (block_device == NULL) {
 			log_error("Device %s not found.", device);
 			return STATUS_DATA_ERROR;
 		}
+		slot = vmdssd_find_pci_slot(block_device->sysfs_path);
 	}
 
 	if (slot_path && slot_path[0] != '\0')
 		slot = find_pci_slot_by_number(basename(slot_path));
 
-	if (slot) {
-		return set_slot_parameters(slot, slot_res);
-	} else {
+	if (slot == NULL) {
 		log_error("Specified slot was not found.");
 		return STATUS_DATA_ERROR;
 	}
+
+	return set_slot_parameters(slot, slot_res);
 }
 
-status_t pci_set_slot(char *device, char *slot_path, enum ibpi_pattern state)
+status_t pci_set_slot(char *slot_path, enum ibpi_pattern state)
 {
 	struct pci_slot *slot = NULL;
-	status_t status = STATUS_SUCCESS;
 
 	slot = find_pci_slot_by_number(basename(slot_path));
-	if (slot) {
-		status = vmdssd_write_attention_buf(slot, state);
-		if (status != STATUS_SUCCESS)
-			return status;
-	} else {
+	if (slot == NULL) {
 		log_error("Slot %s not found.", slot_path);
 		return STATUS_NULL_POINTER;
 	}
 
-	return status;
+	return vmdssd_write_attention_buf(slot, state);
 }

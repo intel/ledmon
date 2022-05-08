@@ -30,3 +30,5 @@ config_ac.h.in
 config.log
 config.status
 stamp-h1
+
+gledctl

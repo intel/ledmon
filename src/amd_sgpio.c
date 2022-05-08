@@ -275,7 +275,7 @@ static struct cache_entry *_get_cache(struct amd_drive *drive)
 	 *	cache_entry[n] => drive (4*n) to drive (4*n + 3)
 	 */
 
-	index = (drive->ata_port / 4);
+	index = ((drive->ata_port - 1) / 4);
 
 	return &sgpio_cache[index];
 }

@@ -1,6 +1,9 @@
 ledctl.8.gz
 ledmon.conf.5.gz
 ledmon.8.gz
+ledctl.gz
+ledmon.conf.gz
+ledmon.gz
 *.o
 _build
 ledmon
@@ -8,7 +11,12 @@ ledctl
 *~
 *.bak
 .depend
+*.deps*
+depcomp
 *.swp
+compile
+missing
+install-sh
 
 Makefile
 Makefile.in
@@ -18,6 +26,7 @@ config.h.in
 build-aux/
 configure
 config_ac.h
+config_ac.h.in
 config.log
 config.status
 stamp-h1

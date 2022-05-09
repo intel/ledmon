@@ -119,7 +119,7 @@ struct slot_request {
 	/**
 	 * Type of the controller.
 	 */
-	char ctrl_type[BUFFER_MAX];
+	enum cntrl_type cntrl;
 
 	/**
 	 * IBPI state.
@@ -201,6 +201,15 @@ static const int possible_params_size = sizeof(possible_params)
 
 static int listed_only;
 
+enum cntrl_type get_cntrl_type(const char *cntrl)
+{
+	if (strcasecmp(cntrl, "vmd") == 0)
+		return CNTRL_TYPE_VMD;
+	else if (strcasecmp(cntrl, "npem") == 0)
+		return CNTRL_TYPE_NPEM;
+	return CNTRL_TYPE_UNKNOWN;
+}
+
 /**
  * @brief Determines a slot functions based on controller.
  *
@@ -212,15 +221,18 @@ static int listed_only;
  *
  * @return This function does not return a value.
  */
-static void _get_slot_ctrl_fn(const char *ctrl_type, struct slot_request *slot_req)
+static void _get_slot_ctrl_fn(enum cntrl_type ctrl_type, struct slot_request *slot_req)
 {
-	if (strcasecmp(ctrl_type, "vmd") == 0) {
+	switch (ctrl_type) {
+	case CNTRL_TYPE_VMD:
 		slot_req->get_slot_fn = pci_get_slot;
 		slot_req->set_slot_fn = pci_set_slot;
-	} else if (strcasecmp(ctrl_type, "npem") == 0) {
+		break;
+	case CNTRL_TYPE_NPEM:
 		slot_req->get_slot_fn = npem_get_slot;
 		slot_req->set_slot_fn = npem_set_slot;
-	} else {
+		break;
+	default:
 		log_debug("Slot functions could not be set because the controller type %s does not "
 			  "support slots managing.", ctrl_type);
 	}
@@ -702,7 +714,7 @@ static void slot_response_init(struct slot_response *slot_res)
  */
 static status_t slot_verify_request(struct slot_request *slot_req)
 {
-	if (slot_req->ctrl_type[0] == '\0') {
+	if (slot_req->cntrl == CNTRL_TYPE_UNKNOWN) {
 		log_error("Invalid controller in the request.");
 		return STATUS_INVALID_CONTROLLER;
 	}
@@ -712,7 +724,11 @@ static status_t slot_verify_request(struct slot_request *slot_req)
 	}
 	if (!slot_req->get_slot_fn && !slot_req->set_slot_fn) {
 		log_error("The controller type %s doesn't support slot functionality.",
-			  slot_req->ctrl_type);
+			  slot_req->cntrl);
+		return STATUS_DATA_ERROR;
+	}
+	if (slot_req->device[0] && slot_req->slot[0]) {
+		log_error("Slot commands require only one from parameters: device and slot.");
 		return STATUS_DATA_ERROR;
 	}
 
@@ -746,25 +762,29 @@ static status_t list_slots(struct slot_request *slot_req)
 {
 	status_t status = STATUS_SUCCESS;
 
-	if (strcasecmp(slot_req->ctrl_type, "vmd") == 0) {
+	switch (slot_req->cntrl) {
+	case CNTRL_TYPE_VMD:
+	{
 		struct pci_slot *slot;
 
 		list_for_each(sysfs_get_pci_slots(), slot)
 			status = get_state_for_slot(slot->sysfs_path, slot_req);
 		return status;
 	}
-	if (strcasecmp(slot_req->ctrl_type, "npem") == 0) {
+	case CNTRL_TYPE_NPEM:
+	{
 		struct cntrl_device *ctrl_dev;
 
 		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
-			if (!is_npem_capable(ctrl_dev->sysfs_path))
+			if (ctrl_dev->cntrl_type != CNTRL_TYPE_NPEM)
 				continue;
 			status = get_state_for_slot(ctrl_dev->sysfs_path, slot_req);
 		}
 		return status;
 	}
-
-	return STATUS_NOT_SUPPORTED;
+	default:
+		return STATUS_NOT_SUPPORTED;
+	}
 }
 
 /**
@@ -791,8 +811,9 @@ status_t slot_execute(struct slot_request *slot_req)
 				    ibpi2str(slot_req->state));
 			return STATUS_SUCCESS;
 		}
-		if (status == STATUS_SUCCESS)
-			status = slot_req->set_slot_fn(slot_res.slot, slot_req->state);
+		if (status != STATUS_SUCCESS)
+			return status;
+		status = slot_req->set_slot_fn(slot_res.slot, slot_req->state);
 		if (status != STATUS_SUCCESS)
 			return status;
 	case OPT_GET_SLOT:
@@ -874,8 +895,8 @@ static status_t _cmdline_parse(int argc, char *argv[], struct slot_request *req)
 			req->chosen_opt = OPT_SET_SLOT;
 			break;
 		case 'c':
-			strncpy(req->ctrl_type, optarg, BUFFER_MAX - 1);
-			_get_slot_ctrl_fn(req->ctrl_type, req);
+			req->cntrl = get_cntrl_type(optarg);
+			_get_slot_ctrl_fn(req->cntrl, req);
 			break;
 		case 's':
 		{

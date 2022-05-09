@@ -441,5 +441,6 @@ int get_option_id(const char *optarg);
 status_t set_verbose_level(int log_level);
 
 const char *ibpi2str(enum ibpi_pattern ibpi);
+int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[]);
 
 #endif				/* _UTILS_H_INCLUDED_ */

@@ -133,10 +133,9 @@ status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_
 			return STATUS_DATA_ERROR;
 		}
 		slot = vmdssd_find_pci_slot(block_device->sysfs_path);
-	}
-
-	if (slot_path && slot_path[0] != '\0')
+	} else if (slot_path && slot_path[0] != '\0') {
 		slot = find_pci_slot_by_number(basename(slot_path));
+	}
 
 	if (slot == NULL) {
 		log_error("Specified slot was not found.");

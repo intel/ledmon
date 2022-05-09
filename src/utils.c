@@ -706,3 +706,15 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 
 	return ret;
 }
+
+int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[])
+{
+	const struct ibpi_value *tmp = ibpi_values;
+
+	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
+		if (tmp->ibpi == ibpi)
+			break;
+		tmp++;
+	}
+	return tmp->value;
+}

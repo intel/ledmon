@@ -85,18 +85,6 @@ static enum ibpi_pattern npem_capability_to_ibpi(const u32 reg)
 	return tmp->ibpi;
 }
 
-static u32 ibpi_to_npem_cap(const enum ibpi_pattern ibpi)
-{
-	const struct ibpi_value *tmp = ibpi_to_npem_capability;
-
-	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
-		if (tmp->ibpi == ibpi)
-			break;
-		tmp++;
-	}
-	return tmp->value;
-}
-
 static struct pci_access *get_pci_access()
 {
 	struct pci_access *pacc;
@@ -124,17 +112,6 @@ static struct pci_dev *get_pci_dev(struct pci_access *pacc, const char *path)
 		return NULL;
 
 	return pci_get_dev(pacc, domain, bus, dev, fn);
-}
-
-static struct pci_dev *get_pci_dev_by_path(const char *path, struct pci_access *pacc)
-{
-	pacc = get_pci_access();
-	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", path);
-		return NULL;
-	}
-
-	return get_pci_dev(pacc, path);
 }
 
 static struct pci_cap *get_npem_cap(struct pci_dev *pdev)
@@ -166,10 +143,15 @@ static int write_npem_register(struct pci_dev *pdev, int reg, u32 val)
 int is_npem_capable(const char *path)
 {
 	u8 val;
-	struct pci_access *pacc = calloc(1, sizeof(struct pci_access));
+	struct pci_access *pacc = get_pci_access();
 	struct pci_dev *pdev;
 
-	pdev = get_pci_dev_by_path(path, pacc);
+	if (!pacc) {
+		log_error("NPEM: Unable to initialize pci access for %s\n", path);
+		return 0;
+	}
+
+	pdev = get_pci_dev(pacc, path);
 
 	if (!pdev) {
 		pci_cleanup(pacc);
@@ -178,10 +160,8 @@ int is_npem_capable(const char *path)
 
 	val = read_npem_register(pdev, PCI_NPEM_CAP_REG);
 
-	if (pdev)
-		pci_free_dev(pdev);
-	if (pacc)
-		pci_cleanup(pacc);
+	pci_free_dev(pdev);
+	pci_cleanup(pacc);
 	return (val & PCI_NPEM_CAP);
 }
 
@@ -219,13 +199,18 @@ static int npem_wait_command(struct pci_dev *pdev)
 int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	struct cntrl_device *npem_cntrl = device->cntrl;
-	struct pci_access *pacc = NULL;
 	struct pci_dev *pdev = NULL;
+	struct pci_access *pacc = get_pci_access();
 
 	u32 reg;
 	u32 val;
 
 	int err = 0;
+
+	if (!pacc) {
+		log_error("NPEM: Unable to initialize pci access for %s\n", npem_cntrl->sysfs_path);
+		return -ENOMEM;
+	}
 
 	if (ibpi == device->ibpi_prev)
 		return 0;
@@ -235,7 +220,7 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 		goto exit;
 	}
 
-	pdev = get_pci_dev_by_path(npem_cntrl->sysfs_path, pacc);
+	pdev = get_pci_dev(pacc, npem_cntrl->sysfs_path);
 	if (!pdev) {
 		log_error("NPEM: Unable to get pci device for %s\n",
 			  npem_cntrl->sysfs_path);
@@ -244,7 +229,9 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CAP_REG);
-	if ((reg & ibpi_to_npem_cap(ibpi)) == 0) {
+	u32 cap = (u32)get_value_for_ibpi(ibpi, ibpi_to_npem_capability);
+
+	if ((reg & cap) == 0) {
 		log_debug("NPEM: Controller %s doesn't support %s pattern\n",
 			  npem_cntrl->sysfs_path, ibpi_str[ibpi]);
 		ibpi = IBPI_PATTERN_NORMAL;
@@ -252,7 +239,8 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
-	val = (val | PCI_NPEM_CAP | ibpi_to_npem_cap(ibpi));
+	cap = (u32)get_value_for_ibpi(ibpi, ibpi_to_npem_capability);
+	val = (val | PCI_NPEM_CAP | cap);
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
 	if (npem_wait_command(pdev)) {
@@ -264,8 +252,7 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 exit:
 	if (pdev)
 		pci_free_dev(pdev);
-	if (pacc)
-		pci_cleanup(pacc);
+	pci_cleanup(pacc);
 	return err;
 }
 
@@ -278,7 +265,7 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 {
 	struct pci_dev *pdev = NULL;
 	struct block_device *block_device = NULL;
-	struct pci_access *pacc = NULL;
+	struct pci_access *pacc = get_pci_access();
 	status_t status = STATUS_SUCCESS;
 	char *path = NULL;
 	u32 reg;
@@ -287,12 +274,11 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 		block_device = get_block_device_from_sysfs_path(basename(device));
 		if (block_device)
 			path = block_device->cntrl->sysfs_path;
-	}
-	if (slot_path && slot_path[0] != '\0') {
+	} else if (slot_path && slot_path[0] != '\0') {
 		struct cntrl_device *ctrl_dev;
 
 		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
-			if (!is_npem_capable(ctrl_dev->sysfs_path))
+			if (ctrl_dev->cntrl_type != CNTRL_TYPE_NPEM)
 				continue;
 			if (strcmp(basename(ctrl_dev->sysfs_path), basename(slot_path)) != 0)
 				continue;
@@ -306,12 +292,15 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	else
 		snprintf(slot_res->device, PATH_MAX, "(empty)");
 
+	if (!pacc) {
+		log_error("NPEM: Unable to initialize pci access for %s\n", path);
+		return STATUS_NULL_POINTER;
+	}
 	if (path)
-		pdev = get_pci_dev_by_path(path, pacc);
-	if (pdev == NULL) {
+		pdev = get_pci_dev(pacc, path);
+	if (!pdev) {
 		log_error("NPEM: Unable to get pci device for %s\n", path);
-		if (pacc)
-			pci_cleanup(pacc);
+		pci_cleanup(pacc);
 		return STATUS_NULL_POINTER;
 	}
 
@@ -320,30 +309,35 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	snprintf(slot_res->slot, PATH_MAX, "%s", path);
 
 	pci_free_dev(pdev);
-	if (pacc)
-		pci_cleanup(pacc);
+	pci_cleanup(pacc);
 	return status;
 }
 
 status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 {
 	struct pci_dev *pdev = NULL;
-	struct pci_access *pacc = NULL;
+	struct pci_access *pacc = get_pci_access();
 	status_t status = STATUS_SUCCESS;
 	u32 val;
 	u32 reg;
+	u32 cap;
 
-	pdev = get_pci_dev_by_path(slot_path, pacc);
-	if (pdev == NULL) {
+	if (!pacc) {
+		log_error("NPEM: Unable to initialize pci access for %s\n", slot_path);
+		return STATUS_NULL_POINTER;
+	}
+
+	pdev = get_pci_dev(pacc, slot_path);
+	if (!pdev) {
 		log_error("NPEM: Unable to get pci device for %s\n", slot_path);
-		if (pacc)
-			pci_cleanup(pacc);
+		pci_cleanup(pacc);
 		return STATUS_NULL_POINTER;
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
-	val = (val | PCI_NPEM_CAP | ibpi_to_npem_cap(state));
+	cap = (u32)get_value_for_ibpi(state, ibpi_to_npem_capability);
+	val = (val | PCI_NPEM_CAP | cap);
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
 	if (npem_wait_command(pdev)) {
@@ -352,7 +346,6 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 	}
 
 	pci_free_dev(pdev);
-	if (pacc)
-		pci_cleanup(pacc);
+	pci_cleanup(pacc);
 	return status;
 }

@@ -68,23 +68,6 @@ static char *get_slot_from_syspath(char *path)
 	return ret;
 }
 
-static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
-{
-	const struct ibpi_value *tmp = NULL;
-	int i = 0;
-
-	while (i < ARRAY_SIZE(ibpi_to_attention)) {
-		tmp = &ibpi_to_attention[i];
-		if (tmp->ibpi == ibpi) {
-			*new = tmp->value;
-			return;
-		}
-		i++;
-	}
-
-	*new = ATTENTION_OFF;
-}
-
 /**
  * @brief Returns IBPI pattern based on attention state
  *
@@ -94,17 +77,14 @@ static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
  */
 enum ibpi_pattern attention_to_ibpi(const int attention)
 {
-	const struct ibpi_value *tmp = NULL;
-	int i = 0;
+	const struct ibpi_value *tmp = ibpi_to_attention;
 
-	while (i < ARRAY_SIZE(ibpi_to_attention)) {
-		tmp = &ibpi_to_attention[i];
-		if (attention == tmp->value)
-			return tmp->ibpi;
-		i++;
+	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
+		if (tmp->value == attention)
+			break;
+		tmp++;
 	}
-
-	return IBPI_PATTERN_UNKNOWN;
+	return tmp->ibpi;
 }
 
 static int check_slot_module(const char *slot_path)
@@ -156,7 +136,7 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibp
 
 	log_debug("%s before: 0x%x\n", slot->address,
 		  get_int(slot->sysfs_path, 0, "attention"));
-	get_ctrl(ibpi, &val);
+	val = get_value_for_ibpi(ibpi, ibpi_to_attention);
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
 	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
 	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {

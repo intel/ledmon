@@ -327,7 +327,7 @@ ledmon and exits.
 =item B<-P> or B<--list-slots> B<--controller>=I<controller>
 
 Prints all slots for the controller. Slot definition depends on the controller
-and is unique for the controller.
+and is unique across all controllers of the same type.
 
 Definitions for supported controllers are described below:
 

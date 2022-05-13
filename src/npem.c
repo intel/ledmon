@@ -199,24 +199,27 @@ static int npem_wait_command(struct pci_dev *pdev)
 int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
 	struct cntrl_device *npem_cntrl = device->cntrl;
+	struct pci_access *pacc = NULL;
 	struct pci_dev *pdev = NULL;
-	struct pci_access *pacc = get_pci_access();
 
 	u32 reg;
 	u32 val;
 
 	int err = 0;
 
-	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", npem_cntrl->sysfs_path);
-		return -ENOMEM;
-	}
-
 	if (ibpi == device->ibpi_prev)
 		return 0;
 
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
 		err = -EINVAL;
+		goto exit;
+	}
+
+	pacc = get_pci_access();
+	if (!pacc) {
+		log_error("NPEM: Unable to initialize pci access for %s\n",
+			  npem_cntrl->sysfs_path);
+		err = -ENOMEM;
 		goto exit;
 	}
 
@@ -252,7 +255,8 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 exit:
 	if (pdev)
 		pci_free_dev(pdev);
-	pci_cleanup(pacc);
+	if (pacc)
+		pci_cleanup(pacc);
 	return err;
 }
 
@@ -269,6 +273,11 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	status_t status = STATUS_SUCCESS;
 	char *path = NULL;
 	u32 reg;
+
+	if (!pacc) {
+		log_error("NPEM: Unable to initialize pci access for %s\n", path);
+		return STATUS_NULL_POINTER;
+	}
 
 	if (device && device[0] != '\0') {
 		block_device = get_block_device_from_sysfs_path(basename(device));
@@ -292,12 +301,13 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	else
 		snprintf(slot_res->device, PATH_MAX, "(empty)");
 
-	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", path);
-		return STATUS_NULL_POINTER;
-	}
-	if (path)
+	if (path) {
 		pdev = get_pci_dev(pacc, path);
+	} else {
+		log_debug("NPEM: unable to get sysfs path for the controller.");
+		pci_cleanup(pacc);
+		return STATUS_INVALID_PATH;
+	}
 	if (!pdev) {
 		log_error("NPEM: Unable to get pci device for %s\n", path);
 		pci_cleanup(pacc);

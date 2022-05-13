@@ -93,7 +93,7 @@ static struct pci_slot *find_pci_slot_by_number(char *slot_number)
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response *slot_res)
+static status_t set_slot_response(struct pci_slot *slot, struct slot_response *slot_res)
 {
 	struct block_device *bl_device;
 	status_t status = STATUS_SUCCESS;
@@ -103,9 +103,8 @@ static status_t set_slot_parameters(struct pci_slot *slot, struct slot_response 
 		return STATUS_INVALID_STATE;
 
 	slot_res->state = attention_to_ibpi(attention);
-	char* slot_num = basename(slot->sysfs_path);
+	snprintf(slot_res->slot, PATH_MAX, "%s", basename(slot->sysfs_path));
 
-	snprintf(slot_res->slot, PATH_MAX, "%s", slot_num);
 	bl_device = get_block_device_from_sysfs_path(slot->address);
 	if (bl_device)
 		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(bl_device->sysfs_path));
@@ -142,7 +141,7 @@ status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_
 		return STATUS_DATA_ERROR;
 	}
 
-	return set_slot_parameters(slot, slot_res);
+	return set_slot_response(slot, slot_res);
 }
 
 status_t pci_set_slot(char *slot_path, enum ibpi_pattern state)

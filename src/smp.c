@@ -88,7 +88,7 @@ struct smp_read_response_frame_header {
 	uint8_t function;	/* =0x02 for read, 0x82 for write */
 	uint8_t function_result;
 	uint8_t reserved;
-	uint32_t read_data[];	/* variable length of data */
+	//uint32_t read_data[];	/* variable length of data */
 	/* uint32_t crc; */
 } __attribute__ ((__packed__));
 
@@ -401,6 +401,68 @@ int smp_write_gpio(const char *path, int smp_reg_type,
 	return status;
 }
 
+
+/**
+   destest
+ */
+
+#define DRIVES_PER_GPIO_TX 4
+
+int _start_smp_read_gpio(int hba, struct smp_read_request_frame *header,
+						struct gpio_tx_register_byte *gpio_state_buffer)
+{
+	struct smp_read_response_frame_header response;
+	struct gpio_tx_register_byte state;
+	uint8_t reqbuf[sizeof(*header)], resbuf[MAX_SMP_FRAME_LEN];
+	uint8_t *read_data;
+	size_t response_size = sizeof(resbuf);
+	int status;
+
+	memset(&response, 0, sizeof(response));
+	memset(reqbuf, 0, sizeof(*header));
+	memcpy(reqbuf, header, sizeof(*header));
+
+	status = _send_smp_frame(hba, reqbuf, sizeof(*header), resbuf, &response_size);
+	read_data = calloc(1, SMP_DATA_CHUNK_SIZE);
+	memcpy(&response, resbuf, sizeof(response));
+	memcpy(read_data, resbuf + sizeof(response), SMP_DATA_CHUNK_SIZE);
+
+	/* if frame is somehow malformed return failure */
+	if (status != GPIO_STATUS_OK ||
+	    response.frame_type != SMP_FRAME_TYPE_RESP ||
+	    response.function != header->function) {
+		return GPIO_STATUS_FAILURE;
+	}
+
+    // update gpio state to buffer
+	for (int i=0; i < DRIVES_PER_GPIO_TX; i++) {
+		log_debug("gpio state%d: %x\n", i, read_data[i]);
+		memcpy(&state, read_data + i * sizeof(state), sizeof(state));
+		gpio_state_buffer[i] = state;
+	}
+
+	return response.function_result;
+}
+
+int smp_read_gpio(const char *path, int smp_reg_type,
+				int smp_reg_index, int smp_reg_count,
+				struct gpio_tx_register_byte *gpio_state_buffer)
+{
+	struct smp_read_request_frame header;
+	int status;
+
+	header.frame_type = SMP_FRAME_TYPE_REQ;
+	header.function = SMP_FUNC_GPIO_READ;
+	header.register_type = smp_reg_type;
+	header.register_index = smp_reg_index;
+	header.register_count = smp_reg_count;
+	memset(header.reserved, 0, sizeof(header.reserved));
+	int fd = _open_smp_device(path);
+	status = _start_smp_read_gpio(fd, &header, gpio_state_buffer);
+	_close_smp_device(fd);
+	return status;
+}
+
 #define BLINK_GEN_1HZ				8
 #define BLINK_GEN_2HZ				4
 #define BLINK_GEN_4HZ				2
@@ -461,8 +523,8 @@ int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 		}
 		__set_errno_and_return(ENOTSUP);
 	}
-
 	gpio_tx = get_bdev_ibpi_buffer(device);
+	smp_read_gpio(sysfs_path, GPIO_REG_TYPE_TX, 0, (device->host->ports+3)/4, gpio_tx);
 	if (!gpio_tx) {
 		log_debug("%s(): no IBPI buffer. Skipping.", __func__);
 		__set_errno_and_return(ENODEV);
@@ -481,7 +543,6 @@ int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
 		gpio_tx[device->phy_index + 3 - (device->phy_index % 4) * 2] =
 			ibpi2sgpio[ibpi].pattern;
 	}
-
 	/* write only if state has changed */
 	if (ibpi != device->ibpi_prev)
 		device->host->flush = 1;

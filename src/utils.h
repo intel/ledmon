@@ -46,8 +46,6 @@
  */
 #define WRITE_BUFFER_SIZE   1024
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 /**
  * This structure describes a device identifier. It consists of major and minor
  * attributes of device.
@@ -442,5 +440,6 @@ status_t set_verbose_level(int log_level);
 
 const char *ibpi2str(enum ibpi_pattern ibpi);
 int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[]);
+enum ibpi_pattern get_ibpi_for_value(const int value, const struct ibpi_value ibpi_values[]);
 
 #endif				/* _UTILS_H_INCLUDED_ */

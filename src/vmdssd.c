@@ -68,25 +68,6 @@ static char *get_slot_from_syspath(char *path)
 	return ret;
 }
 
-/**
- * @brief Returns IBPI pattern based on attention state
- *
- * @param[in]       attention       Attention state.
- *
- * @return Enum with IBPI value.
- */
-enum ibpi_pattern attention_to_ibpi(const int attention)
-{
-	const struct ibpi_value *tmp = ibpi_to_attention;
-
-	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
-		if (tmp->value == attention)
-			break;
-		tmp++;
-	}
-	return tmp->ibpi;
-}
-
 static int check_slot_module(const char *slot_path)
 {
 	char module_path[PATH_MAX], real_module_path[PATH_MAX];

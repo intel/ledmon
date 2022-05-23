@@ -725,10 +725,10 @@ static status_t slot_verify_request(struct slot_request *slot_req)
 	if (!slot_req->get_slot_fn && !slot_req->set_slot_fn) {
 		log_error("The controller type %s doesn't support slot functionality.",
 			  slot_req->cntrl);
-		return STATUS_DATA_ERROR;
+		return STATUS_INVALID_CONTROLLER;
 	}
 	if (slot_req->device[0] && slot_req->slot[0]) {
-		log_error("Slot commands require only one from parameters: device and slot.");
+		log_error("Only one from device and slot can be set.");
 		return STATUS_DATA_ERROR;
 	}
 

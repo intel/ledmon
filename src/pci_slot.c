@@ -102,7 +102,7 @@ static status_t set_slot_response(struct pci_slot *slot, struct slot_response *s
 	if (attention == -1)
 		return STATUS_INVALID_STATE;
 
-	slot_res->state = attention_to_ibpi(attention);
+	slot_res->state = get_ibpi_for_value(attention, ibpi_to_attention);
 	snprintf(slot_res->slot, PATH_MAX, "%s", basename(slot->sysfs_path));
 
 	bl_device = get_block_device_from_sysfs_path(slot->address);

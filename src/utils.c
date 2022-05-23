@@ -707,6 +707,14 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 	return ret;
 }
 
+/**
+ * @brief Returns value based on IBPI state
+ *
+ * @param[in]       value       Value for led state.
+ * @param[in]       ibpi_values    Array with defined IBPI states and values.
+ *
+ * @return Integer value which represents given IBPI state.
+ */
 int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[])
 {
 	const struct ibpi_value *tmp = ibpi_values;
@@ -717,4 +725,24 @@ int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_valu
 		tmp++;
 	}
 	return tmp->value;
+}
+
+/**
+ * @brief Returns IBPI pattern based on value
+ *
+ * @param[in]       value          Value for led state.
+ * @param[in]       ibpi_values    Array with defined IBPI states and values.
+ *
+ * @return Enum with IBPI value, which represents given value.
+ */
+enum ibpi_pattern get_ibpi_for_value(const int value, const struct ibpi_value ibpi_values[])
+{
+	const struct ibpi_value *tmp = ibpi_values;
+
+	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
+		if (tmp->value == value)
+			break;
+		tmp++;
+	}
+	return tmp->ibpi;
 }

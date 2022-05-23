@@ -296,10 +296,6 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 			break;
 		}
 	}
-	if (block_device)
-		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));
-	else
-		snprintf(slot_res->device, PATH_MAX, "(empty)");
 
 	if (path) {
 		pdev = get_pci_dev(pacc, path);
@@ -308,6 +304,7 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 		pci_cleanup(pacc);
 		return STATUS_INVALID_PATH;
 	}
+
 	if (!pdev) {
 		log_error("NPEM: Unable to get pci device for %s\n", path);
 		pci_cleanup(pacc);
@@ -317,6 +314,11 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	slot_res->state = npem_capability_to_ibpi(reg);
 	snprintf(slot_res->slot, PATH_MAX, "%s", path);
+
+	if (block_device)
+		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));
+	else
+		snprintf(slot_res->device, PATH_MAX, "(empty)");
 
 	pci_free_dev(pdev);
 	pci_cleanup(pacc);

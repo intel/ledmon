@@ -1,3 +1,17 @@
+### v0.96 / 2022-05-26
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.95...v0.96)
+
+Bug fixes
+
+* Manual updates, clarify --listed-only option
+* Fix cache indexing of ATA port
+* Fixes in regard to macros
+* Fix memory leak in amd_ipmi.c
+* Fix NULL pointer dereferences in sysfs.c
+* Make messages appear in service log immediately
+* Other minor fixes
+
 ### v0.95 / 2021-01-15
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.94...v0.95)

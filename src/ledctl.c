@@ -728,7 +728,7 @@ static status_t slot_verify_request(struct slot_request *slot_req)
 		return STATUS_INVALID_CONTROLLER;
 	}
 	if (slot_req->device[0] && slot_req->slot[0]) {
-		log_error("Only one from device and slot can be set.");
+		log_error("Device and slot parameters are exclusive.");
 		return STATUS_DATA_ERROR;
 	}
 

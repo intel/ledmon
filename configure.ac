@@ -1,8 +1,8 @@
 
 AC_PREREQ([2.69])
-AC_INIT([ledmon], [0.95])
+AC_INIT([ledmon], [0.96])
 AC_CONFIG_MACRO_DIR([m4])
-AC_SUBST([PACKAGE_DATE], "January 2021")
+AC_SUBST([PACKAGE_DATE], "May 2022")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.

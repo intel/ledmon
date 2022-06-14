@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (c) 2016-2019, Intel Corporation
+ * Copyright (c) 2016-2022, Intel Corporation
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -37,6 +37,13 @@
 #define ATTENTION_REBUILD    0x5  /* (0101) Attention On, Power On */
 #define ATTENTION_FAILURE    0xD  /* (1101) Attention On, Power Off */
 
+struct ibpi_value ibpi_to_attention[] = {
+	{IBPI_PATTERN_LOCATE, ATTENTION_LOCATE},
+	{IBPI_PATTERN_FAILED_DRIVE, ATTENTION_FAILURE},
+	{IBPI_PATTERN_REBUILD, ATTENTION_REBUILD},
+	{IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF}
+};
+
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 
 static char *get_slot_from_syspath(char *path)
@@ -59,24 +66,6 @@ static char *get_slot_from_syspath(char *path)
 	free(temp_path);
 
 	return ret;
-}
-
-static void get_ctrl(enum ibpi_pattern ibpi, uint16_t *new)
-{
-	switch (ibpi) {
-	case IBPI_PATTERN_LOCATE:
-		*new = ATTENTION_LOCATE;
-		break;
-	case IBPI_PATTERN_FAILED_DRIVE:
-		*new = ATTENTION_FAILURE;
-		break;
-	case IBPI_PATTERN_REBUILD:
-		*new = ATTENTION_REBUILD;
-		break;
-	default:
-		*new = ATTENTION_OFF;
-		break;
-	}
 }
 
 static int check_slot_module(const char *slot_path)
@@ -120,11 +109,29 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 	return slot;
 }
 
-int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibpi)
 {
 	char attention_path[PATH_MAX];
 	char buf[WRITE_BUFFER_SIZE];
 	uint16_t val;
+
+	log_debug("%s before: 0x%x\n", slot->address,
+		  get_int(slot->sysfs_path, 0, "attention"));
+	val = get_value_for_ibpi(ibpi, ibpi_to_attention);
+	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
+	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
+	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
+		log_error("%s write error: %d\n", slot->sysfs_path, errno);
+		return STATUS_FILE_WRITE_ERROR;
+	}
+	log_debug("%s after: 0x%x\n", slot->address,
+		  get_int(slot->sysfs_path, 0, "attention"));
+
+	return STATUS_SUCCESS;
+}
+
+int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+{
 	struct pci_slot *slot;
 	char *short_name = strrchr(device->sysfs_path, '/');
 
@@ -145,21 +152,7 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 		__set_errno_and_return(ENODEV);
 	}
 
-	log_debug("%s before: 0x%x\n", short_name,
-		  get_int(slot->sysfs_path, 0, "attention"));
-
-	get_ctrl(ibpi, &val);
-	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
-	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
-	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
-		log_error("%s write error: %d\n", slot->sysfs_path, errno);
-		return -1;
-	}
-
-	log_debug("%s after: 0x%x\n", short_name,
-		  get_int(slot->sysfs_path, 0, "attention"));
-
-	return 0;
+	return vmdssd_write_attention_buf(slot, ibpi);
 }
 
 char *vmdssd_get_path(const char *cntrl_path)

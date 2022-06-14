@@ -324,6 +324,42 @@ Displays version of ledctl and information about the license and exits.
 Prints information (system path and type) of all controllers detected by
 ledmon and exits.
 
+=item B<-P> or B<--list-slots> B<--controller>=I<controller>
+
+Prints all slots for the controller. Slot definition depends on the controller
+and is unique across all controllers of the same type.
+
+Definitions for supported controllers are described below:
+
+=over
+
+=item
+
+VMD - PCI Express Hot Plug Controller Driver slot number
+
+=item
+
+NPEM - PCI Express Downstream Port address
+
+=back
+
+Command returns a list of all slots for the controller with current state and
+attached device name (if any). I<controller> is type of controller
+(vmd, NPEM) that should be scanned here.
+
+=item B<-G> or B<--get-slot> B<--controller>=I<controller> B<--device>=I<device>
+
+Displays slot details of given device. I<device> is devnode of selected drive.
+
+=item B<-G> or B<--get-slot> B<--controller>=I<controller> B<--slot>=I<slot>
+
+Displays details of given slot. I<slot> is unique slot identifier.
+
+=item B<-S> or B<--set-slot> B<--controller>=I<controller> B<--slot>=I<slot> B<--state>=I<IBPI_state>
+
+Changes led state for given slot. I<controller> is type of the controller.
+I<slot> is unique slot identifier. I<IBPI_state> is led pattern.
+
 =item B<-x> or B<--listed-only>
 
 With this option ledctl will change state only on devices listed in CLI. The

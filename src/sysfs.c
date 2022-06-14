@@ -48,7 +48,6 @@
  */
 #define SYSFS_CLASS_BLOCK       "/sys/block"
 #define SYSFS_CLASS_ENCLOSURE   "/sys/class/enclosure"
-#define SYSFS_PCI_DEVICES       "/sys/bus/pci/devices"
 #define SYSFS_PCI_SLOTS         "/sys/bus/pci/slots"
 
 /**

@@ -215,6 +215,18 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 	return hosts;
 }
 
+struct block_device *get_block_device_from_sysfs_path(char *sub_path)
+{
+	struct block_device *device;
+
+	list_for_each(sysfs_get_block_devices(), device) {
+			if (strstr(device->sysfs_path, sub_path))
+				return device;
+	}
+
+	return NULL;
+}
+
 /*
  * Allocates a new block device structure. See block.h for details.
  */

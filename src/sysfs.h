@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2018 Intel Corporation.
+ * Copyright (C) 2009-2022 Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -21,6 +21,8 @@
 #define _SYSFS_H_INCLUDED_
 
 #include "status.h"
+
+#define SYSFS_PCI_DEVICES       "/sys/bus/pci/devices"
 
 /**
  * @brief Initializes sysfs module.

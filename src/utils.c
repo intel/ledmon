@@ -505,7 +505,7 @@ int get_log_fd(void)
 
 void print_opt(const char *long_opt, const char *short_opt, const char *desc)
 {
-	printf("%-20s%-10s%s\n", long_opt, short_opt, desc);
+	printf("%-70s%-40s%s\n", long_opt, short_opt, desc);
 }
 
 /**
@@ -581,6 +581,13 @@ struct option longopt_all[] = {
 	[OPT_LIST_CTRL]    = {"list-controllers", no_argument, NULL, 'L'},
 	[OPT_LISTED_ONLY]  = {"listed-only", no_argument, NULL, 'x'},
 	[OPT_FOREGROUND]   = {"foreground", no_argument, NULL, '\0'},
+	[OPT_LIST_SLOTS]   = {"list-slots", no_argument, NULL, 'P'},
+	[OPT_GET_SLOT]     = {"get-slot", no_argument, NULL, 'G'},
+	[OPT_SET_SLOT]     = {"set-slot", no_argument, NULL, 'S'},
+	[OPT_CONTROLLER]   = {"controller", required_argument, NULL, 'c'},
+	[OPT_DEVICE]       = {"device", required_argument, NULL, 'd'},
+	[OPT_SLOT]         = {"slot", required_argument, NULL, 'p'},
+	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 
@@ -698,4 +705,44 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 	}
 
 	return ret;
+}
+
+/**
+ * @brief Returns value based on IBPI state
+ *
+ * @param[in]       value       Value for led state.
+ * @param[in]       ibpi_values    Array with defined IBPI states and values.
+ *
+ * @return Integer value which represents given IBPI state.
+ */
+int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[])
+{
+	const struct ibpi_value *tmp = ibpi_values;
+
+	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
+		if (tmp->ibpi == ibpi)
+			break;
+		tmp++;
+	}
+	return tmp->value;
+}
+
+/**
+ * @brief Returns IBPI pattern based on value
+ *
+ * @param[in]       value          Value for led state.
+ * @param[in]       ibpi_values    Array with defined IBPI states and values.
+ *
+ * @return Enum with IBPI value, which represents given value.
+ */
+enum ibpi_pattern get_ibpi_for_value(const int value, const struct ibpi_value ibpi_values[])
+{
+	const struct ibpi_value *tmp = ibpi_values;
+
+	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
+		if (tmp->value == value)
+			break;
+		tmp++;
+	}
+	return tmp->ibpi;
 }

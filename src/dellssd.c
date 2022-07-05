@@ -93,6 +93,9 @@ enum {
   DELL_13G_MODULAR    = 0x21,
   DELL_14G_MONOLITHIC = 0x30,
   DELL_14G_MODULAR    = 0x31,
+  DELL_15G_MONOLITHIC = 0x40,
+  DELL_15G_MODULAR    = 0x41,
+
 };
 
 int get_dell_server_type()
@@ -125,6 +128,9 @@ int get_dell_server_type()
 	case DELL_13G_MODULAR:
 	case DELL_14G_MONOLITHIC:
 	case DELL_14G_MODULAR:
+	case DELL_15G_MONOLITHIC:
+	case DELL_15G_MODULAR:
+
 		gen = rdata[10];
 		return gen;
 	default:
@@ -166,6 +172,9 @@ static int ipmi_setled(int b, int d, int f, int state)
 		break;
 	case DELL_14G_MONOLITHIC:
 	case DELL_14G_MODULAR:
+	case DELL_15G_MONOLITHIC:
+	case DELL_15G_MODULAR:
+
 		data[1] = DELL_OEM_STORAGE_GETDRVMAP_14G;
 		break;
 	}
@@ -206,6 +215,9 @@ static int ipmi_setled(int b, int d, int f, int state)
 		break;
 	case DELL_14G_MONOLITHIC:
 	case DELL_14G_MODULAR:
+	case DELL_15G_MONOLITHIC:
+	case DELL_15G_MODULAR:
+
 		data[1] = DELL_OEM_STORAGE_SETDRVSTATUS_14G;
 		break;
 	}

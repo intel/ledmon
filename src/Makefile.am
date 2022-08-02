@@ -17,7 +17,7 @@
 #
 
 COMMON_SRCS      = ahci.c block.c cntrl.c config_file.c enclosure.c list.c \
-                   raid.c scsi.c slave.c status.c sysfs.c smp.c dellssd.c \
+                   raid.c scsi.c slave.c sysfs.c smp.c dellssd.c \
                    utils.c pci_slot.c vmdssd.c udev.c amd.c amd_sgpio.c amd_ipmi.c\
                    ipmi.c npem.c ses.c \
                    ahci.h amd_sgpio.h block.h cntrl.h config_file.h dellssd.h \

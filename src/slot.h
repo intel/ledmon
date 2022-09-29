@@ -57,7 +57,7 @@ struct slot_response {
 static inline void print_slot_state(struct slot_response *res)
 {
 	printf("slot: %-15s led state: %-15s device: %-15s\n",
-	       basename(res->slot), ibpi2str(res->state), res->device);
+		res->slot, ibpi2str(res->state), res->device);
 }
 
 #endif // SLOT_H_INCLUDED_

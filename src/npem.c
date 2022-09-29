@@ -314,7 +314,7 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	slot_res->state = npem_capability_to_ibpi(reg);
-	snprintf(slot_res->slot, PATH_MAX, "%s", path);
+	snprintf(slot_res->slot, PATH_MAX, "%s", basename(path));
 
 	if (block_device)
 		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));

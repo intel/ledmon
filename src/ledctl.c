@@ -842,13 +842,13 @@ ledctl_status_code_t slot_execute(struct slot_request *slot_req)
 		return list_slots(slot_req);
 	case OPT_SET_SLOT:
 		status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
+		if (status != LEDCTL_STATUS_SUCCESS)
+			return status;
 		if (slot_res.state == slot_req->state) {
 			log_warning("Led state: %s is already set for the slot.",
 				    ibpi2str(slot_req->state));
 			return LEDCTL_STATUS_SUCCESS;
 		}
-		if (status != LEDCTL_STATUS_SUCCESS)
-			return status;
 		status = slot_req->set_slot_fn(slot_res.slot, slot_req->state);
 		if (status != LEDCTL_STATUS_SUCCESS)
 			return status;

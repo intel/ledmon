@@ -56,6 +56,23 @@ static const char * const ctrl_type_str[] = {
 	[CNTRL_TYPE_AMD]     = "AMD",
 };
 
+#define CTRL_TYPE_STR_NUM (sizeof(ctrl_type_str)/sizeof(ctrl_type_str[0]))
+
+enum cntrl_type string_to_cntrl_type(const char *cntrl_str)
+{
+	for(int i = 0; i < CTRL_TYPE_STR_NUM; i++) {
+		if (strcasecmp(cntrl_str, ctrl_type_str[i]) == 0 ) {
+			return (enum cntrl_type)i;
+		}
+	}
+	return CNTRL_TYPE_UNKNOWN;
+}
+
+const char * const cntrl_type_to_string(enum cntrl_type cntrl)
+{
+	return ctrl_type_str[cntrl];
+}
+
 /**
  */
 static int _is_storage_controller(const char *path)

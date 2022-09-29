@@ -69,4 +69,39 @@ int scsi_ses_flush(struct block_device *device);
  * */
 int scsi_get_enclosure(struct block_device *device);
 
+/**
+ * @brief Locates a block device by sas_address
+ *
+ * This function walks the list of block devices searching for one that
+ * matches the sas_address.
+ * @param[in]       sas_address   sas address of block device
+ *
+ * @return address of block_device if found, else NULL
+ */
+struct block_device *locate_block_by_sas_addr(uint64_t sas_address);
+
+/**
+ * @brief Given an enclosure_device pointer and slot index, prepare the SES message
+ *
+ * @param[in]      enclosure      Enclosure
+ * @param[in]      idx            slot in enclosure
+ * @param[in]      ibpi           IBPI pattern to visualize.
+ *
+ * @return 0 on success, otherwise error.
+ */
+int scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx, enum ibpi_pattern ibpi);
+
+/**
+ * @brief Sends message to SES processor of an enclosure.
+ *
+ * This function sends a message to an enclosure in order to control LEDs of
+ * the given slot/component. It uses the interface of ENCLOSURE kernel module to
+ * control LEDs.
+ *
+ * @param[in]      enclosure       Pointer to enclosure to flush
+ *
+ * @return 0 on success, otherwise error.
+ */
+int scsi_ses_flush_enclosure(struct enclosure_device *enclosure);
+
 #endif				/* _SCSI_H_INCLUDED_ */

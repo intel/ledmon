@@ -21,6 +21,8 @@
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
+#include <linux/limits.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,6 +50,7 @@
 #include "pci_slot.h"
 #include "scsi.h"
 #include "sysfs.h"
+#include "enclosure.h"
 
 typedef enum {
 	LEDCTL_STATUS_SUCCESS=0,
@@ -236,15 +239,6 @@ static const int possible_params_size = sizeof(possible_params)
 
 static int listed_only;
 
-enum cntrl_type get_cntrl_type(const char *cntrl)
-{
-	if (strcasecmp(cntrl, "vmd") == 0)
-		return CNTRL_TYPE_VMD;
-	else if (strcasecmp(cntrl, "npem") == 0)
-		return CNTRL_TYPE_NPEM;
-	return CNTRL_TYPE_UNKNOWN;
-}
-
 /**
  * @brief Determines a slot functions based on controller.
  *
@@ -266,6 +260,10 @@ static void _get_slot_ctrl_fn(enum cntrl_type ctrl_type, struct slot_request *sl
 	case CNTRL_TYPE_NPEM:
 		slot_req->get_slot_fn = npem_get_slot;
 		slot_req->set_slot_fn = npem_set_slot;
+		break;
+	case CNTRL_TYPE_SCSI:
+		slot_req->get_slot_fn = enclosure_get_slot;
+		slot_req->set_slot_fn = enclosure_set_slot;
 		break;
 	default:
 		log_debug("Slot functions could not be set because the controller type %s does not "
@@ -817,6 +815,18 @@ static ledctl_status_code_t list_slots(struct slot_request *slot_req)
 		}
 		return status;
 	}
+	case CNTRL_TYPE_SCSI:
+	{
+		struct enclosure_device *encl = NULL;
+		char slot_id[PATH_MAX];
+		list_for_each(sysfs_get_enclosure_devices(), encl) {
+			for (int i = 0; i < encl->slots_count; i++) {
+				snprintf(slot_id, PATH_MAX, "%s/%d", encl->dev_path, encl->slots[i].index);
+				status = get_state_for_slot(slot_id, slot_req);
+			}
+		}
+		return status;
+	}
 	default:
 		return LEDCTL_STATUS_NOT_SUPPORTED;
 	}
@@ -930,7 +940,7 @@ ledctl_status_code_t _cmdline_parse(int argc, char *argv[], struct slot_request 
 			req->chosen_opt = OPT_SET_SLOT;
 			break;
 		case 'c':
-			req->cntrl = get_cntrl_type(optarg);
+			req->cntrl = string_to_cntrl_type(optarg);
 			_get_slot_ctrl_fn(req->cntrl, req);
 			break;
 		case 's':

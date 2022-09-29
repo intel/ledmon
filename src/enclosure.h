@@ -25,6 +25,8 @@
 #include <limits.h>
 
 #include "ses.h"
+#include "slot.h"
+#include "status.h"
 
 /**
  * @brief Enclosure device structure.
@@ -84,5 +86,32 @@ struct enclosure_device *enclosure_device_init(const char *path);
 void enclosure_device_fini(struct enclosure_device *enclosure);
 
 int enclosure_open(const struct enclosure_device *enclosure);
+
+/**
+ * @brief Gets led state for slot.
+ *
+ * This function finds slot connected to given identifier
+ * and fills slot response related to the slot.
+ *
+ * @param[in]         device         Requested device name.
+ * @param[in]         slot_num       Requested identifier of the slot.
+ * @param[in]         slot_res       Pointer to the slot response.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t enclosure_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
+
+/**
+ * @brief Sets led state for slot.
+ *
+ * This function finds slot connected to given number or device name
+ * and set given led state.
+ *
+ * @param[in]         slot_num       Requested number of the slot.
+ * @param[in]         state          IBPI state based on slot request.
+ *
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ */
+status_t enclosure_set_slot(char *slot_num, enum ibpi_pattern state);
 
 #endif				/* _ENCLOSURE_H_INCLUDED_ */

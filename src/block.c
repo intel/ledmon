@@ -153,7 +153,7 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 		result = npem_get_path(cntrl->sysfs_path);
 	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD)
 		result = amd_get_path(path, cntrl->sysfs_path);
-  
+
 	return result;
 }
 
@@ -221,8 +221,12 @@ struct block_device *get_block_device_from_sysfs_path(char *sub_path)
 	struct block_device *device;
 
 	list_for_each(sysfs_get_block_devices(), device) {
-			if (strstr(device->sysfs_path, sub_path))
-				return device;
+			char *start_loc;
+			if ((start_loc = strstr(device->sysfs_path, sub_path))) {
+				char following = start_loc[strnlen(sub_path, PATH_MAX)];
+				if (following == '/' || following == '\n' || following == '\0')
+					return device;
+			}
 	}
 
 	return NULL;

@@ -234,6 +234,8 @@ int block_compare(const struct block_device *bd_old,
  *
  * This function scans block devices and checks their sysfs path
  * to find any which contains PCI address specified for device in path.
+ * The character after the sub_path match is required to be one of the
+ * following ('\n', '\0', '/'), otherwise it is excluded.
  *
  * @param[in]        sub_path        Sub path.
  *

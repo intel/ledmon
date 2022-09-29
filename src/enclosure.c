@@ -20,6 +20,8 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <inttypes.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +35,8 @@
 
 #include "config.h"
 #include "enclosure.h"
+#include "scsi.h"
+#include "sysfs.h"
 #include "utils.h"
 
 /**
@@ -106,6 +110,27 @@ static char *_get_dev_sg(const char *encl_path)
 }
 
 /*
+ * Re-loads the ses hardware state for this enclosure, to allow refreshing the
+ * state after the hardare has be written.
+ */
+int enclosure_reload(struct enclosure_device * enclosure)
+{
+	int fd, ret;
+
+	fd = enclosure_open(enclosure);
+	if (fd == -1) {
+		return 1;
+	}
+
+	ret = ses_load_pages(fd, &enclosure->ses_pages);
+	close(fd);
+	if (ret != 0)
+		return ret;
+
+	return ses_get_slots(&enclosure->ses_pages, &enclosure->slots, &enclosure->slots_count);
+}
+
+/*
  * Allocates memory for enclosure device structure and initializes fields of
  * the structure.
  */
@@ -114,7 +139,6 @@ struct enclosure_device *enclosure_device_init(const char *path)
 	char temp[PATH_MAX] = "\0";
 	struct enclosure_device *enclosure;
 	int ret;
-	int fd;
 
 	if (!realpath(path, temp))
 		return NULL;
@@ -129,18 +153,7 @@ struct enclosure_device *enclosure_device_init(const char *path)
 	enclosure->sas_address = _get_sas_address(temp);
 	enclosure->dev_path = _get_dev_sg(temp);
 
-	fd = enclosure_open(enclosure);
-	if (fd == -1) {
-		ret = 1;
-		goto out;
-	}
-
-	ret = ses_load_pages(fd, &enclosure->ses_pages);
-	close(fd);
-	if (ret)
-		goto out;
-
-	ret = ses_get_slots(&enclosure->ses_pages, &enclosure->slots, &enclosure->slots_count);
+	ret = enclosure_reload(enclosure);
 out:
 	if (ret) {
 		log_warning("failed to initialize enclosure_device %s\n", path);
@@ -171,4 +184,143 @@ int enclosure_open(const struct enclosure_device *enclosure)
 		fd = open(enclosure->dev_path, O_RDWR);
 
 	return fd;
+}
+
+static struct enclosure_device *find_enclosure(char *enclosure_id)
+{
+	struct enclosure_device *enclosure_device;
+	list_for_each(sysfs_get_enclosure_devices(), enclosure_device) {
+		if (strncmp(enclosure_device->dev_path, enclosure_id, PATH_MAX) == 0) {
+			return enclosure_device;
+		}
+	}
+	return NULL;
+}
+
+static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *encl, int index)
+{
+	for (int i = 0; i < encl->slots_count; i++) {
+		if (encl->slots[i].index == index) {
+			return &encl->slots[i];
+		}
+	}
+	return NULL;
+}
+
+static status_t _enclosure_get_slot(struct enclosure_device *encl, int index, struct slot_response *slot_res)
+{
+	struct block_device *block_device = NULL;
+	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
+	if (!s_slot) {
+		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
+		return STATUS_NULL_POINTER;
+	}
+
+	slot_res->state = s_slot->ibpi_status;
+	snprintf(slot_res->slot, PATH_MAX, "%s/%d", encl->dev_path, index);
+
+	// Not having a block device for a slot is OK
+	if (NULL != (block_device = locate_block_by_sas_addr(s_slot->sas_addr))) {
+		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));
+	}
+	return STATUS_SUCCESS;
+}
+
+static status_t parse_slot_num(char *slot_num, char *enclosure_id, int *index)
+{
+	char tmp_enclosure_id[PATH_MAX];
+	const char *index_str;
+
+	if (slot_num == NULL || slot_num[0] == '\0') {
+		log_error("SCSI: Invalid slot identifier =%s\n", slot_num);
+		return STATUS_NULL_POINTER;
+	}
+
+	snprintf(tmp_enclosure_id, PATH_MAX, "%s", slot_num);
+	snprintf(enclosure_id, PATH_MAX, "%s", dirname(tmp_enclosure_id));
+	index_str = basename(slot_num);
+
+	if (str_toi(index, index_str, NULL, 10)) {
+		log_error("SCSI: Invalid slot identifier index %s\n", index_str);
+		return STATUS_INVALID_PATH;
+	}
+	return STATUS_SUCCESS;
+}
+
+static status_t enclosure_get_slot_by_slot_num(char *slot_num, struct slot_response *slot_res)
+{
+	char enclosure_id[PATH_MAX];
+	int index = -1;
+	struct enclosure_device *encl = NULL;
+
+	status_t parse = parse_slot_num(slot_num, enclosure_id, &index);
+	if (STATUS_SUCCESS != parse)
+		return parse;
+
+	encl = find_enclosure(enclosure_id);
+	if (!encl) {
+		log_error("SCSI: Invalid enclosure ='%s'\n", enclosure_id);
+		return STATUS_NULL_POINTER;
+	}
+	return _enclosure_get_slot(encl, index, slot_res);
+}
+
+static status_t enclosure_get_slot_by_device(char *device, struct slot_response *slot_res)
+{
+	struct block_device *block_device = get_block_device_from_sysfs_path(basename(device));
+
+	if (!block_device) {
+		log_error("SCSI: Device node not found %s\n", device);
+		return STATUS_INVALID_PATH;
+	}
+
+	if (!block_device->enclosure) {
+		log_error("SCSI: Not a SCSI ses device %n\n", device);
+		return STATUS_INVALID_PATH;
+	}
+	return _enclosure_get_slot(block_device->enclosure, block_device->encl_index, slot_res);
+}
+
+status_t enclosure_get_slot(char *device, char *slot_num, struct slot_response *slot_res)
+{
+	if (device && device[0])
+		return enclosure_get_slot_by_device(device, slot_res);
+	return enclosure_get_slot_by_slot_num(slot_num, slot_res);
+}
+
+status_t enclosure_set_slot(char *slot_num, enum ibpi_pattern state)
+{
+	int rc, index;
+	struct enclosure_device *enclosure_device;
+	char enclosure_id[PATH_MAX];
+
+	status_t parse = parse = parse_slot_num(slot_num, enclosure_id, &index);
+	if (STATUS_SUCCESS != parse)
+		return parse;
+
+	enclosure_device = find_enclosure(enclosure_id);
+	if (NULL == enclosure_device) {
+		log_error("SCSI: Unable to locate enclosure %s\n", slot_num);
+		return STATUS_NULL_POINTER;
+	}
+
+	rc = scsi_ses_write_enclosure(enclosure_device, index, state);
+	if (rc != 0) {
+		log_error("SCSI: ses write failed %d\n", rc);
+		return STATUS_FILE_WRITE_ERROR;
+	}
+
+	rc = scsi_ses_flush_enclosure(enclosure_device);
+	if (rc != 0) {
+		log_error("SCSI: ses flush enclosure failed %d\n", rc);
+		return STATUS_FILE_WRITE_ERROR;
+	}
+
+	// Reload from hardware to report actual current state.
+	rc = enclosure_reload(enclosure_device);
+	if (rc != 0) {
+		log_error("SCSI: ses enclosure reload error %d\n", rc);
+		return STATUS_FILE_READ_ERROR;
+	}
+	return STATUS_SUCCESS;
 }

@@ -36,6 +36,23 @@ enum cntrl_type {
 	CNTRL_TYPE_AMD,
 };
 
+
+/**
+ * @brief Translates string to controller enumerated type
+ *
+ * @param cntrl_str          string to translate
+ * @return enum cntrl_type   enumerated value
+ */
+enum cntrl_type string_to_cntrl_type(const char *cntrl_str);
+
+/**
+ * @brief Translates enumerated type to string representation
+ *
+ * @param cntrl               Enumerated type to translate to string representation
+ * @return const char* const  String representation of enumerated type
+ */
+const char *const cntrl_type_to_string(enum cntrl_type cntrl);
+
 /**
  * @brief Storage controller device structure.
  *

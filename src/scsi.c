@@ -132,6 +132,30 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	return ses_write_msg(ibpi, &device->enclosure->ses_pages, device->encl_index);
 }
 
+int scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx, enum ibpi_pattern ibpi)
+{
+	if (!enclosure || idx == -1) {
+		__set_errno_and_return(EINVAL);
+	}
+
+	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
+		__set_errno_and_return(ERANGE);
+
+	return ses_write_msg(ibpi, &enclosure->ses_pages, idx);
+}
+
+int scsi_ses_flush_enclosure(struct enclosure_device *enclosure)
+{
+	int ret = 0;
+	int fd = enclosure_open(enclosure);
+	if (fd == -1)
+		return 1;
+
+	ret = ses_send_diag(fd, &enclosure->ses_pages);
+	close(fd);
+	return ret;
+}
+
 int scsi_ses_flush(struct block_device *device)
 {
 	int ret;
@@ -169,4 +193,17 @@ char *scsi_get_host_path(const char *path, const char *ctrl_path)
 		free(host);
 	}
 	return str_dup(host_path);
+}
+
+
+struct block_device *locate_block_by_sas_addr(uint64_t sas_address)
+{
+	struct block_device *block_device;
+	list_for_each(sysfs_get_block_devices(), block_device) {
+		uint64_t tmp = get_drive_sas_addr(block_device->sysfs_path);
+		if (tmp != 0 && tmp == sas_address) {
+			return block_device;
+		}
+	}
+	return NULL;
 }

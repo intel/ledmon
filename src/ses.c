@@ -19,6 +19,7 @@
  */
 
 #include <dirent.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -463,11 +464,36 @@ int ses_send_diag(int fd, struct ses_pages *sp)
 			       sp->page2.len, 0, debug);
 }
 
+static void get_led_status(struct ses_pages *sp, int idx, enum ibpi_pattern *led_status)
+{
+	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2.buf + 8);
+	struct ses_slot_ctrl_elem *desc_element = NULL;
+	descriptors++;
+	desc_element = &descriptors[idx];
+
+	*led_status = IBPI_PATTERN_NORMAL;
+
+	if (desc_element->b2 & 0x02) {
+		*led_status = IBPI_PATTERN_LOCATE;
+	}
+	if (desc_element->b3 & 0x60) {
+		*led_status = IBPI_PATTERN_FAILED_DRIVE;
+	}
+}
+
 int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count)
 {
 	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
+
+	// Our expectation is that the caller is passing us NULL or a valid chunk of memory for
+	// slots that was used before and are now reloading, so free it first.
+	if (*out_slots) {
+		free(*out_slots);
+		*out_slots = NULL;
+	}
+	*out_slots_count = 0;
 
 	/* Check Page10 for address. Extract index. */
 	ap = add_desc = sp->page10.buf + 8;
@@ -509,6 +535,7 @@ int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_sl
 					((uint64_t)addr_p[19]);
 
 				slots[j].index = ap[0] & 0x10 ? ap[3] : j;
+				get_led_status(sp, slots[j].index, &slots[j].ibpi_status);
 			}
 
 			*out_slots = slots;

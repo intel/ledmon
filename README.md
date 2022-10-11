@@ -16,7 +16,7 @@ Following packages are required to compile:
 
 |RHEL|SLES|Debian/Ubuntu|
 |:---:|:---:|:---:|
-| `RHEL8: pkgconf`, `RHEL7: pkgconfig`  | `pkg-config` | `pkg-config` |
+| `pkgconf`, `RHEL7: pkgconfig`  | `pkg-config` | `pkg-config` |
 | `automake` | `automake`   | `automake`   |
 | `autoconf` | `autoconf`   | `autoconf`   |
 | `gcc` | `gcc` | `gcc` |

@@ -56,11 +56,9 @@ static const char * const ctrl_type_str[] = {
 	[CNTRL_TYPE_AMD]     = "AMD",
 };
 
-#define CTRL_TYPE_STR_NUM (sizeof(ctrl_type_str)/sizeof(ctrl_type_str[0]))
-
 enum cntrl_type string_to_cntrl_type(const char *cntrl_str)
 {
-	for(int i = 0; i < CTRL_TYPE_STR_NUM; i++) {
+	for(int i = 0; i < ARRAY_SIZE(ctrl_type_str); i++) {
 		if (strcasecmp(cntrl_str, ctrl_type_str[i]) == 0 ) {
 			return (enum cntrl_type)i;
 		}

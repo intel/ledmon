@@ -62,6 +62,11 @@ char *str_map(int scode, struct map *map);
 #define WRITE_BUFFER_SIZE   1024
 
 /**
+ * @brief Macro for compile time array size constants
+ */
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
+/**
  * This structure describes a device identifier. It consists of major and minor
  * attributes of device.
  */

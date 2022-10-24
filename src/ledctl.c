@@ -235,9 +235,7 @@ static int possible_params[] = {
 	OPT_LOG_LEVEL,
 };
 
-static const int possible_params_size = sizeof(possible_params)
-		/ sizeof(possible_params[0]);
-
+static const int possible_params_size = ARRAY_SIZE(possible_params);
 static int listed_only;
 
 /**

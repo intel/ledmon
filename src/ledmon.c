@@ -144,8 +144,7 @@ static int possible_params[] = {
 	OPT_FOREGROUND,
 };
 
-static int possible_params_size = sizeof(possible_params)
-		/ sizeof(possible_params[0]);
+static int possible_params_size = ARRAY_SIZE(possible_params);
 
 /**
  * @brief Monitor service finalize function.

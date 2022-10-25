@@ -754,8 +754,8 @@ static ledctl_status_code_t slot_verify_request(struct slot_request *slot_req)
 		return LEDCTL_STATUS_INVALID_STATE;
 	}
 	if (!slot_req->get_slot_fn && !slot_req->set_slot_fn) {
-		log_error("The controller type %d doesn't support slot functionality.",
-			  slot_req->cntrl);
+		log_error("The controller type %s doesn't support slot functionality.",
+			cntrl_type_to_string(slot_req->cntrl));
 		return LEDCTL_STATUS_INVALID_CONTROLLER;
 	}
 	if (slot_req->device[0] && slot_req->slot[0]) {

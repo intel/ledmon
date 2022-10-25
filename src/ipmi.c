@@ -125,7 +125,7 @@ int ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 		goto end;
 	}
 	if (rcv.msg.data[0])
-		log_info("IPMI Error: %.2x\n", rcv.msg.data[0]);
+		log_debug("IPMI Error: %.2x\n", rcv.msg.data[0]);
 	rc = 0;
 	*rlen = rcv.msg.data_len - 1;
 	memcpy(resp, rcv.msg.data + 1, *rlen);

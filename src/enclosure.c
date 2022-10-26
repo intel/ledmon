@@ -207,7 +207,8 @@ static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *en
 	return NULL;
 }
 
-static status_t _enclosure_get_slot(struct enclosure_device *encl, int index, struct slot_response *slot_res)
+static status_t _enclosure_get_slot(struct enclosure_device *encl, int index,
+									const char *device, struct slot_response *slot_res)
 {
 	struct block_device *block_device = NULL;
 	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
@@ -219,10 +220,18 @@ static status_t _enclosure_get_slot(struct enclosure_device *encl, int index, st
 	slot_res->state = s_slot->ibpi_status;
 	snprintf(slot_res->slot, PATH_MAX, "%s/%d", encl->dev_path, index);
 
-	// Not having a block device for a slot is OK
-	if (NULL != (block_device = locate_block_by_sas_addr(s_slot->sas_addr))) {
-		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));
+	if (!device) {
+		block_device = locate_block_by_sas_addr(s_slot->sas_addr);
+		if (block_device) {
+			device = basename(block_device->sysfs_path);
+		}
 	}
+
+	// Not having a block device for a slot is OK
+	if (device) {
+		snprintf(slot_res->device, PATH_MAX, "/dev/%s", device);
+	}
+
 	return STATUS_SUCCESS;
 }
 
@@ -262,7 +271,7 @@ static status_t enclosure_get_slot_by_slot_num(char *slot_num, struct slot_respo
 		log_error("SCSI: Invalid enclosure ='%s'\n", enclosure_id);
 		return STATUS_NULL_POINTER;
 	}
-	return _enclosure_get_slot(encl, index, slot_res);
+	return _enclosure_get_slot(encl, index, NULL, slot_res);
 }
 
 static status_t enclosure_get_slot_by_device(char *device, struct slot_response *slot_res)
@@ -278,7 +287,7 @@ static status_t enclosure_get_slot_by_device(char *device, struct slot_response 
 		log_error("SCSI: Not a SCSI ses device %n\n", device);
 		return STATUS_INVALID_PATH;
 	}
-	return _enclosure_get_slot(block_device->enclosure, block_device->encl_index, slot_res);
+	return _enclosure_get_slot(block_device->enclosure, block_device->encl_index, device, slot_res);
 }
 
 status_t enclosure_get_slot(char *device, char *slot_num, struct slot_response *slot_res)

@@ -487,14 +487,6 @@ int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_sl
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
 
-	// Our expectation is that the caller is passing us NULL or a valid chunk of memory for
-	// slots that was used before and are now reloading, so free it first.
-	if (*out_slots) {
-		free(*out_slots);
-		*out_slots = NULL;
-	}
-	*out_slots_count = 0;
-
 	/* Check Page10 for address. Extract index. */
 	ap = add_desc = sp->page10.buf + 8;
 	for (i = 0; i < sp->page1_types_len; i++) {
@@ -538,6 +530,9 @@ int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_sl
 				get_led_status(sp, slots[j].index, &slots[j].ibpi_status);
 			}
 
+			// Our expectation is that the caller is passing us NULL or a valid chunk of
+			// memory for slots that was used before and are now reloading, so free it first.
+			free(*out_slots);
 			*out_slots = slots;
 			*out_slots_count = t->num_of_elements;
 

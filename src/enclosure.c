@@ -226,7 +226,7 @@ static status_t _enclosure_get_slot(struct enclosure_device *encl, int index, st
 	return STATUS_SUCCESS;
 }
 
-static status_t parse_slot_num(char *slot_num, char *enclosure_id, int *index)
+static status_t parse_slot_id(char *slot_num, char *enclosure_id, int *index)
 {
 	char tmp_enclosure_id[PATH_MAX];
 	const char *index_str;
@@ -253,7 +253,7 @@ static status_t enclosure_get_slot_by_slot_num(char *slot_num, struct slot_respo
 	int index = -1;
 	struct enclosure_device *encl = NULL;
 
-	status_t parse = parse_slot_num(slot_num, enclosure_id, &index);
+	status_t parse = parse_slot_id(slot_num, enclosure_id, &index);
 	if (STATUS_SUCCESS != parse)
 		return parse;
 
@@ -294,7 +294,7 @@ status_t enclosure_set_slot(char *slot_num, enum ibpi_pattern state)
 	struct enclosure_device *enclosure_device;
 	char enclosure_id[PATH_MAX];
 
-	status_t parse = parse = parse_slot_num(slot_num, enclosure_id, &index);
+	status_t parse = parse_slot_id(slot_num, enclosure_id, &index);
 	if (STATUS_SUCCESS != parse)
 		return parse;
 

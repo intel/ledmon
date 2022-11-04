@@ -1,19 +1,20 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2009-2019 Intel Corporation.
+ * Copyright (C) 2022-2022 Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
@@ -34,8 +35,7 @@ enum status_code {
 	STATUS_OUT_OF_RANGE,
 	STATUS_INVALID_NODE,
 	STATUS_DATA_ERROR,
-	STATUS_IBPI_DETERMINE_ERROR,
-	STATUS_INVALID_PATH,
+	STATUS_INVALID_PATH=8,
 	STATUS_INVALID_SUBOPTION,
 	STATUS_INVALID_STATE,
 	STATUS_SIZE_ERROR,
@@ -48,30 +48,17 @@ enum status_code {
 	STATUS_SYSFS_INIT_ERROR,
 	STATUS_SYSFS_SCAN_ERROR,
 	STATUS_SYSFS_RESET_ERROR,
-	STATUS_LIST_EMPTY,
-	STATUS_LIST_INIT_ERROR,
+	STATUS_LIST_INIT_ERROR=22,
 	STATUS_BLOCK_LIST_ERROR,
 	STATUS_VOLUM_LIST_ERROR,
 	STATUS_CNTRL_LIST_ERROR,
 	STATUS_SLAVE_LIST_ERROR,
 	STATUS_CNTNR_LIST_ERROR,
 	STATUS_INVALID_FORMAT,
-	STATUS_LEDMON_INIT,
-	STATUS_LEDMON_RUNNING,
-	STATUS_ONEXIT_ERROR,
-	STATUS_INVALID_CONTROLLER,
-	STATUS_NOT_SUPPORTED,
-	STATUS_STAT_ERROR,
-	STATUS_CMDLINE_ERROR,
-	STATUS_NOT_A_PRIVILEGED_USER,
-	STATUS_ENCLO_LIST_ERROR,
+	STATUS_CMDLINE_ERROR=35,
+	STATUS_ENCLO_LIST_ERROR=37,
 	STATUS_SLOTS_LIST_ERROR,
 	STATUS_CONFIG_FILE_ERROR,
-	STATUS_LOG_FILE_ERROR,
 };
-
-/**
- */
-char *strstatus(status_t scode);
 
 #endif				/* _STATUS_H_INCLUDED_ */

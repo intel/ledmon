@@ -52,7 +52,6 @@
 #include "scsi.h"
 #include "slave.h"
 #include "smp.h"
-#include "status.h"
 #include "sysfs.h"
 #include "udev.h"
 #include "utils.h"
@@ -169,6 +168,41 @@ static void _ledmon_fini(int __attribute__ ((unused)) status, void *program_name
 	pidfile_remove(program_name);
 }
 
+typedef enum {
+	LEDMON_STATUS_SUCCESS=0,
+	LEDMON_STATUS_FILE_OPEN_ERROR=12,
+	LEDMON_STATUS_LEDMON_RUNNING=30,
+	LEDMON_STATUS_ONEXIT_ERROR=31,
+	LEDMON_STATUS_CMDLINE_ERROR=35,
+	LEDMON_STATUS_NOT_A_PRIVILEGED_USER=36,
+	LEDMON_STATUS_CONFIG_FILE_ERROR=39,
+	LEDMON_STATUS_LOG_FILE_ERROR=40,
+	LEDMON_STATUS_UNDEFINED
+} ledmon_status_code_t;
+
+struct map ledmon_status_map[] = {
+	{ "STATUS_SUCCESS", LEDMON_STATUS_SUCCESS },
+	{ "STATUS_LEDMON_RUNNING", LEDMON_STATUS_LEDMON_RUNNING },
+	{ "STATUS_ONEXIT_ERROR", LEDMON_STATUS_ONEXIT_ERROR },
+	{ "STATUS_CMDLINE_ERROR", LEDMON_STATUS_CMDLINE_ERROR },
+	{ "STATUS_NOT_A_PRIVILEGED_USER", LEDMON_STATUS_NOT_A_PRIVILEGED_USER },
+	{ "STATUS_LOG_FILE_ERROR", LEDMON_STATUS_LOG_FILE_ERROR },
+	{ NULL, LEDMON_STATUS_UNDEFINED}
+};
+
+/**
+ * @brief Get string status for ledmon.
+ *
+ * @param 	s 	ledctl status code.
+ * @return 	string status if defined, else "???".
+ */
+static char *ledmon_strstatus(ledmon_status_code_t s)
+{
+	char *status_str = str_map(s, ledmon_status_map);
+
+	return status_str ? status_str : "???";
+}
+
 /**
  * @brief Puts exit status to a log file.
  *
@@ -191,13 +225,13 @@ static void _ledmon_status(int status, void *arg)
 	if (ignore)
 		return;
 
-	if (status == STATUS_SUCCESS)
+	if (status == LEDMON_STATUS_SUCCESS)
 		log_level = LOG_LEVEL_INFO;
 	else
 		log_level = LOG_LEVEL_ERROR;
 
 	snprintf(message, sizeof(message), "exit status is %s.",
-		 strstatus(status));
+		 ledmon_strstatus(status));
 
 	if (get_log_fd() >= 0)
 		_log(log_level, message);
@@ -265,9 +299,9 @@ static void _ledmon_help(void)
  *
  * @param[in]      path           the new location and name of config file.
  *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * @return STATUS_SUCCESS if successful, otherwise ledmon_status_code_t.
  */
-static status_t _set_config_path(char **conf_path, const char *path)
+static ledmon_status_code_t _set_config_path(char **conf_path, const char *path)
 {
 	if (!path)
 		path = LEDMON_DEF_CONF_FILE;
@@ -276,7 +310,7 @@ static status_t _set_config_path(char **conf_path, const char *path)
 		free(*conf_path);
 	*conf_path = str_dup(path);
 
-	return STATUS_SUCCESS;
+	return LEDMON_STATUS_SUCCESS;
 }
 
 /**
@@ -288,19 +322,19 @@ static status_t _set_config_path(char **conf_path, const char *path)
  * @param[in]     optarg          String containing the new value of time
  *                                interval, given in command line option.
  *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * @return STATUS_SUCCESS if successful, otherwise ledmon_status_code_t.
  */
-static status_t _set_sleep_interval(const char *optarg)
+static ledmon_status_code_t _set_sleep_interval(const char *optarg)
 {
 	if (str_toi(&conf.scan_interval, optarg, NULL, 10) != 0) {
 		log_error("Cannot parse sleep interval");
-		return STATUS_CMDLINE_ERROR;
+		return LEDMON_STATUS_CMDLINE_ERROR;
 	}
 	if (conf.scan_interval < LEDMON_MIN_SLEEP_INTERVAL) {
 		log_warning("sleep interval too small... using default.");
 		conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
 	}
-	return STATUS_SUCCESS;
+	return LEDMON_STATUS_SUCCESS;
 }
 
 
@@ -315,13 +349,13 @@ static status_t _set_sleep_interval(const char *optarg)
  * @param[in]     argc            - number of arguments.
  * @param[in]     argv            - array of command line arguments.
  *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * @return STATUS_SUCCESS if successful, otherwise ledmon_status_code_t.
  */
-static status_t _cmdline_parse_non_daemonise(int argc, char *argv[])
+static ledmon_status_code_t _cmdline_parse_non_daemonise(int argc, char *argv[])
 {
 	int opt_index = -1;
 	int opt = -1;
-	status_t status = STATUS_SUCCESS;
+	ledmon_status_code_t status = LEDMON_STATUS_SUCCESS;
 
 	do {
 		opt = getopt_long(argc, argv, shortopt, longopt, &opt_index);
@@ -337,7 +371,7 @@ static status_t _cmdline_parse_non_daemonise(int argc, char *argv[])
 			exit(EXIT_SUCCESS);
 		case ':':
 		case '?':
-			return STATUS_CMDLINE_ERROR;
+			return LEDMON_STATUS_CMDLINE_ERROR;
 		}
 	} while (opt >= 0);
 
@@ -352,12 +386,12 @@ static status_t _cmdline_parse_non_daemonise(int argc, char *argv[])
  * @param[in]     argc            - number of arguments.
  * @param[in]     argv            - array of command line arguments.
  *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
+ * @return STATUS_SUCCESS if successful, otherwise ledmon_status_code_t.
  */
-static status_t _cmdline_parse(int argc, char *argv[])
+static ledmon_status_code_t _cmdline_parse(int argc, char *argv[])
 {
 	int opt, opt_index = -1;
-	status_t status = STATUS_SUCCESS;
+	ledmon_status_code_t status = LEDMON_STATUS_SUCCESS;
 
 	optind = 1;
 	do {
@@ -375,7 +409,7 @@ static status_t _cmdline_parse(int argc, char *argv[])
 				if (log_level != -1)
 					status = set_verbose_level(log_level);
 				else
-					status = STATUS_CMDLINE_ERROR;
+					status = LEDMON_STATUS_CMDLINE_ERROR;
 				break;
 			case OPT_FOREGROUND:
 				foreground = 1;
@@ -393,11 +427,11 @@ static status_t _cmdline_parse(int argc, char *argv[])
 			break;
 		}
 		opt_index = -1;
-		if (status != STATUS_SUCCESS)
+		if (status != LEDMON_STATUS_SUCCESS)
 			return status;
 	} while (1);
 
-	return STATUS_SUCCESS;
+	return LEDMON_STATUS_SUCCESS;
 }
 
 /**
@@ -816,7 +850,7 @@ static void _ledmon_execute(void)
 	}
 }
 
-static status_t _init_ledmon_conf(void)
+static ledmon_status_code_t _init_ledmon_conf(void)
 {
 	memset(&conf, 0, sizeof(struct ledmon_conf));
 
@@ -856,7 +890,7 @@ static void _close_parent_fds(void)
  */
 int main(int argc, char *argv[])
 {
-	status_t status = STATUS_SUCCESS;
+	ledmon_status_code_t status = LEDMON_STATUS_SUCCESS;
 	int ignore = 0;
 
 	setup_options(&longopt, &shortopt, possible_params,
@@ -865,37 +899,37 @@ int main(int argc, char *argv[])
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
 	if (on_exit(_ledmon_status, &ignore))
-		return STATUS_ONEXIT_ERROR;
+		return LEDMON_STATUS_ONEXIT_ERROR;
 
-	if (_cmdline_parse_non_daemonise(argc, argv) != STATUS_SUCCESS)
-		return STATUS_CMDLINE_ERROR;
+	if (_cmdline_parse_non_daemonise(argc, argv) != LEDMON_STATUS_SUCCESS)
+		return LEDMON_STATUS_CMDLINE_ERROR;
 
 	if (geteuid() != 0) {
 		fprintf(stderr, "Only root can run this application.\n");
-		return STATUS_NOT_A_PRIVILEGED_USER;
+		return LEDMON_STATUS_NOT_A_PRIVILEGED_USER;
 	}
 
 	status = _init_ledmon_conf();
-	if (status != STATUS_SUCCESS)
+	if (status != LEDMON_STATUS_SUCCESS)
 		return status;
 
 	status = ledmon_read_config(ledmon_conf_path);
-	if (status != STATUS_SUCCESS)
+	if (status != LEDMON_STATUS_SUCCESS)
 		return status;
 
-	if (_cmdline_parse(argc, argv) != STATUS_SUCCESS)
-		return STATUS_CMDLINE_ERROR;
+	if (_cmdline_parse(argc, argv) != LEDMON_STATUS_SUCCESS)
+		return LEDMON_STATUS_CMDLINE_ERROR;
 
 	ledmon_write_shared_conf();
 
-	if (log_open(conf.log_path) != STATUS_SUCCESS)
-		return STATUS_LOG_FILE_ERROR;
+	if (log_open(conf.log_path) != LEDMON_STATUS_SUCCESS)
+		return LEDMON_STATUS_LOG_FILE_ERROR;
 
 	free(shortopt);
 	free(longopt);
 	if (pidfile_check(progname, NULL) == 0) {
 		log_warning("daemon is running...");
-		return STATUS_LEDMON_RUNNING;
+		return LEDMON_STATUS_LEDMON_RUNNING;
 	}
 	if (!foreground) {
 		pid_t pid = fork();
@@ -936,7 +970,7 @@ int main(int argc, char *argv[])
 	_ledmon_setup_signals();
 
 	if (on_exit(_ledmon_fini, progname))
-		exit(STATUS_ONEXIT_ERROR);
+		exit(LEDMON_STATUS_ONEXIT_ERROR);
 	list_init(&ledmon_block_list, (item_free_t)block_device_fini);
 	sysfs_init();
 	log_info("monitor service has been started...");

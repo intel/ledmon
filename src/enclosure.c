@@ -208,7 +208,7 @@ static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *en
 }
 
 static status_t _enclosure_get_slot(struct enclosure_device *encl, int index,
-									const char *device, struct slot_response *slot_res)
+					const char *device, struct slot_response *slot_res)
 {
 	struct block_device *block_device = NULL;
 	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
@@ -276,6 +276,7 @@ static status_t enclosure_get_slot_by_slot_num(char *slot_num, struct slot_respo
 
 static status_t enclosure_get_slot_by_device(char *device, struct slot_response *slot_res)
 {
+	char device_node[PATH_MAX] = {0,};
 	struct block_device *block_device = get_block_device_from_sysfs_path(basename(device));
 
 	if (!block_device) {
@@ -287,7 +288,9 @@ static status_t enclosure_get_slot_by_device(char *device, struct slot_response 
 		log_error("SCSI: Not a SCSI ses device %n\n", device);
 		return STATUS_INVALID_PATH;
 	}
-	return _enclosure_get_slot(block_device->enclosure, block_device->encl_index, device, slot_res);
+
+	snprintf(device_node, PATH_MAX, "/dev/%s", basename(block_device->sysfs_path));
+	return _enclosure_get_slot(block_device->enclosure, block_device->encl_index, device_node, slot_res);
 }
 
 status_t enclosure_get_slot(char *device, char *slot_num, struct slot_response *slot_res)

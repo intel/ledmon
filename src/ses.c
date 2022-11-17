@@ -35,6 +35,7 @@
 
 #include "ses.h"
 #include "utils.h"
+#include "libled_private.h"
 
 static int debug = 0;
 
@@ -60,7 +61,7 @@ static int get_ses_page(int fd, struct ses_page *p, int pg_code)
 	return ret;
 }
 
-static int process_page1(struct ses_pages *sp)
+static int process_page1(struct ses_pages *sp, struct led_ctx *ctx)
 {
 	int num_encl;		/* number of subenclosures */
 	unsigned char *ed;	/* Enclosure Descriptor */
@@ -74,15 +75,15 @@ static int process_page1(struct ses_pages *sp)
 	ed = sp->page1.buf + 8;
 	for (i = 0; i < num_encl; i++, ed += len) {
 		if (ed + 3 > sp->page1.buf + sp->page1.len) {
-			log_debug
-			    ("SES: Error, response pare 1 truncated at %d\n",
-			     i);
+			lib_log(ctx, LED_LOG_LEVEL_DEBUG,
+				"SES: Error, response pare 1 truncated at %d\n", i);
 			return 1;
 		}
 		sum_headers += ed[2];
 		len = ed[3] + 4;
 		if (len < 40) {
-			log_debug("SES: Response too short for page 1\n");
+			lib_log(ctx, LED_LOG_LEVEL_DEBUG,
+				"SES: Response too short for page 1: %d\n", len);
 			continue;
 		}
 	}
@@ -93,7 +94,8 @@ static int process_page1(struct ses_pages *sp)
 	/* ed is on type descr header */
 	for (i = 0; i < sum_headers; i++, ed += 4) {
 		if (ed > sp->page1.buf + sp->page1.len) {
-			log_debug("SES: Response page 1 truncated at %d\n", i);
+			lib_log(ctx, LED_LOG_LEVEL_DEBUG,
+				"SES: Response page 1 truncated at %d\n", i);
 			return 1;
 		}
 	}
@@ -165,7 +167,7 @@ static void print_page10(struct ses_pages *sp)
 	return;
 }
 
-int ses_load_pages(int fd, struct ses_pages *sp)
+int ses_load_pages(int fd, struct ses_pages *sp, struct led_ctx *ctx)
 {
 	int ret;
 
@@ -174,7 +176,7 @@ int ses_load_pages(int fd, struct ses_pages *sp)
 	if (ret)
 		return ret;
 
-	ret = process_page1(sp);
+	ret = process_page1(sp, ctx);
 	if (ret)
 		return ret;
 
@@ -194,27 +196,27 @@ int ses_load_pages(int fd, struct ses_pages *sp)
 	return ret;
 }
 
-static enum ibpi_pattern ibpi_to_ses(enum ibpi_pattern ibpi)
+static enum led_ibpi_pattern ibpi_to_ses(enum led_ibpi_pattern ibpi)
 {
 	switch (ibpi) {
-	case IBPI_PATTERN_UNKNOWN:
-	case IBPI_PATTERN_ONESHOT_NORMAL:
-	case IBPI_PATTERN_NORMAL:
-		return SES_REQ_OK;
-	case IBPI_PATTERN_FAILED_ARRAY:
-		return SES_REQ_IFA;
-	case IBPI_PATTERN_DEGRADED:
-		return SES_REQ_ICA;
-	case IBPI_PATTERN_REBUILD:
-		return SES_REQ_REBUILD;
-	case IBPI_PATTERN_FAILED_DRIVE:
-		return SES_REQ_FAULT;
-	case IBPI_PATTERN_LOCATE:
-		return SES_REQ_IDENT;
-	case IBPI_PATTERN_HOTSPARE:
-		return SES_REQ_HOSTSPARE;
-	case IBPI_PATTERN_PFA:
-		return SES_REQ_PRDFAIL;
+	case LED_IBPI_PATTERN_UNKNOWN:
+	case LED_IBPI_PATTERN_ONESHOT_NORMAL:
+	case LED_IBPI_PATTERN_NORMAL:
+		return LED_SES_REQ_OK;
+	case LED_IBPI_PATTERN_FAILED_ARRAY:
+		return LED_SES_REQ_IFA;
+	case LED_IBPI_PATTERN_DEGRADED:
+		return LED_SES_REQ_ICA;
+	case LED_IBPI_PATTERN_REBUILD:
+		return LED_SES_REQ_REBUILD;
+	case LED_IBPI_PATTERN_FAILED_DRIVE:
+		return LED_SES_REQ_FAULT;
+	case LED_IBPI_PATTERN_LOCATE:
+		return LED_SES_REQ_IDENT;
+	case LED_IBPI_PATTERN_HOTSPARE:
+		return LED_SES_REQ_HOSTSPARE;
+	case LED_IBPI_PATTERN_PFA:
+		return LED_SES_REQ_PRDFAIL;
 	default:
 		return ibpi;
 	}
@@ -320,12 +322,12 @@ static inline void _set_fault(unsigned char *u)
 	u[3] |= (1 << 5);
 }
 
-static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el)
+static int ses_set_message(enum led_ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el)
 {
 	struct ses_slot_ctrl_elem msg;
 
 	memset(&msg, 0, sizeof(msg));
-	if (ibpi == IBPI_PATTERN_LOCATE_OFF) {
+	if (ibpi == LED_IBPI_PATTERN_LOCATE_OFF) {
 		/*
 		 * For locate_off we don't set a new state, just clear the
 		 * IDENT bit and the bits that are reserved or have different
@@ -339,61 +341,61 @@ static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el
 	}
 
 	switch (ibpi_to_ses(ibpi)) {
-	case SES_REQ_ABORT:
+	case LED_SES_REQ_ABORT:
 		_set_abrt(msg.b);
 		break;
-	case SES_REQ_REBUILD:
+	case LED_SES_REQ_REBUILD:
 		_set_rebuild(msg.b);
 		break;
-	case SES_REQ_IFA:
+	case LED_SES_REQ_IFA:
 		_set_ifa(msg.b);
 		break;
-	case SES_REQ_ICA:
+	case LED_SES_REQ_ICA:
 		_set_ica(msg.b);
 		break;
-	case SES_REQ_CONS_CHECK:
+	case LED_SES_REQ_CONS_CHECK:
 		_set_cons_check(msg.b);
 		break;
-	case SES_REQ_HOSTSPARE:
+	case LED_SES_REQ_HOSTSPARE:
 		_set_hspare(msg.b);
 		break;
-	case SES_REQ_RSVD_DEV:
+	case LED_SES_REQ_RSVD_DEV:
 		_set_rsvd_dev(msg.b);
 		break;
-	case SES_REQ_OK:
+	case LED_SES_REQ_OK:
 		_set_ok(msg.b);
 		break;
-	case SES_REQ_IDENT:
+	case LED_SES_REQ_IDENT:
 		_set_ident(msg.b);
 		break;
-	case SES_REQ_RM:
+	case LED_SES_REQ_RM:
 		_set_rm(msg.b);
 		break;
-	case SES_REQ_INS:
+	case LED_SES_REQ_INS:
 		_set_ins(msg.b);
 		break;
-	case SES_REQ_MISSING:
+	case LED_SES_REQ_MISSING:
 		_set_miss(msg.b);
 		break;
-	case SES_REQ_DNR:
+	case LED_SES_REQ_DNR:
 		_set_dnr(msg.b);
 		break;
-	case SES_REQ_ACTIVE:
+	case LED_SES_REQ_ACTIVE:
 		_set_actv(msg.b);
 		break;
-	case SES_REQ_EN_BB:
+	case LED_SES_REQ_EN_BB:
 		_set_enbb(msg.b);
 		break;
-	case SES_REQ_EN_BA:
+	case LED_SES_REQ_EN_BA:
 		_set_enba(msg.b);
 		break;
-	case SES_REQ_DEV_OFF:
+	case LED_SES_REQ_DEV_OFF:
 		_set_off(msg.b);
 		break;
-	case SES_REQ_FAULT:
+	case LED_SES_REQ_FAULT:
 		_set_fault(msg.b);
 		break;
-	case SES_REQ_PRDFAIL:
+	case LED_SES_REQ_PRDFAIL:
 		_set_prdfail(msg.b);
 		break;
 	default:
@@ -405,7 +407,7 @@ static int ses_set_message(enum ibpi_pattern ibpi, struct ses_slot_ctrl_elem *el
 	return 0;
 }
 
-int ses_write_msg(enum ibpi_pattern ibpi, struct ses_pages *sp, int idx)
+int ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx)
 {
 	/* Move do descriptors */
 	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2.buf + 8);
@@ -464,20 +466,20 @@ int ses_send_diag(int fd, struct ses_pages *sp)
 			       sp->page2.len, 0, debug);
 }
 
-static void get_led_status(struct ses_pages *sp, int idx, enum ibpi_pattern *led_status)
+static void get_led_status(struct ses_pages *sp, int idx, enum led_ibpi_pattern *led_status)
 {
 	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2.buf + 8);
 	struct ses_slot_ctrl_elem *desc_element = NULL;
 	descriptors++;
 	desc_element = &descriptors[idx];
 
-	*led_status = IBPI_PATTERN_NORMAL;
+	*led_status = LED_IBPI_PATTERN_NORMAL;
 
 	if (desc_element->b2 & 0x02) {
-		*led_status = IBPI_PATTERN_LOCATE;
+		*led_status = LED_IBPI_PATTERN_LOCATE;
 	}
 	if (desc_element->b3 & 0x60) {
-		*led_status = IBPI_PATTERN_FAILED_DRIVE;
+		*led_status = LED_IBPI_PATTERN_FAILED_DRIVE;
 	}
 }
 

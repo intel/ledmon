@@ -25,8 +25,10 @@
 
 #include "block.h"
 #include "cntrl.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "utils.h"
+
+#include "libled_private.h"
 
 /* Forward decl. */
 struct slot_property;
@@ -40,17 +42,17 @@ struct slot_property_common {
 	/**
 	 * Controller type which is being represented by slot.
 	 */
-	enum cntrl_type cntrl_type;
+	enum led_cntrl_type cntrl_type;
 
 	/**
 	 * Pointer to the set slot function.
 	 */
-	status_t (*set_slot_fn)(struct slot_property *slot, enum ibpi_pattern state);
+	status_t (*set_slot_fn)(struct slot_property *slot, enum led_ibpi_pattern state);
 
 	/**
 	 * Pointer to the get led state function.
 	 */
-	enum ibpi_pattern (*get_state_fn)(struct slot_property *slot);
+	enum led_ibpi_pattern (*get_state_fn)(struct slot_property *slot);
 };
 
 /**
@@ -91,33 +93,28 @@ struct slot_property {
 };
 
 /**
- * @brief Print address, slot identifier and led state.
- *
- * @param[in]        res        Structure with slot.
- *
- * @return This function does not return a value.
- */
-void print_slot_state(struct slot_property *res);
-
-/**
  * @brief Find slot device by path to slot.
  *
+ * @param[in]        ctx              The library context.
  * @param[in]        slot_path        Path to slot.
  * @param[in]        cntrl_type       Type of controller.
  *
  * @return This function returns related slot property.
  */
-struct slot_property *find_slot_by_slot_path(char *slot_path, enum cntrl_type cntrl_type);
+struct slot_property *find_slot_by_slot_path(struct led_ctx *ctx, char *slot_path,
+					     enum led_cntrl_type cntrl_type);
 
 /**
  * @brief Find slot device by device name.
  *
+ * @param[in]        ctx              The library context.
  * @param[in]        device_name       Device name.
  * @param[in]        cntrl_type       Type of controller.
  *
  * @return This function returns related slot property.
  */
-struct slot_property *find_slot_by_device_name(char *device_name, enum cntrl_type cntrl_type);
+struct slot_property *find_slot_by_device_name(struct led_ctx *ctx, char *device_name,
+					       enum led_cntrl_type cntrl_type);
 
 /**
  * @brief Set the slot pattern for the given slot
@@ -126,7 +123,7 @@ struct slot_property *find_slot_by_device_name(char *device_name, enum cntrl_typ
  * @param[in]      state      The desired ibpi pattern for the slot
  * @return status_t
  */
-status_t set_slot_pattern(struct slot_property *slot, enum ibpi_pattern state);
+status_t set_slot_pattern(struct slot_property *slot, enum led_ibpi_pattern state);
 
 /**
  * @brief Get the slot pattern
@@ -134,6 +131,6 @@ status_t set_slot_pattern(struct slot_property *slot, enum ibpi_pattern state);
  * @param[in]      slot        The slot to retrieve the ibpi pattern
  * @return enum ibpi_pattern
  */
-enum ibpi_pattern get_slot_pattern(struct slot_property *slot);
+enum led_ibpi_pattern get_slot_pattern(struct slot_property *slot);
 
 #endif // SLOT_H_INCLUDED_

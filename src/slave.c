@@ -30,7 +30,6 @@
 #endif
 
 #include "config.h"
-#include "ibpi.h"
 #include "list.h"
 #include "slave.h"
 #include "status.h"

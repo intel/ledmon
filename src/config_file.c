@@ -34,7 +34,6 @@
  * This is a pointer to structure that contains settings of ledmon behavior
  * read from configuration file.
  */
-struct ledmon_conf conf;
 
 const char *log_level_map[] = {
 	[LOG_LEVEL_QUIET]   = "QUIET",
@@ -44,6 +43,16 @@ const char *log_level_map[] = {
 	[LOG_LEVEL_DEBUG]   = "DEBUG",
 	[LOG_LEVEL_ALL]     = "ALL"
 };
+
+int ledmon_init_conf(struct ledmon_conf *conf, enum log_level_enum lvl, const char *log_path)
+{
+	memset(conf, 0, sizeof(struct ledmon_conf));
+	conf->log_level = lvl;
+	list_init(&conf->cntrls_allowlist, free);
+	list_init(&conf->cntrls_excludelist, free);
+
+	return set_log_path(conf, log_path);
+}
 
 static int parse_bool(char *s)
 {
@@ -62,8 +71,9 @@ static int parse_bool(char *s)
 	return -1;
 }
 
-static void parse_list(struct list *list, char *s)
+static bool parse_list(struct list *list, char *s)
 {
+	char *copy = NULL;
 	list_erase(list);
 
 	while (s && *s) {
@@ -73,13 +83,21 @@ static void parse_list(struct list *list, char *s)
 		if (sep)
 			*sep = '\0';
 
-		list_append(list, str_dup(s));
+		copy = strdup(s);
+		if (copy) {
+			if (!list_append(list, copy)) {
+				fprintf(stderr, "%s: memory allocation error!", __func__);
+				return false;
+			}
+		} else
+			return false;
 
 		if (sep)
 			s = sep + 1;
 		else
 			break;
 	}
+	return true;
 }
 
 static bool _parse_and_add_to_list(char *s, const char *key, size_t key_len, struct list *list)
@@ -106,20 +124,21 @@ int _map_log_level(char *conf_log_level)
 	return 0;
 }
 
-void _set_log_level(char *s)
+void _set_log_level(struct ledmon_conf *conf, char *s)
 {
 	int log_level;
 
 	log_level = _map_log_level(s);
 	if (log_level)
-		conf.log_level = log_level;
+		conf->log_level = log_level;
 	else if (sscanf(s, "%d", &log_level) == 1 &&
 			log_level >= LOG_LEVEL_QUIET &&
 			log_level <= LOG_LEVEL_ALL)
-		conf.log_level = log_level;
+		conf->log_level = log_level;
 	else
-		log_warning("Log level given in config file (%s) is incorrect! Using default log level: %s",
-			s, log_level_map[conf.log_level]);
+		_log(conf, LOG_LEVEL_WARNING,
+		    "Log level given in config file (%s) is incorrect! Using default log level: %s",
+		    s, log_level_map[conf->log_level]);
 }
 
 #define KEYLEN(key)   (sizeof((key))- 1)	/* Subtract 1 for string terminator */
@@ -134,7 +153,7 @@ void _set_log_level(char *s)
 #define BLACKLIST "BLACKLIST="
 #define BLACKLIST_LEN KEYLEN(BLACKLIST)
 
-static int parse_next(FILE *fd)
+static int parse_next(FILE *fd, struct ledmon_conf *conf)
 {
 	char buf[BUFSIZ];
 	char *s;
@@ -168,46 +187,47 @@ static int parse_next(FILE *fd)
 	if (!strncmp(s, "INTERVAL=", 9)) {
 		s += 9;
 		if (*s) {
-			if (str_toi(&conf.scan_interval, s, NULL, 10) != 0 ||
-				conf.scan_interval < LEDMON_MIN_SLEEP_INTERVAL)
-				conf.scan_interval = LEDMON_MIN_SLEEP_INTERVAL;
+			if (str_toi(&conf->scan_interval, s, NULL, 10) != 0 ||
+				conf->scan_interval < LEDMON_MIN_SLEEP_INTERVAL)
+				conf->scan_interval = LEDMON_MIN_SLEEP_INTERVAL;
 		}
 	} else if (!strncmp(s, "LOG_LEVEL=", 10)) {
 		s += 10;
-		_set_log_level(s);
+		_set_log_level(conf, s);
 	} else if (!strncmp(s, "LOG_PATH=", 9)) {
 		s += 9;
 		if (*s)
-			set_log_path(s);
+			set_log_path(conf, s);
 	} else if (!strncmp(s, "BLINK_ON_MIGR=", 14)) {
 		s += 14;
-		conf.blink_on_migration = parse_bool(s);
-		if (conf.blink_on_migration < 0)
+		conf->blink_on_migration = parse_bool(s);
+		if (conf->blink_on_migration < 0)
 			return -1;
 	} else if (!strncmp(s, "BLINK_ON_INIT=", 14)) {
 		s += 14;
-		conf.blink_on_init = parse_bool(s);
-		if (conf.blink_on_init < 0)
+		conf->blink_on_init = parse_bool(s);
+		if (conf->blink_on_init < 0)
 			return -1;
 	} else if (!strncmp(s, "REBUILD_BLINK_ON_ALL=", 21)) {
 		s += 21;
-		conf.rebuild_blink_on_all = parse_bool(s);
-		if (conf.rebuild_blink_on_all < 0)
+		conf->rebuild_blink_on_all = parse_bool(s);
+		if (conf->blink_on_migration < 0)
 			return -1;
 	} else if (!strncmp(s, "RAID_MEMBERS_ONLY=", 18)) {
 		s += 18;
-		conf.raid_members_only = parse_bool(s);
-		if (conf.raid_members_only < 0)
+		conf->raid_members_only = parse_bool(s);
+		if (conf->raid_members_only < 0)
 			return -1;
-	} else if (_parse_and_add_to_list(s, WHITELIST, WHILELIST_LEN, &conf.cntrls_allowlist)) {
+	} else if (_parse_and_add_to_list(s, WHITELIST, WHILELIST_LEN, &conf->cntrls_allowlist)) {
 		/* Deprecated, provided for backwards compatibilty */
 		return 0;
-	} else if (_parse_and_add_to_list(s, BLACKLIST, BLACKLIST_LEN, &conf.cntrls_excludelist)) {
+	} else if (_parse_and_add_to_list(s, BLACKLIST, BLACKLIST_LEN, &conf->cntrls_excludelist)) {
 		/* Deprecated, provided for backwards compatibilty */
 		return 0;
-	} else if (_parse_and_add_to_list(s, ALLOWLIST, ALLOWLIST_LEN, &conf.cntrls_allowlist)) {
+	} else if (_parse_and_add_to_list(s, ALLOWLIST, ALLOWLIST_LEN, &conf->cntrls_allowlist)) {
 		return 0;
-	} else if (_parse_and_add_to_list(s, EXCLUDELIST,  EXCLUDELIST_LEN, &conf.cntrls_excludelist)) {
+	} else if (_parse_and_add_to_list(s, EXCLUDELIST,  EXCLUDELIST_LEN,
+					  &conf->cntrls_excludelist)) {
 		return 0;
 	} else {
 		fprintf(stderr, "config file: unknown option '%s'.\n", s);
@@ -216,17 +236,17 @@ static int parse_next(FILE *fd)
 	return 0;
 }
 
-void ledmon_free_config(void)
+void ledmon_free_conf(struct ledmon_conf *conf)
 {
-	list_erase(&conf.cntrls_excludelist);
-	list_erase(&conf.cntrls_allowlist);
+	list_erase(&conf->cntrls_excludelist);
+	list_erase(&conf->cntrls_allowlist);
 
-	if (conf.log_path)
-		free(conf.log_path);
+	if (conf->log_path)
+		free(conf->log_path);
 }
 
 /* return real config data or built-in default */
-int ledmon_read_config(const char *filename)
+int ledmon_read_conf(const char *filename, struct ledmon_conf *conf)
 {
 	FILE *f;
 
@@ -243,9 +263,9 @@ int ledmon_read_config(const char *filename)
 			filename);
 	} else {
 		while (!feof(f)) {
-			if (parse_next(f)) {
+			if (parse_next(f, conf)) {
 				fprintf(stderr, "%s: parse error\n", filename);
-				ledmon_free_config();
+				ledmon_free_conf(conf);
 				fclose(f);
 				return STATUS_CONFIG_FILE_ERROR;
 			}
@@ -253,9 +273,10 @@ int ledmon_read_config(const char *filename)
 		fclose(f);
 	}
 
-	if (!list_is_empty(&conf.cntrls_allowlist) &&
-		!list_is_empty(&conf.cntrls_excludelist))
-		fprintf(stderr, "Both allowlist and excludelist are specified - ignoring excludelist.");
+	if (!list_is_empty(&conf->cntrls_allowlist) &&
+	    !list_is_empty(&conf->cntrls_excludelist))
+		fprintf(stderr,
+			"Both allowlist and excludelist are specified - ignoring excludelist.");
 
 	return STATUS_SUCCESS;
 }
@@ -271,10 +292,10 @@ static char *conf_list_to_str(struct list *list)
 		snprintf(buf + curr, sizeof(buf) - curr, "%s,", elem);
 	}
 
-	return str_dup(buf);
+	return strdup(buf);
 }
 
-int ledmon_write_shared_conf(void)
+int ledmon_write_shared_conf(struct ledmon_conf *conf)
 {
 	char buf[BUFSIZ];
 	char *allowlist = NULL;
@@ -297,26 +318,26 @@ int ledmon_write_shared_conf(void)
 	}
 
 	snprintf(buf, sizeof(buf),
-		 "BLINK_ON_INIT=%d\n", conf.blink_on_init);
+		 "BLINK_ON_INIT=%d\n", conf->blink_on_init);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "BLINK_ON_MIGR=%d\n", conf.blink_on_migration);
+		 "BLINK_ON_MIGR=%d\n", conf->blink_on_migration);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "LOG_LEVEL=%u\n", conf.log_level);
+		 "LOG_LEVEL=%u\n", conf->log_level);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "LOG_PATH=%s\n", conf.log_path);
+		 "LOG_PATH=%s\n", conf->log_path);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "RAID_MEMBERS_ONLY=%d\n", conf.raid_members_only);
+		 "RAID_MEMBERS_ONLY=%d\n", conf->raid_members_only);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "REBUILD_BLINK_ON_ALL=%d\n", conf.rebuild_blink_on_all);
+		 "REBUILD_BLINK_ON_ALL=%d\n", conf->rebuild_blink_on_all);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		 "INTERVAL=%d\n", conf.scan_interval);
-	allowlist = conf_list_to_str(&conf.cntrls_allowlist);
+		 "INTERVAL=%d\n", conf->scan_interval);
+	allowlist = conf_list_to_str(&conf->cntrls_allowlist);
 	if (allowlist) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 			 "%s%s\n", ALLOWLIST, allowlist);
 		free(allowlist);
 	}
-	excludelist = conf_list_to_str(&conf.cntrls_excludelist);
+	excludelist = conf_list_to_str(&conf->cntrls_excludelist);
 	if (excludelist) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 			 "%s%s\n", EXCLUDELIST, excludelist);

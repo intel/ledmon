@@ -45,8 +45,9 @@
 #include "cntrl.h"
 #include "config.h"
 #include "config_file.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "list.h"
+#include "libled_internal.h"
 #include "pidfile.h"
 #include "raid.h"
 #include "scsi.h"
@@ -56,6 +57,11 @@
 #include "udev.h"
 #include "utils.h"
 #include "vmdssd.h"
+
+
+static struct led_ctx *ctx;
+
+struct ledmon_conf conf;
 
 /**
  * @brief List of active block devices.
@@ -97,20 +103,20 @@ static int foreground;
  * This is internal array with names of IBPI patterns. Logging routines use this
  * entries to translate enumeration type into the string.
  */
-const char *ibpi_str[] = {
-	[IBPI_PATTERN_UNKNOWN]        = "None",
-	[IBPI_PATTERN_NORMAL]         = "Off",
-	[IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
-	[IBPI_PATTERN_DEGRADED]       = "In a Critical Array",
-	[IBPI_PATTERN_REBUILD]        = "Rebuild",
-	[IBPI_PATTERN_FAILED_ARRAY]   = "In a Failed Array",
-	[IBPI_PATTERN_HOTSPARE]       = "Hotspare",
-	[IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",
-	[IBPI_PATTERN_FAILED_DRIVE]   = "Failure",
-	[IBPI_PATTERN_LOCATE]         = "Locate",
-	[IBPI_PATTERN_LOCATE_OFF]     = "Locate Off",
-	[IBPI_PATTERN_ADDED]          = "Added",
-	[IBPI_PATTERN_REMOVED]        = "Removed"
+const char *ibpi_str_ledmon[] = {
+	[LED_IBPI_PATTERN_UNKNOWN]        = "None",
+	[LED_IBPI_PATTERN_NORMAL]         = "Off",
+	[LED_IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
+	[LED_IBPI_PATTERN_DEGRADED]       = "In a Critical Array",
+	[LED_IBPI_PATTERN_REBUILD]        = "Rebuild",
+	[LED_IBPI_PATTERN_FAILED_ARRAY]   = "In a Failed Array",
+	[LED_IBPI_PATTERN_HOTSPARE]       = "Hotspare",
+	[LED_IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",
+	[LED_IBPI_PATTERN_FAILED_DRIVE]   = "Failure",
+	[LED_IBPI_PATTERN_LOCATE]         = "Locate",
+	[LED_IBPI_PATTERN_LOCATE_OFF]     = "Locate Off",
+	[LED_IBPI_PATTERN_ADDED]          = "Added",
+	[LED_IBPI_PATTERN_REMOVED]        = "Removed"
 };
 
 /**
@@ -118,7 +124,7 @@ const char *ibpi_str[] = {
  * information about the version of monitor service.
  */
 static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %s %s\n"
-			      "Copyright (C) 2009-2022 Intel Corporation.\n";
+			      "Copyright (C) 2009-2023 Intel Corporation.\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line
@@ -161,21 +167,22 @@ static int possible_params_size = ARRAY_SIZE(possible_params);
  */
 static void _ledmon_fini(int __attribute__ ((unused)) status, void *program_name)
 {
-	sysfs_reset();
+	led_free(ctx);
 	list_erase(&ledmon_block_list);
-	log_close();
+	log_close(&conf);
 	pidfile_remove(program_name);
 }
 
 typedef enum {
-	LEDMON_STATUS_SUCCESS=0,
-	LEDMON_STATUS_FILE_OPEN_ERROR=12,
-	LEDMON_STATUS_LEDMON_RUNNING=30,
-	LEDMON_STATUS_ONEXIT_ERROR=31,
-	LEDMON_STATUS_CMDLINE_ERROR=35,
-	LEDMON_STATUS_NOT_A_PRIVILEGED_USER=36,
-	LEDMON_STATUS_CONFIG_FILE_ERROR=39,
-	LEDMON_STATUS_LOG_FILE_ERROR=40,
+	LEDMON_STATUS_SUCCESS = 0,
+	LEDMON_STATUS_OUT_OF_MEMORY = 3,
+	LEDMON_STATUS_FILE_OPEN_ERROR = 12,
+	LEDMON_STATUS_LEDMON_RUNNING = 30,
+	LEDMON_STATUS_ONEXIT_ERROR = 31,
+	LEDMON_STATUS_CMDLINE_ERROR = 35,
+	LEDMON_STATUS_NOT_A_PRIVILEGED_USER = 36,
+	LEDMON_STATUS_CONFIG_FILE_ERROR = 39,
+	LEDMON_STATUS_LOG_FILE_ERROR = 40,
 	LEDMON_STATUS_UNDEFINED
 } ledmon_status_code_t;
 
@@ -232,8 +239,8 @@ static void _ledmon_status(int status, void *arg)
 	snprintf(message, sizeof(message), "exit status is %s.",
 		 ledmon_strstatus(status));
 
-	if (get_log_fd() >= 0)
-		_log(log_level, message);
+	if (get_log_fd(&conf) >= 0)
+		_log(&conf, log_level, "%s", message);
 	else
 		syslog(log_level_infos[log_level].priority, "%s", message);
 }
@@ -307,7 +314,9 @@ static ledmon_status_code_t _set_config_path(char **conf_path, const char *path)
 
 	if (*conf_path)
 		free(*conf_path);
-	*conf_path = str_dup(path);
+	*conf_path = strdup(path);
+	if (!conf_path)
+		return LEDMON_STATUS_OUT_OF_MEMORY;
 
 	return LEDMON_STATUS_SUCCESS;
 }
@@ -406,7 +415,7 @@ static ledmon_status_code_t _cmdline_parse(int argc, char *argv[])
 			case OPT_LOG_LEVEL:
 				log_level = get_option_id(optarg);
 				if (log_level != -1)
-					status = set_verbose_level(log_level);
+					status = set_verbose_level(&conf, log_level);
 				else
 					status = LEDMON_STATUS_CMDLINE_ERROR;
 				break;
@@ -414,12 +423,12 @@ static ledmon_status_code_t _cmdline_parse(int argc, char *argv[])
 				foreground = 1;
 				break;
 			default:
-				status = set_verbose_level(
+				status = set_verbose_level(&conf,
 						possible_params[opt_index]);
 			}
 			break;
 		case 'l':
-			status = set_log_path(optarg);
+			status = set_log_path(&conf, optarg);
 			break;
 		case 't':
 			status = _set_sleep_interval(optarg);
@@ -524,7 +533,7 @@ static void _ledmon_wait(int seconds)
 
 		res = pselect(max_fd, &rdfds, NULL, &exfds, &timeout, &sigset);
 		if (terminate || !FD_ISSET(udev_fd, &rdfds) ||
-		    handle_udev_event(&ledmon_block_list) <= 0)
+		    handle_udev_event(&ledmon_block_list, ctx) <= 0)
 			break;
 	} while (res > 0);
 
@@ -562,7 +571,7 @@ static void _handle_fail_state(struct block_device *block,
 	if (!temp->raid_dev)
 		return;
 
-	temp_raid_device = find_raid_device(sysfs_get_volumes(),
+	temp_raid_device = find_raid_device(sysfs_get_volumes(ctx),
 					    temp->raid_dev->sysfs_path);
 
 	if (!block->raid_dev) {
@@ -574,7 +583,7 @@ static void _handle_fail_state(struct block_device *block,
 			 * blink fail LED. It is case when drive is removed
 			 * by mdadm -If.
 			 */
-			temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+			temp->ibpi = LED_IBPI_PATTERN_FAILED_DRIVE;
 			/*
 			 * Changing failed state to hotspare will be prevent by
 			 * code from _add_block function. If disk come back to
@@ -617,7 +626,7 @@ static void _handle_fail_state(struct block_device *block,
 				 * migration to raid. State of this disk is
 				 * hotspare now.
 				 */
-				temp->ibpi = IBPI_PATTERN_HOTSPARE;
+				temp->ibpi = LED_IBPI_PATTERN_HOTSPARE;
 			} else {
 				/*
 				 * Trasitions other than raid 0 migration.
@@ -631,7 +640,7 @@ static void _handle_fail_state(struct block_device *block,
 					 * blocks or calling mdadm
 					 * --set-faulty.
 					 */
-					temp->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+					temp->ibpi = LED_IBPI_PATTERN_FAILED_DRIVE;
 				}
 			}
 		} else if (temp->raid_dev->type == DEVICE_TYPE_CONTAINER &&
@@ -664,6 +673,7 @@ static void _handle_fail_state(struct block_device *block,
 static void _add_block(struct block_device *block)
 {
 	struct block_device *temp = NULL;
+	char buf[128];
 
 	list_for_each(&ledmon_block_list, temp) {
 		if (block_compare(temp, block))
@@ -671,52 +681,60 @@ static void _add_block(struct block_device *block)
 		temp = NULL;
 	}
 	if (temp) {
-		enum ibpi_pattern ibpi = temp->ibpi;
+		enum led_ibpi_pattern ibpi = temp->ibpi;
 		temp->timestamp = block->timestamp;
-		if (temp->ibpi == IBPI_PATTERN_ADDED) {
-			temp->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
-		} else if (temp->ibpi == IBPI_PATTERN_ONESHOT_NORMAL) {
-			temp->ibpi = IBPI_PATTERN_UNKNOWN;
-		} else if (temp->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
-			if (block->ibpi == IBPI_PATTERN_UNKNOWN) {
-				if ((temp->ibpi != IBPI_PATTERN_UNKNOWN) &&
-				    (temp->ibpi != IBPI_PATTERN_NORMAL)) {
+		if (temp->ibpi == LED_IBPI_PATTERN_ADDED) {
+			temp->ibpi = LED_IBPI_PATTERN_ONESHOT_NORMAL;
+		} else if (temp->ibpi == LED_IBPI_PATTERN_ONESHOT_NORMAL) {
+			temp->ibpi = LED_IBPI_PATTERN_UNKNOWN;
+		} else if (temp->ibpi != LED_IBPI_PATTERN_FAILED_DRIVE) {
+			if (block->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
+				if ((temp->ibpi != LED_IBPI_PATTERN_UNKNOWN) &&
+				    (temp->ibpi != LED_IBPI_PATTERN_NORMAL)) {
 					temp->ibpi =
-					    IBPI_PATTERN_ONESHOT_NORMAL;
+					    LED_IBPI_PATTERN_ONESHOT_NORMAL;
 				} else {
-					temp->ibpi = IBPI_PATTERN_UNKNOWN;
+					temp->ibpi = LED_IBPI_PATTERN_UNKNOWN;
 				}
 			} else {
 				temp->ibpi = block->ibpi;
 			}
-		} else if (!(temp->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
-			block->ibpi == IBPI_PATTERN_HOTSPARE) ||
-			(temp->ibpi == IBPI_PATTERN_FAILED_DRIVE &&
-			block->ibpi == IBPI_PATTERN_NONE)) {
+		} else if (!(temp->ibpi == LED_IBPI_PATTERN_FAILED_DRIVE &&
+			block->ibpi == LED_IBPI_PATTERN_HOTSPARE) ||
+			(temp->ibpi == LED_IBPI_PATTERN_FAILED_DRIVE &&
+			block->ibpi == LED_IBPI_PATTERN_NONE)) {
 			temp->ibpi = block->ibpi;
 		}
 
 		_handle_fail_state(block, temp);
 
-		if (ibpi != temp->ibpi && ibpi <= IBPI_PATTERN_REMOVED) {
+		if (ibpi != temp->ibpi && ibpi <= LED_IBPI_PATTERN_REMOVED) {
 			log_info("CHANGE %s: from '%s' to '%s'.",
-				 temp->sysfs_path, ibpi2str(ibpi),
-				 ibpi2str(temp->ibpi));
+				 temp->sysfs_path,
+				 ibpi2str_table(ibpi, ibpi_str_ledmon, buf, sizeof(buf)),
+				 ibpi2str_table(temp->ibpi, ibpi_str_ledmon, buf, sizeof(buf)));
 		}
 		/* Check if name of the device changed.*/
 		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
 			log_info("NAME CHANGED %s to %s",
 				 temp->sysfs_path, block->sysfs_path);
 			free(temp->sysfs_path);
-			temp->sysfs_path = str_dup(block->sysfs_path);
+			temp->sysfs_path = strdup(block->sysfs_path);
+			if (!temp->sysfs_path) {
+				log_error("Memory allocation error!");
+				exit(1);
+			}
 		}
 	} else {
 		/* Device not found, it's a new one! */
 		temp = block_device_duplicate(block);
 		if (temp != NULL) {
 			log_info("NEW %s: state '%s'.", temp->sysfs_path,
-				 ibpi2str(temp->ibpi));
-			list_append(&ledmon_block_list, temp);
+				 ibpi2str_table(temp->ibpi, ibpi_str_ledmon, buf, sizeof(buf)));
+			if (!list_append(&ledmon_block_list, temp)) {
+				log_error("Memory allocation error!");
+				exit(1);
+			}
 		}
 	}
 }
@@ -738,18 +756,21 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
+	char buf[128];
 	if (!block->cntrl) {
 		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
 		return;
 	}
 	if (block->timestamp != timestamp ||
-	    block->ibpi == IBPI_PATTERN_REMOVED) {
-		if (block->ibpi != IBPI_PATTERN_FAILED_DRIVE) {
+	    block->ibpi == LED_IBPI_PATTERN_REMOVED) {
+		if (block->ibpi != LED_IBPI_PATTERN_FAILED_DRIVE) {
 			log_info("CHANGE %s: from '%s' to '%s'.",
-				 block->sysfs_path, ibpi2str(block->ibpi),
-				 ibpi2str(IBPI_PATTERN_FAILED_DRIVE));
-			block->ibpi = IBPI_PATTERN_FAILED_DRIVE;
+				 block->sysfs_path,
+				 ibpi2str_table(block->ibpi, ibpi_str_ledmon, buf, sizeof(buf)),
+				 ibpi2str_table(LED_IBPI_PATTERN_FAILED_DRIVE, ibpi_str_ledmon,
+						buf, sizeof(buf)));
+			block->ibpi = LED_IBPI_PATTERN_FAILED_DRIVE;
 		} else {
 			char *host = strstr(block->sysfs_path, "host");
 			log_debug("DETACHED DEV '%s' in failed state",
@@ -770,7 +791,7 @@ static void _flush_msg(struct block_device *block)
 static void _revalidate_dev(struct block_device *block)
 {
 	/* Bring back controller and host to the device. */
-	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(),
+	block->cntrl = block_get_controller(sysfs_get_cntrl_devices(ctx),
 					    block->cntrl_path);
 	if (!block->cntrl) {
 		/* It could be removed VMD drive */
@@ -778,13 +799,13 @@ static void _revalidate_dev(struct block_device *block)
 			  block->sysfs_path, block->cntrl_path);
 		return;
 	}
-	if (block->cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+	if (block->cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI) {
 		block->host = block_get_host(block->cntrl, block->host_id);
 		if (block->host) {
 			if (dev_directly_attached(block->sysfs_path))
 				cntrl_init_smp(NULL, block->cntrl);
 			else
-				scsi_get_enclosure(block);
+				scsi_get_enclosure(ctx, block);
 		} else {
 			log_debug("Failed to get host for dev: %s, hostId: %d",
 				  block->sysfs_path, block->host_id);
@@ -831,7 +852,7 @@ static void _ledmon_execute(void)
 	list_for_each(&ledmon_block_list, device)
 		_revalidate_dev(device);
 	/* Scan all devices and compare them against saved list */
-	list_for_each(sysfs_get_block_devices(), device)
+	list_for_each(sysfs_get_block_devices(ctx), device)
 		_add_block(device);
 	/* Send message to all devices in the list if needed. */
 	list_for_each(&ledmon_block_list, device)
@@ -851,18 +872,43 @@ static void _ledmon_execute(void)
 
 static ledmon_status_code_t _init_ledmon_conf(void)
 {
-	memset(&conf, 0, sizeof(struct ledmon_conf));
-
 	/* initialize with default values */
+	ledmon_status_code_t rc = ledmon_init_conf(&conf, LOG_LEVEL_WARNING, LEDMON_DEF_LOG_FILE);
 	conf.blink_on_init = 1;
 	conf.blink_on_migration = 1;
 	conf.rebuild_blink_on_all = 0;
 	conf.raid_members_only = 0;
-	conf.log_level = LOG_LEVEL_WARNING;
 	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
-	list_init(&conf.cntrls_allowlist, NULL);
-	list_init(&conf.cntrls_excludelist, NULL);
-	return set_log_path(LEDMON_DEF_LOG_FILE);
+	return rc;
+}
+
+/**
+ * @brief Take the configuration from the ledmon_conf structure and apply it to the led library.
+ *
+ * @return int LEDMON_STATUS_SUCCESS if executes without error, else error reason.
+ */
+static int load_library_prefs(void)
+{
+	char *path = NULL;
+	led_status_t lib_status;
+
+	led_log_fd_set(ctx, get_log_fd(&conf));
+	led_log_level_set(ctx, conf.log_level);
+	device_blink_behavior_set(ctx, conf.blink_on_migration, conf.blink_on_init,
+					conf.rebuild_blink_on_all, conf.raid_members_only);
+
+	list_for_each(&conf.cntrls_allowlist, path) {
+		lib_status = device_allow_pattern_add(ctx, path);
+		if (lib_status != LED_STATUS_SUCCESS)
+			return lib_status;
+	}
+
+	list_for_each(&conf.cntrls_excludelist, path) {
+		lib_status = device_exclude_pattern_add(ctx, path);
+		if (lib_status != LED_STATUS_SUCCESS)
+			return lib_status;
+	}
+	return LEDMON_STATUS_SUCCESS;
 }
 
 static void _close_parent_fds(void)
@@ -878,7 +924,7 @@ static void _close_parent_fds(void)
 			if (str_toi(&fd, basename(elem), NULL, 10) != 0)
 				continue;
 
-			if (fd != get_log_fd())
+			if (fd != get_log_fd(&conf))
 				close(fd);
 		}
 		list_erase(&dir);
@@ -889,12 +935,20 @@ static void _close_parent_fds(void)
  */
 int main(int argc, char *argv[])
 {
+	led_status_t lib_rc;
 	ledmon_status_code_t status = LEDMON_STATUS_SUCCESS;
 	static int ignore;
 
 	setup_options(&longopt, &shortopt, possible_params,
 			possible_params_size);
 	set_invocation_name(argv[0]);
+
+	lib_rc = led_new(&ctx);
+	if (lib_rc != LED_STATUS_SUCCESS) {
+		fprintf(stderr, "Unable to initialize lib LED %d\n", lib_rc);
+		return lib_rc;
+	}
+
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
 	if (on_exit(_ledmon_status, &ignore))
@@ -912,16 +966,20 @@ int main(int argc, char *argv[])
 	if (status != LEDMON_STATUS_SUCCESS)
 		return status;
 
-	status = ledmon_read_config(ledmon_conf_path);
+	status = ledmon_read_conf(ledmon_conf_path, &conf);
+	if (status != LEDMON_STATUS_SUCCESS)
+		return status;
+
+	status = load_library_prefs();
 	if (status != LEDMON_STATUS_SUCCESS)
 		return status;
 
 	if (_cmdline_parse(argc, argv) != LEDMON_STATUS_SUCCESS)
 		return LEDMON_STATUS_CMDLINE_ERROR;
 
-	ledmon_write_shared_conf();
+	ledmon_write_shared_conf(&conf);
 
-	if (log_open(conf.log_path) != LEDMON_STATUS_SUCCESS)
+	if (log_open(&conf) != LEDMON_STATUS_SUCCESS)
 		return LEDMON_STATUS_LOG_FILE_ERROR;
 
 	free(shortopt);
@@ -971,21 +1029,23 @@ int main(int argc, char *argv[])
 	if (on_exit(_ledmon_fini, progname))
 		exit(LEDMON_STATUS_ONEXIT_ERROR);
 	list_init(&ledmon_block_list, (item_free_t)block_device_fini);
-	sysfs_init();
 	log_info("monitor service has been started...");
 	while (terminate == 0) {
 		struct block_device *device;
 
 		timestamp = time(NULL);
-		sysfs_scan();
+		if (led_scan(ctx) != LED_STATUS_SUCCESS) {
+			log_error("Error on led_scan\n");
+			exit(1);
+		}
 		_ledmon_execute();
 		_ledmon_wait(conf.scan_interval);
 		/* Invalidate each device in the list. Clear controller and host. */
 		list_for_each(&ledmon_block_list, device)
 			_invalidate_dev(device);
-		sysfs_reset();
 	}
 	ledmon_remove_shared_conf();
 	stop_udev_monitor();
+	led_free(ctx);
 	exit(EXIT_SUCCESS);
 }

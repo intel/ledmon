@@ -19,8 +19,10 @@
  */
 
 #include <assert.h>
+#include <stdbool.h>
 
 #include "list.h"
+#include "libled_private.h"
 #include "utils.h"
 
 void __list_erase(struct list *list, item_free_t free_fn)
@@ -55,20 +57,15 @@ void __list_remove(struct node *node, item_free_t free_fn)
 		free_fn(node->item);
 }
 
-void list_insert(struct list *list, void *item, struct node *after)
+bool list_insert(struct list *list, void *item, struct node *after)
 {
 	struct node *new;
 	struct node **x;
 
-	if (!item) {
-		log_error("Failed to insert item into list. NULL cannot be inserted.");
-		exit(1);
-	}
-
+	assert(item != NULL);
 	new = malloc(sizeof(struct node));
 	if (!new) {
-		log_error("Failed to allocate memory for list node.");
-		exit(1);
+		return false;
 	}
 
 	new->list = list;
@@ -88,4 +85,12 @@ void list_insert(struct list *list, void *item, struct node *after)
 	new->next = *x;
 	*x = new;
 	new->prev = after;
+	return true;
+}
+
+
+void list_append_ctx(struct list *list, void *item, struct led_ctx *ctx)
+{
+	if (!list_insert(list, item, list->tail))
+		ctx->deferred_error = LED_STATUS_OUT_OF_MEMORY;
 }

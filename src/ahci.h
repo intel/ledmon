@@ -22,7 +22,7 @@
 #define _AHCI_H_INCLUDED_
 
 #include "block.h"
-#include "ibpi.h"
+#include "led/libled.h"
 
 /**
  * @brief Gets sysfs path to SATA port.
@@ -50,6 +50,6 @@ char *ahci_get_port_path(const char *path);
  * @return Number of bytes send to controller, -1 means error occurred and
  *         errno has additional error information.
  */
-int ahci_sgpio_write(struct block_device *path, enum ibpi_pattern ibpi);
+int ahci_sgpio_write(struct block_device *path, enum led_ibpi_pattern ibpi);
 
 #endif				/* _AHCI_H_INCLUDED_ */

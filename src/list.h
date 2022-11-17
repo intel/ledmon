@@ -22,6 +22,9 @@
 #define _LIST_H_INCLUDED_
 
 #include <stdlib.h>
+#include <stdbool.h>
+
+struct led_ctx;
 
 struct node {
 	struct node *next, *prev;
@@ -145,20 +148,29 @@ static inline void list_delete(struct node *node)
  * @param[in]      after          list node after which to insert the element.
  *                                If NULL, then insert at the head of the list.
  */
-void list_insert(struct list *list, void *item, struct node *after);
+bool list_insert(struct list *list, void *item, struct node *after);
 
 /**
  * @brief Appends an element to the end of the list.
  *
- * This function puts an element on tail of a list.
+ * @param[in]      list           pointer to list object.
+ * @param[in]      item           data item to be inserted into the list.
+ * @return true on success
+ * @return false on memory allocation failure
+ */
+inline bool list_append(struct list *list, void *item)
+{
+	return list_insert(list, item, list->tail);
+}
+
+/**
+ * @brief Appends an element to the end of the list.
  *
  * @param[in]      list           pointer to list object.
  * @param[in]      item           data item to be inserted into the list.
+ * @param[in]      ctx            library context (sets ctx deferred error)
  */
-static inline void list_append(struct list *list, void *item)
-{
-	list_insert(list, item, list->tail);
-}
+void list_append_ctx(struct list *list, void *item, struct led_ctx *ctx);
 
 /**
  * @brief Reruns next element.

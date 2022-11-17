@@ -38,18 +38,19 @@
 #endif
 
 #include "config.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "list.h"
 #include "utils.h"
 #include "amd.h"
 #include "amd_sgpio.h"
 #include "amd_ipmi.h"
+#include "libled_private.h"
 
 enum amd_led_interfaces amd_interface = AMD_INTF_UNSET;
 enum amd_ipmi_platforms amd_ipmi_platform = AMD_PLATFORM_UNSET;
 
 int _find_file_path(const char *start_path, const char *filename,
-		    char *path, size_t path_len)
+		    char *path, size_t path_len, struct led_ctx *ctx)
 {
 	int rc, found;
 	struct stat sbuf;
@@ -59,7 +60,7 @@ int _find_file_path(const char *start_path, const char *filename,
 
 	rc = scan_dir(start_path, &dir);
 	if (rc) {
-		log_info("Failed to scan %s", start_path);
+		lib_log(ctx, LED_LOG_LEVEL_INFO, "Failed to scan %s", start_path);
 		return 0;
 	}
 
@@ -87,7 +88,7 @@ int _find_file_path(const char *start_path, const char *filename,
 
 		if (S_ISDIR(sbuf.st_mode)) {
 			found = _find_file_path(dir_path, filename,
-						path, path_len);
+						path, path_len, ctx);
 			if (found)
 				break;
 		}
@@ -102,7 +103,7 @@ int _find_file_path(const char *start_path, const char *filename,
  * proper channel and slave address when making IPMI requests.
  * Platforms not checked for IPMI enablement default to using SGPIO.
  */
-int amd_em_enabled(const char *path)
+int amd_em_enabled(const char *path, struct led_ctx *ctx)
 {
 	char *platform;
 	int rc;
@@ -125,14 +126,14 @@ int amd_em_enabled(const char *path)
 
 	switch (amd_interface) {
 	case AMD_INTF_SGPIO:
-		rc = _amd_sgpio_em_enabled(path);
+		rc = _amd_sgpio_em_enabled(path, ctx);
 		break;
 	case AMD_INTF_IPMI:
-		rc = _amd_ipmi_em_enabled(path);
+		rc = _amd_ipmi_em_enabled(path, ctx);
 		break;
 	default:
-		log_error("Unknown interface for AMD %s platform\n",
-			  platform);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Unknown interface for AMD %s platform\n", platform);
 		rc = -EOPNOTSUPP;
 		break;
 	}
@@ -140,7 +141,7 @@ int amd_em_enabled(const char *path)
 	return rc;
 }
 
-int amd_write(struct block_device *device, enum ibpi_pattern ibpi)
+int amd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	int rc;
 
@@ -157,7 +158,8 @@ int amd_write(struct block_device *device, enum ibpi_pattern ibpi)
 		break;
 	case AMD_INTF_UNSET:
 	default:
-		log_error("Unsupported AMD interface\n");
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_ERROR,
+			"Unsupported AMD interface %u\n", amd_interface);
 		rc = -EOPNOTSUPP;
 		break;
 	}
@@ -165,20 +167,20 @@ int amd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	return rc;
 }
 
-char *amd_get_path(const char *cntrl_path, const char *sysfs_path)
+char *amd_get_path(const char *cntrl_path, const char *sysfs_path, struct led_ctx *ctx)
 {
 	char *path;
 
 	switch (amd_interface) {
 	case AMD_INTF_SGPIO:
-		path = _amd_sgpio_get_path(sysfs_path);
+		path = _amd_sgpio_get_path(sysfs_path, ctx);
 		break;
 	case AMD_INTF_IPMI:
 		path = _amd_ipmi_get_path(cntrl_path, sysfs_path);
 		break;
 	case AMD_INTF_UNSET:
 	default:
-		log_error("Unsupported AMD interface\n");
+		lib_log(ctx, LED_LOG_LEVEL_ERROR, "Unsupported AMD interface\n");
 		path = NULL;
 		break;
 	}

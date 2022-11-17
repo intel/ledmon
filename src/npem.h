@@ -21,12 +21,13 @@
 #ifndef NPEM_H_INCLUDED_
 #define NPEM_H_INCLUDED_
 #include "block.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "slot.h"
 #include "status.h"
+#include "sysfs.h"
 
-int is_npem_capable(const char *path);
-int npem_write(struct block_device *device, enum ibpi_pattern ibpi);
+int is_npem_capable(const char *path, struct led_ctx *ctx);
+int npem_write(struct block_device *device, enum led_ibpi_pattern ibpi);
 char *npem_get_path(const char *cntrl_path);
 
 /**
@@ -34,12 +35,11 @@ char *npem_get_path(const char *cntrl_path);
  *
  * This function fills slot information related to the slot.
  *
- * @param[in]         slot                Requested slot.
- * @param[in]         slot_property       Pointer to the slot property element.
+ * @param[in]         slot       Pointer to the slot property element.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-enum ibpi_pattern npem_get_state(struct slot_property *slot);
+enum led_ibpi_pattern npem_get_state(struct slot_property *slot);
 
 /**
  * @brief Sets led state for slot.
@@ -51,7 +51,7 @@ enum ibpi_pattern npem_get_state(struct slot_property *slot);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t npem_set_state(struct slot_property *slot, enum ibpi_pattern state);
+status_t npem_set_state(struct slot_property *slot, enum led_ibpi_pattern state);
 
 /**
  * @brief Initializes a slot_property for a specified npem controller.

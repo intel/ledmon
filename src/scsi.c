@@ -87,7 +87,7 @@ static uint64_t get_drive_sas_addr(const char *path)
 	return ret;
 }
 
-int scsi_get_enclosure(struct block_device *device)
+int scsi_get_enclosure(struct led_ctx *ctx, struct block_device *device)
 {
 	struct enclosure_device *encl;
 	uint64_t addr;
@@ -99,7 +99,7 @@ int scsi_get_enclosure(struct block_device *device)
 	if (!addr)
 		return 0;
 
-	list_for_each(sysfs_get_enclosure_devices(), encl) {
+	list_for_each(sysfs_get_enclosure_devices(ctx), encl) {
 		int i;
 
 		for (i = 0; i < encl->slots_count; i++) {
@@ -116,7 +116,7 @@ int scsi_get_enclosure(struct block_device *device)
 
 /**
  */
-int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
+int scsi_ses_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	if (!device || !device->sysfs_path || !device->enclosure ||
 	    device->encl_index == -1)
@@ -126,19 +126,20 @@ int scsi_ses_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if (ibpi == device->ibpi_prev)
 		return 1;
 
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
+	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
 	return ses_write_msg(ibpi, &device->enclosure->ses_pages, device->encl_index);
 }
 
-int scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx, enum ibpi_pattern ibpi)
+int scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx,
+			     enum led_ibpi_pattern ibpi)
 {
 	if (!enclosure || idx == -1) {
 		__set_errno_and_return(EINVAL);
 	}
 
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > SES_REQ_FAULT))
+	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_SES_REQ_FAULT))
 		__set_errno_and_return(ERANGE);
 
 	return ses_write_msg(ibpi, &enclosure->ses_pages, idx);
@@ -192,14 +193,14 @@ char *scsi_get_host_path(const char *path, const char *ctrl_path)
 			 ctrl_path, host, host);
 		free(host);
 	}
-	return str_dup(host_path);
+	return strdup(host_path);
 }
 
 
-struct block_device *locate_block_by_sas_addr(uint64_t sas_address)
+struct block_device *locate_block_by_sas_addr(struct led_ctx *ctx, uint64_t sas_address)
 {
 	struct block_device *block_device;
-	list_for_each(sysfs_get_block_devices(), block_device) {
+	list_for_each(sysfs_get_block_devices(ctx), block_device) {
 		uint64_t tmp = get_drive_sas_addr(block_device->sysfs_path);
 		if (tmp != 0 && tmp == sas_address) {
 			return block_device;

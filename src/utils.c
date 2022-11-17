@@ -56,10 +56,6 @@
  */
 char *progname = NULL;
 
-/**
- */
-static FILE *s_log = NULL;
-
 struct log_level_info log_level_infos[] = {
 		[LOG_LEVEL_DEBUG] = {PREFIX_DEBUG, LOG_DEBUG},
 		[LOG_LEVEL_WARNING] = {PREFIX_WARNING, LOG_WARNING},
@@ -149,7 +145,12 @@ int scan_dir(const char *path, struct list *result)
 
 		snprintf(str, len, "%s/%s", path, dirent->d_name);
 
-		list_append(result, str);
+		if (!list_append(result, str)) {
+			free(str);
+			ret = -1;
+			list_erase(result);
+			break;
+		}
 	}
 	closedir(dir);
 
@@ -243,7 +244,7 @@ void get_id(const char *path, struct device_id *did)
 
 /**
  */
-static void _log_timestamp(void)
+static void _log_timestamp(int log_fd)
 {
 	time_t timestamp;
 	struct tm *t;
@@ -254,57 +255,62 @@ static void _log_timestamp(void)
 
 	if (t) {
 		strftime(buf, sizeof(buf), TIMESTAMP_PATTERN, t);
-		fprintf(s_log, "%s", buf);
+		dprintf(log_fd, "%s", buf);
 	}
 }
 
 /**
  */
-int log_open(const char *path)
+int log_open(struct ledmon_conf *conf)
 {
-	if (s_log)
-		log_close();
+	if (conf->s_log)
+		log_close(conf);
 
-	s_log = fopen(path, "a");
-	if (s_log == NULL)
+	conf->s_log = fopen(conf->log_path, "a");
+	if (conf->s_log == NULL)
 		return -1;
 	return 0;
 }
 
 /**
  */
-void log_close(void)
+void log_close(struct ledmon_conf *conf)
 {
-	if (s_log) {
-		fflush(s_log);
-		fclose(s_log);
-		s_log = NULL;
+	if (conf->s_log) {
+		fflush(conf->s_log);
+		fclose(conf->s_log);
+		conf->s_log = NULL;
+	}
+}
+
+
+void _common_log(int log_fd, enum log_level_enum config_level, enum log_level_enum loglevel,
+		const char *buf, va_list list)
+{
+	if (config_level >= loglevel && log_fd >= 0) {
+		char msg[4096];
+		struct log_level_info *lli = &log_level_infos[loglevel];
+
+		vsnprintf(msg, sizeof(msg), buf, list);
+		_log_timestamp(log_fd);
+		dprintf(log_fd, "%s", lli->prefix);
+		dprintf(log_fd, "%s\n", msg);
+		fsync(log_fd);
+		syslog(lli->priority, "%s", msg);
 	}
 }
 
 /**
  */
-void _log(enum log_level_enum loglevel, const char *buf,  ...)
+void _log(struct ledmon_conf *conf, enum log_level_enum loglevel, const char *buf,  ...)
 {
 	va_list vl;
-	struct log_level_info *lli = &log_level_infos[loglevel];
+	if (conf->s_log == NULL)
+		log_open(conf);
 
-	if (s_log == NULL)
-		log_open(conf.log_path);
-
-	if (conf.log_level >= loglevel) {
-		char msg[4096];
-		va_start(vl, buf);
-		vsnprintf(msg, sizeof(msg), buf, vl);
-		va_end(vl);
-		if (s_log) {
-			_log_timestamp();
-			fprintf(s_log, "%s", lli->prefix);
-			fprintf(s_log, "%s\n", msg);
-			fflush(s_log);
-		}
-		syslog(lli->priority, "%s", msg);
-	}
+	va_start(vl, buf);
+	_common_log(get_log_fd(conf), conf->log_level, loglevel, buf, vl);
+	va_end(vl);
 }
 
 /**
@@ -339,22 +345,6 @@ char *str_cpy(char *dest, const char *src, size_t size)
 	strncpy(dest, src, size - 1);
 	dest[size - 1] = '\0';
 	return dest;
-}
-
-/**
- */
-char *str_dup(const char *src)
-{
-	char *ret;
-
-	if (!src)
-		return NULL;
-	ret = strdup(src);
-	if (!ret) {
-		log_error("Cannot duplicate string");
-		exit(EXIT_FAILURE);
-	}
-	return ret;
 }
 
 static int _str_to_num(const char *strptr, char **endptr, int base, unsigned long *n, int is_signed)
@@ -424,7 +414,7 @@ _DECL_STR_TO_NUM(str_toui, unsigned, int, 0, UINT_MAX)
 
 char *get_path_hostN(const char *path)
 {
-	char *c = NULL, *s = NULL, *p = str_dup(path);
+	char *c = NULL, *s = NULL, *p = strdup(path);
 	if (!p)
 		return NULL;
 	c = strstr(p, "host");
@@ -434,43 +424,10 @@ char *get_path_hostN(const char *path)
 	if (!s)
 		goto end;
 	*s = 0;
-	s = str_dup(c);
+	s = strdup(c);
  end:
 	free(p);
 	return s;
-}
-
-char *get_path_component_rev(const char *path, int index)
-{
-	int i;
-	char *c = NULL, *p = str_dup(path);
-	char *result = NULL;
-	for (i = 0; i <= index; i++) {
-		if (c)
-			*c = '\0';
-		c = strrchr(p, '/');
-	}
-	if (c)
-		result = str_dup(c + 1);
-	free(p);
-	return result;
-}
-
-char *truncate_path_component_rev(const char *path, int index)
-{
-	int i;
-	char *c = NULL, *p = str_dup(path);
-	if (!p)
-		return NULL;
-
-	for (i = 0; i <= index; i++) {
-		if (c)
-			*c = '\0';
-		c = strrchr(p, '/');
-	}
-	c = str_dup(p);
-	free(p);
-	return c;
 }
 
 int match_string(const char *string, const char *pattern)
@@ -486,7 +443,7 @@ int match_string(const char *string, const char *pattern)
 
 	status = regcomp(&regex, pattern, REG_EXTENDED);
 	if (status != 0) {
-		log_debug("regecomp failed, ret=%d", status);
+		printf("regecomp failed, ret=%d", status);
 		return 0;
 	}
 
@@ -498,10 +455,10 @@ int match_string(const char *string, const char *pattern)
 	return 1;
 }
 
-int get_log_fd(void)
+int get_log_fd(struct ledmon_conf *conf)
 {
-	if (s_log)
-		return fileno(s_log);
+	if (conf->s_log)
+		return fileno(conf->s_log);
 	return -1;
 }
 
@@ -525,8 +482,9 @@ void print_opt(const char *long_opt, const char *short_opt, const char *desc)
  *         STATUS_INVALID_PATH    the given path is invalid.
  *         STATUS_FILE_OPEN_ERROR unable to open a log file i.e. because of
  *                                insufficient privileges.
+ *         STATUS_OUT_OF_MEMORY
  */
-status_t set_log_path(const char *path)
+status_t set_log_path(struct ledmon_conf *conf, const char *path)
 {
 	char temp[PATH_MAX];
 	char log_file[PATH_MAX];
@@ -535,7 +493,9 @@ status_t set_log_path(const char *path)
 	/*
 	 * Extract directory from path
 	 */
-	cpath = str_dup(path);
+	cpath = strdup(path);
+	if (!cpath)
+		return STATUS_OUT_OF_MEMORY;
 	logdir = dirname(cpath);
 
 	/*
@@ -543,22 +503,27 @@ status_t set_log_path(const char *path)
 	 */
 	resolved = realpath(logdir, temp);
 	if (resolved == NULL) {
-		printf("%s: %s\n", strerror(errno), logdir);
+		_log(conf, LOG_LEVEL_ERROR, "%s: %s\n", strerror(errno), logdir);
 		free(cpath);
 		return STATUS_INVALID_PATH;
 	}
 
 	free(cpath);
-	cpath = str_dup(path);
+	cpath = strdup(path);
+	if (!cpath)
+		return STATUS_OUT_OF_MEMORY;
+
 	logfile = basename(cpath);
 
 	snprintf(log_file, sizeof(log_file), "%s/%s",
 		 resolved, logfile);
 	free(cpath);
 
-	if (conf.log_path)
-		free(conf.log_path);
-	conf.log_path = str_dup(log_file);
+	if (conf->log_path)
+		free(conf->log_path);
+	conf->log_path = strdup(log_file);
+	if (!conf->log_path)
+		return STATUS_OUT_OF_MEMORY;
 
 	return STATUS_SUCCESS;
 }
@@ -660,7 +625,7 @@ int get_option_id(const char *optarg)
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t set_verbose_level(int log_level)
+status_t set_verbose_level(struct ledmon_conf *conf, int log_level)
 {
 	int new_verbose = -1;
 
@@ -685,28 +650,55 @@ status_t set_verbose_level(int log_level)
 		break;
 	}
 	if (new_verbose != -1) {
-		conf.log_level = new_verbose;
+		conf->log_level = new_verbose;
 		return STATUS_SUCCESS;
 	}
 	return STATUS_CMDLINE_ERROR;
 }
 
-const char *ibpi2str(enum ibpi_pattern ibpi)
+/**
+ * @brief IBPI pattern names.
+ *
+ * This is internal array holding names of IBPI pattern. Logging routines use
+ * this entries to translate enumeration type values into the string.
+ */
+const char *ibpi_str[led_ibpi_pattern_count] = {
+	[LED_IBPI_PATTERN_UNKNOWN]        = "UNKNOWN",
+	[LED_IBPI_PATTERN_NORMAL]         = "NORMAL",
+	[LED_IBPI_PATTERN_ONESHOT_NORMAL] = "ONESHOT_NORMAL",
+	[LED_IBPI_PATTERN_DEGRADED]       = "ICA",
+	[LED_IBPI_PATTERN_REBUILD]        = "REBUILD",
+	[LED_IBPI_PATTERN_FAILED_ARRAY]   = "IFA",
+	[LED_IBPI_PATTERN_HOTSPARE]       = "HOTSPARE",
+	[LED_IBPI_PATTERN_PFA]            = "PFA",
+	[LED_IBPI_PATTERN_FAILED_DRIVE]   = "FAILURE",
+	[LED_IBPI_PATTERN_LOCATE]         = "LOCATE",
+	[LED_IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF",
+	[LED_IBPI_PATTERN_ADDED]          = "ADDED",
+	[LED_IBPI_PATTERN_REMOVED]        = "REMOVED"
+};
+
+const char *ibpi2str_table(enum led_ibpi_pattern ibpi, const char *names[], char *buf,
+			   size_t buf_size)
 {
-	static char buf[20];
 	const char *ret;
 
-	if (ibpi >= 0 && ibpi < ibpi_pattern_count)
-		ret = ibpi_str[ibpi];
+	if (ibpi >= 0 && ibpi < led_ibpi_pattern_count)
+		ret = names[ibpi];
 	else
 		ret = NULL;
 
 	if (!ret) {
-		snprintf(buf, sizeof(buf), "(unknown: %u)", ibpi);
+		snprintf(buf, buf_size, "(unknown: %u)", ibpi);
 		ret = buf;
 	}
 
 	return ret;
+}
+
+const char *ibpi2str(enum led_ibpi_pattern ibpi, char *buf, size_t buf_size)
+{
+	return ibpi2str_table(ibpi, ibpi_str, buf, buf_size);
 }
 
 static const struct ibpi2value *get_ibpi2value(const unsigned int val,
@@ -726,7 +718,7 @@ static const struct ibpi2value *get_ibpi2value(const unsigned int val,
 		if (compar(val, tmp))
 			return tmp;
 		cnt++;
-	} while (tmp->ibpi != IBPI_PATTERN_UNKNOWN);
+	} while (tmp->ibpi != LED_IBPI_PATTERN_UNKNOWN);
 
 	return tmp;
 }
@@ -739,7 +731,7 @@ static bool compar_bits(const unsigned int val, const struct ibpi2value *ibpi2va
 }
 
 #define IBPI2VALUE_GET_FN(_name)							\
-const struct ibpi2value *get_by_##_name(const enum ibpi_pattern ibpi,			\
+const struct ibpi2value *get_by_##_name(const enum led_ibpi_pattern ibpi,			\
 					const struct ibpi2value *ibpi2val_arr,		\
 					int ibpi2value_arr_cnt)				\
 {											\

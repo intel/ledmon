@@ -34,11 +34,12 @@
 #include <dmalloc.h>
 #endif
 
+#include "libled_private.h"
 #include "ahci.h"
 #include "cntrl.h"
 #include "config.h"
 #include "dellssd.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "list.h"
 #include "raid.h"
 #include "scsi.h"
@@ -60,17 +61,17 @@
 #define BP_FAILEDARRAY   (1L << 10)
 
 static const struct ibpi2value ibpi2ssd[] = {
-	{IBPI_PATTERN_NORMAL, BP_ONLINE},
-	{IBPI_PATTERN_ONESHOT_NORMAL, BP_ONLINE},
-	{IBPI_PATTERN_DEGRADED, BP_CRITICALARRAY | BP_ONLINE},
-	{IBPI_PATTERN_HOTSPARE, BP_HOTSPARE | BP_ONLINE},
-	{IBPI_PATTERN_REBUILD, BP_REBUILDING | BP_ONLINE},
-	{IBPI_PATTERN_FAILED_ARRAY, BP_FAILEDARRAY | BP_ONLINE},
-	{IBPI_PATTERN_PFA, BP_PREDICT | BP_ONLINE},
-	{IBPI_PATTERN_FAILED_DRIVE, BP_FAULT | BP_ONLINE},
-	{IBPI_PATTERN_LOCATE, BP_IDENTIFY | BP_ONLINE},
-	{IBPI_PATTERN_LOCATE_OFF, BP_ONLINE},
-	{IBPI_PATTERN_UNKNOWN}
+	{LED_IBPI_PATTERN_NORMAL, BP_ONLINE},
+	{LED_IBPI_PATTERN_ONESHOT_NORMAL, BP_ONLINE},
+	{LED_IBPI_PATTERN_DEGRADED, BP_CRITICALARRAY | BP_ONLINE},
+	{LED_IBPI_PATTERN_HOTSPARE, BP_HOTSPARE | BP_ONLINE},
+	{LED_IBPI_PATTERN_REBUILD, BP_REBUILDING | BP_ONLINE},
+	{LED_IBPI_PATTERN_FAILED_ARRAY, BP_FAILEDARRAY | BP_ONLINE},
+	{LED_IBPI_PATTERN_PFA, BP_PREDICT | BP_ONLINE},
+	{LED_IBPI_PATTERN_FAILED_DRIVE, BP_FAULT | BP_ONLINE},
+	{LED_IBPI_PATTERN_LOCATE, BP_IDENTIFY | BP_ONLINE},
+	{LED_IBPI_PATTERN_LOCATE_OFF, BP_ONLINE},
+	{LED_IBPI_PATTERN_UNKNOWN}
 };
 
 #define DELL_OEM_NETFN                      0x30
@@ -99,15 +100,14 @@ enum {
 
 };
 
-int get_dell_server_type()
+int get_dell_server_type(struct led_ctx *ctx)
 {
-	static int gen;
 	uint8_t data[4], rdata[20];
 	int rc, rlen;
 
 	/* Don't requery if we already know have ID */
-	if (gen)
-		return gen;
+	if (ctx->dellssd_hw_gen)
+		return ctx->dellssd_hw_gen;
 
 	/* Get Dell Generation */
 	memset(data, 0, sizeof(data));
@@ -116,10 +116,10 @@ int get_dell_server_type()
 	data[1] = DELL_GET_IDRAC_INFO;
 	data[2] = 0x02;
 	data[3] = 0x00;
-	rc = ipmicmd(BMC_SA, 0, APP_NETFN, APP_GET_SYSTEM_INFO, 4, data,
+	rc = ipmicmd(ctx, BMC_SA, 0, APP_NETFN, APP_GET_SYSTEM_INFO, 4, data,
 		     20, &rlen, rdata);
 	if (rc) {
-		log_debug("Unable to issue IPMI command GetSystemInfo\n");
+		lib_log(ctx, LED_LOG_LEVEL_DEBUG, "Unable to issue IPMI command GetSystemInfo\n");
 		return 0;
 	}
 	switch (rdata[10]) {
@@ -132,22 +132,22 @@ int get_dell_server_type()
 	case DELL_15G_MONOLITHIC:
 	case DELL_15G_MODULAR:
 
-		gen = rdata[10];
-		return gen;
+		ctx->dellssd_hw_gen = rdata[10];
+		return ctx->dellssd_hw_gen;
 	default:
-		log_debug("Unable to determine Dell Server type\n");
+		lib_log(ctx, LED_LOG_LEVEL_DEBUG, "Unable to determine Dell Server type\n");
 		break;
 	}
 	return 0;
 }
 
-static int ipmi_setled(int b, int d, int f, int state)
+static int ipmi_setled(struct led_ctx *ctx, int b, int d, int f, int state)
 {
 	uint8_t data[20], rdata[20];
 	int rc, rlen, bay = 0xFF, slot = 0xFF, devfn, gen = 0;
 
 	/* Check if this is a supported Dell server */
-	gen = get_dell_server_type();
+	gen = get_dell_server_type(ctx);
 	if (!gen)
 		return 0;
 	devfn = (((d & 0x1F) << 3) | (f & 0x7));
@@ -179,15 +179,16 @@ static int ipmi_setled(int b, int d, int f, int state)
 		data[1] = DELL_OEM_STORAGE_GETDRVMAP_14G;
 		break;
 	}
-	rc = ipmicmd(BMC_SA, 0, DELL_OEM_NETFN, DELL_OEM_STORAGE_CMD, 8, data,
+	rc = ipmicmd(ctx, BMC_SA, 0, DELL_OEM_NETFN, DELL_OEM_STORAGE_CMD, 8, data,
 		     20, &rlen, rdata);
 	if (!rc) {
 		bay = rdata[7];
 		slot = rdata[8];
 	}
 	if (bay == 0xFF || slot == 0xFF) {
-		log_error("Unable to determine bay/slot for device %.2x:%.2x.%x\n",
-			  b, d, f);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Unable to determine bay/slot for device %.2x:%.2x.%x\n",
+			(unsigned int)b, (unsigned int)d, (unsigned int)f);
 		return 0;
 	}
 
@@ -222,21 +223,22 @@ static int ipmi_setled(int b, int d, int f, int state)
 		data[1] = DELL_OEM_STORAGE_SETDRVSTATUS_14G;
 		break;
 	}
-	rc = ipmicmd(BMC_SA, 0, DELL_OEM_NETFN, DELL_OEM_STORAGE_CMD, 20, data,
+	rc = ipmicmd(ctx, BMC_SA, 0, DELL_OEM_NETFN, DELL_OEM_STORAGE_CMD, 20, data,
 		     20, &rlen, rdata);
 	if (rc) {
-		log_error("Unable to issue SetDriveState for %.2x:%.2x.%x\n",
-			  b,d,f);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Unable to issue SetDriveState for %.2x:%.2x.%x\n",
+			(unsigned int)b, (unsigned int)d, (unsigned int)f);
 	}
 	return 0;
 }
 
 char *dellssd_get_path(const char *cntrl_path)
 {
-	return str_dup(cntrl_path);
+	return strdup(cntrl_path);
 }
 
-int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+int dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	unsigned int bus, dev, fun;
 	char *t;
@@ -246,13 +248,17 @@ int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if (ibpi == device->ibpi_prev)
 		return 1;
 
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
+	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 
 	ibpi2val = get_by_ibpi(ibpi, ibpi2ssd, ARRAY_SIZE(ibpi2ssd));
 
-	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_error("SSD: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
+		char buf[IPBI2STR_BUFF_SIZE];
+
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_ERROR,
+			"SSD: Controller doesn't support %s pattern\n",
+			ibpi2str(ibpi, buf, sizeof(buf)));
 		__set_errno_and_return(EINVAL);
 	}
 
@@ -260,7 +266,7 @@ int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if (t != NULL) {
 		/* Extract PCI bus:device.function */
 		if (sscanf(t + 1, "%*x:%x:%x.%x", &bus, &dev, &fun) == 3)
-			ipmi_setled(bus, dev, fun, ibpi2val->value);
+			ipmi_setled(device->cntrl->ctx, bus, dev, fun, ibpi2val->value);
 	}
 	return 0;
 }

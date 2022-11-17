@@ -38,6 +38,7 @@
 #include "scsi.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "libled_private.h"
 
 /**
  * @brief Gets SAS address of an enclosure device.
@@ -52,9 +53,12 @@
 #define SAS_DEVICE "/sas_device"
 static uint64_t _get_sas_address(const char *path)
 {
-	char *tmp = str_dup(path);
 	char buf[PATH_MAX];
 	char *p, *s;
+	char *tmp = strdup(path);
+
+	if (!tmp)
+		return 0;
 
 	p = strstr(tmp, "/expander");
 	if (p == NULL)
@@ -122,7 +126,7 @@ int enclosure_reload(struct enclosure_device * enclosure)
 		return 1;
 	}
 
-	ret = ses_load_pages(fd, &enclosure->ses_pages);
+	ret = ses_load_pages(fd, &enclosure->ses_pages, enclosure->ctx);
 	close(fd);
 	if (ret != 0)
 		return ret;
@@ -134,7 +138,7 @@ int enclosure_reload(struct enclosure_device * enclosure)
  * Allocates memory for enclosure device structure and initializes fields of
  * the structure.
  */
-struct enclosure_device *enclosure_device_init(const char *path)
+struct enclosure_device *enclosure_device_init(const char *path, struct led_ctx *ctx)
 {
 	char temp[PATH_MAX] = "\0";
 	struct enclosure_device *enclosure;
@@ -152,11 +156,13 @@ struct enclosure_device *enclosure_device_init(const char *path)
 	memccpy(enclosure->sysfs_path, temp, '\0', PATH_MAX - 1);
 	enclosure->sas_address = _get_sas_address(temp);
 	enclosure->dev_path = _get_dev_sg(temp);
+	enclosure->ctx = ctx;
 
 	ret = enclosure_reload(enclosure);
 out:
 	if (ret) {
-		log_warning("failed to initialize enclosure_device %s\n", path);
+		lib_log(ctx, LED_LOG_LEVEL_WARNING,
+			"failed to initialize enclosure_device %s\n", path);
 		enclosure_device_fini(enclosure);
 		enclosure = NULL;
 	}
@@ -200,14 +206,15 @@ static struct block_device *enclosure_get_block_device(struct enclosure_device *
 {
 	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
 	if (!s_slot) {
-		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
+		lib_log(encl->ctx, LED_LOG_LEVEL_ERROR,
+			"SCSI: Unable to locate slot in enclosure %d\n", index);
 		return NULL;
 	}
 
-	return locate_block_by_sas_addr(s_slot->sas_addr);
+	return locate_block_by_sas_addr(encl->ctx, s_slot->sas_addr);
 }
 
-enum ibpi_pattern enclosure_get_state(struct slot_property *sp)
+enum led_ibpi_pattern enclosure_get_state(struct slot_property *sp)
 {
 	int index = sp->slot_spec.ses.slot_num;
 	struct enclosure_device *encl = sp->slot_spec.ses.encl;
@@ -215,14 +222,15 @@ enum ibpi_pattern enclosure_get_state(struct slot_property *sp)
 
 	s_slot = find_enclosure_slot_by_index(encl, index);
 	if (!s_slot) {
-		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
-		return IBPI_PATTERN_UNKNOWN;
+		lib_log(encl->ctx, LED_LOG_LEVEL_ERROR,
+			"SCSI: Unable to locate slot in enclosure %d\n", index);
+		return LED_IBPI_PATTERN_UNKNOWN;
 	}
 	return s_slot->ibpi_status;
 }
 
 const struct slot_property_common ses_slot_common = {
-	.cntrl_type = CNTRL_TYPE_SCSI,
+	.cntrl_type = LED_CNTRL_TYPE_SCSI,
 	.get_state_fn = enclosure_get_state,
 	.set_slot_fn = enclosure_set_state
 };
@@ -244,27 +252,30 @@ struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl
 	return result;
 }
 
-status_t enclosure_set_state(struct slot_property *sp, enum ibpi_pattern state)
+status_t enclosure_set_state(struct slot_property *sp, enum led_ibpi_pattern state)
 {
 	struct enclosure_device *enclosure_device = sp->slot_spec.ses.encl;
 	int index = sp->slot_spec.ses.slot_num;
 
 	int rc = scsi_ses_write_enclosure(enclosure_device, index, state);
 	if (rc != 0) {
-		log_error("SCSI: ses write failed %d\n", rc);
+		lib_log(enclosure_device->ctx, LED_LOG_LEVEL_ERROR,
+			"SCSI: ses write failed %d\n", rc);
 		return STATUS_FILE_WRITE_ERROR;
 	}
 
 	rc = scsi_ses_flush_enclosure(enclosure_device);
 	if (rc != 0) {
-		log_error("SCSI: ses flush enclosure failed %d\n", rc);
+		lib_log(enclosure_device->ctx, LED_LOG_LEVEL_ERROR,
+			"SCSI: ses flush enclosure failed %d\n", rc);
 		return STATUS_FILE_WRITE_ERROR;
 	}
 
 	// Reload from hardware to report actual current state.
 	rc = enclosure_reload(enclosure_device);
 	if (rc != 0) {
-		log_error("SCSI: ses enclosure reload error %d\n", rc);
+		lib_log(enclosure_device->ctx, LED_LOG_LEVEL_ERROR,
+			"SCSI: ses enclosure reload error %d\n", rc);
 		return STATUS_FILE_READ_ERROR;
 	}
 	return STATUS_SUCCESS;

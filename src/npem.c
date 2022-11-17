@@ -26,6 +26,7 @@
 #include <stdbool.h>
 
 #include "config.h"
+#include "libled_private.h"
 #include "cntrl.h"
 #include "list.h"
 #include "npem.h"
@@ -62,17 +63,17 @@
 #define PCI_NPEM_STATUS_CC	0x01  /* NPEM Command Completed */
 
 const struct ibpi2value ibpi_to_npem_capability[] = {
-	{IBPI_PATTERN_NORMAL, PCI_NPEM_OK_CAP},
-	{IBPI_PATTERN_ONESHOT_NORMAL, PCI_NPEM_OK_CAP},
-	{IBPI_PATTERN_DEGRADED, PCI_NPEM_CRA_CAP},
-	{IBPI_PATTERN_HOTSPARE, PCI_NPEM_HOT_SPARE_CAP},
-	{IBPI_PATTERN_REBUILD, PCI_NPEM_REBUILD_CAP},
-	{IBPI_PATTERN_FAILED_ARRAY, PCI_NPEM_FA_CAP},
-	{IBPI_PATTERN_PFA, PCI_NPEM_PFA_CAP},
-	{IBPI_PATTERN_FAILED_DRIVE, PCI_NPEM_FAIL_CAP},
-	{IBPI_PATTERN_LOCATE, PCI_NPEM_LOCATE_CAP},
-	{IBPI_PATTERN_LOCATE_OFF, PCI_NPEM_OK_CAP},
-	{IBPI_PATTERN_UNKNOWN}
+	{LED_IBPI_PATTERN_NORMAL, PCI_NPEM_OK_CAP},
+	{LED_IBPI_PATTERN_ONESHOT_NORMAL, PCI_NPEM_OK_CAP},
+	{LED_IBPI_PATTERN_DEGRADED, PCI_NPEM_CRA_CAP},
+	{LED_IBPI_PATTERN_HOTSPARE, PCI_NPEM_HOT_SPARE_CAP},
+	{LED_IBPI_PATTERN_REBUILD, PCI_NPEM_REBUILD_CAP},
+	{LED_IBPI_PATTERN_FAILED_ARRAY, PCI_NPEM_FA_CAP},
+	{LED_IBPI_PATTERN_PFA, PCI_NPEM_PFA_CAP},
+	{LED_IBPI_PATTERN_FAILED_DRIVE, PCI_NPEM_FAIL_CAP},
+	{LED_IBPI_PATTERN_LOCATE, PCI_NPEM_LOCATE_CAP},
+	{LED_IBPI_PATTERN_LOCATE_OFF, PCI_NPEM_OK_CAP},
+	{LED_IBPI_PATTERN_UNKNOWN}
 };
 
 static struct pci_access *get_pci_access()
@@ -141,14 +142,15 @@ static bool is_mask_set(struct pci_dev *pdev, int reg,  u32 mask)
 	return false;
 }
 
-int is_npem_capable(const char *path)
+int is_npem_capable(const char *path, struct led_ctx *ctx)
 {
 	u8 val;
 	struct pci_access *pacc = get_pci_access();
 	struct pci_dev *pdev;
 
 	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", path);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"NPEM: Unable to initialize pci access for %s\n", path);
 		return 0;
 	}
 
@@ -194,28 +196,30 @@ static void npem_wait_command(struct pci_dev *pdev)
 
 char *npem_get_path(const char *cntrl_path)
 {
-	return str_dup(cntrl_path);
+	return strdup(cntrl_path);
 }
 
-enum ibpi_pattern npem_get_state(struct slot_property *slot)
+enum led_ibpi_pattern npem_get_state(struct slot_property *slot)
 {
 	u32 reg;
 	struct pci_dev *pdev = NULL;
 	const struct ibpi2value *ibpi2val;
 	const char *path = slot->slot_spec.cntrl->sysfs_path;
 	struct pci_access *pacc = get_pci_access();
+	struct led_ctx *ctx = slot->slot_spec.cntrl->ctx;
 
 	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", path);
-		return IBPI_PATTERN_UNKNOWN;
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"NPEM: Unable to initialize pci access for %s\n", path);
+		return LED_IBPI_PATTERN_UNKNOWN;
 	}
 
 	pdev = get_pci_dev(pacc, path);
 
 	if (!pdev) {
-		log_error("NPEM: Unable to get pci device for %s\n", path);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR, "NPEM: Unable to get pci device for %s\n", path);
 		pci_cleanup(pacc);
-		return IBPI_PATTERN_UNKNOWN;
+		return LED_IBPI_PATTERN_UNKNOWN;
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
@@ -228,11 +232,12 @@ enum ibpi_pattern npem_get_state(struct slot_property *slot)
 	return ibpi2val->ibpi;
 }
 
-status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
+status_t npem_set_slot(struct led_ctx *ctx, const char *sysfs_path, enum led_ibpi_pattern state)
 {
 	struct pci_dev *pdev = NULL;
 	struct pci_access *pacc = get_pci_access();
 	const struct ibpi2value *ibpi2val;
+	char buf[IPBI2STR_BUFF_SIZE];
 
 	u32 val;
 	u32 reg;
@@ -241,27 +246,32 @@ status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
 	ibpi2val = get_by_ibpi(state, ibpi_to_npem_capability,
 			       ARRAY_SIZE(ibpi_to_npem_capability));
 
-	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_info("NPEM: Controller doesn't support %s pattern\n", ibpi_str[state]);
+	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"NPEM: Controller doesn't support %s pattern\n",
+			ibpi2str(state, buf, sizeof(buf)));
 		return STATUS_INVALID_STATE;
 	}
 	cap = (u32)ibpi2val->value;
 
 	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", sysfs_path);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"NPEM: Unable to initialize pci access for %s\n", sysfs_path);
 		return STATUS_NULL_POINTER;
 	}
 
 	pdev = get_pci_dev(pacc, sysfs_path);
 	if (!pdev) {
-		log_error("NPEM: Unable to get pci device for %s\n", sysfs_path);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"NPEM: Unable to get pci device for %s\n", sysfs_path);
 		pci_cleanup(pacc);
 		return STATUS_NULL_POINTER;
 	}
 
 	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
-		log_info("NPEM: Controller %s doesn't support %s pattern\n",
-			  sysfs_path, ibpi_str[state]);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"NPEM: Controller %s doesn't support %s pattern\n",
+			sysfs_path, ibpi2str(state, buf, sizeof(buf)));
 		pci_free_dev(pdev);
 		pci_cleanup(pacc);
 		return STATUS_INVALID_STATE;
@@ -282,19 +292,19 @@ status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
 /*
  * FIXME: Error is not checked, no need to translate to errno based codes.
  */
-int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
+int npem_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	if (ibpi == device->ibpi_prev)
 		return STATUS_SUCCESS;
 
-	if (ibpi < IBPI_PATTERN_NORMAL || ibpi > IBPI_PATTERN_LOCATE_OFF)
+	if (ibpi < LED_IBPI_PATTERN_NORMAL || ibpi > LED_IBPI_PATTERN_LOCATE_OFF)
 		return STATUS_INVALID_STATE;
 
-	return npem_set_slot(device->cntrl->sysfs_path, ibpi);
+	return npem_set_slot(device->cntrl->ctx, device->cntrl->sysfs_path, ibpi);
 }
 
 const struct slot_property_common npem_slot_common = {
-	.cntrl_type = CNTRL_TYPE_NPEM,
+	.cntrl_type = LED_CNTRL_TYPE_NPEM,
 	.get_state_fn = npem_get_state,
 	.set_slot_fn = npem_set_state
 };
@@ -305,14 +315,15 @@ struct slot_property *npem_slot_property_init(struct cntrl_device *npem_cntrl)
 	if (result == NULL)
 		return NULL;
 
-	result->bl_device = get_block_device_from_sysfs_path(npem_cntrl->sysfs_path, true);
+	result->bl_device = get_block_device_from_sysfs_path(npem_cntrl->ctx,
+							     npem_cntrl->sysfs_path, true);
 	result->slot_spec.cntrl = npem_cntrl;
 	snprintf(result->slot_id, PATH_MAX, "%s", npem_cntrl->sysfs_path);
 	result->c = &npem_slot_common;
 	return result;
 }
 
-status_t npem_set_state(struct slot_property *slot, enum ibpi_pattern state)
+status_t npem_set_state(struct slot_property *slot, enum led_ibpi_pattern state)
 {
-	return npem_set_slot(slot->slot_spec.cntrl->sysfs_path, state);
+	return npem_set_slot(slot->slot_spec.cntrl->ctx, slot->slot_spec.cntrl->sysfs_path, state);
 }

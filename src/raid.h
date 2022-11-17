@@ -87,7 +87,7 @@ struct raid_device {
 /**
  */
 struct raid_device *raid_device_init(const char *path, unsigned int device_num,
-				     enum device_type type);
+				     enum device_type type, struct led_ctx *ctx);
 
 /**
  */

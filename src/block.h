@@ -24,11 +24,12 @@
 #include <stdbool.h>
 
 #include "cntrl.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "time.h"
 #include "list.h"
 #include "raid.h"
 #include "status.h"
+#include "sysfs.h"
 
 struct block_device;
 
@@ -45,7 +46,7 @@ struct block_device;
  * @return 1 if successful, otherwise the function returns 0.
  */
 typedef int (*send_message_t) (struct block_device *device,
-			       enum ibpi_pattern ibpi);
+			       enum led_ibpi_pattern ibpi);
 
 /**
  * @brief Pointer to a flush buffer function.
@@ -96,12 +97,12 @@ struct block_device {
  * The current state of block device. This is an IBPI pattern and it is used
  * to visualize the state of block device.
  */
-	enum ibpi_pattern ibpi;
+	enum led_ibpi_pattern ibpi;
 
 /**
  * The previous state of block device.
  */
-	enum ibpi_pattern ibpi_prev;
+	enum led_ibpi_pattern ibpi_prev;
 
 /**
  * The time stamp used to determine if the given block device still exist or
@@ -239,11 +240,13 @@ int block_compare(const struct block_device *bd_old,
  * The character after the sub_path match is required to be one of the
  * following ('\n', '\0', '/'), otherwise it is excluded.
  *
+ * @param[in]        ctx                 Library context
  * @param[in]        sub_path            Sub path.
  * @param[in]        sub_path_to_end     True if sub_path is complete path.
  *
  * @return first block device containing sub-path if any, otherwise NULL.
  */
-struct block_device *get_block_device_from_sysfs_path(char *sub_path, bool sub_path_to_end);
+struct block_device *get_block_device_from_sysfs_path(struct led_ctx *ctx, char *sub_path,
+						      bool sub_path_to_end);
 
 #endif				/* _BLOCK_H_INCLUDED_ */

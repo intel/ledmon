@@ -18,8 +18,9 @@
  *
  */
 
-#include "ibpi.h"
+#include "led/libled.h"
 #include "block.h"
+#include "sysfs.h"
 
 #ifndef _SMP_H_INCLUDED
 #define _SMP_H_INCLUDED
@@ -73,7 +74,7 @@ struct gpio_tx_register_byte {
  * @return 1 if successful or -1 in case of error
  *         and errno is set to appropriate error code.
  */
-int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi);
+int scsi_smp_fill_buffer(struct block_device *device, enum led_ibpi_pattern ibpi);
 
 /**
  * @brief Sends message to SMP device.

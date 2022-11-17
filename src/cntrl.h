@@ -21,37 +21,10 @@
 #ifndef _CNTRL_H_INCLUDED_
 #define _CNTRL_H_INCLUDED_
 
+#include "sysfs.h"
+#include "led/libled.h"
+
 #include <limits.h>
-
-/**
- * This enumeration type lists all supported storage controller types.
- */
-enum cntrl_type {
-	CNTRL_TYPE_UNKNOWN = 0,
-	CNTRL_TYPE_DELLSSD,
-	CNTRL_TYPE_VMD,
-	CNTRL_TYPE_SCSI,
-	CNTRL_TYPE_AHCI,
-	CNTRL_TYPE_NPEM,
-	CNTRL_TYPE_AMD,
-};
-
-
-/**
- * @brief Translates string to controller enumerated type
- *
- * @param cntrl_str          string to translate
- * @return enum cntrl_type   enumerated value
- */
-enum cntrl_type string_to_cntrl_type(const char *cntrl_str);
-
-/**
- * @brief Translates enumerated type to string representation
- *
- * @param cntrl               Enumerated type to translate to string representation
- * @return const char* const  String representation of enumerated type
- */
-const char *const cntrl_type_to_string(enum cntrl_type cntrl);
 
 /**
  * @brief Storage controller device structure.
@@ -67,7 +40,7 @@ struct cntrl_device {
 	/**
 	 * Type of storage controller device.
 	 */
-	enum cntrl_type cntrl_type;
+	enum led_cntrl_type cntrl_type;
 
 	/**
 	 * Flag if scsi controller driver is "isci"
@@ -105,6 +78,8 @@ struct cntrl_device {
 		 */
 		struct _host_type *next;
 	} *hosts;
+
+	struct led_ctx *ctx;
 };
 
 /**
@@ -115,12 +90,13 @@ struct cntrl_device {
  * The function registers only supported storage controllers.
  *
  * @param[in]      path           path to storage controller in sysfs tree.
+ * @param[in]      ctx            library context
  *
  * @return Pointer to storage controller structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means that controller
  *         device is not supported.
  */
-struct cntrl_device *cntrl_device_init(const char *path);
+struct cntrl_device *cntrl_device_init(const char *path, struct led_ctx *ctx);
 
 /**
  * @brief Releases a controller device structure.
@@ -132,18 +108,5 @@ struct cntrl_device *cntrl_device_init(const char *path);
  * @return The function does not return a value.
  */
 void cntrl_device_fini(struct cntrl_device *device);
-
-/**
- * @brief Prints given controller to stdout.
- *
- * This function prints the path and type of controller device given as
- * argument.
- *
- * @param[in]      ctrl_dev            address to element from a
- *                                     controller list.
- *
- * @return The function does not return a value.
- */
-void print_cntrl(struct cntrl_device *ctrl_dev);
 
 #endif				/* _CNTRL_H_INCLUDED_ */

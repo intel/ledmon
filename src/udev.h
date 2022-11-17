@@ -22,6 +22,7 @@
 #define _UDEV_H_INCLUDED_
 
 #include "list.h"
+#include "sysfs.h"
 
 /**
  */
@@ -61,6 +62,6 @@ int get_udev_monitor(void);
  *         1 if registered event is not 'add' or 'remove';
  *         -1 on libudev error.
  */
-int handle_udev_event(struct list *ledmon_block_list);
+int handle_udev_event(struct list *ledmon_block_list, struct led_ctx *ctx);
 
 #endif                         /* _UDEV_H_INCLUDED_ */

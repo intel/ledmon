@@ -28,7 +28,7 @@
 #include "list.h"
 #include "status.h"
 #include "syslog.h"
-#include "ibpi.h"
+#include "led/libled.h"
 
 struct map {
 	char *name;
@@ -273,7 +273,7 @@ void get_id(const char *buf, struct device_id *did);
  * @return The function returns 0 if successful, otherwise -1 and errno variable
  *         has additional error information.
  */
-int log_open(const char *path);
+int log_open(struct ledmon_conf *conf);
 
 /**
  * @brief Close a local log file.
@@ -283,7 +283,19 @@ int log_open(const char *path);
  *
  * @return The function does not return a value.
  */
-void log_close(void);
+void log_close(struct ledmon_conf *conf);
+
+/**
+ * @brief Common logging function for both lib_log & _log functions.
+ *
+ * @param[in]	log_fd		Open file descriptor
+ * @param[in]	config_level	Logging level specified in configuration
+ * @param[in]	loglevel	What logging level this message is logged at
+ * @param[in]	buf		printf formatting string
+ * @param[in]	list		variable argument list
+ */
+void _common_log(int log_fd, enum log_level_enum config_level,
+			enum log_level_enum loglevel, const char *buf, va_list list);
 
 /**
  * @brief Logs an message with given loglevel.
@@ -297,12 +309,13 @@ void log_close(void);
  *
  * @return The function does not return a value.
  */
-void _log(enum log_level_enum loglevel, const char *buf, ...);
+void _log(struct ledmon_conf *conf, enum log_level_enum loglevel, const char *buf, ...)
+		__attribute__ ((format (printf, 3, 4)));
 
-#define log_error(buf, ...)	_log(LOG_LEVEL_ERROR, buf, ##__VA_ARGS__)
-#define log_debug(buf, ...)	_log(LOG_LEVEL_DEBUG, buf, ##__VA_ARGS__)
-#define log_info(buf, ...)	_log(LOG_LEVEL_INFO, buf, ##__VA_ARGS__)
-#define log_warning(buf, ...)	_log(LOG_LEVEL_WARNING, buf, ##__VA_ARGS__)
+#define log_error(buf, ...)	_log(&conf, LOG_LEVEL_ERROR, buf, ##__VA_ARGS__)
+#define log_debug(buf, ...)	_log(&conf, LOG_LEVEL_DEBUG, buf, ##__VA_ARGS__)
+#define log_info(buf, ...)	_log(&conf, LOG_LEVEL_INFO, buf, ##__VA_ARGS__)
+#define log_warning(buf, ...)	_log(&conf, LOG_LEVEL_WARNING, buf, ##__VA_ARGS__)
 /**
  */
 void set_invocation_name(char *invocation_name);
@@ -320,20 +333,6 @@ void set_invocation_name(char *invocation_name);
  * @return Pointer to destination buffer even if function failed.
  */
 char *str_cpy(char *dest, const char *src, size_t size);
-
-/**
- * @brief Duplicates a text buffer.
- *
- * This function duplicates a text buffer. It allocates a new memory block and
- * copies the content of source buffer to new location. If pointer to source
- * buffer is NULL the function will return NULL, too. The caller is required to
- * free allocated memory as soon as content is not needed.
- *
- * @param[in]      src            Source buffer to duplicate the content.
- *
- * @return Pointer to allocated memory block if successful, otherwise NULL.
- */
-char *str_dup(const char *src);
 
 /**
  * @brief Converts string to long integer.
@@ -401,14 +400,6 @@ int str_toi(signed int *dest, const char *strptr, char **endptr, int base);
 int str_toui(unsigned int *dest, const char *strptr, char **endptr, int base);
 
 /**
- */
-char *truncate_path_component_rev(const char *path, int index);
-
-/**
- */
-char *get_path_component_rev(const char *path, int index);
-
-/**
  * @brief Extracts the 'hostX' part from path.
  */
 char *get_path_hostN(const char *path);
@@ -417,7 +408,7 @@ int match_string(const char *string, const char *pattern);
 
 /**
  */
-int get_log_fd(void);
+int get_log_fd(struct ledmon_conf *conf);
 
 /**
  */
@@ -425,7 +416,7 @@ void print_opt(const char *long_opt, const char *short_opt, const char *desc);
 
 /**
  */
-status_t set_log_path(const char *path);
+status_t set_log_path(struct ledmon_conf *conf, const char *path);
 
 /**
  * Internal enumeration type. It is used to help parse command line arguments.
@@ -460,9 +451,12 @@ extern struct option longopt_all[];
 void setup_options(struct option **longopt, char **shortopt, int *options,
 			int options_nr);
 int get_option_id(const char *optarg);
-status_t set_verbose_level(int log_level);
+status_t set_verbose_level(struct ledmon_conf *conf, int log_level);
 
-const char *ibpi2str(enum ibpi_pattern ibpi);
+#define IPBI2STR_BUFF_SIZE 32
+const char *ibpi2str(enum led_ibpi_pattern ibpi, char *buf, size_t buf_size);
+const char *ibpi2str_table(enum led_ibpi_pattern ibpi, const char *names[], char *buf,
+			   size_t buf_size);
 
 /**
  * @brief Returns ibpi2value entry if IBPI matches
@@ -471,9 +465,9 @@ const char *ibpi2str(enum ibpi_pattern ibpi);
  * @param[in]       ibpi2val_arr          IBPI pattern to value array.
  * @param[in]       ibpi2value_arr_cnt    Array entries count.
  *
- * @return Corresponding ibpi2value entry last or entry with IBPI_PATTERN_UNKNOWN
+ * @return Corresponding ibpi2value entry last or entry with LED_IBPI_PATTERN_UNKNOWN
  */
-const struct ibpi2value *get_by_ibpi(const enum ibpi_pattern ibpi,
+const struct ibpi2value *get_by_ibpi(const enum led_ibpi_pattern ibpi,
 				     const struct ibpi2value *ibpi2val_arr,
 				     int ibpi2value_arr_cnt);
 
@@ -484,7 +478,7 @@ const struct ibpi2value *get_by_ibpi(const enum ibpi_pattern ibpi,
  * @param[in]       ibpi2val_arr          IBPI pattern to value array.
  * @param[in]       ibpi2value_arr_cnt    Array entries count.
  *
- * @return Corresponding ibpi2value entry last or entry with IBPI_PATTERN_UNKNOWN
+ * @return Corresponding ibpi2value entry last or entry with LED_IBPI_PATTERN_UNKNOWN
  */
 const struct ibpi2value *get_by_value(const unsigned int value,
 				      const struct ibpi2value *ibpi2val_arr,
@@ -497,7 +491,7 @@ const struct ibpi2value *get_by_value(const unsigned int value,
  * @param[in]       ibpi2val_arr          IBPI pattern to value array.
  * @param[in]       ibpi2value_arr_cnt    Array entries count.
  *
- * @return Corresponding ibpi2value entry last or entry with IBPI_PATTERN_UNKNOWN
+ * @return Corresponding ibpi2value entry last or entry with LED_IBPI_PATTERN_UNKNOWN
  */
 const struct ibpi2value *get_by_bits(const unsigned int value,
 				     const struct ibpi2value *ibpi2val_arr,

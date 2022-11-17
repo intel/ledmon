@@ -21,9 +21,10 @@
 #ifndef PCI_SLOT_H_INCLUDED_
 #define PCI_SLOT_H_INCLUDED_
 
-#include "ibpi.h"
+#include "led/libled.h"
 #include "slot.h"
 #include "status.h"
+#include "sysfs.h"
 
 /**
  * @brief PCI hotplug slot structure.
@@ -40,6 +41,8 @@ struct pci_slot {
  * PCI hotplug slot address.
  */
 	char *address;
+
+	struct led_ctx *ctx;
 };
 
 /**
@@ -50,13 +53,14 @@ struct pci_slot {
  *
  * @param[in]      path           Path to a PCI hotplug slot in sysfs tree.
  *                                The path begins with "/sys/bus/pci/slots/".
+ * @param[in]      ctx            The library context
  *
  * @return Pointer to PCI hotplug slot structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means either the
  *         specified path is invalid or there's not enough memory in the system
  *         to allocated new structure.
  */
-struct pci_slot *pci_slot_init(const char *path);
+struct pci_slot *pci_slot_init(const char *path, struct led_ctx *ctx);
 
 /**
  * @brief Releases an PCI hotplug slot structure.
@@ -74,12 +78,12 @@ void pci_slot_fini(struct pci_slot *slot);
  *
  * This function fills slot information related to the slot.
  *
- * @param[in]         slot                Requested slot.
- * @param[in]         slot_property       Pointer to the slot property element.
+ * @param[in]         slot       Pointer to the slot property element.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-enum ibpi_pattern pci_get_state(struct slot_property *slot);
+enum led_ibpi_pattern pci_get_state(struct slot_property *slot);
+
 
 /**
  * @brief Sets led state for slot.
@@ -91,7 +95,7 @@ enum ibpi_pattern pci_get_state(struct slot_property *slot);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t pci_set_slot(struct slot_property *slot, enum ibpi_pattern state);
+status_t pci_set_slot(struct slot_property *slot, enum led_ibpi_pattern state);
 
 /**
  * @brief Initializes a slot_property for a specified pci slot.

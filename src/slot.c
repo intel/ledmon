@@ -31,26 +31,12 @@
 #include "sysfs.h"
 #include "pci_slot.h"
 
-void print_slot_state(struct slot_property *slot_property)
-{
-	char device_name[PATH_MAX];
-	enum ibpi_pattern led_state = slot_property->c->get_state_fn(slot_property);
-
-	if (slot_property->bl_device)
-		snprintf(device_name, PATH_MAX, "/dev/%s",
-			 basename(slot_property->bl_device->sysfs_path));
-	else
-		snprintf(device_name, PATH_MAX, "(empty)");
-
-	printf("slot: %-15s led state: %-15s device: %-15s\n",
-		basename(slot_property->slot_id), ibpi2str(led_state), device_name);
-}
-
-struct slot_property *find_slot_by_device_name(char *device_name, enum cntrl_type cntrl_type)
+struct slot_property *find_slot_by_device_name(struct led_ctx *ctx, char *device_name,
+					       enum led_cntrl_type cntrl_type)
 {
 	struct slot_property *slot;
 
-	list_for_each(sysfs_get_slots(), slot) {
+	list_for_each(sysfs_get_slots(ctx), slot) {
 		if (slot->c->cntrl_type != cntrl_type)
 			continue;
 		if (slot->bl_device == NULL)
@@ -62,25 +48,26 @@ struct slot_property *find_slot_by_device_name(char *device_name, enum cntrl_typ
 	return NULL;
 }
 
-struct slot_property *find_slot_by_slot_path(char *slot_path, enum cntrl_type cntrl_type)
+struct slot_property *find_slot_by_slot_path(struct led_ctx *ctx, char *slot_path,
+					     enum led_cntrl_type cntrl_type)
 {
 	struct slot_property *slot;
 
-	list_for_each(sysfs_get_slots(), slot) {
+	list_for_each(sysfs_get_slots(ctx), slot) {
 		if (slot->c->cntrl_type != cntrl_type)
 			continue;
-		if (strncmp(basename(slot->slot_id), slot_path, PATH_MAX) == 0)
+		if (strncmp(basename(slot->slot_id), basename(slot_path), PATH_MAX) == 0)
 			return slot;
 	}
 	return NULL;
 }
 
-status_t set_slot_pattern(struct slot_property *slot, enum ibpi_pattern state)
+status_t set_slot_pattern(struct slot_property *slot, enum led_ibpi_pattern state)
 {
 	return slot->c->set_slot_fn(slot, state);
 }
 
-enum ibpi_pattern get_slot_pattern(struct slot_property *slot)
+enum led_ibpi_pattern get_slot_pattern(struct slot_property *slot)
 {
 	return slot->c->get_state_fn(slot);
 }

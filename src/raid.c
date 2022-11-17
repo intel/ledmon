@@ -29,13 +29,14 @@
 
 #include "block.h"
 #include "config.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "list.h"
 #include "raid.h"
 #include "slave.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "libled_private.h"
 
 /**
  */
@@ -127,7 +128,7 @@ static enum raid_level _get_level(const char *path)
 /**
  */
 struct raid_device *raid_device_init(const char *path, unsigned int device_num,
-				     enum device_type type)
+				     enum device_type type, struct led_ctx *ctx)
 {
 	struct raid_device *device = NULL;
 	enum raid_state state;
@@ -136,24 +137,28 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num,
 	state = _get_array_state(path);
 	if (state > RAID_STATE_INACTIVE ||
 	    (type == DEVICE_TYPE_CONTAINER && state > RAID_STATE_CLEAR)) {
-		device = malloc(sizeof(struct raid_device));
-		if (device) {
-			device->sysfs_path = str_dup(path);
-			device->device_num = device_num;
-			device->sync_action = _get_sync_action(path);
-			device->array_state = state;
-			device->level = _get_level(path);
-			device->degraded = get_int(path, -1, "md/degraded");
-			device->raid_disks = get_int(path, 0, "md/raid_disks");
-			device->type = type;
-			debug_dev = strrchr(path, '/');
-			debug_dev = debug_dev ? debug_dev + 1 : path;
-			log_debug("(%s) path: %s, level=%d, state=%d, " \
-					"degraded=%d, disks=%d, type=%d",
-					__func__, debug_dev, device->level,
-						state, device->degraded,
-						device->raid_disks, type);
+		device = calloc(1, sizeof(struct raid_device));
+		if (!device)
+			return NULL;
+
+		device->sysfs_path = strdup(path);
+		if (!device->sysfs_path) {
+			free(device);
+			return NULL;
 		}
+		device->device_num = device_num;
+		device->sync_action = _get_sync_action(path);
+		device->array_state = state;
+		device->level = _get_level(path);
+		device->degraded = get_int(path, -1, "md/degraded");
+		device->raid_disks = get_int(path, 0, "md/raid_disks");
+		device->type = type;
+		debug_dev = strrchr(path, '/');
+		debug_dev = debug_dev ? debug_dev + 1 : path;
+		lib_log(ctx, LED_LOG_LEVEL_DEBUG,
+			"(%s) path: %s, level=%u, state=%u, degraded=%d, disks=%d, type=%u",
+			__func__, debug_dev, device->level, state, device->degraded,
+			device->raid_disks, type);
 	}
 	return device;
 }
@@ -179,7 +184,11 @@ struct raid_device *raid_device_duplicate(struct raid_device *device)
 		new_device = malloc(sizeof(struct raid_device));
 		if (new_device) {
 			*new_device = *device;
-			new_device->sysfs_path = str_dup(device->sysfs_path);
+			new_device->sysfs_path = strdup(device->sysfs_path);
+			if (!new_device->sysfs_path) {
+				free(new_device);
+				return NULL;
+			}
 		}
 	}
 	return new_device;

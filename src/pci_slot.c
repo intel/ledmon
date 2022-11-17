@@ -33,20 +33,26 @@
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
+#include "libled_private.h"
 
 /*
  * Allocates memory for PCI hotplug slot structure and initializes fields of
  * the structure.
  */
-struct pci_slot *pci_slot_init(const char *path)
+struct pci_slot *pci_slot_init(const char *path, struct led_ctx *ctx)
 {
 	struct pci_slot *result = NULL;
 
 	result = malloc(sizeof(struct pci_slot));
 	if (result == NULL)
 		return NULL;
-	result->sysfs_path = str_dup(path);
+	result->sysfs_path = strdup(path);
+	if (!result->sysfs_path) {
+		free(result);
+		return NULL;
+	}
 	result->address = get_text(path, "address");
+	result->ctx = ctx;
 
 	return result;
 }
@@ -65,7 +71,7 @@ void pci_slot_fini(struct pci_slot *slot)
 }
 
 const struct slot_property_common pci_slot_common = {
-	.cntrl_type = CNTRL_TYPE_VMD,
+	.cntrl_type = LED_CNTRL_TYPE_VMD,
 	.get_state_fn = pci_get_state,
 	.set_slot_fn = pci_set_slot
 };
@@ -76,7 +82,8 @@ struct slot_property *pci_slot_property_init(struct pci_slot *pci_slot)
 	if (result == NULL)
 		return NULL;
 
-	result->bl_device = get_block_device_from_sysfs_path(pci_slot->address, true);
+	result->bl_device = get_block_device_from_sysfs_path(pci_slot->ctx,
+							     pci_slot->address, true);
 	result->slot_spec.pci = pci_slot;
 	snprintf(result->slot_id, PATH_MAX, "%s", pci_slot->sysfs_path);
 	result->c = &pci_slot_common;
@@ -84,12 +91,12 @@ struct slot_property *pci_slot_property_init(struct pci_slot *pci_slot)
 	return result;
 }
 
-status_t pci_set_slot(struct slot_property *slot, enum ibpi_pattern state)
+status_t pci_set_slot(struct slot_property *slot, enum led_ibpi_pattern state)
 {
 	return vmdssd_write_attention_buf(slot->slot_spec.pci, state);
 }
 
-enum ibpi_pattern pci_get_state(struct slot_property *slot)
+enum led_ibpi_pattern pci_get_state(struct slot_property *slot)
 {
 	return vmdssd_get_attention(slot->slot_spec.pci);
 }

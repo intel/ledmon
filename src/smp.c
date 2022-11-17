@@ -38,17 +38,19 @@
 #include <dmalloc.h>
 #endif
 
+#include "led/libled.h"
 #include "block.h"
 #include "cntrl.h"
 #include "config.h"
 #include "enclosure.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "list.h"
 #include "scsi.h"
 #include "smp.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "libled_private.h"
 
 #define GPIO_TX_GP1	0x01
 
@@ -71,17 +73,17 @@ static const struct gpio_rx_table {
 	struct gpio_tx_register_byte pattern;
 	int support_mask;
 } ibpi2sgpio[] = {
-	[IBPI_PATTERN_UNKNOWN]        = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }, /* OK */
-	[IBPI_PATTERN_ONESHOT_NORMAL] = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }, /* OK */
-	[IBPI_PATTERN_NORMAL]         = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }, /* OK */
-	[IBPI_PATTERN_DEGRADED]       = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 0 }, /* NO */
-	[IBPI_PATTERN_REBUILD]        = { INIT_IBPI(LED_SOF,LED_ON,LED_ON), 1 }, /* OK */
-	[IBPI_PATTERN_FAILED_ARRAY]   = { INIT_IBPI(LED_SOF,LED_4HZ,LED_OFF), 0 }, /* NO */
-	[IBPI_PATTERN_HOTSPARE]       = { INIT_IBPI(LED_SOF,LED_OFF,LED_4HZ), 0 }, /* NO */
-	[IBPI_PATTERN_PFA]            = { INIT_IBPI(LED_SOF,LED_OFF,LED_2HZ), 0 }, /* NO */
-	[IBPI_PATTERN_FAILED_DRIVE]   = { INIT_IBPI(LED_SOF,LED_OFF,LED_ON), 1 }, /* OK */
-	[IBPI_PATTERN_LOCATE]         = { INIT_IBPI(LED_SOF,LED_ON,LED_OFF), 1 }, /* OK */
-	[IBPI_PATTERN_LOCATE_OFF]     = { INIT_IBPI(LED_SOF,LED_OFF,LED_OFF), 1 }  /* OK */
+	[LED_IBPI_PATTERN_UNKNOWN]        = { INIT_IBPI(LED_SOF, LED_OFF, LED_OFF), 1 }, /* OK */
+	[LED_IBPI_PATTERN_ONESHOT_NORMAL] = { INIT_IBPI(LED_SOF, LED_OFF, LED_OFF), 1 }, /* OK */
+	[LED_IBPI_PATTERN_NORMAL]         = { INIT_IBPI(LED_SOF, LED_OFF, LED_OFF), 1 }, /* OK */
+	[LED_IBPI_PATTERN_DEGRADED]       = { INIT_IBPI(LED_SOF, LED_OFF, LED_OFF), 0 }, /* NO */
+	[LED_IBPI_PATTERN_REBUILD]        = { INIT_IBPI(LED_SOF, LED_ON, LED_ON), 1 }, /* OK */
+	[LED_IBPI_PATTERN_FAILED_ARRAY]   = { INIT_IBPI(LED_SOF, LED_4HZ, LED_OFF), 0 }, /* NO */
+	[LED_IBPI_PATTERN_HOTSPARE]       = { INIT_IBPI(LED_SOF, LED_OFF, LED_4HZ), 0 }, /* NO */
+	[LED_IBPI_PATTERN_PFA]            = { INIT_IBPI(LED_SOF, LED_OFF, LED_2HZ), 0 }, /* NO */
+	[LED_IBPI_PATTERN_FAILED_DRIVE]   = { INIT_IBPI(LED_SOF, LED_OFF, LED_ON), 1 }, /* OK */
+	[LED_IBPI_PATTERN_LOCATE]         = { INIT_IBPI(LED_SOF, LED_ON, LED_OFF), 1 }, /* OK */
+	[LED_IBPI_PATTERN_LOCATE_OFF]     = { INIT_IBPI(LED_SOF, LED_OFF, LED_OFF), 1 }  /* OK */
 };
 
 struct smp_read_response_frame_header {
@@ -422,50 +424,50 @@ struct gpio_tx_register_byte *get_bdev_ibpi_buffer(struct block_device *bdevice)
 
 /**
  */
-int scsi_smp_fill_buffer(struct block_device *device, enum ibpi_pattern ibpi)
+int scsi_smp_fill_buffer(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	const char *sysfs_path = device->cntrl_path;
 	struct gpio_tx_register_byte *gpio_tx;
 
 	if (sysfs_path == NULL)
 		__set_errno_and_return(EINVAL);
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
+	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 	if (!device->cntrl) {
-		log_debug("No ctrl dev for '%s'", strstr(sysfs_path, "host"));
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"No ctrl dev for '%s'", strstr(sysfs_path, "host"));
 		__set_errno_and_return(ENODEV);
 	}
-	if (device->cntrl->cntrl_type != CNTRL_TYPE_SCSI) {
-		log_debug("No SCSI ctrl dev '%s'", strstr(sysfs_path, "host"));
+	if (device->cntrl->cntrl_type != LED_CNTRL_TYPE_SCSI) {
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"No SCSI ctrl dev '%s'", strstr(sysfs_path, "host"));
 		__set_errno_and_return(EINVAL);
 	}
 	if (!device->host) {
-		log_debug("No host for '%s'", strstr(sysfs_path, "host"));
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"No host for '%s'", strstr(sysfs_path, "host"));
 		__set_errno_and_return(ENODEV);
 	}
 
 	if (device->cntrl->isci_present && !ibpi2sgpio[ibpi].support_mask) {
+		char buf[IPBI2STR_BUFF_SIZE];
 		char *c = strrchr(device->sysfs_path, '/');
 		if (c++) {
-			log_debug
-			    ("pattern %s not supported for device (/dev/%s)",
-			     ibpi2str(ibpi), c);
-			fprintf(stderr,
-				"%s(): pattern %s not supported for device (/dev/%s)\n",
-				__func__, ibpi2str(ibpi), c);
+			lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+				"pattern %s not supported for device (/dev/%s)",
+				ibpi2str(ibpi, buf, sizeof(buf)), c);
 		} else {
-			log_debug("pattern %s not supported for device %s",
-				  ibpi2str(ibpi), device->sysfs_path);
-			fprintf(stderr,
-				"%s(): pattern %s not supported for device\n\t(%s)\n",
-				__func__, ibpi2str(ibpi), device->sysfs_path);
+			lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+				"pattern %s not supported for device %s",
+				ibpi2str(ibpi, buf, sizeof(buf)), device->sysfs_path);
 		}
 		__set_errno_and_return(ENOTSUP);
 	}
 
 	gpio_tx = get_bdev_ibpi_buffer(device);
 	if (!gpio_tx) {
-		log_debug("%s(): no IBPI buffer. Skipping.", __func__);
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"%s(): no IBPI buffer. Skipping.", __func__);
 		__set_errno_and_return(ENODEV);
 	}
 
@@ -543,7 +545,7 @@ static void init_smp(struct cntrl_device *device)
 		for (i = 0; i < hosts->ports; i++)
 			set_raw_pattern(i, &hosts->bitstream[0],
 					&ibpi2sgpio
-					[IBPI_PATTERN_ONESHOT_NORMAL].pattern);
+					[LED_IBPI_PATTERN_ONESHOT_NORMAL].pattern);
 		hosts->flush = 0;
 	}
 }
@@ -563,15 +565,15 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 
 	/* Other case - just init controller. */
 	if (path && strstr(path, "port-")) {
-		path2 = str_dup(path);
+		path2 = strdup(path);
 		if (!path2)
 			return port;
 
 		c = strstr(path2, "port-");
 		if (!c) {
 			/* Should not happen. */
-			log_debug("%s() missing 'port' in path '%s'", __func__,
-				  path2);
+			lib_log(cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+				"%s() missing 'port' in path '%s'", __func__, path2);
 			free(path2);
 			return port;
 		}
@@ -591,8 +593,9 @@ int cntrl_init_smp(const char *path, struct cntrl_device *cntrl)
 		 * */
 		d = opendir(path2);
 		if (!d) {
-			log_debug("%s() Error dir open '%s', path ='%s'",
-				  __func__, path2, path);
+			lib_log(cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+				"%s() Error dir open '%s', path ='%s'",
+				__func__, path2, path);
 			free(path2);
 			return port;
 		}

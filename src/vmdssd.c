@@ -32,6 +32,7 @@
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
+#include "libled_private.h"
 
 #define ATTENTION_OFF        0xF  /* (1111) Attention Off, Power Off */
 #define ATTENTION_LOCATE     0x7  /* (0111) Attention Off, Power On */
@@ -39,13 +40,13 @@
 #define ATTENTION_FAILURE    0xD  /* (1101) Attention On, Power Off */
 
 struct ibpi2value ibpi_to_attention[] = {
-	{IBPI_PATTERN_NORMAL, ATTENTION_OFF},
-	{IBPI_PATTERN_LOCATE, ATTENTION_LOCATE},
-	{IBPI_PATTERN_FAILED_DRIVE, ATTENTION_FAILURE},
-	{IBPI_PATTERN_REBUILD, ATTENTION_REBUILD},
-	{IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF},
-	{IBPI_PATTERN_ONESHOT_NORMAL, ATTENTION_OFF},
-	{IBPI_PATTERN_UNKNOWN}
+	{LED_IBPI_PATTERN_NORMAL, ATTENTION_OFF},
+	{LED_IBPI_PATTERN_LOCATE, ATTENTION_LOCATE},
+	{LED_IBPI_PATTERN_FAILED_DRIVE, ATTENTION_FAILURE},
+	{LED_IBPI_PATTERN_REBUILD, ATTENTION_REBUILD},
+	{LED_IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF},
+	{LED_IBPI_PATTERN_ONESHOT_NORMAL, ATTENTION_OFF},
+	{LED_IBPI_PATTERN_UNKNOWN}
 };
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
@@ -54,7 +55,10 @@ struct ibpi2value ibpi_to_attention[] = {
 static char *get_slot_from_syspath(char *path)
 {
 	char *cur, *ret = NULL;
-	char *temp_path = str_dup(path);
+	char *temp_path = strdup(path);
+
+	if (!temp_path)
+		return NULL;
 
 	cur = strtok(temp_path, "/");
 	while (cur != NULL) {
@@ -67,7 +71,7 @@ static char *get_slot_from_syspath(char *path)
 
 	cur = strtok(cur, ".");
 	if (cur)
-		ret = str_dup(cur);
+		ret = strdup(cur);
 	free(temp_path);
 
 	return ret;
@@ -85,7 +89,7 @@ char *vmdssd_get_domain(const char *path)
 	return strtok(basename(real_domain_path), ":");
 }
 
-bool vmdssd_check_slot_module(const char *slot_path)
+bool vmdssd_check_slot_module(struct led_ctx *ctx, const char *slot_path)
 {
 	char *address;
 	struct cntrl_device *cntrl;
@@ -95,9 +99,9 @@ bool vmdssd_check_slot_module(const char *slot_path)
 		return false;
 
 	// check if slot address contains vmd domain
-	list_for_each(sysfs_get_cntrl_devices(), cntrl) {
-		if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
-			if (cntrl->domain == NULL)
+	list_for_each(sysfs_get_cntrl_devices(ctx), cntrl) {
+		if (cntrl->cntrl_type == LED_CNTRL_TYPE_VMD) {
+			if (cntrl->domain[0] == '\0')
 				continue;
 			if (strstr(address, cntrl->domain) == NULL)
 				continue;
@@ -108,7 +112,7 @@ bool vmdssd_check_slot_module(const char *slot_path)
 	return false;
 }
 
-struct pci_slot *vmdssd_find_pci_slot(char *device_path)
+struct pci_slot *vmdssd_find_pci_slot(struct led_ctx *ctx, char *device_path)
 {
 	char *pci_addr;
 	struct pci_slot *slot = NULL;
@@ -117,31 +121,31 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 	if (!pci_addr)
 		return NULL;
 
-	list_for_each(sysfs_get_pci_slots(), slot) {
+	list_for_each(sysfs_get_pci_slots(ctx), slot) {
 		if (strcmp(slot->address, pci_addr) == 0)
 			break;
 		slot = NULL;
 	}
 	free(pci_addr);
-	if (slot == NULL || !vmdssd_check_slot_module(slot->sysfs_path))
+	if (slot == NULL || !vmdssd_check_slot_module(ctx, slot->sysfs_path))
 		return NULL;
 
 	return slot;
 }
 
-enum ibpi_pattern vmdssd_get_attention(struct pci_slot *slot)
+enum led_ibpi_pattern vmdssd_get_attention(struct pci_slot *slot)
 {
 	int attention = get_int(slot->sysfs_path, -1, "attention");
 	const struct ibpi2value *ibpi2val;
 
 	if (attention == -1)
-		return IBPI_PATTERN_UNKNOWN;
+		return LED_IBPI_PATTERN_UNKNOWN;
 
 	ibpi2val = get_by_value(attention, ibpi_to_attention, ARRAY_SIZE(ibpi_to_attention));
 	return ibpi2val->ibpi;
 }
 
-status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibpi)
+status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern ibpi)
 {
 	char attention_path[PATH_MAX];
 	char buf[WRITE_BUFFER_SIZE];
@@ -149,12 +153,17 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibp
 
 	uint16_t val;
 
-	log_debug("%s before: 0x%x\n", slot->address,
-		  get_int(slot->sysfs_path, 0, "attention"));
+	lib_log(slot->ctx, LED_LOG_LEVEL_DEBUG,
+		"%s before: 0x%x\n", slot->address,
+		(unsigned int)get_int(slot->sysfs_path, 0, "attention"));
 
 	ibpi2val = get_by_ibpi(ibpi, ibpi_to_attention, ARRAY_SIZE(ibpi_to_attention));
-	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_info("VMD: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
+		char ibpi_buff[IPBI2STR_BUFF_SIZE];
+
+		lib_log(slot->ctx, LED_LOG_LEVEL_ERROR,
+			"VMD: Controller doesn't support %s pattern\n",
+			ibpi2str(ibpi, ibpi_buff, sizeof(ibpi_buff)));
 		return STATUS_INVALID_STATE;
 	}
 	val = (uint16_t)ibpi2val->value;
@@ -162,16 +171,18 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibp
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
 	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
 	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
-		log_error("%s write error: %d\n", slot->sysfs_path, errno);
+		lib_log(slot->ctx, LED_LOG_LEVEL_ERROR,
+			"%s write error: %d\n", slot->sysfs_path, errno);
 		return STATUS_FILE_WRITE_ERROR;
 	}
-	log_debug("%s after: 0x%x\n", slot->address,
-		  get_int(slot->sysfs_path, 0, "attention"));
+	lib_log(slot->ctx, LED_LOG_LEVEL_DEBUG,
+		"%s after: 0x%x\n", slot->address,
+		(unsigned int)get_int(slot->sysfs_path, 0, "attention"));
 
 	return STATUS_SUCCESS;
 }
 
-int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
+int vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	struct pci_slot *slot;
 	char *short_name = strrchr(device->sysfs_path, '/');
@@ -184,12 +195,13 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if (ibpi == device->ibpi_prev)
 		return 0;
 
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
+	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 
-	slot = vmdssd_find_pci_slot(device->sysfs_path);
+	slot = vmdssd_find_pci_slot(device->cntrl->ctx, device->sysfs_path);
 	if (!slot) {
-		log_debug("PCI hotplug slot not found for %s\n", short_name);
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"PCI hotplug slot not found for %s\n", short_name);
 		__set_errno_and_return(ENODEV);
 	}
 
@@ -198,5 +210,5 @@ int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 char *vmdssd_get_path(const char *cntrl_path)
 {
-	return str_dup(cntrl_path);
+	return strdup(cntrl_path);
 }

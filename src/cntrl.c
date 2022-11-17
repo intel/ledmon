@@ -29,6 +29,7 @@
 #include <dmalloc.h>
 #endif
 
+#include "led/libled.h"
 #include "cntrl.h"
 #include "config.h"
 #include "config_file.h"
@@ -40,37 +41,7 @@
 #include "amd.h"
 #include "npem.h"
 #include "vmdssd.h"
-
-/**
- * @brief Name of controllers types.
- *
- * This is internal array with names of controller types. Array can be use to
- * translate enumeration type into the string.
- */
-static const char * const ctrl_type_str[] = {
-	[CNTRL_TYPE_UNKNOWN] = "?",
-	[CNTRL_TYPE_DELLSSD] = "Dell SSD",
-	[CNTRL_TYPE_VMD]     = "VMD",
-	[CNTRL_TYPE_SCSI]    = "SCSI",
-	[CNTRL_TYPE_AHCI]    = "AHCI",
-	[CNTRL_TYPE_NPEM]    = "NPEM",
-	[CNTRL_TYPE_AMD]     = "AMD",
-};
-
-enum cntrl_type string_to_cntrl_type(const char *cntrl_str)
-{
-	for(int i = 0; i < ARRAY_SIZE(ctrl_type_str); i++) {
-		if (strcasecmp(cntrl_str, ctrl_type_str[i]) == 0 ) {
-			return (enum cntrl_type)i;
-		}
-	}
-	return CNTRL_TYPE_UNKNOWN;
-}
-
-const char * const cntrl_type_to_string(enum cntrl_type cntrl)
-{
-	return ctrl_type_str[cntrl];
-}
+#include "libled_private.h"
 
 /**
  */
@@ -162,9 +133,9 @@ static int _is_amd_cntrl(const char *path)
 	return 0;
 }
 
-extern int get_dell_server_type(void);
+extern int get_dell_server_type(struct led_ctx *ctx);
 
-static int _is_dellssd_cntrl(const char *path)
+static int _is_dellssd_cntrl(const char *path, struct led_ctx *ctx)
 {
 	uint64_t vdr, dev, svdr, cls;
 	int gen = 0;
@@ -174,7 +145,7 @@ static int _is_dellssd_cntrl(const char *path)
 	cls = get_uint64(path, 0, "class");
 	svdr = get_uint64(path, 0, "subsystem_vendor");
 	if (cls == 0x10802)
-		gen = get_dell_server_type();
+		gen = get_dell_server_type(ctx);
 
 	return ((vdr == 0x1344L && dev == 0x5150L) || /* micron ssd */
 		(gen != 0) ||			      /* Dell Server+NVME */
@@ -218,9 +189,9 @@ static int _is_vmd_cntrl(const char *path)
 	return sysfs_check_driver(path, "vmd");
 }
 
-static int _is_npem_cntrl(const char *path)
+static int _is_npem_cntrl(const char *path, struct led_ctx *ctx)
 {
-	return is_npem_capable(path);
+	return is_npem_capable(path, ctx);
 }
 
 /**
@@ -236,24 +207,25 @@ static int _is_npem_cntrl(const char *path)
  *         CNTRL_TYPE_UNKNOWN this means a controller device is not
  *         supported.
  */
-static enum cntrl_type _get_type(const char *path)
+static enum led_cntrl_type _get_type(const char *path, struct led_ctx *ctx)
 {
-	enum cntrl_type type = CNTRL_TYPE_UNKNOWN;
-	if (_is_npem_cntrl(path)) {
-		type = CNTRL_TYPE_NPEM;
+	enum led_cntrl_type type = LED_CNTRL_TYPE_UNKNOWN;
+
+	if (_is_npem_cntrl(path, ctx)) {
+		type = LED_CNTRL_TYPE_NPEM;
 	} else if (_is_vmd_cntrl(path)) {
-		type = CNTRL_TYPE_VMD;
-	} else if (_is_dellssd_cntrl(path)) {
-		type = CNTRL_TYPE_DELLSSD;
+		type = LED_CNTRL_TYPE_VMD;
+	} else if (_is_dellssd_cntrl(path, ctx)) {
+		type = LED_CNTRL_TYPE_DELLSSD;
 	} else if (_is_storage_controller(path)) {
 		if (_is_intel_ahci_cntrl(path))
-			type = CNTRL_TYPE_AHCI;
+			type = LED_CNTRL_TYPE_AHCI;
 		else if (_is_amd_cntrl(path))
-			type = CNTRL_TYPE_AMD;
+			type = LED_CNTRL_TYPE_AMD;
 		else if (_is_isci_cntrl(path)
-				|| sysfs_enclosure_attached_to_cntrl(path)
+				|| sysfs_enclosure_attached_to_cntrl(ctx, path)
 				|| _is_smp_cntrl(path))
-			type = CNTRL_TYPE_SCSI;
+			type = LED_CNTRL_TYPE_SCSI;
 	}
 	return type;
 }
@@ -406,49 +378,50 @@ static unsigned int _ahci_em_messages(const char *path)
  * Allocates memory for a new controller device structure. See cntrl.h for
  * details.
  */
-struct cntrl_device *cntrl_device_init(const char *path)
+struct cntrl_device *cntrl_device_init(const char *path, struct led_ctx *ctx)
 {
 	unsigned int em_enabled;
-	enum cntrl_type type;
+	enum led_cntrl_type type;
 	struct cntrl_device *device = NULL;
 
-	type = _get_type(path);
-	if (type != CNTRL_TYPE_UNKNOWN) {
-		if (!list_is_empty(&conf.cntrls_allowlist)) {
+	type = _get_type(path, ctx);
+	if (type != LED_CNTRL_TYPE_UNKNOWN) {
+		if (!list_is_empty(&ctx->config.allowlist)) {
 			char *cntrl = NULL;
 
-			list_for_each(&conf.cntrls_allowlist, cntrl) {
+			list_for_each(&ctx->config.allowlist, cntrl) {
 				if (match_string(cntrl, path))
 					break;
 				cntrl = NULL;
 			}
 			if (!cntrl) {
-				log_debug("%s not found on allowlist, ignoring", path);
+				lib_log(ctx, LED_LOG_LEVEL_DEBUG,
+					"%s not found on allowlist, ignoring", path);
 				return NULL;
 			}
-		} else if (!list_is_empty(&conf.cntrls_excludelist)) {
+		} else if (!list_is_empty(&ctx->config.excludelist)) {
 			char *cntrl;
 
-			list_for_each(&conf.cntrls_excludelist, cntrl) {
+			list_for_each(&ctx->config.excludelist, cntrl) {
 				if (match_string(cntrl, path)) {
-					log_debug("%s found on excludelist, ignoring",
-						  path);
+					lib_log(ctx, LED_LOG_LEVEL_DEBUG,
+						"%s found on excludelist, ignoring", path);
 					return NULL;
 				}
 			}
 		}
 		switch (type) {
-		case CNTRL_TYPE_DELLSSD:
-		case CNTRL_TYPE_SCSI:
-		case CNTRL_TYPE_VMD:
-		case CNTRL_TYPE_NPEM:
+		case LED_CNTRL_TYPE_DELLSSD:
+		case LED_CNTRL_TYPE_SCSI:
+		case LED_CNTRL_TYPE_VMD:
+		case LED_CNTRL_TYPE_NPEM:
 			em_enabled = 1;
 			break;
-		case CNTRL_TYPE_AHCI:
+		case LED_CNTRL_TYPE_AHCI:
 			em_enabled = _ahci_em_messages(path);
 			break;
-		case CNTRL_TYPE_AMD:
-			em_enabled = amd_em_enabled(path);
+		case LED_CNTRL_TYPE_AMD:
+			em_enabled = amd_em_enabled(path, ctx);
 			break;
 		default:
 			em_enabled = 0;
@@ -456,14 +429,14 @@ struct cntrl_device *cntrl_device_init(const char *path)
 		if (em_enabled) {
 			device = calloc(1, sizeof(struct cntrl_device));
 			if (device) {
-				if (type == CNTRL_TYPE_SCSI) {
+				if (type == LED_CNTRL_TYPE_SCSI) {
 					device->isci_present = _is_isci_cntrl(path);
 					device->hosts = _cntrl_get_hosts(path);
 				} else {
 					device->isci_present = 0;
 					device->hosts = NULL;
 				}
-				if (type == CNTRL_TYPE_VMD) {
+				if (type == LED_CNTRL_TYPE_VMD) {
 					char *domain = vmdssd_get_domain(path);
 
 					if (domain != NULL)
@@ -472,11 +445,12 @@ struct cntrl_device *cntrl_device_init(const char *path)
 				}
 				device->cntrl_type = type;
 				strncpy(device->sysfs_path, path, PATH_MAX - 1);
+				device->ctx = ctx;
 			}
 		} else {
-			log_error
-			    ("controller discovery: %s - enclosure " \
-			     "management not supported.", path);
+			lib_log(ctx, LED_LOG_LEVEL_ERROR,
+				"controller discovery: %s - enclosure management not supported.",
+				path);
 		}
 	}
 	return device;
@@ -492,10 +466,4 @@ void cntrl_device_fini(struct cntrl_device *device)
 		free_hosts(device->hosts);
 		free(device);
 	}
-}
-
-void print_cntrl(struct cntrl_device *ctrl_dev)
-{
-		printf("%s (%s)\n", ctrl_dev->sysfs_path,
-			ctrl_type_str[ctrl_dev->cntrl_type]);
 }

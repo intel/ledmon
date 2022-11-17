@@ -27,6 +27,7 @@
 #include "ses.h"
 #include "slot.h"
 #include "status.h"
+#include "sysfs.h"
 
 /**
  * @brief Enclosure device structure.
@@ -55,6 +56,8 @@ struct enclosure_device {
 
 	struct ses_slot *slots;
 	int slots_count;
+
+	struct led_ctx *ctx;
 };
 
 /**
@@ -66,13 +69,14 @@ struct enclosure_device {
  *
  * @param[in]      path           Path to an enclosure device in sysfs tree.
  *                                The path begins with "/sys/class/enclosure/".
+ * @param[in]      ctx            The library context
  *
  * @return Pointer to enclosure device structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means either the
  *         specified path is invalid or there's not enough memory in the system
  *         to allocated new structure.
  */
-struct enclosure_device *enclosure_device_init(const char *path);
+struct enclosure_device *enclosure_device_init(const char *path, struct led_ctx *ctx);
 
 /**
  * @brief Releases an enclosure device structure.
@@ -90,14 +94,14 @@ int enclosure_open(const struct enclosure_device *enclosure);
 /**
  * @brief Gets slot information.
  *
- * This function fills slot information related to the slot.
+ * This function returns the ibpi pattern for the specified slot.
  *
- * @param[in]         slot                Requested slot.
  * @param[in]         slot_property       Pointer to the slot property element.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-enum ibpi_pattern enclosure_get_state(struct slot_property *slot);
+enum led_ibpi_pattern enclosure_get_state(struct slot_property *slot);
+
 
 /**
  * @brief Sets led state for slot.
@@ -109,7 +113,7 @@ enum ibpi_pattern enclosure_get_state(struct slot_property *slot);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t enclosure_set_state(struct slot_property *slot, enum ibpi_pattern state);
+status_t enclosure_set_state(struct slot_property *slot, enum led_ibpi_pattern state);
 
 /**
  * @brief Initializes a slot_property for a specified enclosure and slot number in that enclosure.

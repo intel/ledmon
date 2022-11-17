@@ -30,6 +30,8 @@
 #include <sys/ioctl.h>
 #include <linux/ipmi.h>
 
+#include "libled_private.h"
+
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
@@ -56,10 +58,9 @@ static int ipmi_open(void)
 	return -1;
 }
 
-int ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
+int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	    int resplen, int *rlen, void *resp)
 {
-	static int msgid;
 	struct ipmi_system_interface_addr saddr;
 	struct ipmi_ipmb_addr iaddr;
 	struct ipmi_addr raddr;
@@ -93,7 +94,7 @@ int ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	}
 
 	/* Issue command */
-	req.msgid = ++msgid;
+	req.msgid = ++ctx->ipmi_msgid;
 	req.msg.netfn = netfn;
 	req.msg.cmd = cmd;
 	req.msg.data_len = datalen;
@@ -120,13 +121,13 @@ int ipmicmd(int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	rcv.addr_len = sizeof(raddr);
 	rc = ioctl(fd, IPMICTL_RECEIVE_MSG_TRUNC, (void *)&rcv);
 	if (rc != 0 && errno == EMSGSIZE)
-		log_info("too short..\n");
+		lib_log(ctx, LED_LOG_LEVEL_INFO, "too short..\n");
 	if (rc != 0 && errno != EMSGSIZE) {
-		log_info("%s\n", strerror(errno));
+		lib_log(ctx, LED_LOG_LEVEL_INFO, "%s\n", strerror(errno));
 		goto end;
 	}
 	if (rcv.msg.data[0])
-		log_debug("IPMI Error: %.2x\n", rcv.msg.data[0]);
+		lib_log(ctx, LED_LOG_LEVEL_DEBUG, "IPMI Error: %.2x\n", rcv.msg.data[0]);
 	rc = 0;
 	*rlen = rcv.msg.data_len - 1;
 	memcpy(resp, rcv.msg.data + 1, *rlen);

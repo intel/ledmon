@@ -39,21 +39,22 @@
 #endif
 
 #include "config.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "list.h"
 #include "utils.h"
 #include "amd.h"
 #include "ipmi.h"
+#include "libled_private.h"
 
 /* For IBPI_PATTERN_NORMAL and IBPI_PATTERN_ONESHOT_NORMAL _disable_all_ibpi_states is called. */
 const struct ibpi2value ibpi2amd_ipmi[] = {
-	{IBPI_PATTERN_PFA, 0x41},
-	{IBPI_PATTERN_LOCATE, 0x42},
-	{IBPI_PATTERN_FAILED_DRIVE, 0x44},
-	{IBPI_PATTERN_FAILED_ARRAY, 0x45},
-	{IBPI_PATTERN_REBUILD, 0x46},
-	{IBPI_PATTERN_HOTSPARE, 0x47},
-	{IBPI_PATTERN_UNKNOWN}
+	{LED_IBPI_PATTERN_PFA, 0x41},
+	{LED_IBPI_PATTERN_LOCATE, 0x42},
+	{LED_IBPI_PATTERN_FAILED_DRIVE, 0x44},
+	{LED_IBPI_PATTERN_FAILED_ARRAY, 0x45},
+	{LED_IBPI_PATTERN_REBUILD, 0x46},
+	{LED_IBPI_PATTERN_HOTSPARE, 0x47},
+	{LED_IBPI_PATTERN_UNKNOWN}
 };
 
 #define MG9098_CHIP_ID_REG	0x63
@@ -74,7 +75,7 @@ const struct ibpi2value ibpi2amd_ipmi[] = {
  * then use it to find the corresponding address for a slot in
  * /sys/bus/pci_slots to determine the icorrect port for the NVMe device.
  */
-static int _get_ipmi_nvme_port(char *path)
+static int _get_ipmi_nvme_port(char *path, struct led_ctx *ctx)
 {
 	int rc;
 	char *p, *f;
@@ -85,7 +86,8 @@ static int _get_ipmi_nvme_port(char *path)
 
 	p = strrchr(path, '/');
 	if (!p) {
-		log_error("Couldn't parse NVMe path to determine port\n");
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Couldn't parse NVMe path to determine port\n");
 		return -1;
 	}
 
@@ -94,7 +96,8 @@ static int _get_ipmi_nvme_port(char *path)
 	/* p now points to the address, remove the bits after the '.' */
 	f = strchr(p, '.');
 	if (!f) {
-		log_error("Couldn't parse NVMe port address\n");
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Couldn't parse NVMe port address\n");
 		return -1;
 	}
 
@@ -136,7 +139,8 @@ static int _get_ipmi_nvme_port(char *path)
 	 * not valid.
 	 */
 	if ((port < 0) || (port > 24)) {
-		log_error("Invalid NVMe physical port %d\n", port);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Invalid NVMe physical port %d\n", port);
 		port = -1;
 	}
 
@@ -176,11 +180,12 @@ static int _get_amd_ipmi_drive(const char *start_path,
 	int found;
 	char path[PATH_MAX];
 
-	found = _find_file_path(start_path, "nvme", path, PATH_MAX);
+	found = _find_file_path(start_path, "nvme", path, PATH_MAX, drive->ctx);
 	if (found) {
-		drive->port = _get_ipmi_nvme_port(path);
+		drive->port = _get_ipmi_nvme_port(path, drive->ctx);
 		if (drive->port < 0) {
-			log_error("Could not retrieve port number\n");
+			lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
+				"Could not retrieve port number\n");
 			return -1;
 		}
 
@@ -191,7 +196,8 @@ static int _get_amd_ipmi_drive(const char *start_path,
 
 		drive->port = _get_ipmi_sata_port(start_path);
 		if (drive->port < 0) {
-			log_error("Could not retrieve port number\n");
+			lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
+				"Could not retrieve port number\n");
 			return -1;
 		}
 
@@ -209,8 +215,8 @@ static int _get_amd_ipmi_drive(const char *start_path,
 		drive->dev = AMD_SATA_DEVICE;
 	}
 
-	log_debug("AMD Drive: port: %d, bay %x\n", drive->port,
-		  drive->drive_bay);
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG,
+		"AMD Drive: port: %d, bay %x\n", drive->port, (unsigned int)drive->drive_bay);
 
 	return 0;
 }
@@ -228,7 +234,8 @@ static int _ipmi_platform_channel(struct amd_drive *drive)
 		break;
 	default:
 		rc = -1;
-		log_error("AMD Platform does not have a defined IPMI channel\n");
+		lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
+			"AMD Platform does not have a defined IPMI channel\n");
 		break;
 	}
 
@@ -267,7 +274,8 @@ static int _ipmi_platform_slave_address(struct amd_drive *drive)
 		break;
 	default:
 		rc = -1;
-		log_error("AMD Platform does not have a defined IPMI slave address\n");
+		lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
+			"AMD Platform does not have a defined IPMI slave address\n");
 		break;
 	}
 
@@ -297,15 +305,17 @@ static int _set_ipmi_register(int enable, uint8_t reg, struct amd_drive *drive)
 	/* Find current register setting */
 	status = 0;
 
-	log_debug("Retrieving current register status\n");
-	log_debug(REG_FMT_2, "channel", cmd_data[0], "slave addr", cmd_data[1]);
-	log_debug(REG_FMT_2, "len", cmd_data[2], "register", cmd_data[3]);
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "Retrieving current register status\n");
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "channel", cmd_data[0],
+		"slave addr", cmd_data[1]);
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "len", cmd_data[2],
+		"register", cmd_data[3]);
 
-	rc = ipmicmd(BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 4, &cmd_data,
+	rc = ipmicmd(drive->ctx, BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 4, &cmd_data,
 		     1, &data_sz, &status);
 	if (rc) {
-		log_error("Could not determine current register %x setting\n",
-			  reg);
+		lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
+			"Could not determine current register %x setting\n", reg);
 		return rc;
 	}
 
@@ -320,16 +330,19 @@ static int _set_ipmi_register(int enable, uint8_t reg, struct amd_drive *drive)
 	status = 0;
 	cmd_data[4] = new_drives_status;
 
-	log_debug("Updating register status: %x -> %x\n", drives_status,
-		  new_drives_status);
-	log_debug(REG_FMT_2, "channel", cmd_data[0], "slave addr", cmd_data[1]);
-	log_debug(REG_FMT_2, "len", cmd_data[2], "register", cmd_data[3]);
-	log_debug(REG_FMT_1, "status", cmd_data[4]);
 
-	rc = ipmicmd(BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 5, &cmd_data,
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "Updating register status: %x -> %x\n",
+		drives_status, new_drives_status);
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "channel", cmd_data[0],
+		"slave addr", cmd_data[1]);
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "len", cmd_data[2],
+		"register", cmd_data[3]);
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_1, "status", cmd_data[4]);
+
+	rc = ipmicmd(drive->ctx, BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 5, &cmd_data,
 		     1, &data_sz, &status);
 	if (rc) {
-		log_error("Could not enable register %x\n", reg);
+		lib_log(drive->ctx, LED_LOG_LEVEL_ERROR, "Could not enable register %x\n", reg);
 		return rc;
 	}
 
@@ -338,24 +351,25 @@ static int _set_ipmi_register(int enable, uint8_t reg, struct amd_drive *drive)
 
 static int _enable_smbus_control(struct amd_drive *drive)
 {
-	log_debug("Enabling SMBUS Control\n");
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "Enabling SMBUS Control\n");
 	return _set_ipmi_register(1, 0x3c, drive);
 }
 
-static int _change_ibpi_state(struct amd_drive *drive, enum ibpi_pattern ibpi, bool enable)
+static int _change_ibpi_state(struct amd_drive *drive, enum led_ibpi_pattern ibpi, bool enable)
 {
+	char buf[IPBI2STR_BUFF_SIZE];
 	const struct ibpi2value *ibpi2val = get_by_ibpi(ibpi, ibpi2amd_ipmi,
 							ARRAY_SIZE(ibpi2amd_ipmi));
 
-	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_info("AMD_IPMI: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
-		return STATUS_INVALID_STATE;
+	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
+		lib_log(drive->ctx, LED_LOG_LEVEL_INFO,
+			"AMD_IPMI: Controller doesn't support %s pattern\n",
+			ibpi2str(ibpi, buf, sizeof(buf)));
+		return LED_STATUS_INVALID_STATE;
 	}
 
-	if (enable)
-		log_debug("Enabling %s LED\n", ibpi2str(ibpi));
-	else
-		log_debug("Disabling %s LED\n", ibpi2str(ibpi));
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "%s %s LED\n",
+		(enable) ? "Enabling":"Disabling", ibpi2str(ibpi, buf, sizeof(buf)));
 
 	return _set_ipmi_register(enable, ibpi2val->value, drive);
 }
@@ -364,16 +378,16 @@ static int _disable_all_ibpi_states(struct amd_drive *drive)
 {
 	int rc;
 
-	rc = _change_ibpi_state(drive, IBPI_PATTERN_PFA, false);
-	rc |= _change_ibpi_state(drive, IBPI_PATTERN_LOCATE, false);
-	rc |= _change_ibpi_state(drive, IBPI_PATTERN_FAILED_DRIVE, false);
-	rc |= _change_ibpi_state(drive, IBPI_PATTERN_FAILED_ARRAY, false);
-	rc |= _change_ibpi_state(drive, IBPI_PATTERN_REBUILD, false);
+	rc = _change_ibpi_state(drive, LED_IBPI_PATTERN_PFA, false);
+	rc |= _change_ibpi_state(drive, LED_IBPI_PATTERN_LOCATE, false);
+	rc |= _change_ibpi_state(drive, LED_IBPI_PATTERN_FAILED_DRIVE, false);
+	rc |= _change_ibpi_state(drive, LED_IBPI_PATTERN_FAILED_ARRAY, false);
+	rc |= _change_ibpi_state(drive, LED_IBPI_PATTERN_REBUILD, false);
 
 	return rc;
 }
 
-int _amd_ipmi_em_enabled(const char *path)
+int _amd_ipmi_em_enabled(const char *path, struct led_ctx *ctx)
 {
 	int rc;
 	int status, data_sz;
@@ -393,43 +407,50 @@ int _amd_ipmi_em_enabled(const char *path)
 	cmd_data[3] = MG9098_CHIP_ID_REG;
 
 	status = 0;
-	rc = ipmicmd(BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 4, &cmd_data,
+	rc = ipmicmd(ctx, BMC_SA, 0x0, AMD_IPMI_NETFN, AMD_IPMI_CMD, 4, &cmd_data,
 		     1, &data_sz, &status);
 
 	if (rc) {
-		log_error("Can't determine MG9098 Status for AMD platform\n");
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Can't determine MG9098 Status for AMD platform\n");
 		return 0;
 	}
 
 	/* Status return of 98 indicates MG9098 backplane */
 	if (status != 98) {
-		log_error("Platform does not have a MG9098 controller\n");
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Platform does not have a MG9098 controller\n");
 		return 0;
 	}
 
 	return 1;
 }
 
-int _amd_ipmi_write(struct block_device *device, enum ibpi_pattern ibpi)
+int _amd_ipmi_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	int rc;
 	struct amd_drive drive;
+	char buf[IPBI2STR_BUFF_SIZE];
 
-	log_info("\n");
-	log_info("Setting %s...", ibpi2str(ibpi));
+	memset(&drive, 0, sizeof(struct amd_drive));
+	drive.ctx = device->cntrl->ctx;
+
+	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "\n");
+	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "Setting %s...",
+		ibpi2str(ibpi, buf, sizeof(buf)));
 
 	rc = _get_amd_ipmi_drive(device->cntrl_path, &drive);
 	if (rc)
 		return rc;
 
-	if ((ibpi == IBPI_PATTERN_NORMAL) ||
-	    (ibpi == IBPI_PATTERN_ONESHOT_NORMAL)) {
+	if ((ibpi == LED_IBPI_PATTERN_NORMAL) ||
+	    (ibpi == LED_IBPI_PATTERN_ONESHOT_NORMAL)) {
 		rc = _disable_all_ibpi_states(&drive);
 		return rc;
 	}
 
-	if (ibpi == IBPI_PATTERN_LOCATE_OFF) {
-		rc = _change_ibpi_state(&drive, IBPI_PATTERN_LOCATE, false);
+	if (ibpi == LED_IBPI_PATTERN_LOCATE_OFF) {
+		rc = _change_ibpi_state(&drive, LED_IBPI_PATTERN_LOCATE, false);
 		return rc;
 	}
 

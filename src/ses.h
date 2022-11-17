@@ -23,7 +23,7 @@
 
 #include <asm/types.h>
 
-#include "ibpi.h"
+#include "led/libled.h"
 
 /* Size of buffer for SES-2 Messages. */
 #define SES_ALLOC_BUFF 4096
@@ -70,11 +70,11 @@ struct ses_slot_ctrl_elem {
 struct ses_slot {
 	int index;
 	uint64_t sas_addr;
-	enum ibpi_pattern ibpi_status;
+	enum led_ibpi_pattern ibpi_status;
 };
 
-int ses_load_pages(int fd, struct ses_pages *sp);
-int ses_write_msg(enum ibpi_pattern ibpi, struct ses_pages *sp, int idx);
+int ses_load_pages(int fd, struct ses_pages *sp, struct led_ctx *ctx);
+int ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx);
 int ses_send_diag(int fd, struct ses_pages *sp);
 int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count);
 

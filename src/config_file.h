@@ -13,6 +13,7 @@
 #ifndef SRC_CONFIG_FILE_H_
 #define SRC_CONFIG_FILE_H_
 
+#include <stdio.h>
 #include "list.h"
 
 #define LEDMON_SHARE_MEM_FILE "/ledmon.conf"
@@ -34,6 +35,7 @@ enum log_level_enum {
 
 struct ledmon_conf {
 	/* internal ledmon functions */
+	FILE *s_log;
 	char *log_path;
 	enum log_level_enum log_level;
 	int scan_interval;
@@ -49,10 +51,12 @@ struct ledmon_conf {
 	struct list cntrls_excludelist;
 };
 
-extern struct ledmon_conf conf;
-
-int ledmon_read_config(const char *filename);
-int ledmon_write_shared_conf(void);
+int ledmon_read_conf(const char *filename, struct ledmon_conf *conf);
+int ledmon_write_shared_conf(struct ledmon_conf *conf);
 int ledmon_remove_shared_conf(void);
+
+
+int ledmon_init_conf(struct ledmon_conf *conf, enum log_level_enum lvl, const char *log_path);
+void ledmon_free_conf(struct ledmon_conf *conf);
 
 #endif /* SRC_CONFIG_FILE_H_ */

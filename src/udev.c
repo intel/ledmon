@@ -18,21 +18,25 @@
  *
  */
 
+/* Note: This file only used by ledmon */
+
 #include <libudev.h>
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
 
 #include "block.h"
-#include "ibpi.h"
+#include "led/libled.h"
 #include "status.h"
 #include "sysfs.h"
 #include "udev.h"
 #include "utils.h"
 
+extern struct ledmon_conf conf;
+
 static struct udev_monitor *udev_monitor;
 
-static int _compare(const struct block_device *bd, const char *syspath)
+static int _compare(const struct block_device *bd, const char *syspath, struct led_ctx *ctx)
 {
 	if (!bd || !syspath)
 		return 0;
@@ -43,7 +47,7 @@ static int _compare(const struct block_device *bd, const char *syspath)
 		struct block_device *bd_new;
 		int ret;
 
-		bd_new = block_device_init(sysfs_get_cntrl_devices(), syspath);
+		bd_new = block_device_init(sysfs_get_cntrl_devices(ctx), syspath);
 		if (!bd_new)
 			return 0;
 
@@ -135,14 +139,16 @@ static void _clear_raid_dev_info(struct block_device *block, char *raid_dev)
 		char *tmp = strrchr(block->raid_dev->sysfs_path, '/');
 
 		if (tmp == NULL) {
-			log_debug("Device: %s have wrong raid_dev path: %s",
+			log_error(
+				"Device: %s have wrong raid_dev path: %s",
 				block->sysfs_path,
 				block->raid_dev->sysfs_path);
 			return;
 		}
 		if (strcmp(raid_dev, tmp + 1) == 0) {
-			log_debug("CLEAR raid_dev %s in %s ",
-				  raid_dev, block->sysfs_path);
+			log_error(
+				"CLEAR raid_dev %s in %s ",
+				raid_dev, block->sysfs_path);
 			raid_device_fini(block->raid_dev);
 			block->raid_dev = NULL;
 		}
@@ -150,7 +156,7 @@ static void _clear_raid_dev_info(struct block_device *block, char *raid_dev)
 
 }
 
-int handle_udev_event(struct list *ledmon_block_list)
+int handle_udev_event(struct list *ledmon_block_list, struct led_ctx *ctx)
 {
 	struct udev_device *dev;
 	int status = -1;
@@ -168,7 +174,7 @@ int handle_udev_event(struct list *ledmon_block_list)
 		}
 
 		list_for_each(ledmon_block_list, block) {
-			if (_compare(block, syspath))
+			if (_compare(block, syspath, ctx))
 				break;
 			block = NULL;
 		}
@@ -191,13 +197,13 @@ int handle_udev_event(struct list *ledmon_block_list)
 
 		if (act == UDEV_ACTION_ADD) {
 			log_debug("ADDED %s", block->sysfs_path);
-			if (block->ibpi == IBPI_PATTERN_FAILED_DRIVE ||
-				block->ibpi == IBPI_PATTERN_REMOVED ||
-				block->ibpi == IBPI_PATTERN_UNKNOWN)
-				block->ibpi = IBPI_PATTERN_ADDED;
+			if (block->ibpi == LED_IBPI_PATTERN_FAILED_DRIVE ||
+				block->ibpi == LED_IBPI_PATTERN_REMOVED ||
+				block->ibpi == LED_IBPI_PATTERN_UNKNOWN)
+				block->ibpi = LED_IBPI_PATTERN_ADDED;
 		} else if (act == UDEV_ACTION_REMOVE) {
 			log_debug("REMOVED %s", block->sysfs_path);
-			block->ibpi = IBPI_PATTERN_REMOVED;
+			block->ibpi = LED_IBPI_PATTERN_REMOVED;
 		} else {
 			/* not interesting event */
 			status = 1;

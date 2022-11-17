@@ -32,6 +32,7 @@
 #include <dmalloc.h>
 #endif
 
+#include "libled_private.h"
 #include "ahci.h"
 #include "block.h"
 #include "config.h"
@@ -84,21 +85,21 @@ static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
 {
 	send_message_t result = NULL;
 
-	if (cntrl->cntrl_type == CNTRL_TYPE_AHCI) {
+	if (cntrl->cntrl_type == LED_CNTRL_TYPE_AHCI) {
 		result = ahci_sgpio_write;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
+	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI
 		   && !dev_directly_attached(path)) {
 		result = scsi_ses_write;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_SCSI
+	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI
 		   && dev_directly_attached(path)) {
 		result = scsi_smp_fill_buffer;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD) {
+	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_DELLSSD) {
 		result = dellssd_write;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
+	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_VMD) {
 		result = vmdssd_write;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_NPEM) {
+	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM) {
 		result = npem_write;
-	} else if (cntrl->cntrl_type == CNTRL_TYPE_AMD) {
+	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_AMD) {
 		result = amd_write;
 	}
 	return result;
@@ -113,7 +114,7 @@ static flush_message_t _get_flush_fn(struct cntrl_device *cntrl, const char *pat
 {
 	flush_message_t result = NULL;
 
-	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
+	if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI) {
 		if (dev_directly_attached(path))
 			result = scsi_smp_write_buffer;
 		else
@@ -141,18 +142,18 @@ static char *_get_host(char *path, struct cntrl_device *cntrl)
 {
 	char *result = NULL;
 
-	if (cntrl->cntrl_type == CNTRL_TYPE_SCSI)
+	if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI)
 		result = scsi_get_host_path(path, cntrl->sysfs_path);
-	else if (cntrl->cntrl_type == CNTRL_TYPE_AHCI)
+	else if (cntrl->cntrl_type == LED_CNTRL_TYPE_AHCI)
 		result = ahci_get_port_path(path);
-	else if (cntrl->cntrl_type == CNTRL_TYPE_DELLSSD)
+	else if (cntrl->cntrl_type == LED_CNTRL_TYPE_DELLSSD)
 		result = dellssd_get_path(cntrl->sysfs_path);
-	else if (cntrl->cntrl_type == CNTRL_TYPE_VMD)
+	else if (cntrl->cntrl_type == LED_CNTRL_TYPE_VMD)
 		result = vmdssd_get_path(cntrl->sysfs_path);
-	else if (cntrl->cntrl_type == CNTRL_TYPE_NPEM)
+	else if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM)
 		result = npem_get_path(cntrl->sysfs_path);
-	else if (cntrl->cntrl_type == CNTRL_TYPE_AMD)
-		result = amd_get_path(path, cntrl->sysfs_path);
+	else if (cntrl->cntrl_type == LED_CNTRL_TYPE_AMD)
+		result = amd_get_path(path, cntrl->sysfs_path, cntrl->ctx);
 
 	return result;
 }
@@ -163,9 +164,9 @@ static int is_host_id_supported(const struct block_device *bd)
 		return 0;
 
 	switch (bd->cntrl->cntrl_type) {
-	case CNTRL_TYPE_DELLSSD:
-	case CNTRL_TYPE_VMD:
-	case CNTRL_TYPE_NPEM:
+	case LED_CNTRL_TYPE_DELLSSD:
+	case LED_CNTRL_TYPE_VMD:
+	case LED_CNTRL_TYPE_NPEM:
 		return 0;
 	default:
 		return 1;
@@ -192,7 +193,7 @@ struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *p
 	list_for_each(cntrl_list, cntrl) {
 		if (strncmp(cntrl->sysfs_path, path,
 			    strnlen(cntrl->sysfs_path, PATH_MAX)) == 0) {
-			if (cntrl->cntrl_type == CNTRL_TYPE_NPEM)
+			if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM)
 				return cntrl;
 			non_npem_cntrl = cntrl;
 		}
@@ -216,11 +217,12 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 	return hosts;
 }
 
-struct block_device *get_block_device_from_sysfs_path(char *sub_path, bool sub_path_to_end)
+struct block_device *get_block_device_from_sysfs_path(struct led_ctx *ctx, char *sub_path,
+						      bool sub_path_to_end)
 {
 	struct block_device *device;
 
-	list_for_each(sysfs_get_block_devices(), device) {
+	list_for_each(sysfs_get_block_devices(ctx), device) {
 			char *start_loc;
 			if ((start_loc = strstr(device->sysfs_path, sub_path))) {
 				char following = start_loc[strnlen(sub_path, PATH_MAX)];
@@ -243,77 +245,77 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 	char link[PATH_MAX];
 	char *host = NULL;
 	struct block_device *device = NULL;
-	struct pci_slot *pci_slot = NULL;
-	send_message_t send_fn = NULL;
-	flush_message_t flush_fn = NULL;
 	int host_id = -1;
-	char *host_name;
+	char *host_name = NULL;
+	struct _host_type *hosts = NULL;
 
-	if (realpath(path, link)) {
-		pci_slot = vmdssd_find_pci_slot(link);
-		cntrl = block_get_controller(cntrl_list, link);
-		if (cntrl != NULL) {
-			if (cntrl->cntrl_type == CNTRL_TYPE_VMD && !pci_slot)
-				return NULL;
-			host = _get_host(link, cntrl);
-			if (host == NULL)
-				return NULL;
-			host_name = get_path_hostN(link);
-			if (host_name) {
-				if (sscanf(host_name, "host%d", &host_id) != 1)
-					host_id = -1;
-				free(host_name);
-			}
-			flush_fn = _get_flush_fn(cntrl, link);
-			send_fn = _get_send_fn(cntrl, link);
-			if (send_fn  == NULL) {
-				free(host);
-				return NULL;
-			}
-		} else {
-			return NULL;
+	if (!realpath(path, link))
+		goto error;
+
+	cntrl = block_get_controller(cntrl_list, link);
+	if (!cntrl)
+		goto error;
+
+	if (cntrl->cntrl_type == LED_CNTRL_TYPE_VMD &&
+			!vmdssd_find_pci_slot(cntrl->ctx, link))
+		goto error;
+	host = _get_host(link, cntrl);
+	if (host == NULL)
+		goto error;
+	host_name = get_path_hostN(link);
+	if (host_name) {
+		if (sscanf(host_name, "host%d", &host_id) != 1)
+			host_id = -1;
+		free(host_name);
+	}
+
+	device = calloc(1, sizeof(*device));
+	if (!device)
+		goto error;
+
+	hosts = cntrl ? cntrl->hosts : NULL;
+	device->cntrl = cntrl;
+	device->sysfs_path = strdup(link);
+	if (!device->sysfs_path)
+		goto error;
+	device->cntrl_path = host;
+	device->ibpi = LED_IBPI_PATTERN_UNKNOWN;
+	device->ibpi_prev = LED_IBPI_PATTERN_NONE;
+	device->send_fn = _get_send_fn(cntrl, link);
+	if (!device->send_fn)
+		goto error;
+	device->flush_fn = _get_flush_fn(cntrl, link);
+	device->timestamp = timestamp;
+	device->host = NULL;
+	device->host_id = host_id;
+	device->encl_index = -1;
+	device->raid_dev = NULL;
+	while (hosts) {
+		if (hosts->host_id == host_id) {
+			device->host = hosts;
+			break;
 		}
-
-		device = calloc(1, sizeof(*device));
-		if (device) {
-			struct _host_type *hosts = cntrl ? cntrl->hosts : NULL;
-
-			device->cntrl = cntrl;
-			device->sysfs_path = str_dup(link);
-			device->cntrl_path = host;
-			device->ibpi = IBPI_PATTERN_UNKNOWN;
-			device->ibpi_prev = IBPI_PATTERN_NONE;
-			device->send_fn = send_fn;
-			device->flush_fn = flush_fn;
-			device->timestamp = timestamp;
-			device->host = NULL;
-			device->host_id = host_id;
-			device->encl_index = -1;
-			device->raid_dev = NULL;
-			while (hosts) {
-				if (hosts->host_id == host_id) {
-					device->host = hosts;
-					break;
-				}
-				hosts = hosts->next;
-			}
-			if (cntrl && cntrl->cntrl_type == CNTRL_TYPE_SCSI) {
-				device->phy_index = cntrl_init_smp(link, cntrl);
-				if (!dev_directly_attached(link)
-						&& !scsi_get_enclosure(device)) {
-					log_debug("Device initialization failed for '%s'",
-							path);
-					free(device->sysfs_path);
-					free(device->cntrl_path);
-					free(device);
-					device = NULL;
-				}
-			}
-		} else if (host) {
-			free(host);
+		hosts = hosts->next;
+	}
+	if (cntrl && cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI) {
+		device->phy_index = cntrl_init_smp(link, cntrl);
+		if (!dev_directly_attached(link)
+				&& !scsi_get_enclosure(cntrl->ctx, device)) {
+			lib_log(cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+				"Device initialization failed for '%s'", path);
+			goto error;
 		}
 	}
+out:
 	return device;
+error:
+	free(host);
+	if (device) {
+		free(device->sysfs_path);
+		free(device);
+		device = NULL;
+	}
+	goto out;
 }
 
 /**
@@ -345,12 +347,20 @@ struct block_device *block_device_duplicate(struct block_device *block)
 	if (block) {
 		result = calloc(1, sizeof(*result));
 		if (result) {
-			result->sysfs_path = str_dup(block->sysfs_path);
-			result->cntrl_path = str_dup(block->cntrl_path);
-			if (block->ibpi != IBPI_PATTERN_UNKNOWN)
+			result->sysfs_path = strdup(block->sysfs_path);
+			result->cntrl_path = strdup(block->cntrl_path);
+
+			if (!result->sysfs_path || !result->cntrl_path) {
+				free(result->sysfs_path);
+				free(result->cntrl_path);
+				free(result);
+				return NULL;
+			}
+
+			if (block->ibpi != LED_IBPI_PATTERN_UNKNOWN)
 				result->ibpi = block->ibpi;
 			else
-				result->ibpi = IBPI_PATTERN_ONESHOT_NORMAL;
+				result->ibpi = LED_IBPI_PATTERN_ONESHOT_NORMAL;
 			result->ibpi_prev = block->ibpi_prev;
 			result->send_fn = block->send_fn;
 			result->flush_fn = block->flush_fn;
@@ -374,13 +384,13 @@ int block_compare(const struct block_device *bd_old,
 	int i = 0;
 
 	if (is_host_id_supported(bd_old) && bd_old->host_id == -1) {
-		log_debug("Device %s : No host_id!",
-			  strstr(bd_old->sysfs_path, "host"));
+		lib_log(bd_old->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"Device %s : No host_id!", strstr(bd_old->sysfs_path, "host"));
 		return 0;
 	}
 	if (is_host_id_supported(bd_new) && bd_new->host_id == -1) {
-		log_debug("Device %s : No host_id!",
-			  strstr(bd_new->sysfs_path, "host"));
+		lib_log(bd_old->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"Device %s : No host_id!", strstr(bd_new->sysfs_path, "host"));
 		return 0;
 	}
 
@@ -388,12 +398,12 @@ int block_compare(const struct block_device *bd_old,
 		return 0;
 
 	switch (bd_old->cntrl->cntrl_type) {
-	case CNTRL_TYPE_AHCI:
+	case LED_CNTRL_TYPE_AHCI:
 		/* Missing support for port multipliers. Compare just hostX. */
 		i = (bd_old->host_id == bd_new->host_id);
 		break;
 
-	case CNTRL_TYPE_SCSI:
+	case LED_CNTRL_TYPE_SCSI:
 		/* Host and phy is not enough. They might be DA or EA. */
 		if (dev_directly_attached(bd_old->sysfs_path) &&
 		    dev_directly_attached(bd_new->sysfs_path)) {
@@ -414,25 +424,25 @@ int block_compare(const struct block_device *bd_old,
 		/* */
 		break;
 
-	case CNTRL_TYPE_VMD:
+	case LED_CNTRL_TYPE_VMD:
 		/* compare names and address of the drive */
 		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);
 		if (!i) {
 			struct pci_slot *old_slot, *new_slot;
 
-			old_slot = vmdssd_find_pci_slot(bd_old->sysfs_path);
-			new_slot = vmdssd_find_pci_slot(bd_new->sysfs_path);
+			old_slot = vmdssd_find_pci_slot(bd_old->cntrl->ctx, bd_old->sysfs_path);
+			new_slot = vmdssd_find_pci_slot(bd_old->cntrl->ctx, bd_new->sysfs_path);
 			if (old_slot && new_slot)
 				i = (strcmp(old_slot->address, new_slot->address) == 0);
 		}
 		break;
 
-	case CNTRL_TYPE_NPEM:
+	case LED_CNTRL_TYPE_NPEM:
 		/* check controller to determine slot. */
 		i = (strcmp(bd_old->cntrl_path, bd_new->cntrl_path) == 0);
 		break;
 
-	case CNTRL_TYPE_DELLSSD:
+	case LED_CNTRL_TYPE_DELLSSD:
 	default:
 		/* Just compare names */
 		i = (strcmp(bd_old->sysfs_path, bd_new->sysfs_path) == 0);

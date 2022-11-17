@@ -33,6 +33,7 @@
 #include "ahci.h"
 #include "config.h"
 #include "utils.h"
+#include "libled_private.h"
 
 /**
  * Time interval in nano seconds to wait before enclosure management message
@@ -45,26 +46,26 @@
  * uses this control number to issue SGPIO signals appropriately.
  */
 static const struct ibpi2value ibpi2sgpio[] = {
-	{IBPI_PATTERN_NORMAL, 0x00000000},
-	{IBPI_PATTERN_ONESHOT_NORMAL, 0x00000000},
-	{IBPI_PATTERN_REBUILD, 0x00480000},
-	{IBPI_PATTERN_FAILED_DRIVE, 0x00400000},
-	{IBPI_PATTERN_LOCATE, 0x00080000},
-	{IBPI_PATTERN_LOCATE_OFF, 0x00000000},
+	{LED_IBPI_PATTERN_NORMAL, 0x00000000},
+	{LED_IBPI_PATTERN_ONESHOT_NORMAL, 0x00000000},
+	{LED_IBPI_PATTERN_REBUILD, 0x00480000},
+	{LED_IBPI_PATTERN_FAILED_DRIVE, 0x00400000},
+	{LED_IBPI_PATTERN_LOCATE, 0x00080000},
+	{LED_IBPI_PATTERN_LOCATE_OFF, 0x00000000},
 #ifdef DEBUG_IBPI
-	{IBPI_PATTERN_DEGRADED, 0x00200000},
-	{IBPI_PATTERN_FAILED_ARRAY, 0x00280000},
-	{IBPI_PATTERN_HOTSPARE, 0x01800000},
-	{IBPI_PATTERN_PFA, 0x01400000},
+	{LED_IBPI_PATTERN_DEGRADED, 0x00200000},
+	{LED_IBPI_PATTERN_FAILED_ARRAY, 0x00280000},
+	{LED_IBPI_PATTERN_HOTSPARE, 0x01800000},
+	{LED_IBPI_PATTERN_PFA, 0x01400000},
 #endif
-	{IBPI_PATTERN_UNKNOWN, 0x00000000},
+	{LED_IBPI_PATTERN_UNKNOWN, 0x00000000},
 };
 
 /*
  * The function sends a LED control message to AHCI controller. It uses
  * SGPIO to control the LEDs. See ahci.h for details.
  */
-int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
+int ahci_sgpio_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	char temp[WRITE_BUFFER_SIZE];
 	char path[PATH_MAX];
@@ -81,13 +82,17 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	if (sysfs_path == NULL)
 		__set_errno_and_return(EINVAL);
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
+	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 
 	ibpi2val = get_by_ibpi(ibpi, ibpi2sgpio, ARRAY_SIZE(ibpi2sgpio));
 
-	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_error("AHCI: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
+		char buf[IPBI2STR_BUFF_SIZE];
+
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_ERROR,
+			"AHCI: Controller doesn't support %s pattern\n",
+			ibpi2str(ibpi, buf, sizeof(buf)));
 		__set_errno_and_return(ERANGE);
 	}
 

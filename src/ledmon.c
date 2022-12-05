@@ -860,8 +860,8 @@ static ledmon_status_code_t _init_ledmon_conf(void)
 	conf.raid_members_only = 0;
 	conf.log_level = LOG_LEVEL_WARNING;
 	conf.scan_interval = LEDMON_DEF_SLEEP_INTERVAL;
-	list_init(&conf.cntrls_whitelist, NULL);
-	list_init(&conf.cntrls_blacklist, NULL);
+	list_init(&conf.cntrls_allowlist, NULL);
+	list_init(&conf.cntrls_excludelist, NULL);
 	return set_log_path(LEDMON_DEF_LOG_FILE);
 }
 

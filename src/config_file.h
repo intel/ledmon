@@ -44,9 +44,9 @@ struct ledmon_conf {
 	int rebuild_blink_on_all;
 	int raid_members_only;
 
-	/* whitelist and blacklist of controllers for blinking */
-	struct list cntrls_whitelist;
-	struct list cntrls_blacklist;
+	/* allowlist and excludelist of controllers for blinking */
+	struct list cntrls_allowlist;
+	struct list cntrls_excludelist;
 };
 
 extern struct ledmon_conf conf;

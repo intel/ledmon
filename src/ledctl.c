@@ -1034,8 +1034,8 @@ static void _unset_unused_options(void)
 {
 	conf.blink_on_init = false;
 	conf.blink_on_migration = false;
-	list_erase(&conf.cntrls_blacklist);
-	list_erase(&conf.cntrls_whitelist);
+	list_erase(&conf.cntrls_excludelist);
+	list_erase(&conf.cntrls_allowlist);
 	conf.raid_members_only = false;
 	conf.rebuild_blink_on_all = false;
 	conf.scan_interval = 0;
@@ -1046,8 +1046,8 @@ static ledctl_status_code_t _init_ledctl_conf(void)
 	memset(&conf, 0, sizeof(struct ledmon_conf));
 	/* initialize with default values */
 	conf.log_level = LOG_LEVEL_WARNING;
-	list_init(&conf.cntrls_whitelist, NULL);
-	list_init(&conf.cntrls_blacklist, NULL);
+	list_init(&conf.cntrls_allowlist, NULL);
+	list_init(&conf.cntrls_excludelist, NULL);
 
 	return set_log_path(LEDCTL_DEF_LOG_FILE);
 }

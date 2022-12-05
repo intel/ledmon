@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -81,6 +82,18 @@ static void parse_list(struct list *list, char *s)
 	}
 }
 
+static bool _parse_and_add_to_list(char *s, const char *key, size_t key_len, struct list *list)
+{
+	if (strncmp(s, key, key_len != 0))
+		return false;
+
+	s += key_len;
+
+	if (*s)
+		parse_list(list, s);
+	return true;
+}
+
 int _map_log_level(char *conf_log_level)
 {
 	size_t i = 1;
@@ -108,6 +121,18 @@ void _set_log_level(char *s)
 		log_warning("Log level given in config file (%s) is incorrect! Using default log level: %s",
 			s, log_level_map[conf.log_level]);
 }
+
+#define KEYLEN(key)   (sizeof((key))- 1)	/* Subtract 1 for string terminator */
+
+#define ALLOWLIST "ALLOWLIST="
+#define ALLOWLIST_LEN KEYLEN(ALLOWLIST)
+#define EXCLUDELIST "EXCLUDELIST="
+#define EXCLUDELIST_LEN KEYLEN(EXCLUDELIST)
+
+#define WHITELIST "WHITELIST="
+#define WHILELIST_LEN KEYLEN(WHITELIST)
+#define BLACKLIST "BLACKLIST="
+#define BLACKLIST_LEN KEYLEN(BLACKLIST)
 
 static int parse_next(FILE *fd)
 {
@@ -174,14 +199,16 @@ static int parse_next(FILE *fd)
 		conf.raid_members_only = parse_bool(s);
 		if (conf.raid_members_only < 0)
 			return -1;
-	} else if (!strncmp(s, "WHITELIST=", 10)) {
-		s += 10;
-		if (*s)
-			parse_list(&conf.cntrls_whitelist, s);
-	} else if (!strncmp(s, "BLACKLIST=", 10)) {
-		s += 10;
-		if (*s)
-			parse_list(&conf.cntrls_blacklist, s);
+	} else if (_parse_and_add_to_list(s, WHITELIST, WHILELIST_LEN, &conf.cntrls_allowlist)) {
+		/* Deprecated, provided for backwards compatibilty */
+		return 0;
+	} else if (_parse_and_add_to_list(s, BLACKLIST, BLACKLIST_LEN, &conf.cntrls_excludelist)) {
+		/* Deprecated, provided for backwards compatibilty */
+		return 0;
+	} else if (_parse_and_add_to_list(s, ALLOWLIST, ALLOWLIST_LEN, &conf.cntrls_allowlist)) {
+		return 0;
+	} else if (_parse_and_add_to_list(s, EXCLUDELIST,  EXCLUDELIST_LEN, &conf.cntrls_excludelist)) {
+		return 0;
 	} else {
 		fprintf(stderr, "config file: unknown option '%s'.\n", s);
 		return -1;
@@ -191,8 +218,8 @@ static int parse_next(FILE *fd)
 
 void ledmon_free_config(void)
 {
-	list_erase(&conf.cntrls_blacklist);
-	list_erase(&conf.cntrls_whitelist);
+	list_erase(&conf.cntrls_excludelist);
+	list_erase(&conf.cntrls_allowlist);
 
 	if (conf.log_path)
 		free(conf.log_path);
@@ -226,9 +253,9 @@ int ledmon_read_config(const char *filename)
 		fclose(f);
 	}
 
-	if (!list_is_empty(&conf.cntrls_whitelist) &&
-	    !list_is_empty(&conf.cntrls_blacklist))
-		fprintf(stderr, "Both whitelist and blacklist are specified - ignoring blacklist.");
+	if (!list_is_empty(&conf.cntrls_allowlist) &&
+		!list_is_empty(&conf.cntrls_excludelist))
+		fprintf(stderr, "Both allowlist and excludelist are specified - ignoring excludelist.");
 
 	return STATUS_SUCCESS;
 }
@@ -250,8 +277,8 @@ static char *conf_list_to_str(struct list *list)
 int ledmon_write_shared_conf(void)
 {
 	char buf[BUFSIZ];
-	char *whitelist = NULL;
-	char *blacklist = NULL;
+	char *allowlist = NULL;
+	char *excludelist = NULL;
 	void *shared_mem_ptr;
 	int fd = shm_open(LEDMON_SHARE_MEM_FILE, O_RDWR | O_CREAT, 0644);
 
@@ -283,17 +310,17 @@ int ledmon_write_shared_conf(void)
 		 "REBUILD_BLINK_ON_ALL=%d\n", conf.rebuild_blink_on_all);
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		 "INTERVAL=%d\n", conf.scan_interval);
-	whitelist = conf_list_to_str(&conf.cntrls_whitelist);
-	if (whitelist) {
+	allowlist = conf_list_to_str(&conf.cntrls_allowlist);
+	if (allowlist) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			 "WHITELIST=%s\n", whitelist);
-		free(whitelist);
+			 "%s%s\n", ALLOWLIST, allowlist);
+		free(allowlist);
 	}
-	blacklist = conf_list_to_str(&conf.cntrls_blacklist);
-	if (blacklist) {
+	excludelist = conf_list_to_str(&conf.cntrls_excludelist);
+	if (excludelist) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			 "BLACKLIST=%s\n", blacklist);
-		free(blacklist);
+			 "%s%s\n", EXCLUDELIST, excludelist);
+		free(excludelist);
 	}
 
 	memcpy(shared_mem_ptr, buf, strlen(buf));

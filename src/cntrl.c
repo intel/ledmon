@@ -413,24 +413,24 @@ struct cntrl_device *cntrl_device_init(const char *path)
 
 	type = _get_type(path);
 	if (type != CNTRL_TYPE_UNKNOWN) {
-		if (!list_is_empty(&conf.cntrls_whitelist)) {
+		if (!list_is_empty(&conf.cntrls_allowlist)) {
 			char *cntrl = NULL;
 
-			list_for_each(&conf.cntrls_whitelist, cntrl) {
+			list_for_each(&conf.cntrls_allowlist, cntrl) {
 				if (match_string(cntrl, path))
 					break;
 				cntrl = NULL;
 			}
 			if (!cntrl) {
-				log_debug("%s not found on whitelist, ignoring", path);
+				log_debug("%s not found on allowlist, ignoring", path);
 				return NULL;
 			}
-		} else if (!list_is_empty(&conf.cntrls_blacklist)) {
+		} else if (!list_is_empty(&conf.cntrls_excludelist)) {
 			char *cntrl;
 
-			list_for_each(&conf.cntrls_blacklist, cntrl) {
+			list_for_each(&conf.cntrls_excludelist, cntrl) {
 				if (match_string(cntrl, path)) {
-					log_debug("%s found on blacklist, ignoring",
+					log_debug("%s found on excludelist, ignoring",
 						  path);
 					return NULL;
 				}

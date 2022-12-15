@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1015,6 +1016,23 @@ static ledctl_status_code_t _read_shared_conf(void)
 	return status;
 }
 
+/**
+ * @brief Unset unsupported config parameters.
+ *
+ * For ledctl only LOG_LEVEL and LOG_PATH are supported and desired.
+ * Unset other options.
+ */
+static void _unset_unused_options(void)
+{
+	conf.blink_on_init = false;
+	conf.blink_on_migration = false;
+	list_erase(&conf.cntrls_blacklist);
+	list_erase(&conf.cntrls_whitelist);
+	conf.raid_members_only = false;
+	conf.rebuild_blink_on_all = false;
+	conf.scan_interval = 0;
+}
+
 static ledctl_status_code_t _init_ledctl_conf(void)
 {
 	memset(&conf, 0, sizeof(struct ledmon_conf));
@@ -1089,6 +1107,8 @@ int main(int argc, char *argv[])
 	status = _read_shared_conf();
 	if (status != LEDCTL_STATUS_SUCCESS)
 		return status;
+	_unset_unused_options();
+
 	status = log_open(conf.log_path);
 	if (status != LEDCTL_STATUS_SUCCESS)
 		return LEDCTL_STATUS_LOG_FILE_ERROR;

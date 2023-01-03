@@ -709,7 +709,7 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 	return ret;
 }
 
-static const struct ibpi2value *get_ibpi_value(const unsigned int val,
+static const struct ibpi2value *get_ibpi2value(const unsigned int val,
 					       const struct ibpi2value *ibpi2val_arr,
 					       const int ibpi2value_arr_cnt,
 					       bool (*compar)(const unsigned int val,
@@ -740,10 +740,10 @@ static bool compar_bits(const unsigned int val, const struct ibpi2value *ibpi2va
 
 #define IBPI2VALUE_GET_FN(_name)							\
 const struct ibpi2value *get_by_##_name(const enum ibpi_pattern ibpi,			\
-				     const struct ibpi2value *ibpi2val_arr,		\
-				     int ibpi2value_arr_cnt)				\
+					const struct ibpi2value *ibpi2val_arr,		\
+					int ibpi2value_arr_cnt)				\
 {											\
-	return get_ibpi_value(ibpi, ibpi2val_arr, ibpi2value_arr_cnt, compar_##_name);	\
+	return get_ibpi2value(ibpi, ibpi2val_arr, ibpi2value_arr_cnt, compar_##_name);	\
 }
 
 #define COMPARE(_name)									\

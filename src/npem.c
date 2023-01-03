@@ -132,6 +132,15 @@ static int write_npem_register(struct pci_dev *pdev, int reg, u32 val)
 	return pci_write_long(pdev, pcap->addr + reg, val);
 }
 
+static bool is_mask_set(struct pci_dev *pdev, int reg,  u32 mask)
+{
+	u32 reg_val = read_npem_register(pdev, reg);
+
+	if (reg_val & mask)
+		return true;
+	return false;
+}
+
 int is_npem_capable(const char *path)
 {
 	u8 val;
@@ -157,7 +166,7 @@ int is_npem_capable(const char *path)
 	return (val & PCI_NPEM_CAP);
 }
 
-static int npem_wait_command(struct pci_dev *pdev)
+static void npem_wait_command(struct pci_dev *pdev)
 {
 /*
  * Software must wait for an NPEM command to complete before issuing
@@ -170,22 +179,17 @@ static int npem_wait_command(struct pci_dev *pdev)
  * or timeout is reached.
  */
 	time_t start, end;
-	u32 reg;
 
-	time(&start);
-	end = start;
-	while (difftime(start, end) < 1) {
-		reg = read_npem_register(pdev, PCI_NPEM_STATUS_REG);
+	/* Check status_cc first to avoid system call if not needed */
+	if (!is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
+		return;
 
-		if (reg & PCI_NPEM_STATUS_CC) {
-			/* status register type is RW1C */
-			write_npem_register(pdev, PCI_NPEM_STATUS_REG,
-					    PCI_NPEM_STATUS_CC);
-			return 0;
-		}
-		time(&end);
-	}
-	return 1;
+	start = time(NULL);
+	do {
+		if (!is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
+			return;
+		end = time(NULL);
+	} while (difftime(end, start) < 1);
 }
 
 char *npem_get_path(const char *cntrl_path)
@@ -289,23 +293,18 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 		return STATUS_NULL_POINTER;
 	}
 
-	reg = read_npem_register(pdev, PCI_NPEM_CAP_REG);
-
-	if ((reg & cap) == 0) {
+	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
 		log_error("NPEM: Controller %s doesn't support %s pattern\n", slot_path,
 			  ibpi_str[state]);
 		return STATUS_INVALID_STATE;
 	}
+	npem_wait_command(pdev);
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
 	val = (val | PCI_NPEM_CAP | cap);
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
-	if (npem_wait_command(pdev)) {
-		log_error("NPEM: Write timeout for %s\n", slot_path);
-		status = STATUS_FILE_WRITE_ERROR;
-	}
 
 	pci_free_dev(pdev);
 	pci_cleanup(pacc);

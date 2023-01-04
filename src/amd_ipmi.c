@@ -44,13 +44,14 @@
 #include "amd.h"
 #include "ipmi.h"
 
-static uint8_t amd_ibpi_ipmi_register[] = {
-	[IBPI_PATTERN_PFA] = 0x41,
-	[IBPI_PATTERN_LOCATE] = 0x42,
-	[IBPI_PATTERN_FAILED_DRIVE] = 0x44,
-	[IBPI_PATTERN_FAILED_ARRAY] = 0x45,
-	[IBPI_PATTERN_REBUILD] = 0x46,
-	[IBPI_PATTERN_HOTSPARE] = 0x47,
+const struct ibpi2value ibpi2amd_ipmi[] = {
+	{IBPI_PATTERN_PFA, 0x41},
+	{IBPI_PATTERN_LOCATE, 0x42},
+	{IBPI_PATTERN_FAILED_DRIVE, 0x44},
+	{IBPI_PATTERN_FAILED_ARRAY, 0x45},
+	{IBPI_PATTERN_REBUILD, 0x46},
+	{IBPI_PATTERN_HOTSPARE, 0x47},
+	{IBPI_PATTERN_UNKNOWN}
 };
 
 #define MG9098_CHIP_ID_REG	0x63
@@ -271,14 +272,23 @@ static int _ipmi_platform_slave_address(struct amd_drive *drive)
 	return rc;
 }
 
-static int _set_ipmi_register(int enable, uint8_t reg,
-			      struct amd_drive *drive)
+static int _set_ipmi_register(int enable, enum ibpi_pattern ibpi, struct amd_drive *drive)
 {
 	int rc;
 	int status, data_sz;
 	uint8_t drives_status;
 	uint8_t new_drives_status;
 	uint8_t cmd_data[5];
+	uint8_t reg;
+
+	const struct ibpi2value *ibpi2val = get_by_ibpi(ibpi, ibpi2amd_ipmi,
+							ARRAY_SIZE(ibpi2amd_ipmi));
+
+	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
+		log_error("AMD_APMI: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		return STATUS_INVALID_STATE;
+	}
+	reg = (uint8_t)ibpi2val->value;
 
 	memset(cmd_data, 0, sizeof(cmd_data));
 
@@ -343,13 +353,13 @@ static int _enable_smbus_control(struct amd_drive *drive)
 static int _enable_ibpi_state(struct amd_drive *drive, enum ibpi_pattern ibpi)
 {
 	log_debug("Enabling %s LED\n", ibpi2str(ibpi));
-	return _set_ipmi_register(1, amd_ibpi_ipmi_register[ibpi], drive);
+	return _set_ipmi_register(1, ibpi, drive);
 }
 
 static int _disable_ibpi_state(struct amd_drive *drive, enum ibpi_pattern ibpi)
 {
 	log_debug("Disabling %s LED\n", ibpi2str(ibpi));
-	return _set_ipmi_register(0, amd_ibpi_ipmi_register[ibpi], drive);
+	return _set_ipmi_register(0, ibpi, drive);
 }
 
 static int _disable_all_ibpi_states(struct amd_drive *drive)

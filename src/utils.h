@@ -79,8 +79,12 @@ struct log_level_info {
 	int priority;
 };
 
-struct ibpi_value {
-	int ibpi, value;
+/**
+ * @brief The struct is used for mapping IPBI pattern to the controller internal value.
+ */
+struct ibpi2value {
+	unsigned int ibpi;
+	unsigned int value;
 };
 
 /**
@@ -459,7 +463,44 @@ int get_option_id(const char *optarg);
 status_t set_verbose_level(int log_level);
 
 const char *ibpi2str(enum ibpi_pattern ibpi);
-int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[]);
-enum ibpi_pattern get_ibpi_for_value(const int value, const struct ibpi_value ibpi_values[]);
+
+/**
+ * @brief Returns ibpi2value entry if IBPI matches
+ *
+ * @param[in]       ibpi                  IBPI pattern.
+ * @param[in]       ibpi2val_arr          IBPI pattern to value array.
+ * @param[in]       ibpi2value_arr_cnt    Array entries count.
+ *
+ * @return Corresponding ibpi2value entry last or entry with IBPI_PATTERN_UNKNOWN
+ */
+const struct ibpi2value *get_by_ibpi(const enum ibpi_pattern ibpi,
+				     const struct ibpi2value *ibpi2val_arr,
+				     int ibpi2value_arr_cnt);
+
+/**
+ * @brief Returns ibpi2value entry if value matches
+ *
+ * @param[in]       value                 value to compare.
+ * @param[in]       ibpi2val_arr          IBPI pattern to value array.
+ * @param[in]       ibpi2value_arr_cnt    Array entries count.
+ *
+ * @return Corresponding ibpi2value entry last or entry with IBPI_PATTERN_UNKNOWN
+ */
+const struct ibpi2value *get_by_value(const unsigned int value,
+				      const struct ibpi2value *ibpi2val_arr,
+				      int ibpi2value_arr_cnt);
+
+/**
+ * @brief Returns ibpi2value entry if any bit matches
+ *
+ * @param[in]       value                 value to compare.
+ * @param[in]       ibpi2val_arr          IBPI pattern to value array.
+ * @param[in]       ibpi2value_arr_cnt    Array entries count.
+ *
+ * @return Corresponding ibpi2value entry last or entry with IBPI_PATTERN_UNKNOWN
+ */
+const struct ibpi2value *get_by_bits(const unsigned int value,
+				     const struct ibpi2value *ibpi2val_arr,
+				     int ibpi2value_arr_cnt);
 
 #endif				/* _UTILS_H_INCLUDED_ */

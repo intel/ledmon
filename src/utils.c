@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <regex.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -708,46 +709,55 @@ const char *ibpi2str(enum ibpi_pattern ibpi)
 	return ret;
 }
 
-/**
- * @brief Returns value based on IBPI state
- *
- * @param[in]       value       Value for led state.
- * @param[in]       ibpi_values    Array with defined IBPI states and values.
- *
- * @return Integer value which represents given IBPI state.
- */
-int get_value_for_ibpi(enum ibpi_pattern ibpi, const struct ibpi_value ibpi_values[])
+static const struct ibpi2value *get_ibpi2value(const unsigned int val,
+					       const struct ibpi2value *ibpi2val_arr,
+					       const int ibpi2value_arr_cnt,
+					       bool (*compar)(const unsigned int val,
+							      const struct ibpi2value *ibpi2val))
 {
-	const struct ibpi_value *tmp = ibpi_values;
+	int cnt = 0;
+	const struct ibpi2value *tmp = NULL;
 
-	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
-		if (tmp->ibpi == ibpi)
-			break;
-		tmp++;
-	}
-	return tmp->value;
+	do {
+		/* Prevent out of bound results */
+		assert(cnt < ibpi2value_arr_cnt);
+
+		tmp = ibpi2val_arr + cnt;
+		if (compar(val, tmp))
+			return tmp;
+		cnt++;
+	} while (tmp->ibpi != IBPI_PATTERN_UNKNOWN);
+
+	return tmp;
 }
 
-/**
- * @brief Returns IBPI pattern based on value
- *
- * @param[in]       value          Value for led state.
- * @param[in]       ibpi_values    Array with defined IBPI states and values.
- *
- * @return Enum with IBPI value, which represents given value.
- */
-enum ibpi_pattern get_ibpi_for_value(const int value, const struct ibpi_value ibpi_values[])
+static bool compar_bits(const unsigned int val, const struct ibpi2value *ibpi2val)
 {
-	const struct ibpi_value *tmp = ibpi_values;
-
-	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
-		if (tmp->value == value)
-			break;
-		tmp++;
-	}
-	return tmp->ibpi;
+	if (ibpi2val->value & val)
+		return true;
+	return false;
 }
 
+#define IBPI2VALUE_GET_FN(_name)							\
+const struct ibpi2value *get_by_##_name(const enum ibpi_pattern ibpi,			\
+					const struct ibpi2value *ibpi2val_arr,		\
+					int ibpi2value_arr_cnt)				\
+{											\
+	return get_ibpi2value(ibpi, ibpi2val_arr, ibpi2value_arr_cnt, compar_##_name);	\
+}
+
+#define COMPARE(_name)									\
+static bool compar_##_name(const unsigned int val, const struct ibpi2value *ibpi2val)	\
+{											\
+	if (ibpi2val->_name == val)							\
+		return true;								\
+	return false;									\
+}											\
+IBPI2VALUE_GET_FN(_name)								\
+
+IBPI2VALUE_GET_FN(bits);
+COMPARE(ibpi);
+COMPARE(value);
 /**
  * @brief Get string from map.
  *

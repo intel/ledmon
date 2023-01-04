@@ -44,25 +44,20 @@
  * This array maps IBPI pattern to value recognized by AHCI driver. The driver
  * uses this control number to issue SGPIO signals appropriately.
  */
-static const unsigned int ibpi2sgpio[] = {
-	[IBPI_PATTERN_REBUILD]        = 0x00480000,
-	[IBPI_PATTERN_FAILED_DRIVE]   = 0x00400000,
-	[IBPI_PATTERN_LOCATE]         = 0x00080000,
-	[IBPI_PATTERN_UNKNOWN]        = 0x00000000,
-	[IBPI_PATTERN_ONESHOT_NORMAL] = 0x00000000,
-	[IBPI_PATTERN_NORMAL]         = 0x00000000,
-	[IBPI_PATTERN_LOCATE_OFF]     = 0x00000000,
+static const struct ibpi2value ibpi2sgpio[] = {
+	{IBPI_PATTERN_NORMAL, 0x00000000},
+	{IBPI_PATTERN_ONESHOT_NORMAL, 0x00000000},
+	{IBPI_PATTERN_REBUILD, 0x00480000},
+	{IBPI_PATTERN_FAILED_DRIVE, 0x00400000},
+	{IBPI_PATTERN_LOCATE, 0x00080000},
+	{IBPI_PATTERN_LOCATE_OFF, 0x00000000},
 #ifdef DEBUG_IBPI
-	[IBPI_PATTERN_DEGRADED]       = 0x00200000,
-	[IBPI_PATTERN_FAILED_ARRAY]   = 0x00280000,
-	[IBPI_PATTERN_HOTSPARE]       = 0x01800000,
-	[IBPI_PATTERN_PFA]            = 0x01400000
-#else
-	[IBPI_PATTERN_DEGRADED]       = 0x00000000,
-	[IBPI_PATTERN_FAILED_ARRAY]   = 0x00000000,
-	[IBPI_PATTERN_HOTSPARE]       = 0x00000000,
-	[IBPI_PATTERN_PFA]            = 0x00000000
+	{IBPI_PATTERN_DEGRADED, 0x00200000},
+	{IBPI_PATTERN_FAILED_ARRAY, 0x00280000},
+	{IBPI_PATTERN_HOTSPARE, 0x01800000},
+	{IBPI_PATTERN_PFA, 0x01400000},
 #endif
+	{IBPI_PATTERN_UNKNOWN, 0x00000000},
 };
 
 /*
@@ -78,6 +73,7 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 		.tv_sec = 0,
 		.tv_nsec = EM_MSG_WAIT
 	};
+	const struct ibpi2value *ibpi2val;
 
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
@@ -88,7 +84,14 @@ int ahci_sgpio_write(struct block_device *device, enum ibpi_pattern ibpi)
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 
-	snprintf(temp, WRITE_BUFFER_SIZE, "%u", ibpi2sgpio[ibpi]);
+	ibpi2val = get_by_ibpi(ibpi, ibpi2sgpio, ARRAY_SIZE(ibpi2sgpio));
+
+	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
+		log_error("AHCI: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		__set_errno_and_return(ERANGE);
+	}
+
+	snprintf(temp, WRITE_BUFFER_SIZE, "%u", ibpi2val->value);
 
 	snprintf(path, sizeof(path), "%s/em_message", sysfs_path);
 

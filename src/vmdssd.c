@@ -38,12 +38,13 @@
 #define ATTENTION_REBUILD    0x5  /* (0101) Attention On, Power On */
 #define ATTENTION_FAILURE    0xD  /* (1101) Attention On, Power Off */
 
-struct ibpi_value ibpi_to_attention[] = {
+struct ibpi2value ibpi_to_attention[] = {
 	{IBPI_PATTERN_NORMAL, ATTENTION_OFF},
 	{IBPI_PATTERN_LOCATE, ATTENTION_LOCATE},
 	{IBPI_PATTERN_FAILED_DRIVE, ATTENTION_FAILURE},
 	{IBPI_PATTERN_REBUILD, ATTENTION_REBUILD},
-	{IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF}
+	{IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF},
+	{IBPI_PATTERN_UNKNOWN}
 };
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
@@ -111,15 +112,36 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 	return slot;
 }
 
+enum ibpi_pattern vmdssd_get_attention(struct pci_slot *slot)
+{
+	int attention = get_int(slot->sysfs_path, -1, "attention");
+	const struct ibpi2value *ibpi2val;
+
+	if (attention == -1)
+		return IBPI_PATTERN_UNKNOWN;
+
+	ibpi2val = get_by_value(attention, ibpi_to_attention, ARRAY_SIZE(ibpi_to_attention));
+	return ibpi2val->ibpi;
+}
+
 status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibpi)
 {
 	char attention_path[PATH_MAX];
 	char buf[WRITE_BUFFER_SIZE];
+	const struct ibpi2value *ibpi2val;
+
 	uint16_t val;
 
 	log_debug("%s before: 0x%x\n", slot->address,
 		  get_int(slot->sysfs_path, 0, "attention"));
-	val = get_value_for_ibpi(ibpi, ibpi_to_attention);
+
+	ibpi2val = get_by_ibpi(ibpi, ibpi_to_attention, ARRAY_SIZE(ibpi_to_attention));
+	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
+		log_error("VMD: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		return STATUS_INVALID_STATE;
+	}
+	val = (uint16_t)ibpi2val->value;
+
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
 	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
 	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {

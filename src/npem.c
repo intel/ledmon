@@ -60,7 +60,7 @@
 
 #define PCI_NPEM_STATUS_CC	0x01  /* NPEM Command Completed */
 
-const struct ibpi_value ibpi_to_npem_capability[] = {
+const struct ibpi2value ibpi_to_npem_capability[] = {
 	{IBPI_PATTERN_NORMAL, PCI_NPEM_OK_CAP},
 	{IBPI_PATTERN_ONESHOT_NORMAL, PCI_NPEM_OK_CAP},
 	{IBPI_PATTERN_DEGRADED, PCI_NPEM_CRA_CAP},
@@ -73,18 +73,6 @@ const struct ibpi_value ibpi_to_npem_capability[] = {
 	{IBPI_PATTERN_LOCATE_OFF, PCI_NPEM_OK_CAP},
 	{IBPI_PATTERN_UNKNOWN}
 };
-
-static enum ibpi_pattern npem_capability_to_ibpi(const u32 reg)
-{
-	const struct ibpi_value *tmp = ibpi_to_npem_capability;
-
-	while (tmp->ibpi != IBPI_PATTERN_UNKNOWN) {
-		if (reg & tmp->value)
-			break;
-		tmp++;
-	}
-	return tmp->ibpi;
-}
 
 static struct pci_access *get_pci_access()
 {
@@ -99,13 +87,15 @@ static struct pci_access *get_pci_access()
 static struct pci_dev *get_pci_dev(struct pci_access *pacc, const char *path)
 {
 	unsigned int domain, bus, dev, fn;
-	char *p = strrchr(path, '/');
+	char dpath[PATH_MAX];
+	char *p;
+
 	int ret = 0;
 
-	if (!p)
-		return NULL;
+	snprintf(dpath, PATH_MAX, "%s", path);
+	p = basename(dpath);
 
-	ret += str_toui(&domain, p + 1, &p, 16);
+	ret += str_toui(&domain, p, &p, 16);
 	ret += str_toui(&bus, p + 1, &p, 16);
 	ret += str_toui(&dev, p + 1, &p, 16);
 	ret += str_toui(&fn, p + 1, &p, 16);
@@ -202,9 +192,11 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 	struct cntrl_device *npem_cntrl = device->cntrl;
 	struct pci_access *pacc = NULL;
 	struct pci_dev *pdev = NULL;
+	const struct ibpi2value *ibpi2val;
 
 	u32 reg;
 	u32 val;
+	u32 cap;
 
 	int err = 0;
 
@@ -215,6 +207,16 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 		err = -EINVAL;
 		goto exit;
 	}
+
+	ibpi2val = get_by_ibpi(ibpi, ibpi_to_npem_capability,
+			       ARRAY_SIZE(ibpi_to_npem_capability));
+
+	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
+		log_error("NPEM: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		err = -EINVAL;
+		goto exit;
+	}
+	cap = (u32)ibpi2val->value;
 
 	pacc = get_pci_access();
 	if (!pacc) {
@@ -233,17 +235,15 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CAP_REG);
-	u32 cap = (u32)get_value_for_ibpi(ibpi, ibpi_to_npem_capability);
 
 	if ((reg & cap) == 0) {
-		log_debug("NPEM: Controller %s doesn't support %s pattern\n",
+		log_debug("NPEM: Controller %s doesn't support %s pattern, fallback to default\n",
 			  npem_cntrl->sysfs_path, ibpi_str[ibpi]);
 		ibpi = IBPI_PATTERN_NORMAL;
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
-	cap = (u32)get_value_for_ibpi(ibpi, ibpi_to_npem_capability);
 	val = (val | PCI_NPEM_CAP | cap);
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
@@ -271,6 +271,7 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	struct pci_dev *pdev = NULL;
 	struct block_device *block_device = NULL;
 	struct pci_access *pacc = get_pci_access();
+	const struct ibpi2value *ibpi2val;
 	status_t status = STATUS_SUCCESS;
 	char *path = NULL;
 	u32 reg;
@@ -313,7 +314,10 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
-	slot_res->state = npem_capability_to_ibpi(reg);
+	ibpi2val =  get_by_bits(reg, ibpi_to_npem_capability,
+				ARRAY_SIZE(ibpi_to_npem_capability));
+	slot_res->state = ibpi2val->ibpi;
+
 	snprintf(slot_res->slot, PATH_MAX, "%s", basename(path));
 
 	if (block_device)
@@ -331,9 +335,20 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 	struct pci_dev *pdev = NULL;
 	struct pci_access *pacc = get_pci_access();
 	status_t status = STATUS_SUCCESS;
+	const struct ibpi2value *ibpi2val;
+
 	u32 val;
 	u32 reg;
 	u32 cap;
+
+	ibpi2val = get_by_ibpi(state, ibpi_to_npem_capability,
+			       ARRAY_SIZE(ibpi_to_npem_capability));
+
+	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
+		log_error("NPEM: Controller doesn't support %s pattern\n", ibpi_str[state]);
+		return STATUS_INVALID_STATE;
+	}
+	cap = (u32)ibpi2val->value;
 
 	if (!pacc) {
 		log_error("NPEM: Unable to initialize pci access for %s\n", slot_path);
@@ -349,7 +364,6 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
-	cap = (u32)get_value_for_ibpi(state, ibpi_to_npem_capability);
 	val = (val | PCI_NPEM_CAP | cap);
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);

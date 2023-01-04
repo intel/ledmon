@@ -98,13 +98,10 @@ static status_t set_slot_response(struct pci_slot *slot, struct slot_response *s
 {
 	struct block_device *bl_device;
 	status_t status = STATUS_SUCCESS;
-	int attention = get_int(slot->sysfs_path, -1, "attention");
 
-	if (attention == -1)
-		return STATUS_INVALID_STATE;
-
-	slot_res->state = get_ibpi_for_value(attention, ibpi_to_attention);
 	snprintf(slot_res->slot, PATH_MAX, "%s", basename(slot->sysfs_path));
+
+	slot_res->state = vmdssd_get_attention(slot);
 
 	bl_device = get_block_device_from_sysfs_path(slot->address);
 	if (bl_device)

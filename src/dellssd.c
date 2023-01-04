@@ -59,18 +59,18 @@
 #define BP_CRITICALARRAY (1L << 9)
 #define BP_FAILEDARRAY   (1L << 10)
 
-static const unsigned int ibpi2ssd[] = {
-	[IBPI_PATTERN_UNKNOWN]        = BP_ONLINE,
-	[IBPI_PATTERN_ONESHOT_NORMAL] = BP_ONLINE,
-	[IBPI_PATTERN_NORMAL]         = BP_ONLINE,
-	[IBPI_PATTERN_DEGRADED]       = BP_CRITICALARRAY|BP_ONLINE,
-	[IBPI_PATTERN_REBUILD]        = BP_REBUILDING|BP_ONLINE,
-	[IBPI_PATTERN_FAILED_ARRAY]   = BP_FAILEDARRAY|BP_ONLINE,
-	[IBPI_PATTERN_HOTSPARE]       = BP_HOTSPARE|BP_ONLINE,
-	[IBPI_PATTERN_PFA]            = BP_PREDICT|BP_ONLINE,
-	[IBPI_PATTERN_FAILED_DRIVE]   = BP_FAULT|BP_ONLINE,
-	[IBPI_PATTERN_LOCATE]         = BP_IDENTIFY|BP_ONLINE,
-	[IBPI_PATTERN_LOCATE_OFF]     = BP_ONLINE
+static const struct ibpi2value ibpi2ssd[] = {
+	{IBPI_PATTERN_NORMAL, BP_ONLINE},
+	{IBPI_PATTERN_ONESHOT_NORMAL, BP_ONLINE},
+	{IBPI_PATTERN_DEGRADED, BP_CRITICALARRAY | BP_ONLINE},
+	{IBPI_PATTERN_HOTSPARE, BP_HOTSPARE | BP_ONLINE},
+	{IBPI_PATTERN_REBUILD, BP_REBUILDING | BP_ONLINE},
+	{IBPI_PATTERN_FAILED_ARRAY, BP_FAILEDARRAY | BP_ONLINE},
+	{IBPI_PATTERN_PFA, BP_PREDICT | BP_ONLINE},
+	{IBPI_PATTERN_FAILED_DRIVE, BP_FAULT | BP_ONLINE},
+	{IBPI_PATTERN_LOCATE, BP_IDENTIFY | BP_ONLINE},
+	{IBPI_PATTERN_LOCATE_OFF, BP_ONLINE},
+	{IBPI_PATTERN_UNKNOWN}
 };
 
 #define DELL_OEM_NETFN                      0x30
@@ -238,8 +238,9 @@ char *dellssd_get_path(const char *cntrl_path)
 
 int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-	unsigned int mask, bus, dev, fun;
+	unsigned int bus, dev, fun;
 	char *t;
+	const struct ibpi2value *ibpi2val;
 
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
@@ -247,12 +248,19 @@ int dellssd_write(struct block_device *device, enum ibpi_pattern ibpi)
 
 	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
-	mask = ibpi2ssd[ibpi];
+
+	ibpi2val = get_by_ibpi(ibpi, ibpi2ssd, ARRAY_SIZE(ibpi2ssd));
+
+	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
+		log_error("SSD: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		__set_errno_and_return(EINVAL);
+	}
+
 	t = strrchr(device->cntrl_path, '/');
 	if (t != NULL) {
 		/* Extract PCI bus:device.function */
 		if (sscanf(t + 1, "%*x:%x:%x.%x", &bus, &dev, &fun) == 3)
-			ipmi_setled(bus, dev, fun, mask);
+			ipmi_setled(bus, dev, fun, ibpi2val->value);
 	}
 	return 0;
 }

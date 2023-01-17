@@ -181,12 +181,12 @@ static void npem_wait_command(struct pci_dev *pdev)
 	time_t start, end;
 
 	/* Check status_cc first to avoid system call if not needed */
-	if (!is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
+	if (is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
 		return;
 
 	start = time(NULL);
 	do {
-		if (!is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
+		if (is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
 			return;
 		end = time(NULL);
 	} while (difftime(end, start) < 1);

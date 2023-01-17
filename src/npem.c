@@ -23,6 +23,7 @@
 #include <string.h>
 #include <pci/pci.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "config.h"
 #include "cntrl.h"
@@ -131,6 +132,15 @@ static int write_npem_register(struct pci_dev *pdev, int reg, u32 val)
 	return pci_write_long(pdev, pcap->addr + reg, val);
 }
 
+static bool is_mask_set(struct pci_dev *pdev, int reg,  u32 mask)
+{
+	u32 reg_val = read_npem_register(pdev, reg);
+
+	if (reg_val & mask)
+		return true;
+	return false;
+}
+
 int is_npem_capable(const char *path)
 {
 	u8 val;
@@ -156,7 +166,7 @@ int is_npem_capable(const char *path)
 	return (val & PCI_NPEM_CAP);
 }
 
-static int npem_wait_command(struct pci_dev *pdev)
+static void npem_wait_command(struct pci_dev *pdev)
 {
 /*
  * Software must wait for an NPEM command to complete before issuing
@@ -169,96 +179,17 @@ static int npem_wait_command(struct pci_dev *pdev)
  * or timeout is reached.
  */
 	time_t start, end;
-	u32 reg;
 
-	time(&start);
-	end = start;
-	while (difftime(start, end) < 1) {
-		reg = read_npem_register(pdev, PCI_NPEM_STATUS_REG);
+	/* Check status_cc first to avoid system call if not needed */
+	if (is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
+		return;
 
-		if (reg & PCI_NPEM_STATUS_CC) {
-			/* status register type is RW1C */
-			write_npem_register(pdev, PCI_NPEM_STATUS_REG,
-					    PCI_NPEM_STATUS_CC);
-			return 0;
-		}
-		time(&end);
-	}
-	return 1;
-}
-
-int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
-{
-	struct cntrl_device *npem_cntrl = device->cntrl;
-	struct pci_access *pacc = NULL;
-	struct pci_dev *pdev = NULL;
-	const struct ibpi2value *ibpi2val;
-
-	u32 reg;
-	u32 val;
-	u32 cap;
-
-	int err = 0;
-
-	if (ibpi == device->ibpi_prev)
-		return 0;
-
-	if ((ibpi < IBPI_PATTERN_NORMAL) || (ibpi > IBPI_PATTERN_LOCATE_OFF)) {
-		err = -EINVAL;
-		goto exit;
-	}
-
-	ibpi2val = get_by_ibpi(ibpi, ibpi_to_npem_capability,
-			       ARRAY_SIZE(ibpi_to_npem_capability));
-
-	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_error("NPEM: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
-		err = -EINVAL;
-		goto exit;
-	}
-	cap = (u32)ibpi2val->value;
-
-	pacc = get_pci_access();
-	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n",
-			  npem_cntrl->sysfs_path);
-		err = -ENOMEM;
-		goto exit;
-	}
-
-	pdev = get_pci_dev(pacc, npem_cntrl->sysfs_path);
-	if (!pdev) {
-		log_error("NPEM: Unable to get pci device for %s\n",
-			  npem_cntrl->sysfs_path);
-		err = -ENXIO;
-		goto exit;
-	}
-
-	reg = read_npem_register(pdev, PCI_NPEM_CAP_REG);
-
-	if ((reg & cap) == 0) {
-		log_debug("NPEM: Controller %s doesn't support %s pattern, fallback to default\n",
-			  npem_cntrl->sysfs_path, ibpi_str[ibpi]);
-		ibpi = IBPI_PATTERN_NORMAL;
-	}
-
-	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
-	val = (reg & PCI_NPEM_RESERVED);
-	val = (val | PCI_NPEM_CAP | cap);
-
-	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
-	if (npem_wait_command(pdev)) {
-		log_error("NPEM: Write timeout for %s\n",
-			  npem_cntrl->sysfs_path);
-		err = -EAGAIN;
-	}
-
-exit:
-	if (pdev)
-		pci_free_dev(pdev);
-	if (pacc)
-		pci_cleanup(pacc);
-	return err;
+	start = time(NULL);
+	do {
+		if (is_mask_set(pdev, PCI_NPEM_STATUS_REG, PCI_NPEM_STATUS_CC))
+			return;
+		end = time(NULL);
+	} while (difftime(end, start) < 1);
 }
 
 char *npem_get_path(const char *cntrl_path)
@@ -362,17 +293,36 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 		return STATUS_NULL_POINTER;
 	}
 
+	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
+		log_error("NPEM: Controller %s doesn't support %s pattern\n", slot_path,
+			  ibpi_str[state]);
+		return STATUS_INVALID_STATE;
+	}
+	npem_wait_command(pdev);
+
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	val = (reg & PCI_NPEM_RESERVED);
 	val = (val | PCI_NPEM_CAP | cap);
 
 	write_npem_register(pdev, PCI_NPEM_CTRL_REG, val);
-	if (npem_wait_command(pdev)) {
-		log_error("NPEM: Write timeout for %s\n", slot_path);
-		status = STATUS_FILE_WRITE_ERROR;
-	}
 
 	pci_free_dev(pdev);
 	pci_cleanup(pacc);
 	return status;
+}
+
+/*
+ * FIXME: Error is not checked, no need to translate to errno based codes.
+ */
+int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
+{
+	struct cntrl_device *npem_cntrl = device->cntrl;
+
+	if (ibpi == device->ibpi_prev)
+		return STATUS_SUCCESS;
+
+	if (ibpi < IBPI_PATTERN_NORMAL || ibpi > IBPI_PATTERN_LOCATE_OFF)
+		return STATUS_INVALID_STATE;
+
+	return npem_set_slot(npem_cntrl->sysfs_path, ibpi);
 }

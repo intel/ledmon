@@ -32,7 +32,7 @@
 #include "led/libled.h"
 #include "cntrl.h"
 #include "config.h"
-#include "config_file.h"
+#include <common/config_file.h>
 #include "list.h"
 #include "smp.h"
 #include "status.h"

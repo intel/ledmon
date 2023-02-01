@@ -23,9 +23,10 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#include <lib/utils.h>
+#include <lib/status.h>
+
 #include "config_file.h"
-#include "utils.h"
-#include "status.h"
 
 
 /**

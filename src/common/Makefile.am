@@ -14,25 +14,11 @@
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+#
 
-ACLOCAL_AMFLAGS = -I m4
+AM_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config
 
-if SYSTEMD_CONDITION
-  OPTIONAL_SUBDIR = systemd
-endif
-
-SUBDIRS = doc src $(OPTIONAL_SUBDIR)
-EXTRA_DIST = \
-	config/config.h \
-	systemd/ledmon.service.in \
-	ledmon.pc.in \
-	ledmon.pc
-
-if WITH_LIBRARY
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ledmon.pc
-
-endif
-
-dist_doc_DATA = README.md
+# Make a convenience library for this code
+noinst_LTLIBRARIES = libcommon.la
+libcommon_la_SOURCES = config_file.h config_file.c
+libcommon_la_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS)

@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/led
+
+Name: libled
+Version: @VERSION@
+Description: LED library
+Requires:
+Libs: -L${libdir} -lled @LIBS@
+Cflags: -I${includedir}

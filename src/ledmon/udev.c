@@ -30,7 +30,7 @@
 #include "status.h"
 #include "sysfs.h"
 #include "udev.h"
-#include "utils.h"
+#include <lib/utils.h>
 
 extern struct ledmon_conf conf;
 

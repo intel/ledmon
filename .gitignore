@@ -7,8 +7,8 @@ ledmon.8.gz
 .deps
 .libs
 _build
-ledmon
-ledctl
+src/ledmon/ledmon
+src/ledctl/ledctl
 *~
 *.bak
 .depend
@@ -44,3 +44,5 @@ config_ac.h.in
 install-sh
 ltmain.sh
 .vscode
+src/common/.dirstamp
+ledmon.pc

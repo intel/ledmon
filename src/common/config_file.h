@@ -14,7 +14,8 @@
 #define SRC_CONFIG_FILE_H_
 
 #include <stdio.h>
-#include "list.h"
+
+#include <lib/list.h>
 
 #define LEDMON_SHARE_MEM_FILE "/ledmon.conf"
 #define LEDMON_DEF_CONF_FILE "/etc/ledmon.conf"

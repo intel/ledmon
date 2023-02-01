@@ -21,7 +21,7 @@
 #ifndef _UDEV_H_INCLUDED_
 #define _UDEV_H_INCLUDED_
 
-#include "list.h"
+#include <lib/list.h>
 #include "sysfs.h"
 
 /**

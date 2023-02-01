@@ -22,13 +22,13 @@
 #define _UTILS_H_INCLUDED_
 
 #include <getopt.h>
-#include "config_file.h"
+#include <common/config_file.h>
 #include "stdlib.h"
 #include "stdint.h"
 #include "list.h"
 #include "status.h"
 #include "syslog.h"
-#include "led/libled.h"
+#include <led/libled.h>
 
 struct map {
 	char *name;

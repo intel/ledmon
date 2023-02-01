@@ -16,38 +16,5 @@
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-LIB_SRCS         = ahci.c block.c cntrl.c enclosure.c list.c utils.c \
-                   raid.c scsi.c slave.c sysfs.c smp.c dellssd.c \
-                   pci_slot.c vmdssd.c amd.c amd_sgpio.c amd_ipmi.c\
-                   ipmi.c npem.c ses.c slot.c \
-                   ahci.h amd_sgpio.h block.h cntrl.h dellssd.h utils.h \
-                   enclosure.h ibpi.h list.h pci_slot.h raid.h scsi.h \
-                   ses.h slave.h smp.h status.h sysfs.h \
-                   vmdssd.h ipmi.h amd.h amd_ipmi.h npem.h libled_internal.c
 
-# Make a convenience library, to be used for led tools and the shared library
-noinst_LTLIBRARIES = libledinternal.la
-libledinternal_la_SOURCES = libled.c $(LIB_SRCS)
-libledinternal_la_LIBADD = $(LIBPCI_LIBS)
-libledinternal_la_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS)
-
-
-# User may not want the shared library
-if WITH_LIBRARY
-
-lib_LTLIBRARIES = libled.la
-libled_la_SOURCES =
-libled_la_LIBADD = libledinternal.la
-libled_la_LDFLAGS = -version-info $(LIBLED_LIBTOOL_VERSION)
-
-endif
-
-sbin_PROGRAMS  = ledctl ledmon
-ledctl_SOURCES = ledctl.c config_file.c
-
-ledctl_LDADD = libledinternal.la
-ledctl_CFLAGS = $(AM_CFLAGS)
-
-ledmon_SOURCES = ledmon.c pidfile.c config_file.c udev.c udev.h
-ledmon_LDADD = libledinternal.la $(LIBUDEV_LIBS)
-ledmon_CFLAGS = $(AM_CFLAGS) $(LIBUDEV_CFLAGS)
+SUBDIRS=common lib ledctl ledmon

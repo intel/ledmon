@@ -42,10 +42,10 @@
 #endif
 
 #include "config.h"
-#include "config_file.h"
-#include "utils.h"
-#include "list.h"
-#include "led/libled.h"
+#include <common/config_file.h>
+#include <lib/utils.h>
+#include <lib/list.h>
+#include <led/libled.h>
 #include "libled_internal.h"
 #include "slot.h"
 

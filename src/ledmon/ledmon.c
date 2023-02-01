@@ -40,23 +40,26 @@
 #include <dmalloc.h>
 #endif
 
-#include "ahci.h"
-#include "block.h"
-#include "cntrl.h"
+#include <lib/ahci.h>
+#include <lib/block.h>
+#include <lib/cntrl.h>
+
+#include <common/config_file.h>
+#include <led/libled.h>
+#include <lib/list.h>
+#include <lib/libled_internal.h>
+
+#include <lib/raid.h>
+#include <lib/scsi.h>
+#include <lib/slave.h>
+#include <lib/smp.h>
+#include <lib/sysfs.h>
+#include <lib/utils.h>
+#include <lib/vmdssd.h>
+
 #include "config.h"
-#include "config_file.h"
-#include "led/libled.h"
-#include "list.h"
-#include "libled_internal.h"
-#include "pidfile.h"
-#include "raid.h"
-#include "scsi.h"
-#include "slave.h"
-#include "smp.h"
-#include "sysfs.h"
 #include "udev.h"
-#include "utils.h"
-#include "vmdssd.h"
+#include "pidfile.h"
 
 
 static struct led_ctx *ctx;

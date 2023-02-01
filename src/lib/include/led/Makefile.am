@@ -14,25 +14,15 @@
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
-
-ACLOCAL_AMFLAGS = -I m4
-
-if SYSTEMD_CONDITION
-  OPTIONAL_SUBDIR = systemd
-endif
-
-SUBDIRS = doc src $(OPTIONAL_SUBDIR)
-EXTRA_DIST = \
-	config/config.h \
-	systemd/ledmon.service.in \
-	ledmon.pc.in \
-	ledmon.pc
+#
 
 if WITH_LIBRARY
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ledmon.pc
+ledincludedir = $(includedir)/led
+
+ledinclude_HEADERS = libled.h
+
+install-exec-hook:
+	$(mkinstalldirs) $(DESTDIR)$(ledincludedir)
 
 endif
-
-dist_doc_DATA = README.md

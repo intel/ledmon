@@ -9,7 +9,7 @@ m4_define([MICRO_VERSION], 0)
 AC_INIT([ledmon],[MAJOR_VERSION.MINOR_VERSION.MICRO_VERSION])
 AC_CONFIG_MACRO_DIR([m4])
 AC_SUBST([PACKAGE_DATE], "May 2023")
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 LT_PREREQ([2.4.6])
 AM_PROG_AR
@@ -121,8 +121,15 @@ AC_ARG_ENABLE([library],
 AM_CONDITIONAL([WITH_LIBRARY], [test "x$with_library" = "xyes"])
 
 AC_CONFIG_FILES([Makefile
+                 ledmon.pc
                  doc/Makefile
                  src/Makefile
+                 src/common/Makefile
+                 src/lib/Makefile
+                 src/lib/include/Makefile
+                 src/lib/include/led/Makefile
+                 src/ledctl/Makefile
+                 src/ledmon/Makefile
                  systemd/Makefile])
 AC_OUTPUT
 AC_MSG_RESULT([

@@ -35,7 +35,7 @@
 #include "config.h"
 #include "pidfile.h"
 #include "status.h"
-#include "utils.h"
+#include <lib/utils.h>
 
 #define RUN_DIR "/var/run/"
 #define PID ".pid"

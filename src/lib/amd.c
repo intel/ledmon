@@ -107,11 +107,12 @@ int amd_em_enabled(const char *path, struct led_ctx *ctx)
 {
 	char *platform;
 	int rc;
+	char buf[BUF_SZ_SM];
 
 	/* Default to SGPIO interface */
 	amd_interface = AMD_INTF_SGPIO;
 
-	platform = get_text("/sys/class/dmi/id", "product_name");
+	platform = get_text_to_dest("/sys/class/dmi/id", "product_name", buf, sizeof(buf));
 	if (!platform)
 		return 0;
 

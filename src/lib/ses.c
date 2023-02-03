@@ -485,12 +485,11 @@ static void get_led_status(struct ses_pages *sp, int idx, enum led_ibpi_pattern 
 
 int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count)
 {
-	unsigned char *add_desc = NULL;
 	unsigned char *ap = NULL, *addr_p = NULL;
 	int i, j, len = 0;
 
 	/* Check Page10 for address. Extract index. */
-	ap = add_desc = sp->page10.buf + 8;
+	ap = sp->page10.buf + 8;
 	for (i = 0; i < sp->page1_types_len; i++) {
 		const struct type_descriptor_header *t = &sp->page1_types[i];
 

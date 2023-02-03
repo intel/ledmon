@@ -190,12 +190,17 @@ struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *p
 	struct cntrl_device *cntrl;
 	struct cntrl_device *non_npem_cntrl = NULL;
 
+	if (!cntrl_list || !path)
+		return non_npem_cntrl;
+
 	list_for_each(cntrl_list, cntrl) {
-		if (strncmp(cntrl->sysfs_path, path,
-			    strnlen(cntrl->sysfs_path, PATH_MAX)) == 0) {
-			if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM)
-				return cntrl;
-			non_npem_cntrl = cntrl;
+		if (cntrl) {
+			if (strncmp(cntrl->sysfs_path, path,
+				strnlen(cntrl->sysfs_path, PATH_MAX)) == 0) {
+				if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM)
+					return cntrl;
+				non_npem_cntrl = cntrl;
+			}
 		}
 	}
 	return non_npem_cntrl;
@@ -273,7 +278,7 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 	if (!device)
 		goto error;
 
-	hosts = cntrl ? cntrl->hosts : NULL;
+	hosts = cntrl->hosts;
 	device->cntrl = cntrl;
 	device->sysfs_path = strdup(link);
 	if (!device->sysfs_path)
@@ -306,16 +311,15 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 			goto error;
 		}
 	}
-out:
+
 	return device;
 error:
 	free(host);
 	if (device) {
 		free(device->sysfs_path);
 		free(device);
-		device = NULL;
 	}
-	goto out;
+	return NULL;
 }
 
 /**

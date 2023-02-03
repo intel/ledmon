@@ -103,7 +103,7 @@ static bool parse_list(struct list *list, char *s)
 
 static bool _parse_and_add_to_list(char *s, const char *key, size_t key_len, struct list *list)
 {
-	if (strncmp(s, key, key_len != 0))
+	if (strncmp(s, key, key_len) != 0)
 		return false;
 
 	s += key_len;
@@ -212,7 +212,7 @@ static int parse_next(FILE *fd, struct ledmon_conf *conf)
 	} else if (!strncmp(s, "REBUILD_BLINK_ON_ALL=", 21)) {
 		s += 21;
 		conf->rebuild_blink_on_all = parse_bool(s);
-		if (conf->blink_on_migration < 0)
+		if (conf->rebuild_blink_on_all < 0)
 			return -1;
 	} else if (!strncmp(s, "RAID_MEMBERS_ONLY=", 18)) {
 		s += 18;

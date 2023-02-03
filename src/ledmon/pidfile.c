@@ -92,17 +92,18 @@ int ping_proc(pid_t pid)
 status_t pidfile_check(const char *name, pid_t *pid)
 {
 	char path[PATH_MAX], *p;
+	char buf[BUF_SZ_NUM];
 	pid_t tp;
 
 	snprintf(path, sizeof(path), "%s/%s%s", RUN_DIR, name, PID);
 
-	p = buf_read(path);
+	p = buf_read_to_dest(path, buf, sizeof(buf));
 	if (p == NULL)
 		return STATUS_INVALID_PATH;
 	if (str_toi(&tp, p, NULL, 10) != 0)
 		return STATUS_DATA_ERROR;
 	if (pid)
 		*pid = tp;
-	free(p);
+
 	return ping_proc(tp);
 }

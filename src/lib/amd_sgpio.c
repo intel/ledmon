@@ -216,6 +216,7 @@ void amd_sgpio_cache_free(struct led_ctx *ctx)
 static int _open_and_map_cache(struct led_ctx *ctx)
 {
 	struct stat sbuf;
+	int rc = 0;
 
 	if (ctx->amd_sgpio.cache_fd)
 		return 0;
@@ -228,9 +229,20 @@ static int _open_and_map_cache(struct led_ctx *ctx)
 		return -1;
 	}
 
-	flock(ctx->amd_sgpio.cache_fd, LOCK_EX);
+	rc = flock(ctx->amd_sgpio.cache_fd, LOCK_EX);
+	if (rc != 0) {
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Couldn't lock SGPIO cache: %s", strerror(errno));
+		return -1;
+	}
 
-	fstat(ctx->amd_sgpio.cache_fd, &sbuf);
+	rc = fstat(ctx->amd_sgpio.cache_fd, &sbuf);
+	if (rc != 0) {
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Couldn't stat SGPIO cache: %s", strerror(errno));
+		return -1;
+	}
+
 	if (sbuf.st_size == 0) {
 		if (ftruncate(ctx->amd_sgpio.cache_fd, CACHE_SZ) != 0) {
 			lib_log(ctx, LED_LOG_LEVEL_ERROR,
@@ -780,18 +792,16 @@ int _amd_sgpio_em_enabled(const char *path, struct led_ctx *ctx)
 	int rc, found;
 	uint32_t caps;
 	char em_path[PATH_MAX];
+	char buf[BUF_SZ_SM];
 
 	/* Check that libahci module was loaded with ahci_em_messages=1 */
-	p = get_text("/sys/module/libahci/parameters", "ahci_em_messages");
+	p = get_text_to_dest("/sys/module/libahci/parameters", "ahci_em_messages",
+			     buf, sizeof(buf));
 	if (!p || (p && *p == 'N')) {
 		lib_log(ctx, LED_LOG_LEVEL_INFO,
 			"Kernel libahci module enclosure management messaging not enabled.\n");
-		if (p)
-			free(p);
 		return 0;
 	}
-
-	free(p);
 
 	/* Find base path for enclosure management */
 	found = _find_file_path(path, "em_buffer", em_path, PATH_MAX, ctx);
@@ -802,7 +812,7 @@ int _amd_sgpio_em_enabled(const char *path, struct led_ctx *ctx)
 	}
 
 	/* Validate that enclosure management is supported */
-	p = get_text(em_path, "em_message_supported");
+	p = get_text_to_dest(em_path, "em_message_supported", buf, sizeof(buf));
 	if (!p) {
 		lib_log(ctx, LED_LOG_LEVEL_INFO,
 			"Couldn't get 'em_messages_supported' for %s", path);
@@ -811,14 +821,11 @@ int _amd_sgpio_em_enabled(const char *path, struct led_ctx *ctx)
 
 	if (strstr(p, "sgpio") == NULL) {
 		lib_log(ctx, LED_LOG_LEVEL_INFO, "SGPIO EM not supported for %s\n", path);
-		free(p);
 		return 0;
 	}
 
-	free(p);
-
 	/* Verify host enclosure management capabilities */
-	p = get_text(em_path, "ahci_host_caps");
+	p = get_text_to_dest(em_path, "ahci_host_caps", buf, sizeof(buf));
 	if (!p) {
 		lib_log(ctx, LED_LOG_LEVEL_INFO,
 			"Couldn't read host capabilities for %s\n", path);
@@ -826,7 +833,7 @@ int _amd_sgpio_em_enabled(const char *path, struct led_ctx *ctx)
 	}
 
 	rc = sscanf(p, "%" SCNx32, &caps);
-	free(p);
+
 	if (rc <= 0) {
 		lib_log(ctx, LED_LOG_LEVEL_INFO,
 			"Couldn't parse host capabilities for %s", path);

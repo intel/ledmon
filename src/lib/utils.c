@@ -37,6 +37,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/sysmacros.h>
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -74,44 +75,52 @@ char *get_text(const char *path, const char *name)
 	return buf_read(temp);
 }
 
+char *get_text_to_dest(const char *path, const char *name, char *dest, size_t dest_len)
+{
+	char temp[PATH_MAX];
+
+	snprintf(temp, sizeof(temp), "%s/%s", path, name);
+	return buf_read_to_dest(temp, dest, dest_len);
+}
+
 /*
  * Function returns integer value (1 or 0) based on a boolean value ('Y' or 'N')
  * read from a text file. See utils.h for details.
  */
 int get_bool(const char *path, int defval, const char *name)
 {
-	char *p = get_text(path, name);
+	char buf[BUF_SZ_SM];
+	char *p = get_text_to_dest(path, name, buf, sizeof(buf));
 	if (p) {
 		if (*p == 'Y')
 			defval = 1;
 		else if (*p == 'N')
 			defval = 0;
-		free(p);
 	}
 	return defval;
 }
 
 uint64_t get_uint64(const char *path, uint64_t defval, const char *name)
 {
-	char *p = get_text(path, name);
+	char buf[BUF_SZ_NUM];
+	char *p = get_text_to_dest(path, name, buf, sizeof(buf));
 
 	if (!p)
 		return defval;
 
 	str_toul(&defval, p, NULL, 16);
-	free(p);
 	return defval;
 }
 
 int get_int(const char *path, int defval, const char *name)
 {
-	char *p = get_text(path, name);
+	char buf[BUF_SZ_NUM];
+	char *p = get_text_to_dest(path, name, buf, sizeof(buf));
 
 	if (!p)
 		return defval;
 
 	str_toi(&defval, p, NULL, 10);
-	free(p);
 	return defval;
 }
 
@@ -159,9 +168,9 @@ int scan_dir(const char *path, struct list *result)
 
 /**
  */
-static int _is_virtual(int dev_type)
+static int _is_virtual(dev_t dev_type)
 {
-	switch (dev_type) {
+	switch (major(dev_type)) {
 	case 0:		/* sysfs  */
 	case 3:		/* procfs */
 		return 1;
@@ -200,26 +209,58 @@ char *buf_read(const char *path)
 
 	if (stat(path, &st) < 0)
 		return NULL;
+
 	if (st.st_size == 0) {
 		if (!_is_virtual(st.st_dev))
 			return NULL;
 		st.st_size = st.st_blksize;
 	}
-	if (_is_virtual(st.st_dev))
-		st.st_size = st.st_blksize;
-	t = buf = malloc(st.st_size);
-	if (buf) {
-		fd = open(path, O_RDONLY);
-		if (fd >= 0) {
-			size = read(fd, buf, st.st_size);
-			close(fd);
-			if (size > 0)
-				t = strchrnul(buf, '\n');
+
+	buf = calloc(1, st.st_size + 1);	/* Add a byte for nul */
+	if (!buf)
+		return NULL;
+
+	fd = open(path, O_RDONLY);
+	if (fd >= 0) {
+		size = read(fd, buf, st.st_size);
+		close(fd);
+		if (size > 0) {
+			buf[size] = '\0';
+			t = strchrnul(buf, '\n');
+			*t = '\0';
+		} else {
+			buf[0] = '\0'; // Set empty string if no data was read
 		}
-		*t = '\0';
 	}
+
 	return buf;
 }
+
+char *buf_read_to_dest(const char *path, char *dest, size_t dest_size)
+{
+	int fd, size;
+	char *t = NULL;
+
+	if (!dest || dest_size < 1)
+		return NULL;
+
+	memset(dest, 0, dest_size);
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return NULL;
+
+	size = read(fd, dest, dest_size - 1);
+	close(fd);
+	if (size > 0) {
+		dest[size] = '\0';
+		t = strchrnul(dest, '\n');
+		*t = '\0';
+		return dest;
+	}
+	return NULL;
+}
+
 
 /**
  */

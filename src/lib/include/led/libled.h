@@ -113,7 +113,7 @@ enum led_cntrl_type LED_SYM_PUBLIC led_string_to_cntrl_type(const char *cntrl_st
  *
  * Note: Do not free string, do not try to modify string, it is a library constant
  */
-const LED_SYM_PUBLIC char  *const led_cntrl_type_to_string(enum led_cntrl_type cntrl);
+const LED_SYM_PUBLIC char *const led_cntrl_type_to_string(enum led_cntrl_type cntrl);
 
 /**
  * @brief Opaque data type for controller list entry

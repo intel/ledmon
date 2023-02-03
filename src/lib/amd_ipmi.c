@@ -83,6 +83,7 @@ static int _get_ipmi_nvme_port(char *path, struct led_ctx *ctx)
 	const char *dir_path;
 	char *port_name;
 	int port = -1;
+	char buf[BUF_SZ_NUM];
 
 	p = strrchr(path, '/');
 	if (!p) {
@@ -108,14 +109,17 @@ static int _get_ipmi_nvme_port(char *path, struct led_ctx *ctx)
 		return -1;
 
 	list_for_each(&dir, dir_path) {
-		port_name = get_text(dir_path, "address");
+		port_name = get_text_to_dest(dir_path, "address", buf, sizeof(buf));
 		if (port_name && !strcmp(port_name, p)) {
 			char *dname = strrchr(dir_path, '/');
-
-			dname++;
-			if (str_toi(&port, dname, NULL, 0) != 0)
-				return -1;
-			break;
+			if (dname) {
+				dname++;
+				if (str_toi(&port, dname, NULL, 0) != 0) {
+					list_erase(&dir);
+					return -1;
+				}
+				break;
+			}
 		}
 	}
 
@@ -183,7 +187,12 @@ static int _get_amd_ipmi_drive(const char *start_path,
 	found = _find_file_path(start_path, "nvme", path, PATH_MAX, drive->ctx);
 	if (found) {
 		drive->port = _get_ipmi_nvme_port(path, drive->ctx);
-		if (drive->port < 0) {
+
+		/*
+		 * We are shifting to the left to set drive bay below, we
+		 * cannot shift a negative amount, so ensure this is 1 or more
+		 */
+		if (drive->port < 1) {
 			lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
 				"Could not retrieve port number\n");
 			return -1;
@@ -195,7 +204,10 @@ static int _get_amd_ipmi_drive(const char *start_path,
 		int shift;
 
 		drive->port = _get_ipmi_sata_port(start_path);
-		if (drive->port < 0) {
+		/* We are shifting to the left to set drive bay below, we
+		 * cannot shift a negative amount, so ensure this is 1 or more
+		 */
+		if (drive->port < 1) {
 			lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
 				"Could not retrieve port number\n");
 			return -1;

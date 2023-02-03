@@ -154,6 +154,20 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name);
 char *get_text(const char *path, const char *name);
 
 /**
+ * @brief Get the text to dest similar to get_text, but caller supplies buffer
+ *
+ * @see get_text
+ *
+ *
+ * @param[in]     path        Directory path to file
+ * @param[in]     name        Name of file
+ * @param[out]    dest        Where to place the contents of file read
+ * @param[in]     dest_len    Size of destination buffer
+ * @return NULL if error(s) encountered else dest
+ */
+char *get_text_to_dest(const char *path, const char *name, char *dest, size_t dest_len);
+
+/**
  * @brief Reads boolean value from a text file.
  *
  * This function assumes that the only text in a file is the requested value to
@@ -247,6 +261,24 @@ ssize_t buf_write(const char *path, const char *buf);
  * @return Pointer to memory block if successful, otherwise NULL pointer.
  */
 char *buf_read(const char *path);
+
+/**
+ * @brief some constants for different value types
+ *
+ */
+#define BUF_SZ_SM   64
+#define BUF_SZ_NUM  32
+
+/**
+ * @brief Same as buf_read, except file contents are placed in dest.
+ *
+ * @param[in]     path        Directory path to file
+ * @param[in]     name        Name of file
+ * @param[out]    dest        Where to place the contents of file read
+ * @param[in]     dest_len    Size of destination buffer
+ * @return NULL if error(s) encountered else dest
+ */
+char *buf_read_to_dest(const char *path, char *dest, size_t dest_size);
 
 /**
  * @brief Gets major and minor of device.

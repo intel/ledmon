@@ -42,9 +42,10 @@
  */
 static enum raid_state _get_array_state(const char *path)
 {
+	char buf[BUF_SZ_SM];
 	enum raid_state state = RAID_STATE_UNKNOWN;
 
-	char *p = get_text(path, "md/array_state");
+	char *p = get_text_to_dest(path, "md/array_state", buf, sizeof(buf));
 	if (p) {
 		if (strcmp(p, "clear") == 0)
 			state = RAID_STATE_CLEAR;
@@ -64,7 +65,6 @@ static enum raid_state _get_array_state(const char *path)
 			state = RAID_STATE_WRITE_PENDING;
 		else if (strcmp(p, "active-idle") == 0)
 			state = RAID_STATE_ACTIVE_IDLE;
-		free(p);
 	}
 	return state;
 }
@@ -73,9 +73,10 @@ static enum raid_state _get_array_state(const char *path)
  */
 static enum raid_action _get_sync_action(const char *path)
 {
+	char buf[BUF_SZ_SM];
 	enum raid_action action = RAID_ACTION_UNKNOWN;
 
-	char *p = get_text(path, "md/sync_action");
+	char *p = get_text_to_dest(path, "md/sync_action", buf, sizeof(buf));
 	if (p) {
 		if (strcmp(p, "idle") == 0)
 			action = RAID_ACTION_IDLE;
@@ -91,7 +92,6 @@ static enum raid_action _get_sync_action(const char *path)
 			action = RAID_ACTION_RECOVER;
 		else if (strcmp(p, "repair") == 0)
 			action = RAID_ACTION_REPAIR;
-		free(p);
 	}
 	return action;
 }
@@ -100,9 +100,10 @@ static enum raid_action _get_sync_action(const char *path)
  */
 static enum raid_level _get_level(const char *path)
 {
+	char buf[BUF_SZ_SM];
 	enum raid_level result = RAID_LEVEL_UNKNOWN;
 
-	char *p = get_text(path, "md/level");
+	char *p = get_text_to_dest(path, "md/level", buf, sizeof(buf));
 	if (p) {
 		if (strcmp(p, "raid0") == 0)
 			result = RAID_LEVEL_0;
@@ -120,7 +121,6 @@ static enum raid_level _get_level(const char *path)
 			result = RAID_LEVEL_LINEAR;
 		else if (strcmp(p, "faulty") == 0)
 			result = RAID_LEVEL_FAULTY;
-		free(p);
 	}
 	return result;
 }

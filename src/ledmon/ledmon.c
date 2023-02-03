@@ -318,7 +318,7 @@ static ledmon_status_code_t _set_config_path(char **conf_path, const char *path)
 	if (*conf_path)
 		free(*conf_path);
 	*conf_path = strdup(path);
-	if (!conf_path)
+	if (!*conf_path)
 		return LEDMON_STATUS_OUT_OF_MEMORY;
 
 	return LEDMON_STATUS_SUCCESS;
@@ -535,7 +535,7 @@ static void _ledmon_wait(int seconds)
 			FD_SET(udev_fd, &rdfds);
 
 		res = pselect(max_fd, &rdfds, NULL, &exfds, &timeout, &sigset);
-		if (terminate || !FD_ISSET(udev_fd, &rdfds) ||
+		if (terminate || ((udev_fd > 0) && !FD_ISSET(udev_fd, &rdfds)) ||
 		    handle_udev_event(&ledmon_block_list, ctx) <= 0)
 			break;
 	} while (res > 0);
@@ -676,7 +676,7 @@ static void _handle_fail_state(struct block_device *block,
 static void _add_block(struct block_device *block)
 {
 	struct block_device *temp = NULL;
-	char buf[128];
+	char buf[IPBI2STR_BUFF_SIZE];
 
 	list_for_each(&ledmon_block_list, temp) {
 		if (block_compare(temp, block))
@@ -759,7 +759,7 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
-	char buf[128];
+	char buf[IPBI2STR_BUFF_SIZE];
 	if (!block->cntrl) {
 		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
@@ -1013,6 +1013,10 @@ int main(int argc, char *argv[])
 		_close_parent_fds();
 
 		int t = open("/dev/null", O_RDWR);
+		if (t < 0) {
+			log_debug("%s: open(/dev/null) failed (errno=%d).", __func__, errno);
+			exit(EXIT_FAILURE);
+		}
 		UNUSED(dup(t));
 		UNUSED(dup(t));
 	}

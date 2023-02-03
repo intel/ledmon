@@ -391,16 +391,19 @@ int smp_write_gpio(const char *path, int smp_reg_type,
 			   size_t len)
 {
 	struct smp_write_request_frame_header header;
-	int status;
+	int status = -1;
+
+	memset(&header, 0, sizeof(struct smp_write_request_frame_header));
 	header.frame_type = SMP_FRAME_TYPE_REQ;
 	header.function = SMP_FUNC_GPIO_WRITE;
 	header.register_type = smp_reg_type;
 	header.register_index = smp_reg_index;
 	header.register_count = smp_reg_count;
-	memset(header.reserved, 0, sizeof(header.reserved));
 	int fd = _open_smp_device(path);
-	status = _start_smp_write_gpio(fd, &header, data, len);
-	_close_smp_device(fd);
+	if (fd != -1) {
+		status = _start_smp_write_gpio(fd, &header, data, len);
+		_close_smp_device(fd);
+	}
 	return status;
 }
 
@@ -434,8 +437,7 @@ int scsi_smp_fill_buffer(struct block_device *device, enum led_ibpi_pattern ibpi
 	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
 		__set_errno_and_return(ERANGE);
 	if (!device->cntrl) {
-		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
-			"No ctrl dev for '%s'", strstr(sysfs_path, "host"));
+		/* Unable to log here as we need the device->cntrl to not be null to access ctx */
 		__set_errno_and_return(ENODEV);
 	}
 	if (device->cntrl->cntrl_type != LED_CNTRL_TYPE_SCSI) {

@@ -737,6 +737,7 @@ ledctl_status_code_t slot_execute(struct led_ctx *ctx, struct slot_request *slot
 		led_slot_list_entry_free(slot);
 		return LEDCTL_STATUS_SUCCESS;
 	default:
+		led_slot_list_entry_free(slot);
 		return LEDCTL_STATUS_NOT_SUPPORTED;
 	}
 }

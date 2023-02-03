@@ -105,10 +105,12 @@ bool vmdssd_check_slot_module(struct led_ctx *ctx, const char *slot_path)
 				continue;
 			if (strstr(address, cntrl->domain) == NULL)
 				continue;
+			free(address);
 			return true;
 		}
 	}
 
+	free(address);
 	return false;
 }
 

@@ -646,10 +646,18 @@ const struct list *sysfs_get_slots(struct led_ctx *ctx)
 int sysfs_enclosure_attached_to_cntrl(struct led_ctx *ctx, const char *path)
 {
 	struct enclosure_device *device;
+	size_t path_len = 0;
+
+	if (!ctx || !path)
+		return 0;
+
+	path_len = strnlen(path, PATH_MAX);
 
 	list_for_each(&ctx->sys.enclo_list, device) {
-			if (strncmp(device->sysfs_path, path, strnlen(path, PATH_MAX)) == 0)
-				return 1;
+		if (!device)
+			continue;
+		if (strncmp(device->sysfs_path, path, path_len) == 0)
+			return 1;
 	}
 	return 0;
 }

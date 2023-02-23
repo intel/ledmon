@@ -71,7 +71,7 @@ static char *get_slot_from_syspath(char *path)
 	return ret;
 }
 
-static int check_slot_module(const char *slot_path)
+int vmdssd_check_slot_module(const char *slot_path)
 {
 	char module_path[PATH_MAX], real_module_path[PATH_MAX];
 	struct list dir;
@@ -106,7 +106,7 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 		slot = NULL;
 	}
 	free(pci_addr);
-	if (slot == NULL || check_slot_module(slot->sysfs_path) < 0)
+	if (slot == NULL || vmdssd_check_slot_module(slot->sysfs_path) < 0)
 		return NULL;
 
 	return slot;

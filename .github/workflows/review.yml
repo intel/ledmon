@@ -14,10 +14,10 @@ jobs:
     - name: Run checkpatch review
       uses: webispy/checkpatch-action@v9
   make:
+    name: Compilation test
     strategy:
       matrix:
         gcc-version: [7, 8, 9, 10, 11]
-    name: Build test gcc${{ matrix.gcc-version }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3

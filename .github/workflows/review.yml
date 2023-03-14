@@ -1,0 +1,33 @@
+name: review
+on: [pull_request]
+jobs:
+  checkpatch:
+    name: checkpatch review
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Calculate PR commits + 1'
+      run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> $GITHUB_ENV
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+    - name: Run checkpatch review
+      uses: webispy/checkpatch-action@v9
+  make:
+    name: Compilation test with gcc
+    strategy:
+      matrix:
+        gcc-version: [7, 8, 9, 10, 11]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: 'Add ubuntu repository'
+      run: sudo add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu focal main universe"
+    - name: 'Install gcc'
+      run: sudo apt-get update && sudo apt-get install gcc-${{ matrix.gcc-version }} g++-${{ matrix.gcc-version }}
+    - name: 'Install dependencies'
+      run: sudo apt-get install pkg-config automake autoconf make libsgutils2-dev libudev-dev libpci-dev
+    - name: 'Generate compiling configurations'
+      run: ./autogen.sh && ./configure
+    - name: 'Make'
+      run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && make -j$(nproc)

@@ -14,7 +14,7 @@ jobs:
     - name: Run checkpatch review
       uses: webispy/checkpatch-action@v9
   make:
-    name: Compilation test
+    name: Compilation test with gcc
     strategy:
       matrix:
         gcc-version: [7, 8, 9, 10, 11]

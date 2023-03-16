@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2022-2022 Intel Corporation.
+ * Copyright (C) 2022-2023 Intel Corporation.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -104,7 +104,7 @@ static struct list enclo_list;
  * function to initialize the variable. Use sysfs_scan() function to populate
  * the list. Use sysfs_reset() function to delete the content of the list.
  */
-static struct list slots_list;
+static struct list pci_slots_list;
 
 /**
  * @brief Determine device type.
@@ -347,11 +347,11 @@ static void _enclo_add(const char *path)
 
 /**
  */
-static void _slots_add(const char *path)
+static void _pci_slots_add(const char *path)
 {
 	struct pci_slot *device = pci_slot_init(path);
 	if (device)
-		list_append(&slots_list, device);
+		list_append(&pci_slots_list, device);
 }
 
 /**
@@ -451,14 +451,14 @@ static void _scan_enclo(void)
 	}
 }
 
-static void _scan_slots(void)
+static void _scan_pci_slots(void)
 {
 	struct list dir;
 	if (scan_dir(SYSFS_PCI_SLOTS, &dir) == 0) {
 		const char *dir_path;
 
 		list_for_each(&dir, dir_path)
-			_slots_add(dir_path);
+			_pci_slots_add(dir_path);
 		list_erase(&dir);
 	}
 }
@@ -583,7 +583,7 @@ void sysfs_init(void)
 	list_init(&slave_list, (item_free_t)slave_device_fini);
 	list_init(&cntnr_list, (item_free_t)raid_device_fini);
 	list_init(&enclo_list, (item_free_t)enclosure_device_fini);
-	list_init(&slots_list, (item_free_t)pci_slot_fini);
+	list_init(&pci_slots_list, (item_free_t)pci_slot_fini);
 }
 
 void sysfs_reset(void)
@@ -594,14 +594,14 @@ void sysfs_reset(void)
 	list_erase(&slave_list);
 	list_erase(&cntnr_list);
 	list_erase(&enclo_list);
-	list_erase(&slots_list);
+	list_erase(&pci_slots_list);
 }
 
 void sysfs_scan(void)
 {
 	_scan_enclo();
 	_scan_cntrl();
-	_scan_slots();
+	_scan_pci_slots();
 	_scan_block();
 	_scan_raid();
 	_scan_slave();
@@ -641,7 +641,7 @@ const struct list *sysfs_get_block_devices(void)
 
 const struct list *sysfs_get_pci_slots(void)
 {
-	return &slots_list;
+	return &pci_slots_list;
 }
 
 /*

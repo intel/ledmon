@@ -21,6 +21,8 @@
 #ifndef _BLOCK_H_INCLUDED_
 #define _BLOCK_H_INCLUDED_
 
+#include <stdbool.h>
+
 #include "cntrl.h"
 #include "ibpi.h"
 #include "time.h"
@@ -241,6 +243,6 @@ int block_compare(const struct block_device *bd_old,
  *
  * @return first block device containing sub-path if any, otherwise NULL.
  */
-struct block_device *get_block_device_from_sysfs_path(char *sub_path);
+struct block_device *get_block_device_from_sysfs_path(char *sub_path, bool sub_path_to_end);
 
 #endif				/* _BLOCK_H_INCLUDED_ */

@@ -103,7 +103,7 @@ static status_t set_slot_response(struct pci_slot *slot, struct slot_response *s
 
 	slot_res->state = vmdssd_get_attention(slot);
 
-	bl_device = get_block_device_from_sysfs_path(slot->address);
+	bl_device = get_block_device_from_sysfs_path(slot->address, true);
 	if (bl_device)
 		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(bl_device->sysfs_path));
 	else
@@ -124,7 +124,7 @@ status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_
 			return STATUS_DATA_ERROR;
 		}
 
-		block_device = get_block_device_from_sysfs_path(sub_path + 1);
+		block_device = get_block_device_from_sysfs_path(sub_path + 1, true);
 		if (block_device == NULL) {
 			log_error("Device %s not found.", device);
 			return STATUS_DATA_ERROR;

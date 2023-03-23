@@ -213,7 +213,7 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 	}
 
 	if (device && device[0] != '\0') {
-		block_device = get_block_device_from_sysfs_path(basename(device));
+		block_device = get_block_device_from_sysfs_path(basename(device), true);
 		if (block_device)
 			path = block_device->cntrl->sysfs_path;
 	} else if (slot_path && slot_path[0] != '\0') {
@@ -225,7 +225,7 @@ status_t npem_get_slot(char *device, char *slot_path, struct slot_response *slot
 			if (strcmp(basename(ctrl_dev->sysfs_path), basename(slot_path)) != 0)
 				continue;
 			path = ctrl_dev->sysfs_path;
-			block_device = get_block_device_from_sysfs_path(path);
+			block_device = get_block_device_from_sysfs_path(path, true);
 			break;
 		}
 	}

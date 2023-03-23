@@ -45,6 +45,7 @@
 #include "amd.h"
 #include "ipmi.h"
 
+/* For IBPI_PATTERN_NORMAL and IBPI_PATTERN_ONESHOT_NORMAL _disable_all_ibpi_states is called. */
 const struct ibpi2value ibpi2amd_ipmi[] = {
 	{IBPI_PATTERN_PFA, 0x41},
 	{IBPI_PATTERN_LOCATE, 0x42},
@@ -347,7 +348,7 @@ static int _change_ibpi_state(struct amd_drive *drive, enum ibpi_pattern ibpi, b
 							ARRAY_SIZE(ibpi2amd_ipmi));
 
 	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_error("AMD_IPMI: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		log_info("AMD_IPMI: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
 		return STATUS_INVALID_STATE;
 	}
 

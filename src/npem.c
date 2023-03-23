@@ -276,7 +276,7 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 			       ARRAY_SIZE(ibpi_to_npem_capability));
 
 	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_error("NPEM: Controller doesn't support %s pattern\n", ibpi_str[state]);
+		log_info("NPEM: Controller doesn't support %s pattern\n", ibpi_str[state]);
 		return STATUS_INVALID_STATE;
 	}
 	cap = (u32)ibpi2val->value;
@@ -294,8 +294,8 @@ status_t npem_set_slot(char *slot_path, enum ibpi_pattern state)
 	}
 
 	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
-		log_error("NPEM: Controller %s doesn't support %s pattern\n", slot_path,
-			  ibpi_str[state]);
+		log_info("NPEM: Controller %s doesn't support %s pattern\n", slot_path,
+			 ibpi_str[state]);
 		return STATUS_INVALID_STATE;
 	}
 	npem_wait_command(pdev);

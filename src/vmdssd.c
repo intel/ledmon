@@ -44,6 +44,7 @@ struct ibpi2value ibpi_to_attention[] = {
 	{IBPI_PATTERN_FAILED_DRIVE, ATTENTION_FAILURE},
 	{IBPI_PATTERN_REBUILD, ATTENTION_REBUILD},
 	{IBPI_PATTERN_LOCATE_OFF, ATTENTION_OFF},
+	{IBPI_PATTERN_ONESHOT_NORMAL, ATTENTION_OFF},
 	{IBPI_PATTERN_UNKNOWN}
 };
 
@@ -137,7 +138,7 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibp
 
 	ibpi2val = get_by_ibpi(ibpi, ibpi_to_attention, ARRAY_SIZE(ibpi_to_attention));
 	if (ibpi2val->ibpi == IBPI_PATTERN_UNKNOWN) {
-		log_error("VMD: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
+		log_info("VMD: Controller doesn't support %s pattern\n", ibpi_str[ibpi]);
 		return STATUS_INVALID_STATE;
 	}
 	val = (uint16_t)ibpi2val->value;

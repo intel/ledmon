@@ -890,7 +890,7 @@ static void _close_parent_fds(void)
 int main(int argc, char *argv[])
 {
 	ledmon_status_code_t status = LEDMON_STATUS_SUCCESS;
-	int ignore = 0;
+	static int ignore;
 
 	setup_options(&longopt, &shortopt, possible_params,
 			possible_params_size);

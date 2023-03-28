@@ -64,93 +64,35 @@ void pci_slot_fini(struct pci_slot *slot)
 	}
 }
 
-/**
- * @brief Finds PCI slot by number of the slot.
- *
- * @param[in]       slot_number       Number of the slot
- *
- * @return Struct with pci slot if successful, otherwise the function returns NULL pointer.
- */
-static struct pci_slot *find_pci_slot_by_number(char *slot_number)
+struct slot_property *pci_slot_property_init(void *slot)
 {
-	struct pci_slot *slot = NULL;
-	char *temp;
+	struct pci_slot *pci_slot = (struct pci_slot *)slot;
+	struct slot_property *result = NULL;
 
-	if (slot_number == NULL)
+	result = malloc(sizeof(struct slot_property));
+	if (result == NULL)
 		return NULL;
 
-	list_for_each(sysfs_get_pci_slots(), slot) {
-		temp = basename(slot->sysfs_path);
-		if (temp && strncmp(temp, slot_number, PATH_MAX) == 0)
-			return slot;
-	}
-	return NULL;
+	result->bl_device = get_block_device_from_sysfs_path(pci_slot->address, true);
+	result->slot = slot;
+	snprintf(result->slot_id, PATH_MAX, "%s", pci_slot->sysfs_path);
+	result->cntrl_type = CNTRL_TYPE_VMD;
+	result->get_state_fn = pci_get_state;
+	result->set_slot_fn = pci_set_slot;
+
+	return result;
 }
 
-/**
- * @brief Sets the slot response.
- *
- * @param[in]        slot       Struct with PCI slot parameters.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-static status_t set_slot_response(struct pci_slot *slot, struct slot_response *slot_res)
+status_t pci_set_slot(void *slot, enum ibpi_pattern state)
 {
-	struct block_device *bl_device;
-	status_t status = STATUS_SUCCESS;
+	struct pci_slot *pci_slot = (struct pci_slot *)slot;
 
-	snprintf(slot_res->slot, PATH_MAX, "%s", basename(slot->sysfs_path));
-
-	slot_res->state = vmdssd_get_attention(slot);
-
-	bl_device = get_block_device_from_sysfs_path(slot->address, true);
-	if (bl_device)
-		snprintf(slot_res->device, PATH_MAX, "/dev/%s", basename(bl_device->sysfs_path));
-	else
-		snprintf(slot_res->device, PATH_MAX, "(empty)");
-
-	return status;
+	return vmdssd_write_attention_buf(pci_slot, state);
 }
 
-status_t pci_get_slot(char *device, char *slot_path, struct slot_response *slot_res)
+enum ibpi_pattern pci_get_state(void *slot)
 {
-	struct pci_slot *slot = NULL;
-	struct block_device *block_device = NULL;
+	struct pci_slot *pci_slot = (struct pci_slot *)slot;
 
-	if (device && device[0] != '\0') {
-		char *sub_path = basename(device);
-		if (sub_path == NULL) {
-			log_error("Device name %s is invalid.", device);
-			return STATUS_DATA_ERROR;
-		}
-
-		block_device = get_block_device_from_sysfs_path(sub_path + 1, true);
-		if (block_device == NULL) {
-			log_error("Device %s not found.", device);
-			return STATUS_DATA_ERROR;
-		}
-		slot = vmdssd_find_pci_slot(block_device->sysfs_path);
-	} else if (slot_path && slot_path[0] != '\0') {
-		slot = find_pci_slot_by_number(basename(slot_path));
-	}
-
-	if (slot == NULL) {
-		log_error("Specified slot was not found.");
-		return STATUS_DATA_ERROR;
-	}
-
-	return set_slot_response(slot, slot_res);
-}
-
-status_t pci_set_slot(char *slot_path, enum ibpi_pattern state)
-{
-	struct pci_slot *slot = NULL;
-
-	slot = find_pci_slot_by_number(basename(slot_path));
-	if (slot == NULL) {
-		log_error("Slot %s not found.", slot_path);
-		return STATUS_NULL_POINTER;
-	}
-
-	return vmdssd_write_attention_buf(slot, state);
+	return vmdssd_get_attention(pci_slot);
 }

@@ -76,6 +76,12 @@ const struct list *sysfs_get_block_devices(void);
 const struct list *sysfs_get_pci_slots(void);
 
 /**
+ * The function returns list of slots for supported controllers
+ * present in the system.
+ */
+const struct list *sysfs_get_slots(void);
+
+/**
  * The function checks if the given storage controller is attached to enclosure
  * device(s).
  */

@@ -41,6 +41,7 @@
 #include "pci_slot.h"
 #include "raid.h"
 #include "slave.h"
+#include "slot.h"
 #include "stdio.h"
 #include "sysfs.h"
 #include "utils.h"
@@ -105,6 +106,14 @@ static struct list enclo_list;
  * the list. Use sysfs_reset() function to delete the content of the list.
  */
 static struct list pci_slots_list;
+
+/**
+ * This is internal variable global to sysfs module only. It is a list of
+ * all supported slots registered in the system. Use sysfs_init()
+ * function to initialize the variable. Use sysfs_scan() function to populate
+ * the list. Use sysfs_reset() function to delete the content of the list.
+ */
+static struct list slots_list;
 
 /**
  * @brief Determine device type.
@@ -354,6 +363,14 @@ static void _pci_slots_add(const char *path)
 		list_append(&pci_slots_list, device);
 }
 
+static void _slots_add(void *cntrl, enum cntrl_type cntrl_type)
+{
+	struct slot_property *slot = slot_init(cntrl, cntrl_type);
+
+	if (slot)
+		list_append(&slots_list, slot);
+}
+
 /**
  */
 static void _check_raid(const char *path)
@@ -460,6 +477,22 @@ static void _scan_pci_slots(void)
 		list_for_each(&dir, dir_path)
 			_pci_slots_add(dir_path);
 		list_erase(&dir);
+	}
+}
+
+static void _scan_slots(void)
+{
+	struct pci_slot *pci_slot;
+	struct cntrl_device *cntrl_device;
+
+	list_for_each(sysfs_get_cntrl_devices(), cntrl_device) {
+		// now NPEM and SCSI are supported
+		if (cntrl_device->cntrl_type == CNTRL_TYPE_NPEM ||
+		    cntrl_device->cntrl_type == CNTRL_TYPE_SCSI)
+			_slots_add(cntrl_device, cntrl_device->cntrl_type);
+	}
+	list_for_each(sysfs_get_pci_slots(), pci_slot) {
+		_slots_add(pci_slot, CNTRL_TYPE_VMD);
 	}
 }
 
@@ -584,6 +617,7 @@ void sysfs_init(void)
 	list_init(&cntnr_list, (item_free_t)raid_device_fini);
 	list_init(&enclo_list, (item_free_t)enclosure_device_fini);
 	list_init(&pci_slots_list, (item_free_t)pci_slot_fini);
+	list_init(&slots_list, (item_free_t)slot_fini);
 }
 
 void sysfs_reset(void)
@@ -595,6 +629,7 @@ void sysfs_reset(void)
 	list_erase(&cntnr_list);
 	list_erase(&enclo_list);
 	list_erase(&pci_slots_list);
+	list_erase(&slots_list);
 }
 
 void sysfs_scan(void)
@@ -604,6 +639,7 @@ void sysfs_scan(void)
 	_scan_pci_slots();
 	_scan_block();
 	_scan_raid();
+	_scan_slots();
 	_scan_slave();
 
 	_determine_slaves(&slave_list);
@@ -642,6 +678,11 @@ const struct list *sysfs_get_block_devices(void)
 const struct list *sysfs_get_pci_slots(void)
 {
 	return &pci_slots_list;
+}
+
+const struct list *sysfs_get_slots(void)
+{
+	return &slots_list;
 }
 
 /*

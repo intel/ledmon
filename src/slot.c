@@ -56,6 +56,7 @@ struct slot_property *slot_init(void *cntrl, enum cntrl_type cntrl_type)
 		enclosure_get_slot(cntrl, result);
 		break;
 	default:
+		free(result);
 		return NULL;
 	}
 

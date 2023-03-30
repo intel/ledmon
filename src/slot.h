@@ -45,14 +45,14 @@ struct slot_property {
 	void *slot;
 
 	/**
+	 * Unique slot ID.
+	 */
+	char slot_id[PATH_MAX];
+
+	/**
 	 * Controller type which is being represented by slot.
 	 */
 	enum cntrl_type cntrl_type;
-
-	/**
-	 * IBPI state.
-	 */
-	enum ibpi_pattern state;
 
 	/**
 	 * Pointer to the set slot function.
@@ -60,9 +60,9 @@ struct slot_property {
 	status_t (*set_slot_fn)(void *slot, enum ibpi_pattern state);
 
 	/**
-	 * Pointer to the get slot function.
+	 * Pointer to the get led state function.
 	 */
-	status_t (*get_slot_fn)(void *slot, struct slot_property *res);
+	enum ibpi_pattern (*get_state_fn)(void *slot);
 };
 
 /**

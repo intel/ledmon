@@ -657,6 +657,37 @@ static void slot_request_init(struct slot_request *slot_req)
 }
 
 /**
+ * @brief List slots connected to given controller
+ *
+ * This function scans all available slots connected to given controller
+ * and prints their led states and names of the connected devices (if exist).
+ *
+ * @param[in]       slot_req       Structure with slot request.
+ *
+ * @return LEDCTL_STATUS_SUCCESS if successful, otherwise ledctl_status_code_t.
+ */
+static ledctl_status_code_t list_slots(enum cntrl_type cntrl_type)
+{
+	struct slot_property *slot;
+
+	list_for_each(sysfs_get_slots(), slot) {
+		if (slot->cntrl_type == cntrl_type)
+			print_slot_state(slot);
+	}
+
+	return STATUS_SUCCESS;
+}
+
+struct slot_property *find_slot(struct slot_request *slot_req)
+{
+	if (slot_req->device && slot_req->device[0] != '\0')
+		return find_slot_by_device_name(slot_req->device, slot_req->cntrl);
+	else if (slot_req->slot && slot_req->slot[0] != '\0')
+		return find_slot_by_slot_path(slot_req->slot, slot_req->cntrl);
+	return NULL;
+}
+
+/**
  * @brief Verifies slot request parameters.
  *
  * @param[in]       slot_req       structure with slot request
@@ -677,39 +708,12 @@ static ledctl_status_code_t slot_verify_request(struct slot_request *slot_req)
 		log_error("Device and slot parameters are exclusive.");
 		return LEDCTL_STATUS_DATA_ERROR;
 	}
-
-	return LEDCTL_STATUS_SUCCESS;
-}
-
-/**
- * @brief List slots connected to given controller
- *
- * This function scans all available slots connected to given controller
- * and prints their led states and names of the connected devices (if exist).
- *
- * @param[in]       slot_req       Structure with slot request.
- *
- * @return LEDCTL_STATUS_SUCCESS if successful, otherwise ledctl_status_code_t.
- */
-static ledctl_status_code_t list_slots(struct slot_request *slot_req)
-{
-	struct slot_property *slot;
-
-	list_for_each(sysfs_get_slots(), slot) {
-		if (slot->cntrl_type == slot_req->cntrl)
-			print_slot_state(slot);
+	if (slot_req->chosen_opt != OPT_LIST_SLOTS && find_slot(slot_req) == NULL) {
+		log_error("Slot was not found for provided parameters.");
+		return LEDCTL_STATUS_CMDLINE_ERROR;
 	}
 
-	return STATUS_SUCCESS;
-}
-
-struct slot_property *find_slot(struct slot_request *slot_req)
-{
-	if (slot_req->device && slot_req->device[0] != '\0')
-		return find_slot_by_device_name(slot_req->device, slot_req->cntrl);
-	else if (slot_req->slot && slot_req->slot[0] != '\0')
-		return find_slot_by_slot_path(slot_req->slot, slot_req->cntrl);
-	return NULL;
+	return LEDCTL_STATUS_SUCCESS;
 }
 
 /**
@@ -723,15 +727,14 @@ ledctl_status_code_t slot_execute(struct slot_request *slot_req)
 {
 	struct slot_property *slot;
 
+	if (slot_req->chosen_opt == OPT_LIST_SLOTS)
+		return list_slots(slot_req->cntrl);
+
 	slot = find_slot(slot_req);
-	if (slot_req->chosen_opt != OPT_LIST_SLOTS && slot == NULL)
-		return LEDCTL_STATUS_DATA_ERROR;
 
 	switch (slot_req->chosen_opt) {
-	case OPT_LIST_SLOTS:
-		return list_slots(slot_req);
 	case OPT_SET_SLOT:
-		if (slot->state == slot_req->state) {
+		if (slot->get_state_fn(slot->slot) == slot_req->state) {
 			log_warning("Led state: %s is already set for the slot.",
 				    ibpi2str(slot_req->state));
 			return LEDCTL_STATUS_SUCCESS;

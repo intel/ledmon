@@ -64,26 +64,23 @@ void pci_slot_fini(struct pci_slot *slot)
 	}
 }
 
-/**
- * @brief Sets slot parameters.
- *
- * @param[in]        slot       PCI slot.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-static status_t set_slot_response(struct pci_slot *slot, struct slot_property *slot_property)
-{
-	slot_property->state = vmdssd_get_attention(slot);
-	slot_property->bl_device = get_block_device_from_sysfs_path(slot->address, true);
-
-	return STATUS_SUCCESS;
-}
-
-status_t pci_get_slot(void *slot, struct slot_property *slot_property)
+struct slot_property *pci_slot_property_init(void *slot)
 {
 	struct pci_slot *pci_slot = (struct pci_slot *)slot;
+	struct slot_property *result = NULL;
 
-	return set_slot_response(pci_slot, slot_property);
+	result = malloc(sizeof(struct slot_property));
+	if (result == NULL)
+		return NULL;
+
+	result->bl_device = get_block_device_from_sysfs_path(pci_slot->address, true);
+	result->slot = slot;
+	snprintf(result->slot_id, PATH_MAX, "%s", pci_slot->sysfs_path);
+	result->cntrl_type = CNTRL_TYPE_VMD;
+	result->get_state_fn = pci_get_state;
+	result->set_slot_fn = pci_set_slot;
+
+	return result;
 }
 
 status_t pci_set_slot(void *slot, enum ibpi_pattern state)
@@ -91,4 +88,11 @@ status_t pci_set_slot(void *slot, enum ibpi_pattern state)
 	struct pci_slot *pci_slot = (struct pci_slot *)slot;
 
 	return vmdssd_write_attention_buf(pci_slot, state);
+}
+
+enum ibpi_pattern pci_get_state(void *slot)
+{
+	struct pci_slot *pci_slot = (struct pci_slot *)slot;
+
+	return vmdssd_get_attention(pci_slot);
 }

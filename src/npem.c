@@ -197,12 +197,11 @@ char *npem_get_path(const char *cntrl_path)
 	return str_dup(cntrl_path);
 }
 
-status_t npem_get_slot(void *slot, struct slot_property *slot_res)
+enum ibpi_pattern npem_get_state(void *slot)
 {
 	struct pci_dev *pdev = NULL;
 	struct pci_access *pacc = get_pci_access();
 	const struct ibpi2value *ibpi2val;
-	status_t status = STATUS_SUCCESS;
 	struct cntrl_device *npem_cntrl = (struct cntrl_device *)slot;
 	char *path = npem_cntrl->sysfs_path;
 
@@ -230,12 +229,11 @@ status_t npem_get_slot(void *slot, struct slot_property *slot_res)
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
 	ibpi2val =  get_by_bits(reg, ibpi_to_npem_capability,
 				ARRAY_SIZE(ibpi_to_npem_capability));
-	slot_res->state = ibpi2val->ibpi;
-	slot_res->bl_device = get_block_device_from_sysfs_path(path, true);
 
 	pci_free_dev(pdev);
 	pci_cleanup(pacc);
-	return status;
+
+	return ibpi2val->ibpi;
 }
 
 status_t npem_set_slot(void *slot, enum ibpi_pattern state)
@@ -272,7 +270,7 @@ status_t npem_set_slot(void *slot, enum ibpi_pattern state)
 	}
 
 	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
-		log_error("NPEM: Controller %s doesn't support %s pattern\n",
+		log_info("NPEM: Controller %s doesn't support %s pattern\n",
 			  npem_cntrl->sysfs_path, ibpi_str[state]);
 		return STATUS_INVALID_STATE;
 	}
@@ -303,4 +301,23 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 		return STATUS_INVALID_STATE;
 
 	return npem_set_slot(npem_cntrl->sysfs_path, ibpi);
+}
+
+struct slot_property *npem_slot_property_init(void *cntrl)
+{
+	struct cntrl_device *npem_cntrl = (struct cntrl_device *)cntrl;
+	struct slot_property *result = NULL;
+
+	result = malloc(sizeof(struct slot_property));
+	if (result == NULL)
+		return NULL;
+
+	result->bl_device = get_block_device_from_sysfs_path(npem_cntrl->sysfs_path, true);
+	result->slot = cntrl;
+	snprintf(result->slot_id, PATH_MAX, "%s", npem_cntrl->sysfs_path);
+	result->cntrl_type = CNTRL_TYPE_NPEM;
+	result->get_state_fn = npem_get_state;
+	result->set_slot_fn = npem_set_slot;
+
+	return result;
 }

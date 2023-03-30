@@ -186,17 +186,6 @@ int enclosure_open(const struct enclosure_device *enclosure)
 	return fd;
 }
 
-static struct enclosure_device *find_enclosure(char *enclosure_id)
-{
-	struct enclosure_device *enclosure_device;
-	list_for_each(sysfs_get_enclosure_devices(), enclosure_device) {
-		if (strncmp(enclosure_device->dev_path, enclosure_id, PATH_MAX) == 0) {
-			return enclosure_device;
-		}
-	}
-	return NULL;
-}
-
 static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *encl, int index)
 {
 	for (int i = 0; i < encl->slots_count; i++) {
@@ -205,21 +194,6 @@ static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *en
 		}
 	}
 	return NULL;
-}
-
-static status_t _enclosure_get_slot(struct enclosure_device *encl, int index,
-					const char *device, struct slot_property *slot_res)
-{
-	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
-	if (!s_slot) {
-		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
-		return STATUS_NULL_POINTER;
-	}
-
-	slot_res->state = s_slot->ibpi_status;
-	slot_res->bl_device = locate_block_by_sas_addr(s_slot->sas_addr);
-
-	return STATUS_SUCCESS;
 }
 
 static status_t parse_slot_id(char *slot_num, char *enclosure_id, int *index)
@@ -243,29 +217,63 @@ static status_t parse_slot_id(char *slot_num, char *enclosure_id, int *index)
 	return STATUS_SUCCESS;
 }
 
-static status_t enclosure_get_slot_by_slot_num(char *slot_num, struct slot_property *slot_res)
+struct block_device *enclosure_get_block_device(void *slot)
+{
+	char enclosure_id[PATH_MAX];
+	int index = -1;
+	struct ses_slot *s_slot;
+	struct enclosure_device *encl = (struct enclosure_device *) slot;
+
+	status_t parse = parse_slot_id(encl->dev_path, enclosure_id, &index);
+
+	if (parse != STATUS_SUCCESS)
+		return NULL;
+
+	s_slot = find_enclosure_slot_by_index(encl, index);
+	if (!s_slot) {
+		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
+		return NULL;
+	}
+
+	return locate_block_by_sas_addr(s_slot->sas_addr);
+}
+
+enum ibpi_pattern enclosure_get_state(void *slot)
 {
 	char enclosure_id[PATH_MAX];
 	int index = -1;
 	struct enclosure_device *encl = NULL;
+	struct ses_slot *s_slot;
 
-	status_t parse = parse_slot_id(slot_num, enclosure_id, &index);
+	status_t parse = parse_slot_id(encl->dev_path, enclosure_id, &index);
 	if (STATUS_SUCCESS != parse)
 		return parse;
 
-	encl = find_enclosure(enclosure_id);
-	if (!encl) {
-		log_error("SCSI: Invalid enclosure ='%s'\n", enclosure_id);
+	s_slot = find_enclosure_slot_by_index(encl, index);
+	if (!s_slot) {
+		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
 		return STATUS_NULL_POINTER;
 	}
-	return _enclosure_get_slot(encl, index, NULL, slot_res);
+	return s_slot->ibpi_status;
 }
 
-status_t enclosure_get_slot(void *slot, struct slot_property *slot_res)
+struct slot_property *enclosure_slot_property_init(void *cntrl)
 {
-	struct enclosure_device *encl = (struct enclosure_device *) slot;
+	struct enclosure_device *encl = (struct enclosure_device *) cntrl;
+	struct slot_property *result = NULL;
 
-	return enclosure_get_slot_by_slot_num(encl->dev_path, slot_res);
+	result = malloc(sizeof(struct slot_property));
+	if (result == NULL)
+		return NULL;
+
+	result->bl_device = enclosure_get_block_device(encl);
+	result->slot = encl;
+	snprintf(result->slot_id, PATH_MAX, "%s", encl->dev_path);
+	result->cntrl_type = CNTRL_TYPE_SCSI;
+	result->get_state_fn = enclosure_get_state;
+	result->set_slot_fn = enclosure_set_slot;
+
+	return result;
 }
 
 status_t enclosure_set_slot(void *slot, enum ibpi_pattern state)

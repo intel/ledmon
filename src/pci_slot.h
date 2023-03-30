@@ -79,7 +79,8 @@ void pci_slot_fini(struct pci_slot *slot);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t pci_get_slot(void *slot, struct slot_property *slot_property);
+enum ibpi_pattern pci_get_state(void *slot);
+struct slot_property *pci_slot_property_init(void *slot);
 
 /**
  * @brief Sets led state for slot.

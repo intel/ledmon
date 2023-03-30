@@ -39,8 +39,8 @@ char *npem_get_path(const char *cntrl_path);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t npem_get_slot(void *slot, struct slot_property *slot_property);
-
+enum ibpi_pattern npem_get_state(void *slot);
+struct slot_property *npem_slot_property_init(void *cntrl);
 /**
  * @brief Sets led state for slot.
  *

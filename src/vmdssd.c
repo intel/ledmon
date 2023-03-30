@@ -48,6 +48,7 @@ struct ibpi2value ibpi_to_attention[] = {
 };
 
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
+#define SYSFS_VMD            "/sys/bus/pci/drivers/vmd"
 
 static char *get_slot_from_syspath(char *path)
 {
@@ -73,19 +74,24 @@ static char *get_slot_from_syspath(char *path)
 
 int vmdssd_check_slot_module(const char *slot_path)
 {
-	char module_path[PATH_MAX], real_module_path[PATH_MAX];
-	struct list dir;
+	char domain_path[PATH_MAX], real_domain_path[PATH_MAX];
+	char *address, *domain;
+	struct cntrl_device *cntrl;
 
-	// check if slot is managed by pciehp driver
-	snprintf(module_path, PATH_MAX, "%s/module", slot_path);
-	if (scan_dir(module_path, &dir) == 0) {
-		list_erase(&dir);
-		if (realpath(module_path, real_module_path) == NULL)
-			return -1;
-		if (strcmp(real_module_path, SYSFS_PCIEHP) != 0)
-			__set_errno_and_return(EINVAL);
-	} else {
-		__set_errno_and_return(ENOENT);
+	// check if slot address contains vmd domain
+	list_for_each(sysfs_get_cntrl_devices(), cntrl) {
+		if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
+			snprintf(domain_path, PATH_MAX, "%s/%s/domain",
+				 SYSFS_VMD, basename(cntrl->sysfs_path));
+			if (realpath(domain_path, real_domain_path) == NULL)
+				return -1;
+			address = get_text(slot_path, "address");
+			domain = strtok(basename(real_domain_path), ":");
+
+			if (strstr(address, domain) == NULL)
+				continue;
+			return 0;
+		}
 	}
 
 	return 0;

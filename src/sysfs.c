@@ -460,12 +460,8 @@ static void _scan_slots(void)
 	if (scan_dir(SYSFS_PCI_SLOTS, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(&dir, dir_path) {
-			snprintf(attention_path, PATH_MAX, "%s/%s", dir_path, "attention");
-			if (realpath(attention_path, temp) != NULL &&
-			    vmdssd_check_slot_module(dir_path) == 0)
-				_slots_add(dir_path);
-		}
+		list_for_each(&dir, dir_path)
+			_slots_add(dir_path);
 		list_erase(&dir);
 	}
 }

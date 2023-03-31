@@ -21,6 +21,8 @@
 #ifndef _VMDSSD_H
 #define _VMDSSD_H
 
+#include <stdbool.h>
+
 #include "block.h"
 #include "ibpi.h"
 #include "utils.h"
@@ -35,6 +37,6 @@ char *vmdssd_get_path(const char *cntrl_path);
 struct pci_slot *vmdssd_find_pci_slot(char *device_path);
 status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibpi);
 enum ibpi_pattern vmdssd_get_attention(struct pci_slot *slot);
-int vmdssd_check_slot_module(const char *slot_path);
+bool vmdssd_check_slot_module(const char *slot_path);
 
 #endif

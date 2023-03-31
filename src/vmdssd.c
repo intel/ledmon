@@ -72,7 +72,7 @@ static char *get_slot_from_syspath(char *path)
 	return ret;
 }
 
-int vmdssd_check_slot_module(const char *slot_path)
+bool vmdssd_check_slot_module(const char *slot_path)
 {
 	char domain_path[PATH_MAX], real_domain_path[PATH_MAX];
 	char *address, *domain;
@@ -84,17 +84,17 @@ int vmdssd_check_slot_module(const char *slot_path)
 			snprintf(domain_path, PATH_MAX, "%s/%s/domain",
 				 SYSFS_VMD, basename(cntrl->sysfs_path));
 			if (realpath(domain_path, real_domain_path) == NULL)
-				return -1;
+				return false;
 			address = get_text(slot_path, "address");
 			domain = strtok(basename(real_domain_path), ":");
 
 			if (strstr(address, domain) == NULL)
 				continue;
-			return 0;
+			return true;
 		}
 	}
 
-	return 0;
+	return false;
 }
 
 struct pci_slot *vmdssd_find_pci_slot(char *device_path)
@@ -112,7 +112,7 @@ struct pci_slot *vmdssd_find_pci_slot(char *device_path)
 		slot = NULL;
 	}
 	free(pci_addr);
-	if (slot == NULL || vmdssd_check_slot_module(slot->sysfs_path) < 0)
+	if (slot == NULL || !vmdssd_check_slot_module(slot->sysfs_path))
 		return NULL;
 
 	return slot;

@@ -85,8 +85,13 @@ bool vmdssd_check_slot_module(const char *slot_path)
 				 SYSFS_VMD, basename(cntrl->sysfs_path));
 			if (realpath(domain_path, real_domain_path) == NULL)
 				return false;
+
 			address = get_text(slot_path, "address");
+			if (address == NULL)
+				return false;
 			domain = strtok(basename(real_domain_path), ":");
+			if (domain == NULL)
+				return false;
 
 			if (strstr(address, domain) == NULL)
 				continue;

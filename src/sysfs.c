@@ -455,7 +455,6 @@ static void _scan_enclo(void)
 static void _scan_slots(void)
 {
 	struct list dir;
-	char attention_path[PATH_MAX], temp[PATH_MAX];
 
 	if (scan_dir(SYSFS_PCI_SLOTS, &dir) == 0) {
 		const char *dir_path;

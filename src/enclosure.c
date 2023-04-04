@@ -242,7 +242,7 @@ enum ibpi_pattern enclosure_get_state(void *slot)
 {
 	char enclosure_id[PATH_MAX];
 	int index = -1;
-	struct enclosure_device *encl = NULL;
+	struct enclosure_device *encl = (struct enclosure_device *)slot;
 	struct ses_slot *s_slot;
 
 	status_t parse = parse_slot_id(encl->dev_path, enclosure_id, &index);

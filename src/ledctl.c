@@ -731,6 +731,8 @@ ledctl_status_code_t slot_execute(struct slot_request *slot_req)
 		return list_slots(slot_req->cntrl);
 
 	slot = find_slot(slot_req);
+	if (slot == NULL)
+		return LEDCTL_STATUS_DATA_ERROR;
 
 	switch (slot_req->chosen_opt) {
 	case OPT_SET_SLOT:

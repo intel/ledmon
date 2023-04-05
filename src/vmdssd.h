@@ -34,6 +34,7 @@
 
 int vmdssd_write(struct block_device *device, enum ibpi_pattern ibpi);
 char *vmdssd_get_path(const char *cntrl_path);
+char *vmdssd_get_domain(const char *path);
 struct pci_slot *vmdssd_find_pci_slot(char *device_path);
 status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum ibpi_pattern ibpi);
 enum ibpi_pattern vmdssd_get_attention(struct pci_slot *slot);

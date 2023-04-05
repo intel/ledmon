@@ -74,6 +74,11 @@ struct cntrl_device {
 	 */
 	int isci_present;
 
+	/**
+	 * Applicable to VMD controllers. Domain address.
+	 */
+	char domain[PATH_MAX];
+
 	struct _host_type {
 		/**
 		 * ibpi state buffer for directly attached devices

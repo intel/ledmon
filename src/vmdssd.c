@@ -72,28 +72,33 @@ static char *get_slot_from_syspath(char *path)
 	return ret;
 }
 
-bool vmdssd_check_slot_module(const char *slot_path)
+char *vmdssd_get_domain(const char *path)
 {
 	char domain_path[PATH_MAX], real_domain_path[PATH_MAX];
-	char *address, *domain;
+
+	snprintf(domain_path, PATH_MAX, "%s/%s/domain",
+		 SYSFS_VMD, basename(path));
+	if (realpath(domain_path, real_domain_path) == NULL)
+		return NULL;
+
+	return strtok(basename(real_domain_path), ":");
+}
+
+bool vmdssd_check_slot_module(const char *slot_path)
+{
+	char *address;
 	struct cntrl_device *cntrl;
+
+	address = get_text(slot_path, "address");
+	if (address == NULL)
+		return false;
 
 	// check if slot address contains vmd domain
 	list_for_each(sysfs_get_cntrl_devices(), cntrl) {
 		if (cntrl->cntrl_type == CNTRL_TYPE_VMD) {
-			snprintf(domain_path, PATH_MAX, "%s/%s/domain",
-				 SYSFS_VMD, basename(cntrl->sysfs_path));
-			if (realpath(domain_path, real_domain_path) == NULL)
-				return false;
-
-			address = get_text(slot_path, "address");
-			if (address == NULL)
-				return false;
-			domain = strtok(basename(real_domain_path), ":");
-			if (domain == NULL)
-				return false;
-
-			if (strstr(address, domain) == NULL)
+			if (cntrl->domain == NULL)
+				continue;
+			if (strstr(address, cntrl->domain) == NULL)
 				continue;
 			return true;
 		}

@@ -44,7 +44,6 @@
 #include "stdio.h"
 #include "sysfs.h"
 #include "utils.h"
-#include "vmdssd.h"
 
 /**
  */

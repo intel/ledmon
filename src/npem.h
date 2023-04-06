@@ -39,8 +39,8 @@ char *npem_get_path(const char *cntrl_path);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-enum ibpi_pattern npem_get_state(void *slot);
-struct slot_property *npem_slot_property_init(void *cntrl);
+enum ibpi_pattern npem_get_state(struct slot_property *slot);
+
 /**
  * @brief Sets led state for slot.
  *
@@ -51,5 +51,14 @@ struct slot_property *npem_slot_property_init(void *cntrl);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t npem_set_slot(void *slot, enum ibpi_pattern state);
+status_t npem_set_state(struct slot_property *slot, enum ibpi_pattern state);
+
+/**
+ * @brief Initializes a slot_property for a specified npem controller.
+ *
+ * @param[in]         npem_cntrl       Specified npem controller for this slot
+ * @return struct slot_property* if successful, else NULL on allocation failure
+ */
+struct slot_property *npem_slot_property_init(struct cntrl_device *npem_cntrl);
+
 #endif // NPEM_H_INCLUDED_

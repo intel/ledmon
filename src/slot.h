@@ -28,27 +28,15 @@
 #include "ibpi.h"
 #include "utils.h"
 
+/* Forward decl. */
+struct slot_property;
+
+
 /**
- * @brief slot property parameters
+ * @brief slot property attributes which are the same across slots of a specific type
  *
- * This structure contains slot parameters.
  */
-struct slot_property {
-	/**
-	 * Block device (if exists for slot).
-	 */
-	struct block_device *bl_device;
-
-	/**
-	 * Unique slot.
-	 */
-	void *slot;
-
-	/**
-	 * Unique slot ID.
-	 */
-	char slot_id[PATH_MAX];
-
+struct slot_property_common {
 	/**
 	 * Controller type which is being represented by slot.
 	 */
@@ -57,31 +45,50 @@ struct slot_property {
 	/**
 	 * Pointer to the set slot function.
 	 */
-	status_t (*set_slot_fn)(void *slot, enum ibpi_pattern state);
+	status_t (*set_slot_fn)(struct slot_property *slot, enum ibpi_pattern state);
 
 	/**
 	 * Pointer to the get led state function.
 	 */
-	enum ibpi_pattern (*get_state_fn)(void *slot);
+	enum ibpi_pattern (*get_state_fn)(struct slot_property *slot);
 };
 
 /**
- * @brief Init slot and fill its parameters.
+ * @brief Encapsulates information for enclosure
  *
- * @param[in]        cntrl        Device for controller.
- *
- * @return This function does not return a value.
  */
-struct slot_property *slot_init(void *cntrl, enum cntrl_type cntrl_type);
+struct ses_slot_info {
+	struct enclosure_device *encl;
+	int slot_num;
+};
 
 /**
- * @brief Free slot.
+ * @brief slot property parameters
  *
- * @param[in]        cntrl        Slot parameters.
- *
- * @return This function does not return a value.
+ * This structure contains slot parameters.
  */
-void slot_fini(struct slot_property *slot);
+struct slot_property {
+	const struct slot_property_common *c;
+
+	/**
+	 * Block device (if exists for slot).
+	 */
+	struct block_device *bl_device;
+
+	/**
+	 * Different payload based on slot type
+	 */
+	union {
+		struct pci_slot *pci;
+		struct cntrl_device *cntrl;
+		struct ses_slot_info ses;
+	} slot_spec;
+
+	/**
+	 * Unique slot ID.
+	 */
+	char slot_id[PATH_MAX];
+};
 
 /**
  * @brief Print address, slot identifier and led state.

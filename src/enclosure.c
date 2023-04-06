@@ -196,40 +196,9 @@ static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *en
 	return NULL;
 }
 
-static status_t parse_slot_id(char *slot_num, char *enclosure_id, int *index)
+static struct block_device *enclosure_get_block_device(struct enclosure_device *encl, int index)
 {
-	char tmp_enclosure_id[PATH_MAX];
-	const char *index_str;
-
-	if (slot_num == NULL || slot_num[0] == '\0') {
-		log_error("SCSI: Invalid slot identifier =%s\n", slot_num);
-		return STATUS_NULL_POINTER;
-	}
-
-	snprintf(tmp_enclosure_id, PATH_MAX, "%s", slot_num);
-	snprintf(enclosure_id, PATH_MAX, "%s", dirname(tmp_enclosure_id));
-	index_str = basename(slot_num);
-
-	if (str_toi(index, index_str, NULL, 10)) {
-		log_error("SCSI: Invalid slot identifier index %s\n", index_str);
-		return STATUS_INVALID_PATH;
-	}
-	return STATUS_SUCCESS;
-}
-
-struct block_device *enclosure_get_block_device(void *slot)
-{
-	char enclosure_id[PATH_MAX];
-	int index = -1;
-	struct ses_slot *s_slot;
-	struct enclosure_device *encl = (struct enclosure_device *) slot;
-
-	status_t parse = parse_slot_id(encl->dev_path, enclosure_id, &index);
-
-	if (parse != STATUS_SUCCESS)
-		return NULL;
-
-	s_slot = find_enclosure_slot_by_index(encl, index);
+	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
 	if (!s_slot) {
 		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
 		return NULL;
@@ -238,55 +207,49 @@ struct block_device *enclosure_get_block_device(void *slot)
 	return locate_block_by_sas_addr(s_slot->sas_addr);
 }
 
-enum ibpi_pattern enclosure_get_state(void *slot)
+enum ibpi_pattern enclosure_get_state(struct slot_property *sp)
 {
-	char enclosure_id[PATH_MAX];
-	int index = -1;
-	struct enclosure_device *encl = (struct enclosure_device *)slot;
+	int index = sp->slot_spec.ses.slot_num;
+	struct enclosure_device *encl = sp->slot_spec.ses.encl;
 	struct ses_slot *s_slot;
-
-	status_t parse = parse_slot_id(encl->dev_path, enclosure_id, &index);
-	if (STATUS_SUCCESS != parse)
-		return parse;
 
 	s_slot = find_enclosure_slot_by_index(encl, index);
 	if (!s_slot) {
 		log_error("SCSI: Unable to locate slot in enclosure %d\n", index);
-		return STATUS_NULL_POINTER;
+		return IBPI_PATTERN_UNKNOWN;
 	}
 	return s_slot->ibpi_status;
 }
 
-struct slot_property *enclosure_slot_property_init(void *cntrl)
+const struct slot_property_common ses_slot_common = {
+	.cntrl_type = CNTRL_TYPE_SCSI,
+	.get_state_fn = enclosure_get_state,
+	.set_slot_fn = enclosure_set_state
+};
+
+struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl, int slot)
 {
-	struct enclosure_device *encl = (struct enclosure_device *) cntrl;
 	struct slot_property *result = NULL;
 
-	result = malloc(sizeof(struct slot_property));
+	result = calloc(1, sizeof(struct slot_property));
 	if (result == NULL)
 		return NULL;
 
-	result->bl_device = enclosure_get_block_device(encl);
-	result->slot = encl;
-	snprintf(result->slot_id, PATH_MAX, "%s", encl->dev_path);
-	result->cntrl_type = CNTRL_TYPE_SCSI;
-	result->get_state_fn = enclosure_get_state;
-	result->set_slot_fn = enclosure_set_slot;
+	result->bl_device = enclosure_get_block_device(encl, slot);
+	result->slot_spec.ses.encl = encl;
+	result->slot_spec.ses.slot_num = slot;
+	snprintf(result->slot_id, PATH_MAX, "%s-%d", encl->dev_path, slot);
+	result->c = &ses_slot_common;
 
 	return result;
 }
 
-status_t enclosure_set_slot(void *slot, enum ibpi_pattern state)
+status_t enclosure_set_state(struct slot_property *sp, enum ibpi_pattern state)
 {
-	int rc, index;
-	struct enclosure_device *enclosure_device = (struct enclosure_device *)slot;
-	char enclosure_id[PATH_MAX];
+	struct enclosure_device *enclosure_device = sp->slot_spec.ses.encl;
+	int index = sp->slot_spec.ses.slot_num;
 
-	status_t parse = parse_slot_id(enclosure_device->dev_path, enclosure_id, &index);
-	if (STATUS_SUCCESS != parse)
-		return parse;
-
-	rc = scsi_ses_write_enclosure(enclosure_device, index, state);
+	int rc = scsi_ses_write_enclosure(enclosure_device, index, state);
 	if (rc != 0) {
 		log_error("SCSI: ses write failed %d\n", rc);
 		return STATUS_FILE_WRITE_ERROR;

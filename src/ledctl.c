@@ -671,7 +671,7 @@ static ledctl_status_code_t list_slots(enum cntrl_type cntrl_type)
 	struct slot_property *slot;
 
 	list_for_each(sysfs_get_slots(), slot) {
-		if (slot->cntrl_type == cntrl_type)
+		if (slot->c->cntrl_type == cntrl_type)
 			print_slot_state(slot);
 	}
 
@@ -680,9 +680,9 @@ static ledctl_status_code_t list_slots(enum cntrl_type cntrl_type)
 
 struct slot_property *find_slot(struct slot_request *slot_req)
 {
-	if (slot_req->device && slot_req->device[0] != '\0')
+	if (slot_req->device[0] != '\0')
 		return find_slot_by_device_name(slot_req->device, slot_req->cntrl);
-	else if (slot_req->slot && slot_req->slot[0] != '\0')
+	else if (slot_req->slot[0] != '\0')
 		return find_slot_by_slot_path(slot_req->slot, slot_req->cntrl);
 	return NULL;
 }
@@ -736,12 +736,12 @@ ledctl_status_code_t slot_execute(struct slot_request *slot_req)
 
 	switch (slot_req->chosen_opt) {
 	case OPT_SET_SLOT:
-		if (slot->get_state_fn(slot->slot) == slot_req->state) {
+		if (slot->c->get_state_fn(slot) == slot_req->state) {
 			log_warning("Led state: %s is already set for the slot.",
 				    ibpi2str(slot_req->state));
 			return LEDCTL_STATUS_SUCCESS;
 		}
-		return slot->set_slot_fn(slot->slot, slot_req->state);
+		return slot->c->set_slot_fn(slot, slot_req->state);
 	case OPT_GET_SLOT:
 		print_slot_state(slot);
 		return LEDCTL_STATUS_SUCCESS;

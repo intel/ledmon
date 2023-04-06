@@ -39,6 +39,7 @@
 #include "enclosure.h"
 #include "ibpi.h"
 #include "list.h"
+#include "npem.h"
 #include "pci_slot.h"
 #include "raid.h"
 #include "slave.h"
@@ -365,14 +366,6 @@ static void _pci_slots_add(const char *path)
 		list_append(&pci_slots_list, device);
 }
 
-static void _slots_add(void *cntrl, enum cntrl_type cntrl_type)
-{
-	struct slot_property *slot = slot_init(cntrl, cntrl_type);
-
-	if (slot)
-		list_append(&slots_list, slot);
-}
-
 /**
  */
 static void _check_raid(const char *path)
@@ -488,15 +481,29 @@ static void _scan_slots(void)
 {
 	struct pci_slot *pci_slot;
 	struct cntrl_device *cntrl_device;
+	struct enclosure_device *encl;
+	struct slot_property *slot;
 
 	list_for_each(sysfs_get_cntrl_devices(), cntrl_device) {
-		// now NPEM and SCSI are supported
-		if (cntrl_device->cntrl_type == CNTRL_TYPE_NPEM ||
-		    cntrl_device->cntrl_type == CNTRL_TYPE_SCSI)
-			_slots_add(cntrl_device, cntrl_device->cntrl_type);
+		if (cntrl_device->cntrl_type == CNTRL_TYPE_NPEM) {
+			slot = npem_slot_property_init(cntrl_device);
+			if (slot)
+				list_append(&slots_list, slot);
+		}
 	}
+
 	list_for_each(sysfs_get_pci_slots(), pci_slot) {
-		_slots_add(pci_slot, CNTRL_TYPE_VMD);
+		slot = pci_slot_property_init(pci_slot);
+		if (slot)
+			list_append(&slots_list, slot);
+	}
+
+	list_for_each(sysfs_get_enclosure_devices(), encl) {
+		for (int i = 0; i < encl->slots_count; i++) {
+			slot = enclosure_slot_property_init(encl, i);
+			if (slot)
+				list_append(&slots_list, slot);
+		}
 	}
 }
 
@@ -621,7 +628,7 @@ void sysfs_init(void)
 	list_init(&cntnr_list, (item_free_t)raid_device_fini);
 	list_init(&enclo_list, (item_free_t)enclosure_device_fini);
 	list_init(&pci_slots_list, (item_free_t)pci_slot_fini);
-	list_init(&slots_list, (item_free_t)slot_fini);
+	list_init(&slots_list, NULL);
 }
 
 void sysfs_reset(void)

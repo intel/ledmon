@@ -197,33 +197,25 @@ char *npem_get_path(const char *cntrl_path)
 	return str_dup(cntrl_path);
 }
 
-enum ibpi_pattern npem_get_state(void *slot)
+enum ibpi_pattern npem_get_state(struct slot_property *slot)
 {
-	struct pci_dev *pdev = NULL;
-	struct pci_access *pacc = get_pci_access();
-	const struct ibpi2value *ibpi2val;
-	struct cntrl_device *npem_cntrl = (struct cntrl_device *)slot;
-	char *path = npem_cntrl->sysfs_path;
-
 	u32 reg;
+	struct pci_dev *pdev = NULL;
+	const struct ibpi2value *ibpi2val;
+	const char *path = slot->slot_spec.cntrl->sysfs_path;
+	struct pci_access *pacc = get_pci_access();
 
 	if (!pacc) {
 		log_error("NPEM: Unable to initialize pci access for %s\n", path);
-		return STATUS_NULL_POINTER;
+		return IBPI_PATTERN_UNKNOWN;
 	}
 
-	if (path) {
-		pdev = get_pci_dev(pacc, path);
-	} else {
-		log_debug("NPEM: unable to get sysfs path for the controller.");
-		pci_cleanup(pacc);
-		return STATUS_INVALID_PATH;
-	}
+	pdev = get_pci_dev(pacc, path);
 
 	if (!pdev) {
 		log_error("NPEM: Unable to get pci device for %s\n", path);
 		pci_cleanup(pacc);
-		return STATUS_NULL_POINTER;
+		return IBPI_PATTERN_UNKNOWN;
 	}
 
 	reg = read_npem_register(pdev, PCI_NPEM_CTRL_REG);
@@ -236,13 +228,12 @@ enum ibpi_pattern npem_get_state(void *slot)
 	return ibpi2val->ibpi;
 }
 
-status_t npem_set_slot(void *slot, enum ibpi_pattern state)
+status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
 {
 	struct pci_dev *pdev = NULL;
 	struct pci_access *pacc = get_pci_access();
 	status_t status = STATUS_SUCCESS;
 	const struct ibpi2value *ibpi2val;
-	struct cntrl_device *npem_cntrl = (struct cntrl_device *)slot;
 
 	u32 val;
 	u32 reg;
@@ -258,20 +249,20 @@ status_t npem_set_slot(void *slot, enum ibpi_pattern state)
 	cap = (u32)ibpi2val->value;
 
 	if (!pacc) {
-		log_error("NPEM: Unable to initialize pci access for %s\n", npem_cntrl->sysfs_path);
+		log_error("NPEM: Unable to initialize pci access for %s\n", sysfs_path);
 		return STATUS_NULL_POINTER;
 	}
 
-	pdev = get_pci_dev(pacc, npem_cntrl->sysfs_path);
+	pdev = get_pci_dev(pacc, sysfs_path);
 	if (!pdev) {
-		log_error("NPEM: Unable to get pci device for %s\n", npem_cntrl->sysfs_path);
+		log_error("NPEM: Unable to get pci device for %s\n", sysfs_path);
 		pci_cleanup(pacc);
 		return STATUS_NULL_POINTER;
 	}
 
 	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
 		log_info("NPEM: Controller %s doesn't support %s pattern\n",
-			  npem_cntrl->sysfs_path, ibpi_str[state]);
+			  sysfs_path, ibpi_str[state]);
 		return STATUS_INVALID_STATE;
 	}
 	npem_wait_command(pdev);
@@ -303,21 +294,28 @@ int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 	return npem_set_slot(npem_cntrl->sysfs_path, ibpi);
 }
 
-struct slot_property *npem_slot_property_init(void *cntrl)
+const struct slot_property_common npem_slot_common = {
+	.cntrl_type = CNTRL_TYPE_NPEM,
+	.get_state_fn = npem_get_state,
+	.set_slot_fn = npem_set_state
+};
+
+struct slot_property *npem_slot_property_init(struct cntrl_device *npem_cntrl)
 {
-	struct cntrl_device *npem_cntrl = (struct cntrl_device *)cntrl;
 	struct slot_property *result = NULL;
 
-	result = malloc(sizeof(struct slot_property));
+	result = calloc(1, sizeof(struct slot_property));
 	if (result == NULL)
 		return NULL;
 
 	result->bl_device = get_block_device_from_sysfs_path(npem_cntrl->sysfs_path, true);
-	result->slot = cntrl;
+	result->slot_spec.cntrl = npem_cntrl;
 	snprintf(result->slot_id, PATH_MAX, "%s", npem_cntrl->sysfs_path);
-	result->cntrl_type = CNTRL_TYPE_NPEM;
-	result->get_state_fn = npem_get_state;
-	result->set_slot_fn = npem_set_slot;
-
+	result->c = &npem_slot_common;
 	return result;
+}
+
+status_t npem_set_state(struct slot_property *slot, enum ibpi_pattern state)
+{
+	return npem_set_slot(slot->slot_spec.cntrl->sysfs_path, state);
 }

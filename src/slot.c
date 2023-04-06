@@ -31,30 +31,10 @@
 #include "sysfs.h"
 #include "pci_slot.h"
 
-struct slot_property *slot_init(void *cntrl, enum cntrl_type cntrl_type)
-{
-	switch (cntrl_type) {
-	case CNTRL_TYPE_VMD:
-		return pci_slot_property_init(cntrl);
-	case CNTRL_TYPE_NPEM:
-		return npem_slot_property_init(cntrl);
-	case CNTRL_TYPE_SCSI:
-		return enclosure_slot_property_init(cntrl);
-	default:
-		return NULL;
-	}
-}
-
-void slot_fini(struct slot_property *slot_property)
-{
-	if (slot_property)
-		free(slot_property);
-}
-
 void print_slot_state(struct slot_property *slot_property)
 {
 	char device_name[PATH_MAX];
-	enum ibpi_pattern led_state = slot_property->get_state_fn(slot_property->slot);
+	enum ibpi_pattern led_state = slot_property->c->get_state_fn(slot_property);
 
 	if (slot_property->bl_device)
 		snprintf(device_name, PATH_MAX, "/dev/%s",
@@ -71,7 +51,7 @@ struct slot_property *find_slot_by_device_name(char *device_name, enum cntrl_typ
 	struct slot_property *slot;
 
 	list_for_each(sysfs_get_slots(), slot) {
-		if (slot->cntrl_type != cntrl_type)
+		if (slot->c->cntrl_type != cntrl_type)
 			continue;
 		if (slot->bl_device == NULL)
 			continue;
@@ -87,7 +67,7 @@ struct slot_property *find_slot_by_slot_path(char *slot_path, enum cntrl_type cn
 	struct slot_property *slot;
 
 	list_for_each(sysfs_get_slots(), slot) {
-		if (slot->cntrl_type != cntrl_type)
+		if (slot->c->cntrl_type != cntrl_type)
 			continue;
 		if (strncmp(basename(slot->slot_id), slot_path, PATH_MAX) == 0)
 			return slot;

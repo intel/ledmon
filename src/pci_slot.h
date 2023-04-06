@@ -79,8 +79,7 @@ void pci_slot_fini(struct pci_slot *slot);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-enum ibpi_pattern pci_get_state(void *slot);
-struct slot_property *pci_slot_property_init(void *slot);
+enum ibpi_pattern pci_get_state(struct slot_property *slot);
 
 /**
  * @brief Sets led state for slot.
@@ -92,5 +91,14 @@ struct slot_property *pci_slot_property_init(void *slot);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t pci_set_slot(void *slot, enum ibpi_pattern state);
+status_t pci_set_slot(struct slot_property *slot, enum ibpi_pattern state);
+
+/**
+ * @brief Initializes a slot_property for a specified pci slot.
+ *
+ * @param[in]      pci_slot        The specified pci slot pointer for this slot
+ * @return struct slot_property* if successful, else NULL on allocation failure
+ */
+struct slot_property *pci_slot_property_init(struct pci_slot *pci_slot);
+
 #endif // PCI_SLOT_H_INCLUDED_

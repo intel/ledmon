@@ -64,35 +64,32 @@ void pci_slot_fini(struct pci_slot *slot)
 	}
 }
 
-struct slot_property *pci_slot_property_init(void *slot)
-{
-	struct pci_slot *pci_slot = (struct pci_slot *)slot;
-	struct slot_property *result = NULL;
+const struct slot_property_common pci_slot_common = {
+	.cntrl_type = CNTRL_TYPE_VMD,
+	.get_state_fn = pci_get_state,
+	.set_slot_fn = pci_set_slot
+};
 
-	result = malloc(sizeof(struct slot_property));
+struct slot_property *pci_slot_property_init(struct pci_slot *pci_slot)
+{
+	struct slot_property *result = calloc(1, sizeof(struct slot_property));
 	if (result == NULL)
 		return NULL;
 
 	result->bl_device = get_block_device_from_sysfs_path(pci_slot->address, true);
-	result->slot = slot;
+	result->slot_spec.pci = pci_slot;
 	snprintf(result->slot_id, PATH_MAX, "%s", pci_slot->sysfs_path);
-	result->cntrl_type = CNTRL_TYPE_VMD;
-	result->get_state_fn = pci_get_state;
-	result->set_slot_fn = pci_set_slot;
+	result->c = &pci_slot_common;
 
 	return result;
 }
 
-status_t pci_set_slot(void *slot, enum ibpi_pattern state)
+status_t pci_set_slot(struct slot_property *slot, enum ibpi_pattern state)
 {
-	struct pci_slot *pci_slot = (struct pci_slot *)slot;
-
-	return vmdssd_write_attention_buf(pci_slot, state);
+	return vmdssd_write_attention_buf(slot->slot_spec.pci, state);
 }
 
-enum ibpi_pattern pci_get_state(void *slot)
+enum ibpi_pattern pci_get_state(struct slot_property *slot)
 {
-	struct pci_slot *pci_slot = (struct pci_slot *)slot;
-
-	return vmdssd_get_attention(pci_slot);
+	return vmdssd_get_attention(slot->slot_spec.pci);
 }

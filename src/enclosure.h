@@ -97,8 +97,8 @@ int enclosure_open(const struct enclosure_device *enclosure);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-enum ibpi_pattern enclosure_get_state(void *slot);
-struct slot_property *enclosure_slot_property_init(void *cntrl);
+enum ibpi_pattern enclosure_get_state(struct slot_property *slot);
+
 /**
  * @brief Sets led state for slot.
  *
@@ -109,6 +109,16 @@ struct slot_property *enclosure_slot_property_init(void *cntrl);
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t enclosure_set_slot(void *slot, enum ibpi_pattern state);
+status_t enclosure_set_state(struct slot_property *slot, enum ibpi_pattern state);
+
+/**
+ * @brief Initializes a slot_property for a specified enclosure and slot number in that enclosure.
+ *
+ * @param[in]         enclosure       Specified enclosure for this slot
+ * @param[in]         slot_num        Specified slot number in this enclosure
+ * @return struct slot_property* if successful, else NULL on allocation failure
+ */
+struct slot_property *enclosure_slot_property_init(struct enclosure_device *enclosure,
+						   int slot_num);
 
 #endif				/* _ENCLOSURE_H_INCLUDED_ */

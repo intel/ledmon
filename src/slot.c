@@ -74,3 +74,13 @@ struct slot_property *find_slot_by_slot_path(char *slot_path, enum cntrl_type cn
 	}
 	return NULL;
 }
+
+status_t set_slot_pattern(struct slot_property *slot, enum ibpi_pattern state)
+{
+	return slot->c->set_slot_fn(slot, state);
+}
+
+enum ibpi_pattern get_slot_pattern(struct slot_property *slot)
+{
+	return slot->c->get_state_fn(slot);
+}

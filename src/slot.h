@@ -119,4 +119,21 @@ struct slot_property *find_slot_by_slot_path(char *slot_path, enum cntrl_type cn
  */
 struct slot_property *find_slot_by_device_name(char *device_name, enum cntrl_type cntrl_type);
 
+/**
+ * @brief Set the slot pattern for the given slot
+ *
+ * @param[in]      slot       The slot to change the ibpi_pattern
+ * @param[in]      state      The desired ibpi pattern for the slot
+ * @return status_t
+ */
+status_t set_slot_pattern(struct slot_property *slot, enum ibpi_pattern state);
+
+/**
+ * @brief Get the slot pattern
+ *
+ * @param[in]      slot        The slot to retrieve the ibpi pattern
+ * @return enum ibpi_pattern
+ */
+enum ibpi_pattern get_slot_pattern(struct slot_property *slot);
+
 #endif // SLOT_H_INCLUDED_

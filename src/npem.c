@@ -232,7 +232,6 @@ status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
 {
 	struct pci_dev *pdev = NULL;
 	struct pci_access *pacc = get_pci_access();
-	status_t status = STATUS_SUCCESS;
 	const struct ibpi2value *ibpi2val;
 
 	u32 val;
@@ -263,6 +262,8 @@ status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
 	if (!is_mask_set(pdev, PCI_NPEM_CAP_REG, cap)) {
 		log_info("NPEM: Controller %s doesn't support %s pattern\n",
 			  sysfs_path, ibpi_str[state]);
+		pci_free_dev(pdev);
+		pci_cleanup(pacc);
 		return STATUS_INVALID_STATE;
 	}
 	npem_wait_command(pdev);
@@ -275,7 +276,7 @@ status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
 
 	pci_free_dev(pdev);
 	pci_cleanup(pacc);
-	return status;
+	return STATUS_SUCCESS;
 }
 
 /*
@@ -283,15 +284,13 @@ status_t npem_set_slot(const char *sysfs_path, enum ibpi_pattern state)
  */
 int npem_write(struct block_device *device, enum ibpi_pattern ibpi)
 {
-	struct cntrl_device *npem_cntrl = device->cntrl;
-
 	if (ibpi == device->ibpi_prev)
 		return STATUS_SUCCESS;
 
 	if (ibpi < IBPI_PATTERN_NORMAL || ibpi > IBPI_PATTERN_LOCATE_OFF)
 		return STATUS_INVALID_STATE;
 
-	return npem_set_slot(npem_cntrl->sysfs_path, ibpi);
+	return npem_set_slot(device->cntrl->sysfs_path, ibpi);
 }
 
 const struct slot_property_common npem_slot_common = {
@@ -302,9 +301,7 @@ const struct slot_property_common npem_slot_common = {
 
 struct slot_property *npem_slot_property_init(struct cntrl_device *npem_cntrl)
 {
-	struct slot_property *result = NULL;
-
-	result = calloc(1, sizeof(struct slot_property));
+	struct slot_property *result = calloc(1, sizeof(struct slot_property));
 	if (result == NULL)
 		return NULL;
 

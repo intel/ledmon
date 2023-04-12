@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +45,7 @@
 #include "stdio.h"
 #include "sysfs.h"
 #include "utils.h"
+#include "vmdssd.h"
 
 /**
  */
@@ -457,8 +459,10 @@ static void _scan_slots(void)
 	if (scan_dir(SYSFS_PCI_SLOTS, &dir) == 0) {
 		const char *dir_path;
 
-		list_for_each(&dir, dir_path)
-			_slots_add(dir_path);
+		list_for_each(&dir, dir_path) {
+			if (vmdssd_check_slot_module(dir_path) == true)
+				_slots_add(dir_path);
+		}
 		list_erase(&dir);
 	}
 }

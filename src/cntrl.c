@@ -39,6 +39,7 @@
 #include "utils.h"
 #include "amd.h"
 #include "npem.h"
+#include "vmdssd.h"
 
 /**
  * @brief Name of controllers types.
@@ -462,6 +463,9 @@ struct cntrl_device *cntrl_device_init(const char *path)
 					device->isci_present = 0;
 					device->hosts = NULL;
 				}
+				if (type == CNTRL_TYPE_VMD)
+					snprintf(device->domain, PATH_MAX, "%s",
+						 vmdssd_get_domain(path));
 				device->cntrl_type = type;
 				strncpy(device->sysfs_path, path, PATH_MAX - 1);
 			}

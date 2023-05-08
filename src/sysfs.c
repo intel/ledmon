@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2022-2022 Intel Corporation.
+ * Copyright (C) 2022-2023 Intel Corporation.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,9 +39,11 @@
 #include "enclosure.h"
 #include "ibpi.h"
 #include "list.h"
+#include "npem.h"
 #include "pci_slot.h"
 #include "raid.h"
 #include "slave.h"
+#include "slot.h"
 #include "stdio.h"
 #include "sysfs.h"
 #include "utils.h"
@@ -103,6 +105,14 @@ static struct list enclo_list;
 /**
  * This is internal variable global to sysfs module only. It is a list of
  * PCI slots registered in the system. Use sysfs_init()
+ * function to initialize the variable. Use sysfs_scan() function to populate
+ * the list. Use sysfs_reset() function to delete the content of the list.
+ */
+static struct list pci_slots_list;
+
+/**
+ * This is internal variable global to sysfs module only. It is a list of
+ * all supported slots registered in the system. Use sysfs_init()
  * function to initialize the variable. Use sysfs_scan() function to populate
  * the list. Use sysfs_reset() function to delete the content of the list.
  */
@@ -349,11 +359,11 @@ static void _enclo_add(const char *path)
 
 /**
  */
-static void _slots_add(const char *path)
+static void _pci_slots_add(const char *path)
 {
 	struct pci_slot *device = pci_slot_init(path);
 	if (device)
-		list_append(&slots_list, device);
+		list_append(&pci_slots_list, device);
 }
 
 /**
@@ -453,7 +463,7 @@ static void _scan_enclo(void)
 	}
 }
 
-static void _scan_slots(void)
+static void _scan_pci_slots(void)
 {
 	struct list dir;
 	if (scan_dir(SYSFS_PCI_SLOTS, &dir) == 0) {
@@ -461,9 +471,39 @@ static void _scan_slots(void)
 
 		list_for_each(&dir, dir_path) {
 			if (vmdssd_check_slot_module(dir_path) == true)
-				_slots_add(dir_path);
+				_pci_slots_add(dir_path);
 		}
 		list_erase(&dir);
+	}
+}
+
+static void _scan_slots(void)
+{
+	struct pci_slot *pci_slot;
+	struct cntrl_device *cntrl_device;
+	struct enclosure_device *encl;
+	struct slot_property *slot;
+
+	list_for_each(sysfs_get_cntrl_devices(), cntrl_device) {
+		if (cntrl_device->cntrl_type == CNTRL_TYPE_NPEM) {
+			slot = npem_slot_property_init(cntrl_device);
+			if (slot)
+				list_append(&slots_list, slot);
+		}
+	}
+
+	list_for_each(sysfs_get_pci_slots(), pci_slot) {
+		slot = pci_slot_property_init(pci_slot);
+		if (slot)
+			list_append(&slots_list, slot);
+	}
+
+	list_for_each(sysfs_get_enclosure_devices(), encl) {
+		for (int i = 0; i < encl->slots_count; i++) {
+			slot = enclosure_slot_property_init(encl, i);
+			if (slot)
+				list_append(&slots_list, slot);
+		}
 	}
 }
 
@@ -587,7 +627,8 @@ void sysfs_init(void)
 	list_init(&slave_list, (item_free_t)slave_device_fini);
 	list_init(&cntnr_list, (item_free_t)raid_device_fini);
 	list_init(&enclo_list, (item_free_t)enclosure_device_fini);
-	list_init(&slots_list, (item_free_t)pci_slot_fini);
+	list_init(&pci_slots_list, (item_free_t)pci_slot_fini);
+	list_init(&slots_list, NULL);
 }
 
 void sysfs_reset(void)
@@ -598,6 +639,7 @@ void sysfs_reset(void)
 	list_erase(&slave_list);
 	list_erase(&cntnr_list);
 	list_erase(&enclo_list);
+	list_erase(&pci_slots_list);
 	list_erase(&slots_list);
 }
 
@@ -605,9 +647,10 @@ void sysfs_scan(void)
 {
 	_scan_enclo();
 	_scan_cntrl();
-	_scan_slots();
+	_scan_pci_slots();
 	_scan_block();
 	_scan_raid();
+	_scan_slots();
 	_scan_slave();
 
 	_determine_slaves(&slave_list);
@@ -644,6 +687,11 @@ const struct list *sysfs_get_block_devices(void)
 }
 
 const struct list *sysfs_get_pci_slots(void)
+{
+	return &pci_slots_list;
+}
+
+const struct list *sysfs_get_slots(void)
 {
 	return &slots_list;
 }

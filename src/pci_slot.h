@@ -70,29 +70,35 @@ struct pci_slot *pci_slot_init(const char *path);
 void pci_slot_fini(struct pci_slot *slot);
 
 /**
- * @brief Gets led state for slot.
+ * @brief Gets slot information.
  *
- * This function finds slot connected to given identifier
- * and fills slot response related to the slot.
+ * This function fills slot information related to the slot.
  *
- * @param[in]         device         Requested device name.
- * @param[in]         slot_num       Requested identifier of the slot.
- * @param[in]         slot_res       Pointer to the slot response.
+ * @param[in]         slot                Requested slot.
+ * @param[in]         slot_property       Pointer to the slot property element.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t pci_get_slot(char *device, char *slot_num, struct slot_response *slot_res);
+enum ibpi_pattern pci_get_state(struct slot_property *slot);
 
 /**
  * @brief Sets led state for slot.
  *
- * This function finds slot connected to given number or device name
- * and set given led state.
+ * This function sets given led state for slot.
  *
- * @param[in]         slot_num       Requested number of the slot.
+ * @param[in]         slot           Requested slot.
  * @param[in]         state          IBPI state based on slot request.
  *
  * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-status_t pci_set_slot(char *slot_num, enum ibpi_pattern state);
+status_t pci_set_slot(struct slot_property *slot, enum ibpi_pattern state);
+
+/**
+ * @brief Initializes a slot_property for a specified pci slot.
+ *
+ * @param[in]      pci_slot        The specified pci slot pointer for this slot
+ * @return struct slot_property* if successful, else NULL on allocation failure
+ */
+struct slot_property *pci_slot_property_init(struct pci_slot *pci_slot);
+
 #endif // PCI_SLOT_H_INCLUDED_

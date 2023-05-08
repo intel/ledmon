@@ -110,31 +110,6 @@ struct ibpi_state {
 static struct list ibpi_list;
 
 /**
- * @brief Pointer to a get slot function.
- *
- * The pointer to a function which will print slot details.
- *
- * @param[in]         device        Name of the device.
- * @param[in]         slot          Unique identifier of the slot.
- * @param[in]         res           Pointer to slot response.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-typedef status_t (*get_slot_t) (char *device, char *slot, struct slot_response *res);
-
-/**
- * @brief Pointer to a set slot function.
- *
- * The pointer to a function which will set slot details.
- *
- * @param[in]         slot          Unique identifier of the slot.
- * @param[in]         state         IBPI state based on slot request.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-typedef status_t (*set_slot_t) (char *slot, enum ibpi_pattern state);
-
-/**
  * @brief slot request parametres
  *
  * This structure contains all possible parameters for slot related commands.
@@ -164,16 +139,6 @@ struct slot_request {
 	 * IBPI state.
 	 */
 	enum ibpi_pattern state;
-
-	/**
-	 * Pointer to the get slot function.
-	 */
-	get_slot_t get_slot_fn;
-
-	/**
-	 * Pointer to the set slot function.
-	 */
-	set_slot_t set_slot_fn;
 };
 
 /**
@@ -237,38 +202,6 @@ static int possible_params[] = {
 
 static const int possible_params_size = ARRAY_SIZE(possible_params);
 static int listed_only;
-
-/**
- * @brief Determines a slot functions based on controller.
- *
- * This function determines slot functions based on
- * controller type.
- *
- * @param[in]       ctrl_type       Controller type.
- * @param[in]       slot_req        Pointer to the slot request.
- *
- * @return This function does not return a value.
- */
-static void _get_slot_ctrl_fn(enum cntrl_type ctrl_type, struct slot_request *slot_req)
-{
-	switch (ctrl_type) {
-	case CNTRL_TYPE_VMD:
-		slot_req->get_slot_fn = pci_get_slot;
-		slot_req->set_slot_fn = pci_set_slot;
-		break;
-	case CNTRL_TYPE_NPEM:
-		slot_req->get_slot_fn = npem_get_slot;
-		slot_req->set_slot_fn = npem_set_slot;
-		break;
-	case CNTRL_TYPE_SCSI:
-		slot_req->get_slot_fn = enclosure_get_slot;
-		slot_req->set_slot_fn = enclosure_set_slot;
-		break;
-	default:
-		log_debug("Slot functions could not be set because the controller type %s does not "
-			  "support slots managing.", ctrl_type);
-	}
-}
 
 static void ibpi_state_fini(struct ibpi_state *p)
 {
@@ -724,17 +657,34 @@ static void slot_request_init(struct slot_request *slot_req)
 }
 
 /**
- * @brief Inits slot response structure with initial values.
+ * @brief List slots connected to given controller
  *
- * @param[in]       slot_res       structure with slot response
+ * This function scans all available slots connected to given controller
+ * and prints their led states and names of the connected devices (if exist).
  *
- * @return This function does not return a value.
+ * @param[in]       slot_req       Structure with slot request.
+ *
+ * @return LEDCTL_STATUS_SUCCESS if successful, otherwise ledctl_status_code_t.
  */
-static void slot_response_init(struct slot_response *slot_res)
+static ledctl_status_code_t list_slots(enum cntrl_type cntrl_type)
 {
-	memset(slot_res, 0, sizeof(struct slot_response));
+	struct slot_property *slot;
 
-	slot_res->state = IBPI_PATTERN_UNKNOWN;
+	list_for_each(sysfs_get_slots(), slot) {
+		if (slot->c->cntrl_type == cntrl_type)
+			print_slot_state(slot);
+	}
+
+	return STATUS_SUCCESS;
+}
+
+struct slot_property *find_slot(struct slot_request *slot_req)
+{
+	if (slot_req->device[0] != '\0')
+		return find_slot_by_device_name(slot_req->device, slot_req->cntrl);
+	else if (slot_req->slot[0] != '\0')
+		return find_slot_by_slot_path(slot_req->slot, slot_req->cntrl);
+	return NULL;
 }
 
 /**
@@ -754,81 +704,16 @@ static ledctl_status_code_t slot_verify_request(struct slot_request *slot_req)
 		log_error("Invalid IBPI state in the request.");
 		return LEDCTL_STATUS_INVALID_STATE;
 	}
-	if (!slot_req->get_slot_fn && !slot_req->set_slot_fn) {
-		log_error("The controller type %s doesn't support slot functionality.",
-			cntrl_type_to_string(slot_req->cntrl));
-		return LEDCTL_STATUS_INVALID_CONTROLLER;
-	}
 	if (slot_req->device[0] && slot_req->slot[0]) {
 		log_error("Device and slot parameters are exclusive.");
 		return LEDCTL_STATUS_DATA_ERROR;
 	}
+	if (slot_req->chosen_opt != OPT_LIST_SLOTS && find_slot(slot_req) == NULL) {
+		log_error("Slot was not found for provided parameters.");
+		return LEDCTL_STATUS_CMDLINE_ERROR;
+	}
 
 	return LEDCTL_STATUS_SUCCESS;
-}
-
-static ledctl_status_code_t get_state_for_slot(char *slot, struct slot_request *slot_req)
-{
-	struct slot_response slot_res;
-	ledctl_status_code_t status = LEDCTL_STATUS_SUCCESS;
-
-	slot_response_init(&slot_res);
-	status = slot_req->get_slot_fn(NULL, slot, &slot_res);
-	if (status == LEDCTL_STATUS_SUCCESS)
-		print_slot_state(&slot_res);
-
-	return status;
-}
-
-/**
- * @brief List slots connected to given controller
- *
- * This function scans all available slots connected to given controller
- * and prints their led states and names of the connected devices (if exist).
- *
- * @param[in]       slot_req       Structure with slot request.
- *
- * @return LEDCTL_STATUS_SUCCESS if successful, otherwise ledctl_status_code_t.
- */
-static ledctl_status_code_t list_slots(struct slot_request *slot_req)
-{
-	ledctl_status_code_t status = LEDCTL_STATUS_SUCCESS;
-
-	switch (slot_req->cntrl) {
-	case CNTRL_TYPE_VMD:
-	{
-		struct pci_slot *slot;
-
-		list_for_each(sysfs_get_pci_slots(), slot)
-			status = get_state_for_slot(slot->sysfs_path, slot_req);
-		return status;
-	}
-	case CNTRL_TYPE_NPEM:
-	{
-		struct cntrl_device *ctrl_dev;
-
-		list_for_each(sysfs_get_cntrl_devices(), ctrl_dev) {
-			if (ctrl_dev->cntrl_type != CNTRL_TYPE_NPEM)
-				continue;
-			status = get_state_for_slot(ctrl_dev->sysfs_path, slot_req);
-		}
-		return status;
-	}
-	case CNTRL_TYPE_SCSI:
-	{
-		struct enclosure_device *encl = NULL;
-		char slot_id[PATH_MAX];
-		list_for_each(sysfs_get_enclosure_devices(), encl) {
-			for (int i = 0; i < encl->slots_count; i++) {
-				snprintf(slot_id, PATH_MAX, "%s/%d", encl->dev_path, encl->slots[i].index);
-				status = get_state_for_slot(slot_id, slot_req);
-			}
-		}
-		return status;
-	}
-	default:
-		return LEDCTL_STATUS_NOT_SUPPORTED;
-	}
 }
 
 /**
@@ -840,31 +725,26 @@ static ledctl_status_code_t list_slots(struct slot_request *slot_req)
  */
 ledctl_status_code_t slot_execute(struct slot_request *slot_req)
 {
-	struct slot_response slot_res;
-	ledctl_status_code_t status = LEDCTL_STATUS_SUCCESS;
+	struct slot_property *slot;
 
-	slot_response_init(&slot_res);
+	if (slot_req->chosen_opt == OPT_LIST_SLOTS)
+		return list_slots(slot_req->cntrl);
+
+	slot = find_slot(slot_req);
+	if (slot == NULL)
+		return LEDCTL_STATUS_DATA_ERROR;
 
 	switch (slot_req->chosen_opt) {
-	case OPT_LIST_SLOTS:
-		return list_slots(slot_req);
 	case OPT_SET_SLOT:
-		status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
-		if (status != LEDCTL_STATUS_SUCCESS)
-			return status;
-		if (slot_res.state == slot_req->state) {
+		if (get_slot_pattern(slot) == slot_req->state) {
 			log_warning("Led state: %s is already set for the slot.",
 				    ibpi2str(slot_req->state));
 			return LEDCTL_STATUS_SUCCESS;
 		}
-		status = slot_req->set_slot_fn(slot_res.slot, slot_req->state);
-		if (status != LEDCTL_STATUS_SUCCESS)
-			return status;
+		return set_slot_pattern(slot, slot_req->state);
 	case OPT_GET_SLOT:
-		status = slot_req->get_slot_fn(slot_req->device, slot_req->slot, &slot_res);
-		if (status == LEDCTL_STATUS_SUCCESS)
-			print_slot_state(&slot_res);
-		return status;
+		print_slot_state(slot);
+		return LEDCTL_STATUS_SUCCESS;
 	default:
 		return LEDCTL_STATUS_NOT_SUPPORTED;
 	}
@@ -940,7 +820,6 @@ ledctl_status_code_t _cmdline_parse(int argc, char *argv[], struct slot_request 
 			break;
 		case 'c':
 			req->cntrl = string_to_cntrl_type(optarg);
-			_get_slot_ctrl_fn(req->cntrl, req);
 			break;
 		case 's':
 		{

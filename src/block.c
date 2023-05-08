@@ -216,7 +216,7 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 	return hosts;
 }
 
-struct block_device *get_block_device_from_sysfs_path(char *sub_path)
+struct block_device *get_block_device_from_sysfs_path(char *sub_path, bool sub_path_to_end)
 {
 	struct block_device *device;
 
@@ -225,6 +225,8 @@ struct block_device *get_block_device_from_sysfs_path(char *sub_path)
 			if ((start_loc = strstr(device->sysfs_path, sub_path))) {
 				char following = start_loc[strnlen(sub_path, PATH_MAX)];
 				if (following == '/' || following == '\n' || following == '\0')
+					return device;
+				if (sub_path_to_end)
 					return device;
 			}
 	}

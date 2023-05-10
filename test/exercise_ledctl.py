@@ -69,7 +69,7 @@ def process_slot_line(controller, rawline):
 def get_slot(slot_o):
     result = subprocess.run([LEDCTL_BIN,
                              "--get-slot",
-                             "--controller", slot_o.cntrl,
+                             "--controller-type", slot_o.cntrl,
                              "--slot", slot_o.slot], capture_output=True)
     if result.returncode == 0:
         out = result.stdout.decode("utf-8")
@@ -82,7 +82,9 @@ def get_slot(slot_o):
 
 def get_slots(controller):
     rc = []
-    result = subprocess.run([LEDCTL_BIN, "--list-slots", "--controller", controller], capture_output=True)
+    result = subprocess.run([LEDCTL_BIN,
+                             "--list-slots",
+                             "--controller-type", controller], capture_output=True)
     if result.returncode == 0:
         out = result.stdout.decode("utf-8")
         for l in out.split("\n"):
@@ -95,7 +97,7 @@ def get_slots(controller):
 def set_slot_state(slot_o, state):
     result = subprocess.run([LEDCTL_BIN,
                              "--set-slot",
-                             "--controller", slot_o.cntrl,
+                             "--controller-type", slot_o.cntrl,
                              "--slot", slot_o.slot,
                              "--state", state], capture_output=True)
     if result.returncode == 0:

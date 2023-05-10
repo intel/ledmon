@@ -1,6 +1,6 @@
 #
 #  Intel(R) Enclosure LED Utilities
-#  Copyright (C) 2009-2022 Intel Corporation.
+#  Copyright (C) 2009-2023 Intel Corporation.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms and conditions of the GNU General Public License,
@@ -324,7 +324,7 @@ Displays version of ledctl and information about the license and exits.
 Prints information (system path and type) of all controllers detected by
 ledmon and exits.
 
-=item B<-P> or B<--list-slots> B<--controller-type>=I<controller>
+=item B<-P> or B<--list-slots> B<--controller-type>=I<controller-type>
 
 Prints all slots for the controller. Slot definition depends on the controller
 and is unique across all controllers of the same type.
@@ -344,20 +344,20 @@ NPEM - PCI Express Downstream Port address
 =back
 
 Command returns a list of all slots for the controller with current state and
-attached device name (if any). I<controller> is type of controller
+attached device name (if any). I<controller-type> is type of controller
 (vmd, NPEM) that should be scanned here.
 
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller> B<--device>=I<device>
+=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--device>=I<device>
 
 Displays slot details of given device. I<device> is devnode of selected drive.
 
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller> B<--slot>=I<slot>
+=item B<-G> or B<--get-slot> B<--controller-type>=I<controlle-typer> B<--slot>=I<slot>
 
 Displays details of given slot. I<slot> is unique slot identifier.
 
-=item B<-S> or B<--set-slot> B<--controller-type>=I<controller> B<--slot>=I<slot> B<--state>=I<IBPI_state>
+=item B<-S> or B<--set-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--state>=I<IBPI_state>
 
-Changes led state for given slot. I<controller> is type of the controller.
+Changes led state for given slot. I<controller-type> is type of the controller.
 I<slot> is unique slot identifier. I<IBPI_state> is led pattern.
 
 =item B<-x> or B<--listed-only>

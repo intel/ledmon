@@ -80,15 +80,15 @@ def get_slot(slot_o):
         return None
 
 
-def get_slots(controller):
+def get_slots(controller_type):
     rc = []
     result = subprocess.run([LEDCTL_BIN,
                              "--list-slots",
-                             "--controller-type", controller], capture_output=True)
+                             "--controller-type", controller_type], capture_output=True)
     if result.returncode == 0:
         out = result.stdout.decode("utf-8")
         for l in out.split("\n"):
-            s = process_slot_line(controller, l)
+            s = process_slot_line(controller_type, l)
             if s is not None:
                 rc.append(s)
     return rc

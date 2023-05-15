@@ -326,10 +326,10 @@ ledmon and exits.
 
 =item B<-P> or B<--list-slots> B<--controller-type>=I<controller-type>
 
-Prints all slots for the controller. Slot definition depends on the controller
+Prints all slots for the controller type. Slot definition depends on the controller
 and is unique across all controllers of the same type.
 
-Definitions for supported controllers are described below:
+Definitions for supported controller types are described below:
 
 =over
 
@@ -343,7 +343,7 @@ NPEM - PCI Express Downstream Port address
 
 =back
 
-Command returns a list of all slots for the controller with current state and
+Command returns a list of all slots for the controller type with current state and
 attached device name (if any). I<controller-type> is type of controller
 (vmd, NPEM) that should be scanned here.
 

@@ -267,7 +267,7 @@ static void _ledctl_help(void)
 	print_opt("--list-controllers", "-L",
 		  "Displays list of controllers detected by ledmon.");
 	print_opt("--list-slots --controller-type CONTROLLER", "-P -c CONTROLLER",
-		  "List slots under the controller, their led states, slot numbers and "
+		  "List slots under the controller type, their led states, slot numbers and "
 		  "devnodes connected.");
 	print_opt("--get-slot --controller-type CONTROLLER --device DEVNODE / --slot SLOT",
 		  "-G -c CONTROLLER -d DEVNODE / -p SLOT",

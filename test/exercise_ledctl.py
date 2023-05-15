@@ -25,8 +25,8 @@ SLOT_FILTERS = []
 
 
 class Slot:
-    def __init__(self, cntrl, slot_id, state, device_node):
-        self.cntrl = cntrl
+    def __init__(self, cntrl_type, slot_id, state, device_node):
+        self.cntrl_type = cntrl_type
         self.slot = slot_id
         self.state = state.lower()
         self.device_node = None
@@ -69,11 +69,11 @@ def process_slot_line(controller, rawline):
 def get_slot(slot_o):
     result = subprocess.run([LEDCTL_BIN,
                              "--get-slot",
-                             "--controller-type", slot_o.cntrl,
+                             "--controller-type", slot_o.cntrl_type,
                              "--slot", slot_o.slot], capture_output=True)
     if result.returncode == 0:
         out = result.stdout.decode("utf-8")
-        slot = process_slot_line(slot_o.cntrl, out)
+        slot = process_slot_line(slot_o.cntrl_type, out)
         return slot
     else:
         print("Failed to set slot: {result}")
@@ -97,7 +97,7 @@ def get_slots(controller_type):
 def set_slot_state(slot_o, state):
     result = subprocess.run([LEDCTL_BIN,
                              "--set-slot",
-                             "--controller-type", slot_o.cntrl,
+                             "--controller-type", slot_o.cntrl_type,
                              "--slot", slot_o.slot,
                              "--state", state], capture_output=True)
     if result.returncode == 0:

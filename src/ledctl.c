@@ -187,7 +187,7 @@ static int possible_params[] = {
 	OPT_LIST_SLOTS,
 	OPT_GET_SLOT,
 	OPT_SET_SLOT,
-	OPT_CONTROLLER,
+	OPT_CNTRL_TYPE,
 	OPT_DEVICE,
 	OPT_SLOT,
 	OPT_STATE,

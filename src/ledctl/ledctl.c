@@ -205,15 +205,11 @@ static void ibpi_state_fini(struct ibpi_state *p)
  *
  * This is internal function of ledctl utility. The function cleans up a memory
  * allocated for the application and closes all opened handles. This function is
- * design to be registered as on_exit() handler function.
- *
- * @param[in]      status         exit status of the ledctl application.
- * @param[in]      ignored        function ignores this argument.
+ * design to be registered as atexit() handler function.
  *
  * @return The function does not return a value.
  */
-static void _ledctl_fini(int status __attribute__ ((unused)),
-			 void *ignore __attribute__ ((unused)))
+static void _ledctl_fini(void)
 {
 	led_free(ctx);
 	list_erase(&ibpi_list);
@@ -945,7 +941,7 @@ static led_status_t load_library_prefs(void)
  * @brief Application's entry point.
  *
  * This is the entry point of ledctl utility. This function does all the work.
- * It allocates and initializes all used structures. Registers on_exit()
+ * It allocates and initializes all used structures. Registers atexit()
  * handlers.
  * Then the function parses command line options and commands given and scans
  * sysfs tree for controllers, block devices and RAID devices. If no error is
@@ -989,7 +985,7 @@ int main(int argc, char *argv[])
 	if (status != LEDCTL_STATUS_SUCCESS)
 		return status;
 
-	if (on_exit(_ledctl_fini, progname))
+	if (atexit(_ledctl_fini))
 		exit(LEDCTL_STATUS_ONEXIT_ERROR);
 
 	status = _read_shared_conf();

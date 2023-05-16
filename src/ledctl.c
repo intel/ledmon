@@ -187,7 +187,7 @@ static int possible_params[] = {
 	OPT_LIST_SLOTS,
 	OPT_GET_SLOT,
 	OPT_SET_SLOT,
-	OPT_CONTROLLER,
+	OPT_CNTRL_TYPE,
 	OPT_DEVICE,
 	OPT_SLOT,
 	OPT_STATE,
@@ -266,13 +266,13 @@ static void _ledctl_help(void)
 		  "Ledctl will change state only for given devices.");
 	print_opt("--list-controllers", "-L",
 		  "Displays list of controllers detected by ledmon.");
-	print_opt("--list-slots --controller CONTROLLER", "-P -c CONTROLLER",
-		  "List slots under the controller, their led states, slot numbers and "
+	print_opt("--list-slots --controller-type CONTROLLER", "-P -c CONTROLLER",
+		  "List slots under the controller type, their led states, slot numbers and "
 		  "devnodes connected.");
-	print_opt("--get-slot --controller CONTROLLER --device DEVNODE / --slot SLOT",
+	print_opt("--get-slot --controller-type CONTROLLER --device DEVNODE / --slot SLOT",
 		  "-G -c CONTROLLER -d DEVNODE / -p SLOT",
 		  "Prints slot information, its led state, slot number and devnode.");
-	print_opt("--set-slot --controller CONTROLLER --slot SLOT --state STATE",
+	print_opt("--set-slot --controller-type CONTROLLER --slot SLOT --state STATE",
 		  "-S -c CONTROLLER -p SLOT -s STATE", "Sets given state for chosen slot "
 		  "under the controller.");
 	print_opt("--log=PATH", "-l PATH",

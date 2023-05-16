@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2022-2022 Intel Corporation.
+ * Copyright (C) 2022-2023 Intel Corporation.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -586,7 +586,7 @@ struct option longopt_all[] = {
 	[OPT_LIST_SLOTS]   = {"list-slots", no_argument, NULL, 'P'},
 	[OPT_GET_SLOT]     = {"get-slot", no_argument, NULL, 'G'},
 	[OPT_SET_SLOT]     = {"set-slot", no_argument, NULL, 'S'},
-	[OPT_CONTROLLER]   = {"controller", required_argument, NULL, 'c'},
+	[OPT_CNTRL_TYPE]   = {"controller-type", required_argument, NULL, 'c'},
 	[OPT_DEVICE]       = {"device", required_argument, NULL, 'd'},
 	[OPT_SLOT]         = {"slot", required_argument, NULL, 'p'},
 	[OPT_STATE]        = {"state", required_argument, NULL, 's'},

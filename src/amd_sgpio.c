@@ -1,6 +1,6 @@
 /*
  * AMD SGPIO LED control
- * Copyright (C) 2022, Advanced Micro Devices, Inc.
+ * Copyright (C) 2023, Advanced Micro Devices, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

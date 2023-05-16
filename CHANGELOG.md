@@ -9,7 +9,6 @@ Enhancements
 * ledctl: Add SES get/set/list slot support
 * Update NPEM wait command
 * Remove exclusionary language
-* Add github action on every PR
 * ledmon: Define ONESHOT_NORMAL for VMD
 
 Bug fixes

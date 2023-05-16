@@ -1,4 +1,4 @@
-### v0.97 / 2022-05-16
+### v0.97 / 2023-05-16
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.96...v0.97)
 

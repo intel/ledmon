@@ -1,3 +1,30 @@
+### v0.97 / 2022-05-16
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.96...v0.97)
+
+Enhancements
+
+* ledctl: add support to empty slots blinking
+* ledmon license change to LGPLv2
+* ledctl: Add SES get/set/list slot support
+* Update NPEM wait command
+* Remove exclusionary language
+* Add github action on every PR
+* ledmon: Define ONESHOT_NORMAL for VMD
+
+Bug fixes
+
+* ipmi: avoid error messages on non-dell platforms
+* vmdssd: define normal pattern
+* ledctl: clear unsupported params from config
+* block.c: get_block_device_from_sysfs_path modification
+* fix ibpi_value lists getter
+* amd_ipmi: Allow to _enable_smbus_control
+* ledmon.c: allocate memory for ignore
+* sysfs: add only vmd devices to slots_list
+* Rename --controller parameter
+* Slots list implementations and fixes
+
 ### v0.96 / 2022-05-26
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.95...v0.96)

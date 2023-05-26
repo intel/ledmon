@@ -21,3 +21,4 @@ config_ac.h
 config.log
 config.status
 stamp-h1
+tests/__pycache__/

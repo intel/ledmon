@@ -18,6 +18,7 @@ LOGGER = logging.getLogger(__name__)
 # To run this test do `pytest tests --ledctl-binary=../src/ledctl --slot-filters=sg3-,sg2-`
 # to filter out enclosures that don't work
 
+
 class Slot:
     def __init__(self, cntrl_type, slot_id, state, device_node):
         self.cntrl_type = cntrl_type
@@ -30,53 +31,49 @@ class Slot:
     def __str__(self):
         return "slot: %s state: %s device: %s" % (self.slot, self.state, self.device_node)
 
+
 class TestSlot():
 
     ledctl_bin = ""
 
     def get_controllers_with_slot_functionality(self):
+        supported = ["SCSI", "VMD", "NPEM"]
         rc = {}
-        result = subprocess.run([self.ledctl_bin, "--list-controllers"], capture_output=True)
-        if result.returncode == 0:
-            out = result.stdout.decode("utf-8")
-            for raw_line in out.split("\n"):
-                line = raw_line.strip()
-                if "SCSI" in line:
-                    rc["SCSI"] = True
-                elif "VMD" in line:
-                    rc["VMD"] = True
-                elif "NPEM" in line:
-                    rc["NPEM"] = True
+        result = subprocess.run([self.ledctl_bin, "--list-controllers"], capture_output=True, check=True)
+        out = result.stdout.decode("utf-8")
+        for raw_line in out.split("\n"):
+            line = raw_line.strip()
+            for ctrl in supported:
+                if ctrl in line:
+                    rc[ctrl] = True
+                    break
         return rc.keys()
 
-
-    def process_slot_line(self, controller, rawline, slot_filters):
-        SLOT_LINE = re.compile(r"^slot: (.+)led state:(.+)device:(.+)$")
+    @staticmethod
+    def process_slot_line(controller, rawline, slot_filters):
+        regex_pat = r"^slot: (.+)led state:(.+)device:(.+)$"
+        slot_line_re = re.compile(regex_pat)
         line = rawline.strip()
-        match = SLOT_LINE.match(line)
-        if match is not None:
-            slot = Slot(controller, match.group(1).strip(), match.group(2).strip(), match.group(3).strip())
-            for slot_filter in slot_filters:
-                if slot.slot.startswith(slot_filter):
-                    # Filter out this slot
-                    return None
-            return slot
-        return None
+        if len(line) == 0:
+            return None
+        match = slot_line_re.match(line)
+        if match is None:
+            raise Exception(f"Text line '{line}' did not match regex '{regex_pat}'")
 
+        slot = Slot(controller, match.group(1).strip(), match.group(2).strip(), match.group(3).strip())
+        for slot_filter in slot_filters:
+            if slot.slot.startswith(slot_filter):
+                # Filter out this slot
+                return None
+        return slot
 
     def get_slot(self, slot_o, slot_filter):
         result = subprocess.run([self.ledctl_bin,
                                 "--get-slot",
                                 "--controller-type", slot_o.cntrl_type,
-                                "--slot", slot_o.slot], capture_output=True)
-        if result.returncode == 0:
-            out = result.stdout.decode("utf-8")
-            slot = self.process_slot_line(slot_o.cntrl_type, out, slot_filter)
-            return slot
-        else:
-            LOGGER.error(f"Failed to set slot: {result}")
-            return None
-
+                                "--slot", slot_o.slot], capture_output=True, check=True)
+        out = result.stdout.decode("utf-8")
+        return TestSlot.process_slot_line(slot_o.cntrl_type, out, slot_filter)
 
     def get_slots(self, controller_type, slot_filter):
         rc = []
@@ -85,32 +82,24 @@ class TestSlot():
                                 "--controller-type", controller_type], capture_output=True)
         if result.returncode == 0:
             out = result.stdout.decode("utf-8")
-            for l in out.split("\n"):
-                s = self.process_slot_line(controller_type, l, slot_filter)
+            for line in out.split("\n"):
+                s = TestSlot.process_slot_line(controller_type, line, slot_filter)
                 if s is not None:
                     rc.append(s)
         return rc
 
-
     def set_slot_state(self, slot_o, state):
-        result = subprocess.run([self.ledctl_bin,
-                                "--set-slot",
-                                "--controller-type", slot_o.cntrl_type,
-                                "--slot", slot_o.slot,
-                                "--state", state], capture_output=True)
-        if result.returncode == 0:
-            return True
-        else:
-            LOGGER.error(f"Failed to set slot: {result}")
-            return False
-
+        subprocess.run([self.ledctl_bin,
+                        "--set-slot",
+                        "--controller-type", slot_o.cntrl_type,
+                        "--slot", slot_o.slot,
+                        "--state", state], capture_output=True, check=True)
 
     def get_all_slots(self, slot_filter):
         all_slots = []
         for controller in self.get_controllers_with_slot_functionality():
             all_slots.extend(self.get_slots(controller, slot_filter))
         return all_slots
-
 
     def set_state_by_dev_node(self, dev_node, state):
         option = "%s=%s" % (state, dev_node)
@@ -120,7 +109,6 @@ class TestSlot():
         else:
             LOGGER.error(f"Error while using led non slot syntax {option} {result}")
             return False
-
 
     def test_non_slot_set_path(self, ledctl_binary, slot_filters):
         """
@@ -134,8 +122,8 @@ class TestSlot():
             for state in ["failure", "locate", "normal"]:
                 self.set_state_by_dev_node(slot.device_node, state)
                 cur = self.get_slot(slot, slot_filters)
-                assert cur.state == state, f"unable to set from {slot} to {state}, current = {cur} using non-slot syntax"
-
+                assert cur.state == state,\
+                    f"unable to set from {slot} to {state}, current = {cur} using non-slot syntax"
 
     def test_slot_state_walk(self, ledctl_binary, slot_filters):
         """
@@ -147,7 +135,6 @@ class TestSlot():
 
         for slot in slots:
             for state in ["locate", "failure", "normal"]:
-                result = self.set_slot_state(slot, state)
-                assert result == True, "failed to set slot state"
+                self.set_slot_state(slot, state)
                 cur = self.get_slot(slot, slot_filters)
                 assert cur.state == state, f"unable to set from {slot} to {state}, current = {cur}"

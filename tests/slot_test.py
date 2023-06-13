@@ -64,14 +64,14 @@ class TestSlot():
         return None
 
 
-    def get_slot(self, slot_o, ledctl_bin):
+    def get_slot(self, slot_o, slot_filter):
         result = subprocess.run([self.ledctl_bin,
                                 "--get-slot",
                                 "--controller-type", slot_o.cntrl_type,
                                 "--slot", slot_o.slot], capture_output=True)
         if result.returncode == 0:
             out = result.stdout.decode("utf-8")
-            slot = process_slot_line(slot_o.cntrl_type, out)
+            slot = self.process_slot_line(slot_o.cntrl_type, out, slot_filter)
             return slot
         else:
             LOGGER.error(f"Failed to set slot: {result}")
@@ -86,7 +86,7 @@ class TestSlot():
         if result.returncode == 0:
             out = result.stdout.decode("utf-8")
             for l in out.split("\n"):
-                s = process_slot_line(controller_type, l, slot_filter)
+                s = self.process_slot_line(controller_type, l, slot_filter)
                 if s is not None:
                     rc.append(s)
         return rc
@@ -132,8 +132,8 @@ class TestSlot():
 
         for slot in slots_with_device_nodes:
             for state in ["failure", "locate", "normal"]:
-                set_state_by_dev_node(slot.device_node, state)
-                cur = get_slot(slot)
+                self.set_state_by_dev_node(slot.device_node, state)
+                cur = self.get_slot(slot, slot_filters)
                 assert cur.state == state, f"unable to set from {slot} to {state}, current = {cur} using non-slot syntax"
 
 
@@ -147,7 +147,7 @@ class TestSlot():
 
         for slot in slots:
             for state in ["locate", "failure", "normal"]:
-                result = set_slot_state(slot, state)
+                result = self.set_slot_state(slot, state)
                 assert result == True, "failed to set slot state"
-                cur = get_slot(slot)
+                cur = self.get_slot(slot, slot_filters)
                 assert cur.state == state, f"unable to set from {slot} to {state}, current = {cur}"

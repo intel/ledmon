@@ -111,12 +111,25 @@ AM_CONDITIONAL([SYSTEMD_CONDITION], [test "$SYSTEMD_STR" = yes])
 # target directory for ledmon service file
 AC_SUBST([SYSTEMD_PATH], "$(pkg-config systemd --variable=systemdsystemunitdir)")
 
+
+AC_ARG_ENABLE([test],
+    [AS_HELP_STRING([--enable-test],
+                    [enable test cases, run using  'make check'])],
+    [with_test=${enableval}],
+    [with_test=no])
+
+AM_CONDITIONAL([WITH_TEST], [test "x$with_test" = "xyes"])
+
+if test "x${with_test}" = "xyes"; then
+    PKG_CHECK_MODULES([LIBCHECK], [check >= 0.9.8 ])
+fi
+
 # Add configure option to build without library
 AC_ARG_ENABLE([library],
-    [AS_HELP_STRING([--disable-library],
-        [disable building ledmon library])],
+    [AS_HELP_STRING([--enable-library],
+        [enable building ledmon library])],
     [with_library=${enableval}],
-    [with_library=yes])
+    [with_library=no])
 
 AM_CONDITIONAL([WITH_LIBRARY], [test "x$with_library" = "xyes"])
 
@@ -130,7 +143,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/include/led/Makefile
                  src/ledctl/Makefile
                  src/ledmon/Makefile
-                 systemd/Makefile])
+                 systemd/Makefile
+                 tests/Makefile])
 AC_OUTPUT
 AC_MSG_RESULT([
 $PACKAGE_NAME $VERSION configuration:
@@ -139,5 +153,5 @@ $PACKAGE_NAME $VERSION configuration:
   Preprocessor flags:      ${AM_CPPFLAGS} ${CPPFLAGS}
   C compiler flags:        ${AM_CFLAGS} ${CFLAGS}
   Common install location: ${prefix}
-  configure parameters:    --enable-systemd=${SYSTEMD_STR} --enable-library=${with_library}
+  configure parameters:    --enable-systemd=${SYSTEMD_STR} --enable-library=${with_library} --enable-test=${with_test}
 ])

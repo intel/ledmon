@@ -154,7 +154,7 @@ int scsi_ses_flush_enclosure(struct enclosure_device *enclosure)
 
 	ret = ses_send_diag(fd, &enclosure->ses_pages);
 	close(fd);
-	return ret;
+	return enclosure_reload(enclosure);
 }
 
 int scsi_ses_flush(struct block_device *device)
@@ -176,7 +176,10 @@ int scsi_ses_flush(struct block_device *device)
 
 	close(fd);
 
-	return ret;
+	if (ret)
+		return ret;
+
+	return enclosure_reload(device->enclosure);
 }
 
 char *scsi_get_host_path(const char *path, const char *ctrl_path)

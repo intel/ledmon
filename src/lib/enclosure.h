@@ -125,4 +125,12 @@ status_t enclosure_set_state(struct slot_property *slot, enum led_ibpi_pattern s
 struct slot_property *enclosure_slot_property_init(struct enclosure_device *enclosure,
 						   int slot_num);
 
+/**
+ * @brief Reloads the state of the hardware for the specified enclosure
+ *
+ * @param[in]        enclosure       Enclosure to reload
+ * @return int  0 on success, else error
+ */
+int enclosure_reload(struct enclosure_device *enclosure);
+
 #endif				/* _ENCLOSURE_H_INCLUDED_ */

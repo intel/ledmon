@@ -113,6 +113,28 @@ static char *_get_dev_sg(const char *encl_path)
 	return ret;
 }
 
+static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *encl, int index)
+{
+	for (int i = 0; i < encl->slots_count; i++) {
+		if (encl->slots[i].index == index)
+			return &encl->slots[i];
+	}
+	return NULL;
+}
+
+static struct block_device *enclosure_get_block_device(struct enclosure_device *encl, int index)
+{
+	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
+
+	if (!s_slot) {
+		lib_log(encl->ctx, LED_LOG_LEVEL_ERROR,
+			"SCSI: Unable to locate slot in enclosure %d\n", index);
+		return NULL;
+	}
+
+	return locate_block_by_sas_addr(encl->ctx, s_slot->sas_addr);
+}
+
 /*
  * Re-loads the ses hardware state for this enclosure, to allow refreshing the
  * state after the hardare has be written.
@@ -131,7 +153,21 @@ int enclosure_reload(struct enclosure_device * enclosure)
 	if (ret != 0)
 		return ret;
 
-	return ses_get_slots(&enclosure->ses_pages, &enclosure->slots, &enclosure->slots_count);
+	ret = ses_get_slots(&enclosure->ses_pages, &enclosure->slots, &enclosure->slots_count);
+	if (ret)
+		return ret;
+
+	/* If there is an associated block device with a slot, we need to update the block ibpi */
+	for (int i = 0; i < enclosure->slots_count; i++) {
+		struct block_device *bd = enclosure_get_block_device(enclosure, i);
+		struct ses_slot *s_slot = find_enclosure_slot_by_index(enclosure, i);
+
+		if (bd && s_slot) {
+			bd->ibpi_prev = bd->ibpi;
+			bd->ibpi = s_slot->ibpi_status;
+		}
+	}
+	return 0;
 }
 
 /*
@@ -192,28 +228,6 @@ int enclosure_open(const struct enclosure_device *enclosure)
 	return fd;
 }
 
-static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *encl, int index)
-{
-	for (int i = 0; i < encl->slots_count; i++) {
-		if (encl->slots[i].index == index) {
-			return &encl->slots[i];
-		}
-	}
-	return NULL;
-}
-
-static struct block_device *enclosure_get_block_device(struct enclosure_device *encl, int index)
-{
-	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
-	if (!s_slot) {
-		lib_log(encl->ctx, LED_LOG_LEVEL_ERROR,
-			"SCSI: Unable to locate slot in enclosure %d\n", index);
-		return NULL;
-	}
-
-	return locate_block_by_sas_addr(encl->ctx, s_slot->sas_addr);
-}
-
 enum led_ibpi_pattern enclosure_get_state(struct slot_property *sp)
 {
 	int index = sp->slot_spec.ses.slot_num;
@@ -235,19 +249,24 @@ const struct slot_property_common ses_slot_common = {
 	.set_slot_fn = enclosure_set_state
 };
 
-struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl, int slot)
+struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl, int slot_idx)
 {
 	struct slot_property *result = NULL;
+	struct ses_slot *slot_ptr = find_enclosure_slot_by_index(encl, slot_idx);
 
 	result = calloc(1, sizeof(struct slot_property));
 	if (result == NULL)
 		return NULL;
 
-	result->bl_device = enclosure_get_block_device(encl, slot);
+	result->bl_device = enclosure_get_block_device(encl, slot_idx);
 	result->slot_spec.ses.encl = encl;
-	result->slot_spec.ses.slot_num = slot;
-	snprintf(result->slot_id, PATH_MAX, "%s-%d", encl->dev_path, slot);
+	result->slot_spec.ses.slot_num = slot_idx;
+	snprintf(result->slot_id, PATH_MAX, "%s-%d", encl->dev_path, slot_idx);
 	result->c = &ses_slot_common;
+
+	/* If we have an associated block device, set its ibpi value */
+	if (result->bl_device && slot_ptr)
+		result->bl_device->ibpi = slot_ptr->ibpi_status;
 
 	return result;
 }
@@ -277,6 +296,12 @@ status_t enclosure_set_state(struct slot_property *sp, enum led_ibpi_pattern sta
 		lib_log(enclosure_device->ctx, LED_LOG_LEVEL_ERROR,
 			"SCSI: ses enclosure reload error %d\n", rc);
 		return STATUS_FILE_READ_ERROR;
+	}
+
+	/* If we have an associated block device, update its ibpi value */
+	if (sp->bl_device) {
+		sp->bl_device->ibpi_prev = sp->bl_device->ibpi;
+		sp->bl_device->ibpi = enclosure_get_state(sp);
 	}
 	return STATUS_SUCCESS;
 }

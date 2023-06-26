@@ -38,6 +38,6 @@ endif
 dist_doc_DATA = README.md
 
 if WITH_TEST
-TESTS = tests/lib_unit_test
+TESTS = tests/runtests.sh
 endif
 

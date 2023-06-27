@@ -1053,6 +1053,5 @@ int main(int argc, char *argv[])
 	}
 	ledmon_remove_shared_conf();
 	stop_udev_monitor();
-	led_free(ctx);
 	exit(EXIT_SUCCESS);
 }

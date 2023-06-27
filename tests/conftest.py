@@ -15,8 +15,7 @@ def pytest_generate_tests(metafunc):
         ledtctl_option_value = metafunc.config.option.ledctl_binary
         if 'ledctl_binary' in metafunc.fixturenames and ledtctl_option_value is not None:
                 metafunc.parametrize("ledctl_binary", [ledtctl_option_value])
-        
+
         slotfilters_option_value = metafunc.config.option.slot_filters
         if 'slot_filters' in metafunc.fixturenames and slotfilters_option_value is not None:
                 metafunc.parametrize("slot_filters", [slotfilters_option_value.split(",")])
-    

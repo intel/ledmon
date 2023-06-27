@@ -51,7 +51,7 @@ class TestSlot():
 
     @staticmethod
     def process_slot_line(controller, rawline, slot_filters):
-        regex_pat = r"^slot: (.+)led state:(.+)device:(.+)$"
+        regex_pat = r"^slot: (.+)led state:(.+)device:(.*)$"
         slot_line_re = re.compile(regex_pat)
         line = rawline.strip()
         if len(line) == 0:

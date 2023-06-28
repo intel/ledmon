@@ -26,7 +26,7 @@ jobs:
     - name: 'Install gcc'
       run: sudo apt-get update && sudo apt-get install gcc-${{ matrix.gcc-version }} g++-${{ matrix.gcc-version }}
     - name: 'Install dependencies'
-      run: sudo apt-get install pkg-config automake autoconf make libsgutils2-dev libudev-dev libpci-dev
+      run: sudo apt-get install pkg-config automake autoconf make libsgutils2-dev libudev-dev libpci-dev check
     - name: 'Generate compiling configurations'
       run: ./autogen.sh && ./configure
     - name: 'Make'

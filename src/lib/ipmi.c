@@ -74,17 +74,20 @@ int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datale
 	if (fd < 0)
 		return -1;
 
+	memset(&saddr, 0, sizeof(saddr));
+	memset(&iaddr, 0, sizeof(iaddr));
+	memset(&raddr, 0, sizeof(raddr));
 	memset(&req, 0, sizeof(req));
 	memset(&rcv, 0, sizeof(rcv));
+	memset(tresp, 0, sizeof(uint8_t) + (resplen + 1));
+
 	if (sa == BMC_SA) {
-		memset(&saddr, 0, sizeof(saddr));
 		saddr.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 		saddr.channel = IPMI_BMC_CHANNEL;
 		saddr.lun = 0;
 		req.addr = (void *)&saddr;
 		req.addr_len = sizeof(saddr);
 	} else {
-		memset(&iaddr, 0, sizeof(iaddr));
 		iaddr.addr_type = IPMI_IPMB_ADDR_TYPE;
 		iaddr.channel = 0;
 		iaddr.slave_addr = sa;

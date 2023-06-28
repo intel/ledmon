@@ -158,7 +158,7 @@ bool list_insert(struct list *list, void *item, struct node *after);
  * @return true on success
  * @return false on memory allocation failure
  */
-inline bool list_append(struct list *list, void *item)
+static inline bool list_append(struct list *list, void *item)
 {
 	return list_insert(list, item, list->tail);
 }

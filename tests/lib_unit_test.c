@@ -53,7 +53,10 @@ void setup_device_filters(void)
 	char *tmp_filters = getenv("LEDMONTEST_SLOT_FILTER");
 
 	if (tmp_filters) {
-		char *s_dupe = strdup(tmp_filters);
+		// Store a variable to where it was allocated so we can free, strsep will modify
+		// s_dupe address.
+		char *a_dupe = strdup(tmp_filters);
+		char *s_dupe = a_dupe;
 
 		printf("slot filter = ");
 		while ((found = strsep(&s_dupe, ",")) && (num_filters < MAX_FILTERED_SIZE - 1)) {
@@ -61,6 +64,7 @@ void setup_device_filters(void)
 			printf("%s ", slot_filters[num_filters]);
 			num_filters += 1;
 		}
+		free(a_dupe);
 		printf("\n");
 	}
 }
@@ -203,6 +207,7 @@ START_TEST(test_toggle_slots)
 						led_slot_id(se), led, after_set);
 			}
 		}
+		led_slot_list_free(sl);
 	}
 	ck_assert_msg(devices_found, "No test LED devices found!");
 }
@@ -273,6 +278,7 @@ START_TEST(test_led_by_path)
 					return;
 			}
 		}
+		led_slot_list_free(sl);
 	}
 	ck_assert_msg(devices_found, "No test LED devices found!");
 }

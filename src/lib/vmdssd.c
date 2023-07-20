@@ -163,7 +163,7 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern
 	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
 		char ibpi_buff[IPBI2STR_BUFF_SIZE];
 
-		lib_log(slot->ctx, LED_LOG_LEVEL_ERROR,
+		lib_log(slot->ctx, LED_LOG_LEVEL_INFO,
 			"VMD: Controller doesn't support %s pattern\n",
 			ibpi2str(ibpi, ibpi_buff, sizeof(ibpi_buff)));
 		return STATUS_INVALID_STATE;

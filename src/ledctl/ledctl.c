@@ -672,7 +672,7 @@ static inline void print_slot(struct led_slot_list_entry *s)
  * This function scans all available slots connected to given controller
  * and prints their led states and names of the connected devices (if exist).
  *
- * @param[in]       slot_req       Structure with slot request.
+ * @param[in]       cntrl_type       What type of controller to list slots for
  *
  * @return LEDCTL_STATUS_SUCCESS if successful, otherwise ledctl_status_code_t.
  */

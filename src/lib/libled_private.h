@@ -33,11 +33,17 @@
 
 #include <linux/limits.h>
 
+/**
+ * @brief Embedded structure within the library context used for amd state and caching.
+ */
 struct amd_sgpio_state {
 	int cache_fd;
 	struct cache_entry *cache;
 };
 
+/**
+ * @brief Configuration options for the library.  Mainly used by ledmon.
+ */
 struct configuration {
 	int blink_on_migration;
 	int blink_on_init;
@@ -48,27 +54,44 @@ struct configuration {
 	struct list excludelist;
 };
 
+/**
+ * @brief Implementation of the opaque led_slot_list_entry.
+ */
 struct led_slot_list_entry {
 	struct slot_property *slot;
 	char device_name[PATH_MAX];
 };
 
+/**
+ * @brief Implementation of the opaque led_slot_list.
+ */
 struct led_slot_list {
 	struct list slot_list;
 	struct node *iter;
 };
 
-
+/**
+ * @brief Implementation of the opaque led_cntrl_list_entry.
+ */
 struct led_cntrl_list_entry {
 	char path[PATH_MAX];
 	enum led_cntrl_type cntrl_type;
 };
 
+/**
+ * @brief Implementation of the opaque led_cntrl_list.
+ */
 struct led_cntrl_list {
 	struct list cntrl_list;
 	struct node *iter;
 };
 
+/**
+ * @brief Library context
+ *
+ * This structure is the common data for the library context.  This is an opaque data type and thus
+ * the internals of this structure cannot be visible to library users.
+ */
 struct led_ctx {
 	struct sysfs sys;
 	int log_fd;

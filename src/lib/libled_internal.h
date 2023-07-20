@@ -31,22 +31,23 @@
 #include "led/libled.h"
 
 /**
- * @brief Turns off all LEDs for all support hardware for the system
+ * @brief Turns off all LEDs for all support hardware for the system.
  *
- * @param[in] ctx	Library context
+ * @param[in] ctx	Library context.
  *
- * Note: Needs to be followed with led_flush()
+ * Note: Needs to be followed with led_flush().
  */
 void off_all(struct led_ctx *ctx);
 
 /**
  * @brief Sets library blink behavior.
  *
- * @param[in]	ctx	Library context
- * @param[in]	migration
- * @param[in]	init
- * @param[in]	all
- * @param[in]	raid_members
+ * @param[in]	ctx		Library context.
+ * @param[in]	migration	Migration behavior.
+ * @param[in]	init		Init behavior.
+ * @param[in]	all		All led behavior.
+ * @param[in]	raid_members	Raid member behavior.
+ *
  * @return led_status_t LED_STATUS_SUCCESS on success, else error reason.
  */
 led_status_t device_blink_behavior_set(struct led_ctx *ctx, int migration,
@@ -56,8 +57,9 @@ led_status_t device_blink_behavior_set(struct led_ctx *ctx, int migration,
  * @brief Add a device path to an allow list.  The library will then only consider this device
  * for API calls.  Function can be repeated, to add to an internal list.
  *
- * @param[in]	ctx	Library context
- * @param]in]	path	Device path in allow
+ * @param[in]	ctx	Library context.
+ * @param]in]	path	Device path in allow.
+ *
  * @return led_status_t	LED_STATUS_SUCCESS on success, else error reason.
  *
  * Note: Mutually exclusive with exclude, allow takes priority.
@@ -68,8 +70,9 @@ led_status_t device_allow_pattern_add(struct led_ctx *ctx, const char *path);
  * @brief Add a device path to an exclude list.  The library will then exclude this device
  * from API calls.  Function can be repeated, to add to an internal list.
  *
- * @param[in]	ctx	Library context
- * @param[in]	path	Device path to exclude
+ * @param[in]	ctx	Library context.
+ * @param[in]	path	Device path to exclude.
+ *
  * @return led_status_t LED_STATUS_SUCCESS on success, else error reason.
  */
 led_status_t device_exclude_pattern_add(struct led_ctx *ctx, const char *path);

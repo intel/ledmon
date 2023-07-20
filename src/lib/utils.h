@@ -154,16 +154,16 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name);
 char *get_text(const char *path, const char *name);
 
 /**
- * @brief Get the text to dest similar to get_text, but caller supplies buffer
+ * @brief Get the text to dest similar to get_text, but caller supplies buffer.
  *
  * @see get_text
  *
+ * @param[in]     path        Directory path to file.
+ * @param[in]     name        Name of file.
+ * @param[out]    dest        Where to place the contents of file read.
+ * @param[in]     dest_len    Size of destination buffer.
  *
- * @param[in]     path        Directory path to file
- * @param[in]     name        Name of file
- * @param[out]    dest        Where to place the contents of file read
- * @param[in]     dest_len    Size of destination buffer
- * @return NULL if error(s) encountered else dest
+ * @return NULL if error(s) encountered else dest.
  */
 char *get_text_to_dest(const char *path, const char *name, char *dest, size_t dest_len);
 
@@ -273,7 +273,6 @@ char *buf_read(const char *path);
  * @brief Same as buf_read, except file contents are placed in dest.
  *
  * @param[in]     path        Directory path to file
- * @param[in]     name        Name of file
  * @param[out]    dest        Where to place the contents of file read
  * @param[in]     dest_len    Size of destination buffer
  * @return NULL if error(s) encountered else dest
@@ -334,6 +333,7 @@ void _common_log(int log_fd, enum log_level_enum config_level,
  *
  * The function logs a message at given level of verbosity.
  *
+ * @param[in]      conf           Ledmon configuration.
  * @param[in]      loglevel       Level of verbosity for a message.
  * @param[in]      buf            Buffer containing format of a message.
  * @param[in]      ...            Additional arguments according to format of

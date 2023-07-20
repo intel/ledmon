@@ -146,7 +146,7 @@ static void _clear_raid_dev_info(struct block_device *block, char *raid_dev)
 			return;
 		}
 		if (strcmp(raid_dev, tmp + 1) == 0) {
-			log_error(
+			log_debug(
 				"CLEAR raid_dev %s in %s ",
 				raid_dev, block->sysfs_path);
 			raid_device_fini(block->raid_dev);

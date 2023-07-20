@@ -936,6 +936,7 @@ static led_status_t load_library_prefs(void)
 		conf.raid_members_only);
 
 	led_log_fd_set(ctx, get_log_fd(&conf));
+	led_log_level_set(ctx, conf.log_level);
 	return LEDCTL_STATUS_SUCCESS;
 }
 

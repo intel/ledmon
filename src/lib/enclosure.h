@@ -69,7 +69,7 @@ struct enclosure_device {
  *
  * @param[in]      path           Path to an enclosure device in sysfs tree.
  *                                The path begins with "/sys/class/enclosure/".
- * @param[in]      ctx            The library context
+ * @param[in]      ctx            The library context.
  *
  * @return Pointer to enclosure device structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means either the
@@ -128,7 +128,8 @@ struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl
 /**
  * @brief Reloads the state of the hardware for the specified enclosure
  *
- * @param[in]        enclosure       Enclosure to reload
+ * @param[in]        enclosure       Enclosure to reload.
+ *
  * @return int  0 on success, else error
  */
 int enclosure_reload(struct enclosure_device *enclosure);

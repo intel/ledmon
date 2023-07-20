@@ -57,6 +57,7 @@ int get_udev_monitor(void);
  *
  * @param[in]    ledmon_block_list    list containing block devices, it is
  *                                    used to match device from udev event.
+ * @param[in]    ctx                  Library context.
  *
  * @return 0 if 'add' or 'remove' event handled successfully;
  *         1 if registered event is not 'add' or 'remove';

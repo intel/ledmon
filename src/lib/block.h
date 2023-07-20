@@ -240,7 +240,7 @@ int block_compare(const struct block_device *bd_old,
  * The character after the sub_path match is required to be one of the
  * following ('\n', '\0', '/'), otherwise it is excluded.
  *
- * @param[in]        ctx                 Library context
+ * @param[in]        ctx                 Library context.
  * @param[in]        sub_path            Sub path.
  * @param[in]        sub_path_to_end     True if sub_path is complete path.
  *

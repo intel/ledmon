@@ -90,7 +90,7 @@ struct cntrl_device {
  * The function registers only supported storage controllers.
  *
  * @param[in]      path           path to storage controller in sysfs tree.
- * @param[in]      ctx            library context
+ * @param[in]      ctx            library context.
  *
  * @return Pointer to storage controller structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means that controller

@@ -229,7 +229,7 @@ char *buf_read(const char *path)
 			t = strchrnul(buf, '\n');
 			*t = '\0';
 		} else {
-			buf[0] = '\0'; // Set empty string if no data was read
+			buf[0] = '\0'; /* Set empty string if no data was read */
 		}
 	}
 

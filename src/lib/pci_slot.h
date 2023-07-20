@@ -53,7 +53,7 @@ struct pci_slot {
  *
  * @param[in]      path           Path to a PCI hotplug slot in sysfs tree.
  *                                The path begins with "/sys/bus/pci/slots/".
- * @param[in]      ctx            The library context
+ * @param[in]      ctx            The library context.
  *
  * @return Pointer to PCI hotplug slot structure if successful, otherwise the
  *         function returns NULL pointer. The NULL pointer means either the

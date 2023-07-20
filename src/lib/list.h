@@ -147,6 +147,8 @@ static inline void list_delete(struct node *node)
  * @param[in]      item           data item to be inserted into the list.
  * @param[in]      after          list node after which to insert the element.
  *                                If NULL, then insert at the head of the list.
+ *
+ * @return true if inserted, else false
  */
 bool list_insert(struct list *list, void *item, struct node *after);
 
@@ -155,8 +157,8 @@ bool list_insert(struct list *list, void *item, struct node *after);
  *
  * @param[in]      list           pointer to list object.
  * @param[in]      item           data item to be inserted into the list.
- * @return true on success
- * @return false on memory allocation failure
+ *
+ * @return true on success, else false on memory allocation failure.
  */
 static inline bool list_append(struct list *list, void *item)
 {
@@ -168,7 +170,7 @@ static inline bool list_append(struct list *list, void *item)
  *
  * @param[in]      list           pointer to list object.
  * @param[in]      item           data item to be inserted into the list.
- * @param[in]      ctx            library context (sets ctx deferred error)
+ * @param[in]      ctx            library context (sets ctx deferred error).
  */
 void list_append_ctx(struct list *list, void *item, struct led_ctx *ctx);
 

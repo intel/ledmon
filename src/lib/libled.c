@@ -275,7 +275,9 @@ struct led_slot_list_entry *led_slot_prev(struct led_slot_list *sl)
 const char *led_slot_device(struct led_slot_list_entry *se)
 {
 	// Device is optional
-	return se->device_name;
+	size_t len = strnlen(se->device_name, PATH_MAX);
+
+	return (len > 0 && len < PATH_MAX) ? se->device_name : NULL;
 }
 const char *led_slot_id(struct led_slot_list_entry *se)
 {

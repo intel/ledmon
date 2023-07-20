@@ -229,7 +229,7 @@ START_TEST(test_led_by_path)
 			const char *device_node = led_slot_device(se);
 
 			if (led_controller_slot_support(led_slot_cntrl(se)) &&
-				slot_usable(led_slot_id(se)) && strlen(device_node)) {
+				slot_usable(led_slot_id(se)) && device_node) {
 				char normalized[PATH_MAX];
 				enum led_ibpi_pattern led_via_slot;
 				enum led_ibpi_pattern led_via_path;

@@ -396,7 +396,7 @@ struct cntrl_device *cntrl_device_init(const char *path, struct led_ctx *ctx)
 			}
 			if (!cntrl) {
 				lib_log(ctx, LED_LOG_LEVEL_DEBUG,
-					"%s not found on allowlist, ignoring", path);
+					"%s not found on ALLOWLIST, ignoring", path);
 				return NULL;
 			}
 		} else if (!list_is_empty(&ctx->config.excludelist)) {
@@ -405,7 +405,7 @@ struct cntrl_device *cntrl_device_init(const char *path, struct led_ctx *ctx)
 			list_for_each(&ctx->config.excludelist, cntrl) {
 				if (match_string(cntrl, path)) {
 					lib_log(ctx, LED_LOG_LEVEL_DEBUG,
-						"%s found on excludelist, ignoring", path);
+						"%s found on EXCLUDELIST, ignoring", path);
 					return NULL;
 				}
 			}

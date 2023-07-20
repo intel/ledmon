@@ -973,10 +973,6 @@ int main(int argc, char *argv[])
 	if (status != LEDMON_STATUS_SUCCESS)
 		return status;
 
-	status = load_library_prefs();
-	if (status != LEDMON_STATUS_SUCCESS)
-		return status;
-
 	if (_cmdline_parse(argc, argv) != LEDMON_STATUS_SUCCESS)
 		return LEDMON_STATUS_CMDLINE_ERROR;
 
@@ -984,6 +980,10 @@ int main(int argc, char *argv[])
 
 	if (log_open(&conf) != LEDMON_STATUS_SUCCESS)
 		return LEDMON_STATUS_LOG_FILE_ERROR;
+
+	status = load_library_prefs();
+	if (status != LEDMON_STATUS_SUCCESS)
+		return status;
 
 	free(shortopt);
 	free(longopt);

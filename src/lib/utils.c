@@ -216,7 +216,7 @@ char *buf_read(const char *path)
 		st.st_size = st.st_blksize;
 	}
 
-	buf = calloc(1, st.st_size + 1);	/* Add a byte for nul */
+	buf = calloc(1, st.st_size + 1);	/* Add a byte for string termination */
 	if (!buf)
 		return NULL;
 

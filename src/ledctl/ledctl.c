@@ -723,7 +723,8 @@ ledctl_status_code_t slot_execute(struct led_ctx *ctx, struct slot_request *slot
 		led_status_t set_rc = LEDCTL_STATUS_SUCCESS;
 		char buf[IPBI2STR_BUFF_SIZE];
 
-		if (led_slot_state(slot) == slot_req->state) {
+		if (slot_req->state != LED_IBPI_PATTERN_LOCATE_OFF
+		    && led_slot_state(slot) == slot_req->state) {
 			log_warning("Led state: %s is already set for the slot.",
 				    ibpi2str(slot_req->state, buf, sizeof(buf)));
 		} else {

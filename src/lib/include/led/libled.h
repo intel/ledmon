@@ -436,7 +436,7 @@ struct led_slot_list_entry LED_SYM_PUBLIC *led_slot_prev(struct led_slot_list *s
  * @brief Retrieve the slot device identifier
  *
  * @param[in]	se	Slot entry of interest
- * @return string pointer representing device id
+ * @return string pointer representing device id, NULL if empty
  *
  * Note:
  * - This pointer has a lifetime of ctx or until reset is called.

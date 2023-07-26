@@ -16,10 +16,9 @@
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-AM_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config -I$(top_srcdir)/src/lib
-
 sbin_PROGRAMS  = ledmon
 
 ledmon_SOURCES = ledmon.c pidfile.h pidfile.c udev.c udev.h
 ledmon_LDADD = ../lib/libledinternal.la ../common/libcommon.la $(LIBUDEV_LIBS)
-ledmon_CFLAGS = $(AM_CFLAGS) $(LIBUDEV_CFLAGS)
+ledmon_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config \
+        -I$(top_srcdir)/src/lib $(AM_CFLAGS) $(LIBUDEV_CFLAGS)

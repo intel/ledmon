@@ -329,22 +329,10 @@ led_status_t LED_SYM_PUBLIC led_device_name_lookup(const char *name, char *norma
  *
  * @param[in]	ctx	Library context
  * @param[in]	path	Device path
- * @return led_status_t LED_STATUS_SUCCESS to indicate support, else error reason.
+ * @return enum led_cntrl_type which indicates which controller supports this device path,
+ *		LED_CNTRL_TYPE_UNKNOWN if not supported
  */
-bool led_is_management_supported(struct led_ctx *ctx, const char *path);
-
-/**
- * @brief Retrieve the ibpi pattern for the specified device
- *
- * @param[in]	ctx	Library context
- * @param[in]	path	Device path
- * @param[out]	ibpi	Current ibpi value
- * @return led_status_t LED_STATUS_SUCCESS on success, else error reason.
- *
- * Note: Needs to be followed with led_flush()
- */
-led_status_t LED_SYM_PUBLIC led_get(struct led_ctx *ctx, const char *path,
-				    enum led_ibpi_pattern *ibpi);
+enum led_cntrl_type led_is_management_supported(struct led_ctx *ctx, const char *path);
 
 /**
  * @brief Set the ibpi pattern for the specified device

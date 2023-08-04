@@ -118,28 +118,15 @@ led_status_t led_device_name_lookup(const char *name, char *result)
 	return LED_STATUS_SUCCESS;
 }
 
-bool led_is_management_supported(struct led_ctx *ctx, const char *path)
+enum led_cntrl_type led_is_management_supported(struct led_ctx *ctx, const char *path)
 {
 	struct block_device *block;
 
 	list_for_each(&ctx->sys.sysfs_block_list, block) {
 		if (strcmp(block->sysfs_path, path) == 0)
-			return true;
+			return block->cntrl->cntrl_type;
 	}
-	return false;
-}
-
-led_status_t led_get(struct led_ctx *ctx, const char *path, enum led_ibpi_pattern *ibpi)
-{
-	struct block_device *device;
-
-	list_for_each(sysfs_get_block_devices(ctx), device) {
-		if (strcmp(device->sysfs_path, path) == 0) {
-			*ibpi = device->ibpi;
-			return LED_STATUS_SUCCESS;
-		}
-	}
-	return LED_STATUS_NOT_SUPPORTED;
+	return LED_CNTRL_TYPE_UNKNOWN;
 }
 
 led_status_t led_set(struct led_ctx *ctx, const char *path, enum led_ibpi_pattern ibpi)

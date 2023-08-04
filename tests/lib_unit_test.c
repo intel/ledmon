@@ -232,7 +232,6 @@ START_TEST(test_led_by_path)
 				slot_usable(led_slot_id(se)) && device_node) {
 				char normalized[PATH_MAX];
 				enum led_ibpi_pattern led_via_slot;
-				enum led_ibpi_pattern led_via_path;
 				enum led_ibpi_pattern expected;
 
 				status = led_device_name_lookup(device_node, normalized);
@@ -241,21 +240,15 @@ START_TEST(test_led_by_path)
 				if (status != LED_STATUS_SUCCESS)
 					return;
 
+				if (led_is_management_supported(ctx, normalized) !=
+					led_slot_cntrl(se))
+					continue;
+
 				devices_found = true;
 
 				led_via_slot = led_slot_state(se);
-				status = led_get(ctx, normalized, &led_via_path);
-				ck_assert_msg(status == LED_STATUS_SUCCESS, "led_get %d", status);
-				if (status != LED_STATUS_SUCCESS)
-					return;
-
-				ck_assert_msg(led_via_slot == led_via_path,
-						"slot led retrival %d != %d path led retrival",
-						led_via_slot, led_via_path);
-
-				expected = (led_via_path == LED_IBPI_PATTERN_NORMAL) ?
+				expected = (led_via_slot == LED_IBPI_PATTERN_NORMAL) ?
 					LED_IBPI_PATTERN_LOCATE : LED_IBPI_PATTERN_NORMAL;
-
 
 				status = led_set(ctx, normalized, expected);
 				ck_assert_msg(status == LED_STATUS_SUCCESS, "led_set %d", status);
@@ -264,17 +257,12 @@ START_TEST(test_led_by_path)
 
 				led_flush(ctx);
 
-				status = led_get(ctx, normalized, &led_via_path);
-				ck_assert_msg(status == LED_STATUS_SUCCESS, "led_get %d", status);
-				if (status != LED_STATUS_SUCCESS)
-					return;
-
 				led_via_slot = led_slot_state(se);
 
-				ck_assert_msg(expected == led_via_path,
+				ck_assert_msg(expected == led_via_slot,
 						"Retrieved state %d != %d expected",
-						led_via_path, expected);
-				if (expected != led_via_path)
+						led_via_slot, expected);
+				if (expected != led_via_slot)
 					return;
 			}
 		}

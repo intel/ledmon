@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2023 Red Hat Inc.
 
-# The purpose of this file is testing interractions with hardware. Tests are projected
+# The purpose of this file is testing interactions with hardware. Tests are projected
 # to be executed only if possible (required hardware is available).
 # Ledctl support many blinking standards, there is no possibility to test them all at once.
 # We parametrize each test by controller type to gather logs confirming that it was run

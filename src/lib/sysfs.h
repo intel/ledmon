@@ -25,7 +25,9 @@
 #include "list.h"
 #include "status.h"
 
-#define SYSFS_PCI_DEVICES       "/sys/bus/pci/devices"
+#define SYSFS_PCI_DEVICES	"/sys/bus/pci/devices"
+
+#define SYSTEM_DEV_DIR		"/dev"
 
 struct sysfs {
 	/**

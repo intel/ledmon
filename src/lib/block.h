@@ -73,6 +73,12 @@ struct block_device {
 	char *sysfs_path;
 
 /**
+ * Main devnode we can reach this device. It may not match /sys/dev/block/MAJ:MIN
+ * Could be empty.
+ */
+	char devnode[PATH_MAX];
+
+/**
  * The pointer to a function which sends a message to driver in order to
  * control LEDs in an enclosure or DAS system - @see send_message_t for details.
  * This field cannot have NULL pointer assigned.

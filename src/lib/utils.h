@@ -187,6 +187,17 @@ char *get_text_to_dest(const char *path, const char *name, char *dest, size_t de
 int get_bool(const char *path, int defval, const char *name);
 
 /**
+ * @brief Check if path contains subpath, starting from beginning.
+ *
+ * @param[in]      path           Path to check.
+ * @param[in]      subpath        Expected subpath.
+ * @param[in]      subpath_strlen Subpath string length.
+ *
+ * @return True if subpath is included on path, False otherwise.
+ */
+bool is_subpath(const char * const path, const char * const subpath, size_t subpath_strlen);
+
+/**
  * @brief Writes a text to file.
  *
  * This function writes a text to a file and return the number of bytes written.

@@ -48,12 +48,9 @@
 #include "vmdssd.h"
 #include "libled_private.h"
 
-/**
- */
 #define SYSFS_CLASS_BLOCK       "/sys/block"
 #define SYSFS_CLASS_ENCLOSURE   "/sys/class/enclosure"
 #define SYSFS_PCI_SLOTS         "/sys/bus/pci/slots"
-
 
 /**
  * @brief Determine device type.

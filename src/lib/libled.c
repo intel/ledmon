@@ -98,23 +98,23 @@ led_status_t led_scan(struct led_ctx *ctx)
 	return ctx->deferred_error;
 }
 
-led_status_t led_device_name_lookup(const char *name, char *result)
+led_status_t led_device_name_lookup(struct led_ctx *ctx, const char *name, char *result)
 {
-	struct stat st;
+	struct block_device *device;
 	char temp[PATH_MAX];
 
-	if ((realpath(name, temp) == NULL) && (errno != ENOTDIR))
+	if (!realpath(name, temp))
 		return LED_STATUS_INVALID_PATH;
-	if (strstr(temp, "/dev/") != NULL) {
-		if (stat(temp, &st) < 0)
-			return LED_STATUS_STAT_ERROR;
-		snprintf(temp, PATH_MAX, "/sys/dev/block/%u:%u", major(st.st_rdev),
-			minor(st.st_rdev));
-		if ((realpath(temp, result) == NULL) && (errno != ENOTDIR))
-			return LED_STATUS_INVALID_PATH;
-	} else {
-		str_cpy(result, temp, PATH_MAX);
-	}
+
+	if (is_subpath(temp, SYSTEM_DEV_DIR, strlen(SYSTEM_DEV_DIR)))
+		list_for_each(sysfs_get_block_devices(ctx), device)
+			if (device->devnode[0] && strncmp(device->devnode, temp, PATH_MAX) == 0) {
+				str_cpy(result, device->sysfs_path, PATH_MAX);
+				return LED_STATUS_SUCCESS;
+			}
+
+	/* Backward compatibility, trust that it is valid sysfs path */
+	str_cpy(result, temp, PATH_MAX);
 	return LED_STATUS_SUCCESS;
 }
 
@@ -155,19 +155,19 @@ static struct led_slot_list_entry *init_slot(struct slot_property *slot)
 {
 	struct led_slot_list_entry *s = NULL;
 
-	if (slot) {
-		s = calloc(1, sizeof(struct led_slot_list_entry));
-		if (s) {
-			s->slot = slot;
+	if (!slot)
+		return NULL;
 
-			// As the slot property doesn't have storage allocated for
-			// device path we have it in the slot list entry
-			if (slot->bl_device) {
-				snprintf(s->device_name, PATH_MAX, "/dev/%s",
-					basename(slot->bl_device->sysfs_path));
-			}
-		}
-	}
+	s = calloc(1, sizeof(*s));
+
+	if (!s)
+		return NULL;
+
+	s->slot = slot;
+
+	if (slot->bl_device)
+		str_cpy(s->device_name, slot->bl_device->devnode, PATH_MAX);
+
 	return s;
 }
 

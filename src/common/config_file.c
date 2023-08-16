@@ -277,7 +277,7 @@ int ledmon_read_conf(const char *filename, struct ledmon_conf *conf)
 	if (!list_is_empty(&conf->cntrls_allowlist) &&
 	    !list_is_empty(&conf->cntrls_excludelist))
 		fprintf(stderr,
-			"Both allowlist and excludelist are specified - ignoring excludelist.");
+			"Both ALLOWLIST and EXCLUDELIST are specified - ignoring EXCLUDELIST.\n");
 
 	return STATUS_SUCCESS;
 }

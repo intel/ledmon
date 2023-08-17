@@ -20,6 +20,7 @@ Following packages are required to compile:
 | `automake` | `automake`   | `automake`   |
 | `autoconf` | `autoconf`   | `autoconf`   |
 | `gcc` | `gcc` | `gcc` |
+ | `libtool` | `libtool` | `libtool` |
 | `make` | `make` | `make` |
 | `sg3_utils-devel`| `libsgutils-devel`  | `libsgutils2-dev` |
 | `systemd-devel`  | `libudev-devel`     | `libudev-dev`     |

@@ -47,6 +47,9 @@ Run `./configure` with:
 Run `./configure` with:
     `--enable-test` to enable building unit tests and adds a target for `make check`, requires `--enable-library`
 
+Run `./configure` with:
+    `--disable-doc` to disable building documentation.
+
 ## 3. Compiling the package
 
 -------------------------

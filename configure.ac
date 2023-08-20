@@ -139,6 +139,15 @@ fi
 
 AM_CONDITIONAL([WITH_LIBRARY], [test "x$with_library" = "xyes"])
 
+# Add configure option to disable documentation building
+AC_ARG_ENABLE([doc],
+    [AS_HELP_STRING([--disable-doc],
+        [do not install ledmon documentation])],
+    [with_doc=${enableval}],
+    [with_doc=yes])
+
+AM_CONDITIONAL([WITH_DOC], [test "x$with_doc" = "xyes"])
+
 AC_CONFIG_FILES([Makefile
                  ledmon.pc
                  doc/Makefile
@@ -159,5 +168,5 @@ $PACKAGE_NAME $VERSION configuration:
   Preprocessor flags:      ${AM_CPPFLAGS} ${CPPFLAGS}
   C compiler flags:        ${AM_CFLAGS} ${CFLAGS}
   Common install location: ${prefix}
-  configure parameters:    --enable-systemd=${SYSTEMD_STR} --enable-library=${with_library} --enable-test=${with_test}
+  configure parameters:    --enable-systemd=${SYSTEMD_STR} --enable-library=${with_library} --enable-test=${with_test} --enable-doc=${with_doc}
 ])

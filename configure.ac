@@ -114,10 +114,16 @@ AM_CONDITIONAL([SYSTEMD_CONDITION], [test "$SYSTEMD_STR" = yes])
 # target directory for ledmon service file
 AC_SUBST([SYSTEMD_PATH], "$(pkg-config systemd --variable=systemdsystemunitdir)")
 
+# Add configure option to build without library
+AC_ARG_ENABLE([library],
+    [AS_HELP_STRING([--enable-library],
+        [enable building ledmon library])],
+    [with_library=${enableval}],
+    [with_library=no])
 
 AC_ARG_ENABLE([test],
     [AS_HELP_STRING([--enable-test],
-                    [enable test cases, run using  'make check'])],
+                    [enable test cases, run using  'make check', requires --enable-library])],
     [with_test=${enableval}],
     [with_test=no])
 
@@ -125,14 +131,11 @@ AM_CONDITIONAL([WITH_TEST], [test "x$with_test" = "xyes"])
 
 if test "x${with_test}" = "xyes"; then
     PKG_CHECK_MODULES([LIBCHECK], [check >= 0.9.8 ])
+    # We need the library enabled if we are going to run the tests
+    if test "x${with_library}" = "xno"; then
+        AC_MSG_ERROR([--enable-library is required when specifying --enable-test])
+    fi
 fi
-
-# Add configure option to build without library
-AC_ARG_ENABLE([library],
-    [AS_HELP_STRING([--enable-library],
-        [enable building ledmon library])],
-    [with_library=${enableval}],
-    [with_library=no])
 
 AM_CONDITIONAL([WITH_LIBRARY], [test "x$with_library" = "xyes"])
 

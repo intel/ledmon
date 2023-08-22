@@ -217,6 +217,8 @@ static enum led_ibpi_pattern ibpi_to_ses(enum led_ibpi_pattern ibpi)
 		return LED_SES_REQ_HOTSPARE;
 	case LED_IBPI_PATTERN_PFA:
 		return LED_SES_REQ_PRDFAIL;
+	case LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE:
+		return LED_SES_REQ_IDENT_AND_FAULT;
 	default:
 		return ibpi;
 	}
@@ -398,6 +400,10 @@ static int ses_set_message(enum led_ibpi_pattern ibpi, struct ses_slot_ctrl_elem
 	case LED_SES_REQ_PRDFAIL:
 		_set_prdfail(msg.b);
 		break;
+	case LED_SES_REQ_IDENT_AND_FAULT:
+		_set_ident(msg.b);
+		_set_fault(msg.b);
+		break;
 	default:
 		return 1;
 	}
@@ -475,12 +481,12 @@ static void get_led_status(struct ses_pages *sp, int idx, enum led_ibpi_pattern 
 
 	*led_status = LED_IBPI_PATTERN_NORMAL;
 
-	if (desc_element->b2 & 0x02) {
+	if ((desc_element->b2 & 0x02) && (desc_element->b3 & 0x60))
+		*led_status = LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE;
+	else if (desc_element->b2 & 0x02)
 		*led_status = LED_IBPI_PATTERN_LOCATE;
-	}
-	if (desc_element->b3 & 0x60) {
+	else if (desc_element->b3 & 0x60)
 		*led_status = LED_IBPI_PATTERN_FAILED_DRIVE;
-	}
 }
 
 int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count)

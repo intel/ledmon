@@ -716,7 +716,8 @@ const char *ibpi_str[led_ibpi_pattern_count] = {
 	[LED_IBPI_PATTERN_LOCATE]         = "LOCATE",
 	[LED_IBPI_PATTERN_LOCATE_OFF]     = "LOCATE_OFF",
 	[LED_IBPI_PATTERN_ADDED]          = "ADDED",
-	[LED_IBPI_PATTERN_REMOVED]        = "REMOVED"
+	[LED_IBPI_PATTERN_REMOVED]        = "REMOVED",
+	[LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE] = "LOCATE_AND_FAILURE"
 };
 
 const char *ibpi2str_table(enum led_ibpi_pattern ibpi, const char *names[], char *buf,

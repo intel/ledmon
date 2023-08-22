@@ -134,6 +134,10 @@ Turns Locate LED associated with the given device(s) on.
 
 Turns only Locate LED off.
 
+=item B<locate_and_failure>
+
+Turns Locate LED and Failure LED on.
+
 =item B<normal>
 
 Turns Status LED, Failure LED and Locate LED off.

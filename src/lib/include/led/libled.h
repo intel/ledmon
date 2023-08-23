@@ -314,10 +314,11 @@ void LED_SYM_PUBLIC led_log_level_set(struct led_ctx *ctx, enum led_log_level_en
 led_status_t LED_SYM_PUBLIC led_scan(struct led_ctx *ctx);
 
 /**
- * @brief Used to lookup a block device node to name used by library
+ * @brief Used to lookup a block device node to name used by library.  This function should be
+ * called with its output being used as input for functions: led_is_management_supported, led_set.
  *
  * @param[in]	name			Device node to lookup
- * @param[out]	normalized_name		Normalized device name
+ * @param[out]	normalized_name		Normalized device name, size >= PATH_MAX
  * @return led_status_t LED_STATUS_SUCCESS on success, else error reason.
  *
  * Note: both parameters are expected to have a size of PATH_MAX
@@ -328,7 +329,7 @@ led_status_t LED_SYM_PUBLIC led_device_name_lookup(const char *name, char *norma
  * @brief Given a block device path, returns if it has LED hardware support via library
  *
  * @param[in]	ctx	Library context
- * @param[in]	path	Device path
+ * @param[in]	path	Device path, this is the result of led_device_name_lookup
  * @return enum led_cntrl_type which indicates which controller supports this device path,
  *		LED_CNTRL_TYPE_UNKNOWN if not supported
  */
@@ -338,7 +339,7 @@ enum led_cntrl_type led_is_management_supported(struct led_ctx *ctx, const char 
  * @brief Set the ibpi pattern for the specified device
  *
  * @param[in]	ctx	Library context
- * @param[in]	path	Device path
+ * @param[in]	path	Device path, this is the result of led_device_name_lookup
  * @param[in]	ibpi	Current ibpi value
  * @return led_status_t LED_STATUS_SUCCESS on success, else error reason.
  *
@@ -348,7 +349,8 @@ led_status_t LED_SYM_PUBLIC led_set(struct led_ctx *ctx, const char *path,
 				    enum led_ibpi_pattern ibpi);
 
 /**
- * @brief Flush the changes to hardware
+ * @brief Flush the changes to hardware, this function is required after calling 1 or more calls
+ * to led_set for the changes to take effect.  This function is not needed when using the slot API.
  *
  * @param[in]	ctx	Library context
  */

@@ -2,8 +2,10 @@
 
 Copyright (C) 2009-2023 Intel Corporation.
 
-All files in this package can be freely distributed and used according
-to the terms of the GNU General Public License, version 2.
+Files in this package can be freely distributed and used according
+to the terms of the GNU General Public License, version 2 or the
+GNU Lesser General Public License version 2.1 or later depending on file.
+
 See http://www.gnu.org/ for details.
 
 -------------------------
@@ -43,7 +45,7 @@ Run `./configure` with:
     more library [information](src/lib/LIBRARY.md)
 
 Run `./configure` with:
-    `--enable-test` to enable building unit tests and add target for `make check`
+    `--enable-test` to enable building unit tests and adds a target for `make check`, requires `--enable-library`
 
 ## 3. Compiling the package
 

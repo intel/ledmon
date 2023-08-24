@@ -73,7 +73,7 @@ void off_all(struct led_ctx *ctx)
 	}
 }
 
-led_status_t LED_SYM_PUBLIC device_blink_behavior_set(struct led_ctx *ctx, int migration,
+led_status_t device_blink_behavior_set(struct led_ctx *ctx, int migration,
 						      int init, int rebuild_all, int raid_members)
 {
 	if (!ctx)

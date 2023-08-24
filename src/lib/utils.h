@@ -512,7 +512,7 @@ const struct ibpi2value *get_by_ibpi(const enum led_ibpi_pattern ibpi,
  *
  * @return Corresponding ibpi2value entry last or entry with LED_IBPI_PATTERN_UNKNOWN
  */
-const struct ibpi2value *get_by_value(const unsigned int value,
+const struct ibpi2value *get_by_value(const enum led_ibpi_pattern ibpi,
 				      const struct ibpi2value *ibpi2val_arr,
 				      int ibpi2value_arr_cnt);
 
@@ -525,7 +525,7 @@ const struct ibpi2value *get_by_value(const unsigned int value,
  *
  * @return Corresponding ibpi2value entry last or entry with LED_IBPI_PATTERN_UNKNOWN
  */
-const struct ibpi2value *get_by_bits(const unsigned int value,
+const struct ibpi2value *get_by_bits(const enum led_ibpi_pattern ibpi,
 				     const struct ibpi2value *ibpi2val_arr,
 				     int ibpi2value_arr_cnt);
 

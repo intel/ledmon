@@ -742,7 +742,7 @@ const char *ibpi2str(enum led_ibpi_pattern ibpi, char *buf, size_t buf_size)
 	return ibpi2str_table(ibpi, ibpi_str, buf, buf_size);
 }
 
-static const struct ibpi2value *get_ibpi2value(const unsigned int val,
+static const struct ibpi2value *get_ibpi2value(const enum led_ibpi_pattern val,
 					       const struct ibpi2value *ibpi2val_arr,
 					       const int ibpi2value_arr_cnt,
 					       bool (*compar)(const unsigned int val,
@@ -780,7 +780,7 @@ const struct ibpi2value *get_by_##_name(const enum led_ibpi_pattern ibpi,			\
 }
 
 #define COMPARE(_name)									\
-static bool compar_##_name(const unsigned int val, const struct ibpi2value *ibpi2val)	\
+static bool compar_##_name(const enum led_ibpi_pattern val, const struct ibpi2value *ibpi2val)	\
 {											\
 	if (ibpi2val->_name == val)							\
 		return true;								\

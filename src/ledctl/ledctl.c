@@ -119,7 +119,7 @@ struct ibpi_state {
 static struct list ibpi_list;
 
 /**
- * @brief slot request parametres
+ * @brief slot request parameters
  *
  * This structure contains all possible parameters for slot related commands.
  */

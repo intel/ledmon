@@ -59,7 +59,7 @@ AC_DEFUN([AX_AM_CFLAGS_ADD],[AX_CHECK_COMPILE_FLAG($1, AM_CFLAGS="$AM_CFLAGS $1"
 AX_AM_CFLAGS_ADD([-Wformat -Wformat-security -Werror=format-security])
 AX_AM_CFLAGS_ADD([-Werror=format-overflow=2])
 AX_AM_CFLAGS_ADD([-Wno-strict-overflow])
-AX_AM_CFLAGS_ADD([-Wno-delete-null-pointer-checks])
+AX_AM_CFLAGS_ADD([-fno-delete-null-pointer-checks])
 AX_AM_CFLAGS_ADD([-Wwrapv])
 AX_AM_CFLAGS_ADD([-Werror=format-truncation=1])
 AX_AM_CFLAGS_ADD([-Werror=shift-negative-value])

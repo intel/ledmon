@@ -22,6 +22,7 @@
 #define _UTILS_H_INCLUDED_
 
 #include <getopt.h>
+#include <stdarg.h>
 #include <common/config_file.h>
 #include "stdlib.h"
 #include "stdint.h"

@@ -31,3 +31,5 @@ jobs:
       run: ./autogen.sh && ./configure --enable-test --enable-library
     - name: 'Make'
       run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+    - name: 'Check public symbol visibility'
+      run: tests/check_symbol_visibility.sh

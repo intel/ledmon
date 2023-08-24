@@ -392,7 +392,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 	} else if (strcmp(name, "ses_cons_check") == 0) {
 		ibpi = LED_SES_REQ_CONS_CHECK;
 	} else if (strcmp(name, "ses_hotspare") == 0) {
-		ibpi = LED_SES_REQ_HOSTSPARE;
+		ibpi = LED_SES_REQ_HOTSPARE;
 	} else if (strcmp(name, "ses_rsvd_dev") == 0) {
 		ibpi = LED_SES_REQ_RSVD_DEV;
 	} else if (strcmp(name, "ses_ok") == 0) {

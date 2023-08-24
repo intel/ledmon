@@ -214,7 +214,7 @@ static enum led_ibpi_pattern ibpi_to_ses(enum led_ibpi_pattern ibpi)
 	case LED_IBPI_PATTERN_LOCATE:
 		return LED_SES_REQ_IDENT;
 	case LED_IBPI_PATTERN_HOTSPARE:
-		return LED_SES_REQ_HOSTSPARE;
+		return LED_SES_REQ_HOTSPARE;
 	case LED_IBPI_PATTERN_PFA:
 		return LED_SES_REQ_PRDFAIL;
 	default:
@@ -356,7 +356,7 @@ static int ses_set_message(enum led_ibpi_pattern ibpi, struct ses_slot_ctrl_elem
 	case LED_SES_REQ_CONS_CHECK:
 		_set_cons_check(msg.b);
 		break;
-	case LED_SES_REQ_HOSTSPARE:
+	case LED_SES_REQ_HOTSPARE:
 		_set_hspare(msg.b);
 		break;
 	case LED_SES_REQ_RSVD_DEV:

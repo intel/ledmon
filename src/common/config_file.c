@@ -37,15 +37,15 @@
  */
 
 const char *log_level_map[] = {
-	[LOG_LEVEL_QUIET]   = "QUIET",
-	[LOG_LEVEL_ERROR]   = "ERROR",
-	[LOG_LEVEL_WARNING] = "WARNING",
-	[LOG_LEVEL_INFO]    = "INFO",
-	[LOG_LEVEL_DEBUG]   = "DEBUG",
-	[LOG_LEVEL_ALL]     = "ALL"
+	[LED_LOG_LEVEL_QUIET]   = "QUIET",
+	[LED_LOG_LEVEL_ERROR]   = "ERROR",
+	[LED_LOG_LEVEL_WARNING] = "WARNING",
+	[LED_LOG_LEVEL_INFO]    = "INFO",
+	[LED_LOG_LEVEL_DEBUG]   = "DEBUG",
+	[LED_LOG_LEVEL_ALL]     = "ALL"
 };
 
-int ledmon_init_conf(struct ledmon_conf *conf, enum log_level_enum lvl, const char *log_path)
+int ledmon_init_conf(struct ledmon_conf *conf, enum led_log_level_enum lvl, const char *log_path)
 {
 	memset(conf, 0, sizeof(struct ledmon_conf));
 	conf->log_level = lvl;
@@ -133,11 +133,11 @@ void _set_log_level(struct ledmon_conf *conf, char *s)
 	if (log_level)
 		conf->log_level = log_level;
 	else if (sscanf(s, "%d", &log_level) == 1 &&
-			log_level >= LOG_LEVEL_QUIET &&
-			log_level <= LOG_LEVEL_ALL)
+			log_level >= LED_LOG_LEVEL_QUIET &&
+			log_level <= LED_LOG_LEVEL_ALL)
 		conf->log_level = log_level;
 	else
-		_log(conf, LOG_LEVEL_WARNING,
+		_log(conf, LED_LOG_LEVEL_WARNING,
 		    "Log level given in config file (%s) is incorrect! Using default log level: %s",
 		    s, log_level_map[conf->log_level]);
 }
@@ -192,7 +192,7 @@ static int parse_next(FILE *fd, struct ledmon_conf *conf)
 				conf->scan_interval < LEDMON_MIN_SLEEP_INTERVAL)
 				conf->scan_interval = LEDMON_MIN_SLEEP_INTERVAL;
 		}
-	} else if (!strncmp(s, "LOG_LEVEL=", 10)) {
+	} else if (!strncmp(s, "LED_LOG_LEVEL=", 10)) {
 		s += 10;
 		_set_log_level(conf, s);
 	} else if (!strncmp(s, "LOG_PATH=", 9)) {

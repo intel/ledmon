@@ -239,9 +239,9 @@ static void _ledmon_status(void)
 		return;
 
 	if (exit_status == LEDMON_STATUS_SUCCESS)
-		log_level = LOG_LEVEL_INFO;
+		log_level = LED_LOG_LEVEL_INFO;
 	else
-		log_level = LOG_LEVEL_ERROR;
+		log_level = LED_LOG_LEVEL_ERROR;
 
 	snprintf(message, sizeof(message), "exit status is %s.",
 		 ledmon_strstatus(exit_status));
@@ -880,7 +880,8 @@ static void _ledmon_execute(void)
 static ledmon_status_code_t _init_ledmon_conf(void)
 {
 	/* initialize with default values */
-	ledmon_status_code_t rc = ledmon_init_conf(&conf, LOG_LEVEL_WARNING, LEDMON_DEF_LOG_FILE);
+	ledmon_status_code_t rc = ledmon_init_conf(&conf,
+						   LED_LOG_LEVEL_WARNING, LEDMON_DEF_LOG_FILE);
 	conf.blink_on_init = 1;
 	conf.blink_on_migration = 1;
 	conf.rebuild_blink_on_all = 0;

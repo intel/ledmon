@@ -327,8 +327,8 @@ void log_close(struct ledmon_conf *conf);
  * @param[in]	buf		printf formatting string
  * @param[in]	list		variable argument list
  */
-void _common_log(int log_fd, enum log_level_enum config_level,
-			enum log_level_enum loglevel, const char *buf, va_list list);
+void _common_log(int log_fd, enum led_log_level_enum config_level,
+		enum led_log_level_enum, const char *buf, va_list list);
 
 /**
  * @brief Logs an message with given loglevel.
@@ -343,13 +343,13 @@ void _common_log(int log_fd, enum log_level_enum config_level,
  *
  * @return The function does not return a value.
  */
-void _log(struct ledmon_conf *conf, enum log_level_enum loglevel, const char *buf, ...)
+void _log(struct ledmon_conf *conf, enum led_log_level_enum loglevel, const char *buf, ...)
 		__attribute__ ((format (printf, 3, 4)));
 
-#define log_error(buf, ...)	_log(&conf, LOG_LEVEL_ERROR, buf, ##__VA_ARGS__)
-#define log_debug(buf, ...)	_log(&conf, LOG_LEVEL_DEBUG, buf, ##__VA_ARGS__)
-#define log_info(buf, ...)	_log(&conf, LOG_LEVEL_INFO, buf, ##__VA_ARGS__)
-#define log_warning(buf, ...)	_log(&conf, LOG_LEVEL_WARNING, buf, ##__VA_ARGS__)
+#define log_error(buf, ...)	_log(&conf, LED_LOG_LEVEL_ERROR, buf, ##__VA_ARGS__)
+#define log_debug(buf, ...)	_log(&conf, LED_LOG_LEVEL_DEBUG, buf, ##__VA_ARGS__)
+#define log_info(buf, ...)	_log(&conf, LED_LOG_LEVEL_INFO, buf, ##__VA_ARGS__)
+#define log_warning(buf, ...)	_log(&conf, LED_LOG_LEVEL_WARNING, buf, ##__VA_ARGS__)
 /**
  */
 void set_invocation_name(char *invocation_name);

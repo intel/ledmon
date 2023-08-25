@@ -57,10 +57,10 @@
 char *progname = NULL;
 
 struct log_level_info log_level_infos[] = {
-		[LOG_LEVEL_DEBUG] = {PREFIX_DEBUG, LOG_DEBUG},
-		[LOG_LEVEL_WARNING] = {PREFIX_WARNING, LOG_WARNING},
-		[LOG_LEVEL_INFO] = {PREFIX_INFO, LOG_INFO},
-		[LOG_LEVEL_ERROR] = {PREFIX_ERROR, LOG_ERR}
+		[LED_LOG_LEVEL_DEBUG] = {PREFIX_DEBUG, LOG_DEBUG},
+		[LED_LOG_LEVEL_WARNING] = {PREFIX_WARNING, LOG_WARNING},
+		[LED_LOG_LEVEL_INFO] = {PREFIX_INFO, LOG_INFO},
+		[LED_LOG_LEVEL_ERROR] = {PREFIX_ERROR, LOG_ERR}
 };
 
 /*
@@ -324,7 +324,7 @@ void log_close(struct ledmon_conf *conf)
 }
 
 
-void _common_log(int log_fd, enum log_level_enum config_level, enum log_level_enum loglevel,
+void _common_log(int log_fd, enum led_log_level_enum config_level, enum led_log_level_enum loglevel,
 		const char *buf, va_list list)
 {
 	if (config_level >= loglevel && log_fd >= 0) {
@@ -342,7 +342,7 @@ void _common_log(int log_fd, enum log_level_enum config_level, enum log_level_en
 
 /**
  */
-void _log(struct ledmon_conf *conf, enum log_level_enum loglevel, const char *buf,  ...)
+void _log(struct ledmon_conf *conf, enum led_log_level_enum loglevel, const char *buf,  ...)
 {
 	va_list vl;
 	if (conf->s_log == NULL)
@@ -543,7 +543,7 @@ status_t set_log_path(struct ledmon_conf *conf, const char *path)
 	 */
 	resolved = realpath(logdir, temp);
 	if (resolved == NULL) {
-		_log(conf, LOG_LEVEL_ERROR, "%s: %s\n", strerror(errno), logdir);
+		_log(conf, LED_LOG_LEVEL_ERROR, "%s: %s\n", strerror(errno), logdir);
 		free(cpath);
 		return STATUS_INVALID_PATH;
 	}
@@ -671,22 +671,22 @@ status_t set_verbose_level(struct ledmon_conf *conf, int log_level)
 
 	switch (log_level) {
 	case OPT_ALL:
-		new_verbose = LOG_LEVEL_ALL;
+		new_verbose = LED_LOG_LEVEL_ALL;
 		break;
 	case OPT_DEBUG:
-		new_verbose = LOG_LEVEL_DEBUG;
+		new_verbose = LED_LOG_LEVEL_DEBUG;
 		break;
 	case OPT_ERROR:
-		new_verbose = LOG_LEVEL_ERROR;
+		new_verbose = LED_LOG_LEVEL_ERROR;
 		break;
 	case OPT_INFO:
-		new_verbose = LOG_LEVEL_INFO;
+		new_verbose = LED_LOG_LEVEL_INFO;
 		break;
 	case OPT_QUIET:
-		new_verbose = LOG_LEVEL_QUIET;
+		new_verbose = LED_LOG_LEVEL_QUIET;
 		break;
 	case OPT_WARNING:
-		new_verbose = LOG_LEVEL_WARNING;
+		new_verbose = LED_LOG_LEVEL_WARNING;
 		break;
 	}
 	if (new_verbose != -1) {

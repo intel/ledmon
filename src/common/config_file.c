@@ -192,7 +192,7 @@ static int parse_next(FILE *fd, struct ledmon_conf *conf)
 				conf->scan_interval < LEDMON_MIN_SLEEP_INTERVAL)
 				conf->scan_interval = LEDMON_MIN_SLEEP_INTERVAL;
 		}
-	} else if (!strncmp(s, "LED_LOG_LEVEL=", 10)) {
+	} else if (!strncmp(s, "LOG_LEVEL=", 10)) {
 		s += 10;
 		_set_log_level(conf, s);
 	} else if (!strncmp(s, "LOG_PATH=", 9)) {

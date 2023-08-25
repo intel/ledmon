@@ -921,7 +921,7 @@ static void _unset_unused_options(void)
 
 static ledctl_status_code_t _init_ledctl_conf(void)
 {
-	return ledmon_init_conf(&conf, LOG_LEVEL_WARNING, LEDCTL_DEF_LOG_FILE);
+	return ledmon_init_conf(&conf, LED_LOG_LEVEL_WARNING, LEDCTL_DEF_LOG_FILE);
 }
 
 /**

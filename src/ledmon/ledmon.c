@@ -67,6 +67,19 @@ static struct led_ctx *ctx;
 struct ledmon_conf conf;
 
 /**
+ * This macro is the alternative way to get exit status
+ * in atexit() callback function
+ */
+#define EXIT(x) ((exit)(exit_status = (x)))
+
+static int exit_status;
+
+/**
+ * Flag to print exit status
+ */
+static int ignore;
+
+/**
  * @brief List of active block devices.
  *
  * This list holds all block devices attached to supported storage controllers.
@@ -160,20 +173,16 @@ static int possible_params_size = ARRAY_SIZE(possible_params);
  *
  * This is internal function of monitor service. It is used to finalize daemon
  * process i.e. free allocated memory, unlock and remove pidfile and close log
- * file and syslog. The function is registered as on_exit() handler.
- *
- * @param[in]     status          The function ignores this parameter.
- * @param[in]     program_name    The name of the binary file. This argument
- *                                is passed via on_exit() function.
+ * file and syslog. The function is registered as atexit() handler.
  *
  * @return The function does not return a value.
  */
-static void _ledmon_fini(int __attribute__ ((unused)) status, void *program_name)
+static void _ledmon_fini(void)
 {
 	led_free(ctx);
 	list_erase(&ledmon_block_list);
 	log_close(&conf);
-	pidfile_remove(program_name);
+	pidfile_remove(progname);
 }
 
 typedef enum {
@@ -217,30 +226,25 @@ static char *ledmon_strstatus(ledmon_status_code_t s)
  *
  * This is internal function of monitor service. It is used to report an exit
  * status of the monitor service. The message is logged in to syslog and to log
- * file. The function is registered as on_exit() hander.
- *
- * @param[in]     status            Status given in the last call to exit()
- *                                  function.
- * @param[in]     arg               Argument passed to on_exit().
+ * file. The function is registered as atexit() handler.
  *
  * @return The function does not return a value.
  */
-static void _ledmon_status(int status, void *arg)
+static void _ledmon_status(void)
 {
 	int log_level;
 	char message[4096];
-	int ignore = *((int *)arg);
 
 	if (ignore)
 		return;
 
-	if (status == LEDMON_STATUS_SUCCESS)
+	if (exit_status == LEDMON_STATUS_SUCCESS)
 		log_level = LOG_LEVEL_INFO;
 	else
 		log_level = LOG_LEVEL_ERROR;
 
 	snprintf(message, sizeof(message), "exit status is %s.",
-		 ledmon_strstatus(status));
+		 ledmon_strstatus(exit_status));
 
 	if (get_log_fd(&conf) >= 0)
 		_log(&conf, log_level, "%s", message);
@@ -376,10 +380,10 @@ static ledmon_status_code_t _cmdline_parse_non_daemonise(int argc, char *argv[])
 			break;
 		case 'h':
 			_ledmon_help();
-			exit(EXIT_SUCCESS);
+			EXIT(EXIT_SUCCESS);
 		case 'v':
 			_ledmon_version();
-			exit(EXIT_SUCCESS);
+			EXIT(EXIT_SUCCESS);
 		case ':':
 		case '?':
 			return LEDMON_STATUS_CMDLINE_ERROR;
@@ -940,7 +944,6 @@ int main(int argc, char *argv[])
 {
 	led_status_t lib_rc;
 	ledmon_status_code_t status = LEDMON_STATUS_SUCCESS;
-	static int ignore;
 
 	setup_options(&longopt, &shortopt, possible_params,
 			possible_params_size);
@@ -954,7 +957,7 @@ int main(int argc, char *argv[])
 
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
-	if (on_exit(_ledmon_status, &ignore))
+	if (atexit(_ledmon_status))
 		return LEDMON_STATUS_ONEXIT_ERROR;
 
 	if (_cmdline_parse_non_daemonise(argc, argv) != LEDMON_STATUS_SUCCESS)
@@ -996,18 +999,18 @@ int main(int argc, char *argv[])
 
 		if (pid < 0) {
 			log_debug("main(): fork() failed (errno=%d).", errno);
-			exit(EXIT_FAILURE);
+			EXIT(EXIT_FAILURE);
 		}
 		if (pid > 0) {
 			ignore = 1; /* parent: don't print exit status */
-			exit(EXIT_SUCCESS);
+			EXIT(EXIT_SUCCESS);
 		}
 
 		pid_t sid = setsid();
 
 		if (sid < 0) {
 			log_debug("main(): setsid() failed (errno=%d).", errno);
-			exit(EXIT_FAILURE);
+			EXIT(EXIT_FAILURE);
 		}
 
 		_close_parent_fds();
@@ -1025,16 +1028,16 @@ int main(int argc, char *argv[])
 
 	if (chdir("/") < 0) {
 		log_debug("main(): chdir() failed (errno=%d).", errno);
-		exit(EXIT_FAILURE);
+		EXIT(EXIT_FAILURE);
 	}
 	if (pidfile_create(progname)) {
 		log_debug("main(): pidfile_creat() failed.");
-		exit(EXIT_FAILURE);
+		EXIT(EXIT_FAILURE);
 	}
 	_ledmon_setup_signals();
 
-	if (on_exit(_ledmon_fini, progname))
-		exit(LEDMON_STATUS_ONEXIT_ERROR);
+	if (atexit(_ledmon_fini))
+		EXIT(LEDMON_STATUS_ONEXIT_ERROR);
 	list_init(&ledmon_block_list, (item_free_t)block_device_fini);
 	log_info("monitor service has been started...");
 	while (terminate == 0) {
@@ -1053,5 +1056,5 @@ int main(int argc, char *argv[])
 	}
 	ledmon_remove_shared_conf();
 	stop_udev_monitor();
-	exit(EXIT_SUCCESS);
+	EXIT(EXIT_SUCCESS);
 }

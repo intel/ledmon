@@ -151,7 +151,7 @@ void LED_SYM_PUBLIC led_cntrl_list_free(struct led_cntrl_list *cntrls);
 void LED_SYM_PUBLIC led_cntrl_list_reset(struct led_cntrl_list *cntrls);
 
 /**
- * @brief Iterator to retrieve next contrl list entry from controller list
+ * @brief Iterator to retrieve next controller list entry from controller list
  *
  * @param[in] cntrls	Opaque data type for controller list
  * @return struct led_cntrl_list_entry or NULL if no more are available
@@ -159,7 +159,7 @@ void LED_SYM_PUBLIC led_cntrl_list_reset(struct led_cntrl_list *cntrls);
 LED_SYM_PUBLIC struct led_cntrl_list_entry *led_cntrl_next(struct led_cntrl_list *cntrls);
 
 /**
- * @brief Iterator to retrieve previous contrl list entry from controller list
+ * @brief Iterator to retrieve previous controller list entry from controller list
  *
  * @param[in] cntrls	Opaque data type for controller list
  * @return struct led_cntrl_list_entry or NULL if no more are available
@@ -241,6 +241,7 @@ enum led_ibpi_pattern {
 	LED_IBPI_PATTERN_LOCATE_OFF,
 	LED_IBPI_PATTERN_ADDED,
 	LED_IBPI_PATTERN_REMOVED,
+	LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE,
 	/*
 	 * Below are SES-2 codes. Note that by default most IBPI messages are
 	 * translated into SES when needed but SES codes can be added also.
@@ -250,7 +251,7 @@ enum led_ibpi_pattern {
 	LED_SES_REQ_IFA,
 	LED_SES_REQ_ICA,
 	LED_SES_REQ_CONS_CHECK,
-	LED_SES_REQ_HOSTSPARE,
+	LED_SES_REQ_HOTSPARE,
 	LED_SES_REQ_RSVD_DEV,
 	LED_SES_REQ_OK,
 	LED_SES_REQ_IDENT,
@@ -264,6 +265,7 @@ enum led_ibpi_pattern {
 	LED_SES_REQ_DEV_OFF,
 	LED_SES_REQ_FAULT,
 	LED_SES_REQ_PRDFAIL,
+	LED_SES_REQ_IDENT_AND_FAULT,
 	led_ibpi_pattern_count,
 };
 

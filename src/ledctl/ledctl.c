@@ -119,7 +119,7 @@ struct ibpi_state {
 static struct list ibpi_list;
 
 /**
- * @brief slot request parametres
+ * @brief slot request parameters
  *
  * This structure contains all possible parameters for slot related commands.
  */
@@ -271,8 +271,9 @@ static void _ledctl_help(void)
 		  "Allows user to set ledctl verbose level in logs.");
 	printf("\nPatterns:\n"
 	       "\tCommon patterns are:\n"
-	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n" ""
-	       "\t\tfailed_array, hotspare, pfa, failure, disk_failed\n"
+	       "\t\tlocate, locate_off, normal, off, degraded, rebuild,\n"
+	       "\t\tfailed_array, hotspare, pfa, failure, disk_failed,\n"
+	       "\t\tlocate_and_failure\n"
 	       "\tSES-2 only patterns:\n"
 	       "\t\tses_abort, ses_rebuild, ses_ifa, ses_ica, ses_cons_check,\n"
 	       "\t\tses_hotspare, ses_rsvd_dev, ses_ok, ses_ident, ses_rm,\n"
@@ -377,6 +378,8 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 	} else if ((strcmp(name, "failure") == 0) ||
 		   (strcmp(name, "disk_failed") == 0)) {
 		ibpi = LED_IBPI_PATTERN_FAILED_DRIVE;
+	} else if (strcmp(name, "locate_and_failure") == 0) {
+		ibpi = LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE;
 	} else if (strcmp(name, "ses_abort") == 0) {
 		ibpi = LED_SES_REQ_ABORT;
 	} else if (strcmp(name, "ses_rebuild") == 0) {
@@ -388,7 +391,7 @@ static struct ibpi_state *_ibpi_state_get(const char *name)
 	} else if (strcmp(name, "ses_cons_check") == 0) {
 		ibpi = LED_SES_REQ_CONS_CHECK;
 	} else if (strcmp(name, "ses_hotspare") == 0) {
-		ibpi = LED_SES_REQ_HOSTSPARE;
+		ibpi = LED_SES_REQ_HOTSPARE;
 	} else if (strcmp(name, "ses_rsvd_dev") == 0) {
 		ibpi = LED_SES_REQ_RSVD_DEV;
 	} else if (strcmp(name, "ses_ok") == 0) {

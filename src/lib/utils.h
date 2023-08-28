@@ -23,6 +23,7 @@
 
 #include <getopt.h>
 #include <sys/types.h>
+#include <stdarg.h>
 #include <common/config_file.h>
 #include "stdlib.h"
 #include "stdint.h"

@@ -21,7 +21,12 @@ if SYSTEMD_CONDITION
   OPTIONAL_SUBDIR = systemd
 endif
 
-SUBDIRS = doc src $(OPTIONAL_SUBDIR) tests
+if WITH_DOC
+  DOC_SUBDIR = doc
+  dist_doc_DATA = README.md
+endif
+
+SUBDIRS = src $(DOC_SUBDIR) $(OPTIONAL_SUBDIR) tests
 EXTRA_DIST = \
 	config/config.h \
 	systemd/ledmon.service.in \
@@ -34,8 +39,6 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ledmon.pc
 
 endif
-
-dist_doc_DATA = README.md
 
 if WITH_TEST
 TESTS = tests/runtests.sh

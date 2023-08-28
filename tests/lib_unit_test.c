@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <check.h>
+#include <errno.h>
 #include <led/libled.h>
 
 /* Globla context which is initialized in setup and free'd in teardown */
@@ -91,6 +93,27 @@ void free_device_filters(void)
 	}
 }
 
+void block_device_check(const char *path)
+{
+	struct stat block_dev;
+	int rc;
+
+	if (!path)
+		return;
+
+	rc = stat(path, &block_dev);
+	if (rc != 0) {
+		int errno_cpy = errno;
+
+		ck_assert_msg(rc == 0,
+				"stat failed for %s, errno: %s", block_dev, strerror(errno_cpy));
+		return;
+	}
+
+	ck_assert_msg((block_dev.st_mode & S_IFMT) == S_IFBLK,
+			"Expecting block device 0x%x block_dev.st_mode");
+}
+
 START_TEST(test_load_unload)
 {
 	// Simply create a context and free it when we already have one created in setup/teardown
@@ -148,6 +171,7 @@ START_TEST(test_list_slots)
 	struct led_slot_list *sl = NULL;
 	bool devices_found = false;
 	led_status_t status = led_slots_get(ctx, &sl);
+	const char *block_node;
 
 	ck_assert_msg(status == LED_STATUS_SUCCESS, "led_slots_get %d", status);
 	if (status == LED_STATUS_SUCCESS) {
@@ -160,6 +184,8 @@ START_TEST(test_list_slots)
 			ck_assert_msg(((int)t >= 1 && (int)t <= 6),  "invalid %d cntrl type", t);
 			devices_found = true;
 			// TODO: Check led ibpi pattern and validate
+
+			block_device_check(led_slot_device(se));
 		}
 
 		led_slot_list_reset(sl);
@@ -169,6 +195,8 @@ START_TEST(test_list_slots)
 
 			ck_assert_msg(((int)t >= 1 && (int)t <= 6),  "invalid %d cntrl type", t);
 			// TODO: Check led ibpi pattern and validate
+
+			block_device_check(led_slot_device(se));
 		}
 
 		led_slot_list_free(sl);

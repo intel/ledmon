@@ -154,6 +154,10 @@ int scsi_ses_flush_enclosure(struct enclosure_device *enclosure)
 
 	ret = ses_send_diag(fd, &enclosure->ses_pages);
 	close(fd);
+
+	if (ret)
+		return ret;
+
 	return enclosure_reload(enclosure);
 }
 

@@ -332,7 +332,8 @@ led_status_t LED_SYM_PUBLIC led_device_name_lookup(const char *name, char *norma
  * @return enum led_cntrl_type which indicates which controller supports this device path,
  *		LED_CNTRL_TYPE_UNKNOWN if not supported
  */
-enum led_cntrl_type led_is_management_supported(struct led_ctx *ctx, const char *path);
+enum led_cntrl_type LED_SYM_PUBLIC led_is_management_supported(struct led_ctx *ctx,
+							       const char *path);
 
 /**
  * @brief Set the ibpi pattern for the specified device

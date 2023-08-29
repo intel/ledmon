@@ -18,8 +18,6 @@
 
 SUBDIRS = include
 
-AM_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config
-
 LIB_SRCS         = ahci.c block.c cntrl.c enclosure.c utils.c list.c \
                    raid.c scsi.c slave.c sysfs.c smp.c dellssd.c \
                    pci_slot.c vmdssd.c amd.c amd_sgpio.c amd_ipmi.c\
@@ -34,7 +32,8 @@ LIB_SRCS         = ahci.c block.c cntrl.c enclosure.c utils.c list.c \
 noinst_LTLIBRARIES = libledinternal.la
 libledinternal_la_SOURCES = libled.c $(LIB_SRCS)
 libledinternal_la_LIBADD = $(LIBPCI_LIBS) ../common/libcommon.la
-libledinternal_la_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS)
+libledinternal_la_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src \
+        -I$(top_srcdir)/config $(AM_CFLAGS) $(LIBPCI_CFLAGS)
 
 # User may not want the shared library
 if WITH_LIBRARY

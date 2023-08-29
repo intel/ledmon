@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
 
 	lib_rc = led_new(&ctx);
 	if (lib_rc != LED_STATUS_SUCCESS) {
-		fprintf(stderr, "Unable to initialize lib LED %d\n", lib_rc);
+		fprintf(stderr, "Unable to initialize lib LED %u\n", lib_rc);
 		return lib_rc;
 	}
 

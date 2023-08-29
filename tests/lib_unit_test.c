@@ -27,12 +27,12 @@ void setup(void)
 	led_status_t status = led_new(&ctx);
 
 	if (status != LED_STATUS_SUCCESS) {
-		printf("%s: led_new %d", __func__, status);
+		printf("%s: led_new %u", __func__, status);
 		exit(EXIT_FAILURE);
 	}
 	status = led_scan(ctx);
 	if (status != LED_STATUS_SUCCESS) {
-		printf("%s: led_scan %d", __func__, status);
+		printf("%s: led_scan %u", __func__, status);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -42,7 +42,7 @@ void teardown(void)
 	led_status_t status = led_free(ctx);
 
 	if (status != LED_STATUS_SUCCESS) {
-		printf("%s: led_free %d", __func__, status);
+		printf("%s: led_free %u", __func__, status);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -51,7 +51,6 @@ void setup_device_filters(void)
 {
 	int num_filters = 0;
 	char *found = NULL;
-	char *t = NULL;
 	char *tmp_filters = getenv("LEDMONTEST_SLOT_FILTER");
 
 	if (tmp_filters) {

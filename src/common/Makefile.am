@@ -16,9 +16,8 @@
 #  51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-AM_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config
-
 # Make a convenience library for this code
 noinst_LTLIBRARIES = libcommon.la
 libcommon_la_SOURCES = config_file.h config_file.c
-libcommon_la_CFLAGS = $(AM_CFLAGS) $(LIBPCI_CFLAGS)
+libcommon_la_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config \
+        $(AM_CFLAGS) $(LIBPCI_CFLAGS)

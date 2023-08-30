@@ -110,7 +110,7 @@ void block_device_check(const char *path)
 	}
 
 	ck_assert_msg((block_dev.st_mode & S_IFMT) == S_IFBLK,
-			"Expecting block device 0x%x", block_dev.st_mode);
+			"Expecting block device 0x%x block_dev.st_mode", block_dev.st_mode);
 }
 
 START_TEST(test_load_unload)

@@ -170,7 +170,6 @@ START_TEST(test_list_slots)
 	struct led_slot_list *sl = NULL;
 	bool devices_found = false;
 	led_status_t status = led_slots_get(ctx, &sl);
-	const char *block_node;
 
 	ck_assert_msg(status == LED_STATUS_SUCCESS, "led_slots_get %u", status);
 	if (status == LED_STATUS_SUCCESS) {

@@ -470,7 +470,7 @@ char *get_path_hostN(const char *path)
 	return s;
 }
 
-int match_string(const char *string, const char *pattern)
+int match_string(struct led_ctx *ctx, const char *string, const char *pattern)
 {
 	int status;
 	regex_t regex;
@@ -483,7 +483,7 @@ int match_string(const char *string, const char *pattern)
 
 	status = regcomp(&regex, pattern, REG_EXTENDED);
 	if (status != 0) {
-		printf("regecomp failed, ret=%d", status);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR, "regecomp failed, ret=%d", status);
 		return 0;
 	}
 

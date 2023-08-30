@@ -25,7 +25,11 @@
 #include "list.h"
 #include "status.h"
 
-#define SYSFS_PCI_DEVICES       "/sys/bus/pci/devices"
+#define SYSFS_PCI_DEVICES	"/sys/bus/pci/devices"
+
+#define SYSTEM_DEV_DIR		"/dev"
+
+#define NVME_MAJOR	259
 
 struct sysfs {
 	/**
@@ -161,5 +165,18 @@ int sysfs_enclosure_attached_to_cntrl(struct led_ctx *ctx, const char *path);
  * This function checks driver type.
  */
 int sysfs_check_driver(const char *path, const char *driver);
+
+/**
+ * @brief Determine if the device is exposed by nvme-subsystem.
+ */
+bool is_virt_nvme(const char * const path);
+
+/**
+ * @brief Convert nvme-subsystem devices to real, physical paths.
+ *
+ * Translate /dev/nvmeXnY to physical /sys/block/nvmeXcXnY and get its realpath.
+ * FIXME: This is minimal support, full support have to be added for a block_device.
+ */
+status_t get_nvme_controller(const char * const virtual_blockdev, char * const result);
 
 #endif				/* _SYSFS_H_INCLUDED_ */

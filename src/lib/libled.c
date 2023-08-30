@@ -22,7 +22,6 @@
 #include "led/libled.h"
 
 #include <errno.h>
-#include <glob.h>
 #include <linux/limits.h>
 #include <string.h>
 #include <stdarg.h>
@@ -99,72 +98,31 @@ led_status_t led_scan(struct led_ctx *ctx)
 	return ctx->deferred_error;
 }
 
-static bool virt_nvme(const char *path)
-{
-	if (strstr(path, "/sys/devices/virtual/nvme-subsystem"))
-		return true;
-	return false;
-}
-
-static led_status_t get_nvme_controller(char *virtual_blockdev, char *result)
-{
-	/*
-	 * Converts this
-	 * /sys/devices/virtual/nvme-subsystem/nvme-subsys0/nvme0n1
-	 * to
-	 * /sys/devices/pci0000:64/0000:64:02.0/0000:65:00.0/0000:66:00.0/0000:67:00.0/
-	 * 0000:68:04.0/0000:6a:00.0/nvme/nvme0/nvme0c0n1
-	 *
-	 * In NVMeOF environments, this process will result in a virtual path
-	 */
-
-	led_status_t rc = LED_STATUS_INVALID_PATH;
-	glob_t results;
-	int nvme_num, ns;
-	char pattern[PATH_MAX];
-
-	int ret = sscanf(virtual_blockdev,
-		"/sys/devices/virtual/nvme-subsystem/nvme-subsys%*d/nvme%dn%d",
-		&nvme_num, &ns);
-
-	if (ret != 2)
-		return rc;
-
-	ret = snprintf(pattern, PATH_MAX, "/sys/block/nvme%dn%d/device/nvme*/nvme*c*n%d",
-			nvme_num, ns, ns);
-	if (ret >= PATH_MAX)
-		return rc;
-
-	ret = glob(pattern, 0, NULL, &results);
-	if ((ret == 0) && (results.gl_pathc > 0) && (realpath(results.gl_pathv[0], result)))
-		rc = LED_STATUS_SUCCESS;
-
-	globfree(&results);
-	return rc;
-}
-
 led_status_t led_device_name_lookup(const char *name, char *result)
 {
 	struct stat st;
 	char temp[PATH_MAX];
 
-	if ((realpath(name, temp) == NULL) && (errno != ENOTDIR))
+	if (!realpath(name, temp) && errno != ENOTDIR)
 		return LED_STATUS_INVALID_PATH;
-	if (strstr(temp, "/dev/") != NULL) {
-		if (stat(temp, &st) < 0)
-			return LED_STATUS_STAT_ERROR;
-		snprintf(temp, PATH_MAX, "/sys/dev/block/%u:%u", major(st.st_rdev),
-			minor(st.st_rdev));
-		if ((realpath(temp, result) == NULL) && (errno != ENOTDIR))
-			return LED_STATUS_INVALID_PATH;
-		/* Check to see if path is a virtual NVMe, which indicates NVMe multipath */
-		if (virt_nvme(result)) {
-			str_cpy(temp, result, PATH_MAX);
-			return get_nvme_controller(temp, result);
-		}
-	} else {
+
+	if (is_subpath(temp, SYSTEM_DEV_DIR, strlen(SYSTEM_DEV_DIR)) == false) {
 		str_cpy(result, temp, PATH_MAX);
+		return LED_STATUS_SUCCESS;
 	}
+
+	if (stat(temp, &st) < 0)
+		return LED_STATUS_STAT_ERROR;
+
+	snprintf(temp, PATH_MAX, "/sys/dev/block/%u:%u", major(st.st_rdev), minor(st.st_rdev));
+	if (!realpath(temp, result)  && errno != ENOTDIR)
+		return LED_STATUS_INVALID_PATH;
+
+	if (major(st.st_rdev) == NVME_MAJOR && is_virt_nvme(result)) {
+		str_cpy(temp, result, PATH_MAX);
+		return get_nvme_controller(temp, result);
+	}
+
 	return LED_STATUS_SUCCESS;
 }
 

@@ -48,12 +48,10 @@
 #include "vmdssd.h"
 #include "libled_private.h"
 
-/**
- */
 #define SYSFS_CLASS_BLOCK       "/sys/block"
 #define SYSFS_CLASS_ENCLOSURE   "/sys/class/enclosure"
 #define SYSFS_PCI_SLOTS         "/sys/bus/pci/slots"
-
+#define SYSFS_VIRT_NVME_SUB	"/sys/devices/virtual/nvme-subsystem"
 
 /**
  * @brief Determine device type.
@@ -679,4 +677,30 @@ int sysfs_check_driver(const char *path, const char *driver)
 		found = 1;
 	free(link);
 	return found;
+}
+
+bool is_virt_nvme(const char * const path)
+{
+	return is_subpath(path, SYSFS_VIRT_NVME_SUB, strlen(SYSFS_VIRT_NVME_SUB));
+}
+
+status_t get_nvme_controller(const char * const virtual_blockdev, char * const result)
+{
+	int nvme_num, ns;
+	char temp[PATH_MAX];
+
+	int ret = sscanf(virtual_blockdev, SYSFS_VIRT_NVME_SUB "/nvme-subsys%*d/nvme%dn%d",
+			 &nvme_num, &ns);
+
+	if (ret != 2)
+		return LED_STATUS_INVALID_PATH;
+
+	ret = snprintf(temp, PATH_MAX, SYSFS_CLASS_BLOCK "/nvme%dc%dn%d", nvme_num, nvme_num, ns);
+	if (ret >= PATH_MAX)
+		return LED_STATUS_INVALID_PATH;
+
+	if (!realpath(temp, result))
+		return LED_STATUS_INVALID_PATH;
+
+	return LED_STATUS_SUCCESS;
 }

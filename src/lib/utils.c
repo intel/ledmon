@@ -123,8 +123,13 @@ int get_int(const char *path, int defval, const char *name)
 	return defval;
 }
 
-/**
- */
+bool is_subpath(const char * const path, const char * const subpath, size_t subpath_strlen)
+{
+	if (strncmp(path, subpath, subpath_strlen) == 0)
+		return true;
+	return false;
+}
+
 int scan_dir(const char *path, struct list *result)
 {
 	struct dirent *dirent;

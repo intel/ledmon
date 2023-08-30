@@ -186,6 +186,8 @@ char *get_text_to_dest(const char *path, const char *name, char *dest, size_t de
  */
 int get_bool(const char *path, int defval, const char *name);
 
+bool is_subpath(const char * const path, const char * const subpath, size_t subpath_strlen);
+
 /**
  * @brief Writes a text to file.
  *

@@ -438,7 +438,7 @@ int str_toui(unsigned int *dest, const char *strptr, char **endptr, int base);
  */
 char *get_path_hostN(const char *path);
 
-int match_string(const char *string, const char *pattern);
+int match_string(struct led_ctx *ctx, const char *string, const char *pattern);
 
 /**
  */

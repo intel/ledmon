@@ -366,7 +366,7 @@ static ledmon_status_code_t _set_sleep_interval(const char *optarg)
  *
  * @return STATUS_SUCCESS if successful, otherwise ledmon_status_code_t.
  */
-static ledmon_status_code_t _cmdline_parse_non_daemonise(int argc, char *argv[])
+static ledmon_status_code_t _cmdline_parse_non_daemonize(int argc, char *argv[])
 {
 	int opt_index = -1;
 	int opt = -1;
@@ -554,7 +554,7 @@ static void _ledmon_wait(int seconds)
  *
  * This is internal function of monitor service. Due race conditions related
  * with removing files from /sys/block/md* when raid is stopped or disk is
- * failed, this function analyse state of every block device between scans.
+ * failed, this function analyzes state of every block device between scans.
  *
  * @param[in]    block           Pointer to new (scanned) block device
  *				 structure.
@@ -636,7 +636,7 @@ static void _handle_fail_state(struct block_device *block,
 				temp->ibpi = LED_IBPI_PATTERN_HOTSPARE;
 			} else {
 				/*
-				 * Trasitions other than raid 0 migration.
+				 * Transitions other than raid 0 migration.
 				 * Like reshape, volume stopping etc.
 				 */
 				if (temp_raid_device) {
@@ -961,7 +961,7 @@ int main(int argc, char *argv[])
 	if (atexit(_ledmon_status))
 		return LEDMON_STATUS_ONEXIT_ERROR;
 
-	if (_cmdline_parse_non_daemonise(argc, argv) != LEDMON_STATUS_SUCCESS)
+	if (_cmdline_parse_non_daemonize(argc, argv) != LEDMON_STATUS_SUCCESS)
 		return LEDMON_STATUS_CMDLINE_ERROR;
 
 	if (geteuid() != 0) {

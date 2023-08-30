@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <led/libled.h>
 
-/* Globla context which is initialized in setup and free'd in teardown */
+/* Global context which is initialized in setup and free'd in teardown */
 struct led_ctx *ctx;
 
 

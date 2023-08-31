@@ -51,25 +51,42 @@ AC_PROG_INSTALL
 
 AC_CONFIG_HEADERS([config_ac.h])
 
+# Add compiler flags.
 AM_CFLAGS='-Wall -I../config'
 AM_CPPFLAGS='-D_DEBUG -D_GNU_SOURCE -D_DEFAULT_SOURCE -DDMALLOC_DISABLE -DBUILD_LABEL=\""$(BUILD_LABEL)"\"'
 
-
 AC_DEFUN([AX_AM_CFLAGS_ADD],[AX_CHECK_COMPILE_FLAG($1, AM_CFLAGS="$AM_CFLAGS $1")])
-AX_AM_CFLAGS_ADD([-Wformat -Werror=format-security])
-AX_AM_CFLAGS_ADD([-Werror=format-overflow=2])
+AX_AM_CFLAGS_ADD([-Wformat -Wformat-security -Werror])
+AX_AM_CFLAGS_ADD([-Wformat-overflow=2])
 AX_AM_CFLAGS_ADD([-Wno-strict-overflow])
 AX_AM_CFLAGS_ADD([-fno-delete-null-pointer-checks])
 AX_AM_CFLAGS_ADD([-Wwrapv])
-AX_AM_CFLAGS_ADD([-Werror=format-truncation=1])
-AX_AM_CFLAGS_ADD([-Werror=shift-negative-value])
-AX_AM_CFLAGS_ADD([-Werror=alloca])
-AX_AM_CFLAGS_ADD([-Werror=missing-field-initializers])
-AX_AM_CFLAGS_ADD([-Werror=format-signedness])
-AX_AM_CFLAGS_ADD([-fvisibility=hidden])
+AX_AM_CFLAGS_ADD([-Wformat-truncation=1])
+AX_AM_CFLAGS_ADD([-Wshift-negative-value])
+AX_AM_CFLAGS_ADD([-Walloca])
+AX_AM_CFLAGS_ADD([-Wmissing-field-initializers])
+AX_AM_CFLAGS_ADD([-Wformat-signedness])
+AX_AM_CFLAGS_ADD([-D_FORTIFY_SOURCE=2])
+AX_AM_CFLAGS_ADD([-fstack-protector-strong])
+AX_AM_CFLAGS_ADD([-fPIE])
+
+# Add linker flags.
+AC_DEFUN([AX_AM_LDFLAGS_ADD],[AX_CHECK_LINK_FLAG($1, AM_LDFLAGS="$AM_LDFLAGS $1")])
+AX_AM_LDFLAGS_ADD([-pie])
+AX_AM_LDFLAGS_ADD([[-Wl,-z,relro]])
+AX_AM_LDFLAGS_ADD([[-Wl,-z,now]])
+AX_AM_LDFLAGS_ADD([[-Wl,-z,noexecstack]])
+
+# Add library compiler flags.
+AM_LIB_CFLAGS=''
+AC_DEFUN([AX_AM_LIB_CFLAGS_ADD],[AX_CHECK_COMPILE_FLAG($1, AM_LIB_CFLAGS="$AM_LIB_CFLAGS $1")])
+AX_AM_LIB_CFLAGS_ADD([-fPIC -shared])
+AX_AM_LIB_CFLAGS_ADD([-fvisibility=hidden])
 
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_LDFLAGS])
+AC_SUBST([AM_LIB_CFLAGS])
 AC_PREFIX_DEFAULT(/usr)
 
 # Automake 1.11 - silent build rules
@@ -167,6 +184,7 @@ $PACKAGE_NAME $VERSION configuration:
   Source code location:    ${srcdir}
   Preprocessor flags:      ${AM_CPPFLAGS} ${CPPFLAGS}
   C compiler flags:        ${AM_CFLAGS} ${CFLAGS}
+  Linker flags:            ${AM_LDFLAGS} ${LDFLAGS}
   Common install location: ${prefix}
   configure parameters:    --enable-systemd=${SYSTEMD_STR} --enable-library=${with_library} --enable-test=${with_test} --enable-doc=${with_doc}
 ])

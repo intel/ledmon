@@ -105,12 +105,12 @@ void block_device_check(const char *path)
 		int errno_cpy = errno;
 
 		ck_assert_msg(rc == 0,
-				"stat failed for %s, errno: %s", block_dev, strerror(errno_cpy));
+				"stat failed for %s, errno: %s", path, strerror(errno_cpy));
 		return;
 	}
 
 	ck_assert_msg((block_dev.st_mode & S_IFMT) == S_IFBLK,
-			"Expecting block device 0x%x block_dev.st_mode");
+			"Expecting block device 0x%x", block_dev.st_mode);
 }
 
 START_TEST(test_load_unload)
@@ -170,7 +170,6 @@ START_TEST(test_list_slots)
 	struct led_slot_list *sl = NULL;
 	bool devices_found = false;
 	led_status_t status = led_slots_get(ctx, &sl);
-	const char *block_node;
 
 	ck_assert_msg(status == LED_STATUS_SUCCESS, "led_slots_get %u", status);
 	if (status == LED_STATUS_SUCCESS) {

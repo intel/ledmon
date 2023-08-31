@@ -21,6 +21,7 @@ Following packages are required to compile:
 | `pkgconf`, `RHEL7: pkgconfig`  | `pkg-config` | `pkg-config` |
 | `automake` | `automake`   | `automake`   |
 | `autoconf` | `autoconf`   | `autoconf`   |
+| `autoconf-archive` | `autoconf-archive` | `autoconf-archive` |
 | `gcc` | `gcc` | `gcc` |
  | `libtool` | `libtool` | `libtool` |
 | `make` | `make` | `make` |

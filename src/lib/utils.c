@@ -47,6 +47,8 @@
 #include "status.h"
 #include "utils.h"
 
+#include <lib/libled_internal.h>
+
 /**
  */
 #define TIMESTAMP_PATTERN    "%b %d %T "
@@ -483,7 +485,9 @@ int match_string(struct led_ctx *ctx, const char *string, const char *pattern)
 
 	status = regcomp(&regex, pattern, REG_EXTENDED);
 	if (status != 0) {
-		lib_log(ctx, LED_LOG_LEVEL_ERROR, "regecomp failed, ret=%d", status);
+		lib_log(ctx, LED_LOG_LEVEL_ERROR,
+			"Failed to initialize regular expression pattern (%s), regcomp ret=%d",
+			pattern, status);
 		return 0;
 	}
 

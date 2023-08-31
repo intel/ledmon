@@ -188,7 +188,7 @@ static void ibpi_state_fini(struct ibpi_state *p)
  *
  * @return The function does not return a value.
  */
-static void _ledctl_fini(void)
+static void _ledctl_fini(int _i, void *_arg)
 {
 	led_free(ctx);
 	list_erase(&ibpi_list);

@@ -33,7 +33,7 @@ noinst_LTLIBRARIES = libledinternal.la
 libledinternal_la_SOURCES = libled.c $(LIB_SRCS)
 libledinternal_la_LIBADD = $(LIBPCI_LIBS) ../common/libcommon.la
 libledinternal_la_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src \
-        -I$(top_srcdir)/config $(AM_CFLAGS) $(AM_LIB_CFLAGS)  $(LIBPCI_CFLAGS)
+        -I$(top_srcdir)/config $(AM_CFLAGS) $(AM_LIB_CFLAGS) $(LIBPCI_CFLAGS)
 
 # User may not want the shared library
 if WITH_LIBRARY

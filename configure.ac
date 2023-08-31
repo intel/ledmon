@@ -77,9 +77,16 @@ AX_AM_LDFLAGS_ADD([[-Wl,-z,relro]])
 AX_AM_LDFLAGS_ADD([[-Wl,-z,now]])
 AX_AM_LDFLAGS_ADD([[-Wl,-z,noexecstack]])
 
+# Add library compiler flags.
+AM_LIB_CFLAGS=''
+AC_DEFUN([AX_AM_LIB_CFLAGS_ADD],[AX_CHECK_COMPILE_FLAG($1, AM_LIB_CFLAGS="$AM_LIB_CFLAGS $1")])
+AX_AM_LIB_CFLAGS_ADD([-fPIC -shared])
+AX_AM_LIB_CFLAGS_ADD([-fvisibility=hidden])
+
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_LDFLAGS])
+AC_SUBST([AM_LIB_CFLAGS])
 AC_PREFIX_DEFAULT(/usr)
 
 # Automake 1.11 - silent build rules

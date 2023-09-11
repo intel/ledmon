@@ -71,16 +71,22 @@ struct log_level_info log_level_infos[] = {
 char *get_text(const char *path, const char *name)
 {
 	char temp[PATH_MAX];
+	int ret;
 
-	snprintf(temp, sizeof(temp), "%s/%s", path, name);
+	ret = snprintf(temp, sizeof(temp), "%s/%s", path, name);
+	if (ret < 0 || ret >= PATH_MAX)
+		return NULL;
 	return buf_read(temp);
 }
 
 char *get_text_to_dest(const char *path, const char *name, char *dest, size_t dest_len)
 {
 	char temp[PATH_MAX];
+	int ret;
 
-	snprintf(temp, sizeof(temp), "%s/%s", path, name);
+	ret = snprintf(temp, sizeof(temp), "%s/%s", path, name);
+	if (ret < 0 || ret >= PATH_MAX)
+		return NULL;
 	return buf_read_to_dest(temp, dest, dest_len);
 }
 

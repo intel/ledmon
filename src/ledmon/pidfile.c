@@ -75,7 +75,7 @@ int pidfile_remove(const char *name)
 /**
  * @brief Test whether process with given pid is still alive
  *
- * @return STATUS_SUCCESS if proces is alive and other error if not or
+ * @return STATUS_SUCCESS if process is alive and other error if not or
  * if there is an error
  */
 int ping_proc(pid_t pid)

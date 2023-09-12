@@ -73,7 +73,7 @@ const struct ibpi2value ibpi2amd_ipmi[] = {
  *                                      ^^^^^^^^^^
  * We need to retrieve the address from the path (indicated above)
  * then use it to find the corresponding address for a slot in
- * /sys/bus/pci_slots to determine the icorrect port for the NVMe device.
+ * /sys/bus/pci_slots to determine the correct port for the NVMe device.
  */
 static int _get_ipmi_nvme_port(char *path, struct led_ctx *ctx)
 {
@@ -125,7 +125,7 @@ static int _get_ipmi_nvme_port(char *path, struct led_ctx *ctx)
 
 	list_erase(&dir);
 
-	/* Some platfroms require an adjustment to the port value based
+	/* Some platforms require an adjustment to the port value based
 	 * on how they are numbered by the BIOS.
 	 */
 	switch (amd_ipmi_platform) {

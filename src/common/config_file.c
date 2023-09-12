@@ -150,7 +150,7 @@ void _set_log_level(struct ledmon_conf *conf, char *s)
 #define EXCLUDELIST_LEN KEYLEN(EXCLUDELIST)
 
 #define WHITELIST "WHITELIST="
-#define WHILELIST_LEN KEYLEN(WHITELIST)
+#define WHITELIST_LEN KEYLEN(WHITELIST)
 #define BLACKLIST "BLACKLIST="
 #define BLACKLIST_LEN KEYLEN(BLACKLIST)
 
@@ -219,11 +219,11 @@ static int parse_next(FILE *fd, struct ledmon_conf *conf)
 		conf->raid_members_only = parse_bool(s);
 		if (conf->raid_members_only < 0)
 			return -1;
-	} else if (_parse_and_add_to_list(s, WHITELIST, WHILELIST_LEN, &conf->cntrls_allowlist)) {
-		/* Deprecated, provided for backwards compatibilty */
+	} else if (_parse_and_add_to_list(s, WHITELIST, WHITELIST_LEN, &conf->cntrls_allowlist)) {
+		/* Deprecated, provided for backwards compatibility */
 		return 0;
 	} else if (_parse_and_add_to_list(s, BLACKLIST, BLACKLIST_LEN, &conf->cntrls_excludelist)) {
-		/* Deprecated, provided for backwards compatibilty */
+		/* Deprecated, provided for backwards compatibility */
 		return 0;
 	} else if (_parse_and_add_to_list(s, ALLOWLIST, ALLOWLIST_LEN, &conf->cntrls_allowlist)) {
 		return 0;

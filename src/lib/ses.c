@@ -63,7 +63,7 @@ static int get_ses_page(int fd, struct ses_page *p, int pg_code)
 
 static int process_page1(struct ses_pages *sp, struct led_ctx *ctx)
 {
-	int num_encl;		/* number of subenclosures */
+	int num_encl;		/* number of sub enclosures */
 	unsigned char *ed;	/* Enclosure Descriptor */
 	int len = 0;
 	int sum_headers = 0;	/* Number of Type descriptor headers */

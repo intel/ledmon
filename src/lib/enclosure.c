@@ -137,7 +137,7 @@ static struct block_device *enclosure_get_block_device(struct enclosure_device *
 
 /*
  * Re-loads the ses hardware state for this enclosure, to allow refreshing the
- * state after the hardare has be written.
+ * state after the hardware has be written.
  */
 int enclosure_reload(struct enclosure_device * enclosure)
 {

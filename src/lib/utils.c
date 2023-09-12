@@ -392,7 +392,7 @@ char *str_cpy(char *dest, const char *src, size_t size)
 static int _str_to_num(const char *strptr, char **endptr, int base, unsigned long *n, int is_signed)
 {
 	char *c;
-	int sign_occured = 0;
+	int sign_occurred = 0;
 
 	assert(n);
 	if (!strptr)
@@ -402,9 +402,9 @@ static int _str_to_num(const char *strptr, char **endptr, int base, unsigned lon
 		*n = (unsigned long)strtol(strptr, &c, base);
 	else {
 		while ((*strptr == '-' || *strptr == '+' || isspace(*strptr)) &&
-				*strptr != '\0' && !sign_occured) {
+				*strptr != '\0' && !sign_occurred) {
 			if (*strptr == '-' || *strptr == '+')
-				sign_occured = 1;
+				sign_occurred = 1;
 			strptr++;
 		}
 		*n = strtoul(strptr, &c, base);

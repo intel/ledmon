@@ -65,7 +65,7 @@ struct pci_slot *pci_slot_init(const char *path, struct led_ctx *ctx);
 /**
  * @brief Releases an PCI hotplug slot structure.
  *
- * This function releases memory allocated for PCI hotplug slotstructure.
+ * This function releases memory allocated for PCI hotplug slot structure.
  *
  * @param[in]      slot         Pointer to PCI hotplug slot structure.
  *

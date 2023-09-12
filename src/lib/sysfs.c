@@ -161,7 +161,7 @@ static int _is_duplicate(struct list *slave_list, struct slave_device *slave)
 
 /**
  * @brief Checks if given disk can be removed from sysfs_block_list if
- * metatada is not present.
+ * metadata is not present.
  *
  * This is internal function (action) of sysfs module. The slave_list keeps
  * all devices with metadata (raid devices). If disk is not included in slave
@@ -600,7 +600,7 @@ void sysfs_scan(struct led_ctx *ctx)
 }
 
 /*
- * The function reutrns list of enclosure devices attached to SAS/SCSI storage
+ * The function returns list of enclosure devices attached to SAS/SCSI storage
  * controller(s).
  */
 const struct list *sysfs_get_enclosure_devices(struct led_ctx *ctx)

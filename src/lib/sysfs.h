@@ -29,8 +29,6 @@
 
 #define SYSTEM_DEV_DIR		"/dev"
 
-#define NVME_MAJOR	259
-
 struct sysfs {
 	/**
 	 * This is internal variable global to sysfs module only. It is a list of
@@ -165,11 +163,6 @@ int sysfs_enclosure_attached_to_cntrl(struct led_ctx *ctx, const char *path);
  * This function checks driver type.
  */
 int sysfs_check_driver(const char *path, const char *driver);
-
-/**
- * @brief Determine if the device is exposed by nvme-subsystem.
- */
-bool is_virt_nvme(const char * const path);
 
 /**
  * @brief Convert nvme-subsystem devices to real, physical paths.

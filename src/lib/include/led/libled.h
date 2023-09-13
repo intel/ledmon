@@ -319,13 +319,15 @@ led_status_t LED_SYM_PUBLIC led_scan(struct led_ctx *ctx);
  * @brief Used to lookup a block device node to name used by library.  This function should be
  * called with its output being used as input for functions: led_is_management_supported, led_set.
  *
+ * @param[in]	ctx			Library context
  * @param[in]	name			Device node to lookup
  * @param[out]	normalized_name		Normalized device name, size >= PATH_MAX
  * @return led_status_t LED_STATUS_SUCCESS on success, else error reason.
  *
  * Note: both parameters are expected to have a size of PATH_MAX
  */
-led_status_t LED_SYM_PUBLIC led_device_name_lookup(const char *name, char *normalized_name);
+led_status_t LED_SYM_PUBLIC led_device_name_lookup(struct led_ctx *ctx, const char *name,
+						   char *normalized_name);
 
 /**
  * @brief Given a block device path, returns if it has LED hardware support via library

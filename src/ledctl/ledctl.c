@@ -457,7 +457,7 @@ bool _block_device_search(const struct list *block_list,
 static ledctl_status_code_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 {
 	char path[PATH_MAX];
-	led_status_t rc = led_device_name_lookup(name, path);
+	led_status_t rc = led_device_name_lookup(ctx, name, path);
 
 	if (rc != LED_STATUS_SUCCESS)
 		return rc;

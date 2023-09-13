@@ -39,9 +39,11 @@ struct slot_property *find_slot_by_device_name(struct led_ctx *ctx, char *device
 	list_for_each(sysfs_get_slots(ctx), slot) {
 		if (slot->c->cntrl_type != cntrl_type)
 			continue;
-		if (slot->bl_device == NULL)
+
+		if (!slot->bl_device || slot->bl_device->devnode[0] == 0)
 			continue;
-		if (strncmp(basename(slot->bl_device->sysfs_path),
+
+		if (strncmp(basename(slot->bl_device->devnode),
 			    basename(device_name), PATH_MAX) == 0)
 			return slot;
 	}

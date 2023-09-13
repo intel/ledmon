@@ -260,7 +260,7 @@ START_TEST(test_led_by_path)
 				enum led_ibpi_pattern led_via_slot;
 				enum led_ibpi_pattern expected;
 
-				status = led_device_name_lookup(device_node, normalized);
+				status = led_device_name_lookup(ctx, device_node, normalized);
 				ck_assert_msg(status == LED_STATUS_SUCCESS,
 						"led_device_name_lookup %u", status);
 				if (status != LED_STATUS_SUCCESS)

@@ -98,30 +98,34 @@ led_status_t led_scan(struct led_ctx *ctx)
 	return ctx->deferred_error;
 }
 
-led_status_t led_device_name_lookup(const char *name, char *result)
+led_status_t led_device_name_lookup(struct led_ctx *ctx, const char *name, char *result)
 {
 	struct stat st;
 	char temp[PATH_MAX];
+	struct block_device *device;
 
 	if (!realpath(name, temp) && errno != ENOTDIR)
 		return LED_STATUS_INVALID_PATH;
 
-	if (is_subpath(temp, SYSTEM_DEV_DIR, strlen(SYSTEM_DEV_DIR)) == false) {
+	if (stat(temp, &st) < 0)
+		return LED_STATUS_STAT_ERROR;
+
+	if (!is_subpath(temp, SYSTEM_DEV_DIR, strlen(SYSTEM_DEV_DIR))) {
 		str_cpy(result, temp, PATH_MAX);
 		return LED_STATUS_SUCCESS;
 	}
 
-	if (stat(temp, &st) < 0)
-		return LED_STATUS_STAT_ERROR;
+	list_for_each(sysfs_get_block_devices(ctx), device) {
+		if (device->devnode[0] && strncmp(device->devnode, temp, PATH_MAX) == 0) {
+			str_cpy(result, device->sysfs_path, PATH_MAX);
+			return LED_STATUS_SUCCESS;
+		}
+	}
 
+	/* Backward compatibility, try dereference manually */
 	snprintf(temp, PATH_MAX, "/sys/dev/block/%u:%u", major(st.st_rdev), minor(st.st_rdev));
 	if (!realpath(temp, result)  && errno != ENOTDIR)
 		return LED_STATUS_INVALID_PATH;
-
-	if (major(st.st_rdev) == NVME_MAJOR && is_virt_nvme(result)) {
-		str_cpy(temp, result, PATH_MAX);
-		return get_nvme_controller(temp, result);
-	}
 
 	return LED_STATUS_SUCCESS;
 }
@@ -159,29 +163,6 @@ void led_flush(struct led_ctx *ctx)
 	}
 }
 
-static void set_slot_device_name(const char *sysfs_path, struct led_slot_list_entry *se)
-{
-	char temp[PATH_MAX];
-	struct stat st;
-
-	snprintf(temp, PATH_MAX, "/dev/%s", basename(sysfs_path));
-	if (stat(temp, &st) < 0) {
-		int nvme_num, ns;
-
-		/* device node not present, check for physical path for virt nvme
-		 * eg. nvme12c12n1 -> nvme12n1
-		 */
-		if (sscanf(temp, "/dev/nvme%dc%*dn%d", &nvme_num, &ns) != 2)
-			return;
-
-		snprintf(temp, PATH_MAX, "/dev/nvme%dn%d", nvme_num, ns);
-		if (stat(temp, &st) < 0)
-			return;
-	}
-
-	str_cpy(se->device_name, temp, PATH_MAX);
-}
-
 static struct led_slot_list_entry *init_slot(struct slot_property *slot)
 {
 	struct led_slot_list_entry *s = NULL;
@@ -200,9 +181,9 @@ static struct led_slot_list_entry *init_slot(struct slot_property *slot)
 	 * slot list entry. We want user friendly devnode here, so we need to ensure that it exists.
 	 * Assumption that "/sys/block/" device has a devnode is no longer true with nvme multipath.
 	 */
-	if (slot->bl_device) {
-		set_slot_device_name(slot->bl_device->sysfs_path, s);
-	}
+	if (slot->bl_device)
+		str_cpy(s->device_name, slot->bl_device->devnode, PATH_MAX);
+
 
 	return s;
 }

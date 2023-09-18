@@ -273,7 +273,7 @@ enum led_ibpi_pattern {
 	LED_SES_REQ_FAULT = 37,
 	LED_SES_REQ_PRDFAIL = 38,
 	LED_SES_REQ_IDENT_AND_FAULT = 39,
-	led_ibpi_pattern_count = 50,
+	LED_IBPI_PATTERN_COUNT = 50,
 };
 
 /**

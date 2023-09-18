@@ -712,7 +712,7 @@ status_t set_verbose_level(struct ledmon_conf *conf, int log_level)
  * This is internal array holding names of IBPI pattern. Logging routines use
  * this entries to translate enumeration type values into the string.
  */
-const char *ibpi_str[led_ibpi_pattern_count] = {
+const char *ibpi_str[LED_IBPI_PATTERN_COUNT] = {
 	[LED_IBPI_PATTERN_UNKNOWN]        = "UNKNOWN",
 	[LED_IBPI_PATTERN_NORMAL]         = "NORMAL",
 	[LED_IBPI_PATTERN_ONESHOT_NORMAL] = "ONESHOT_NORMAL",
@@ -734,7 +734,7 @@ const char *ibpi2str_table(enum led_ibpi_pattern ibpi, const char *names[], char
 {
 	const char *ret;
 
-	if (ibpi >= 0 && ibpi < led_ibpi_pattern_count)
+	if (ibpi >= 0 && ibpi < LED_IBPI_PATTERN_COUNT)
 		ret = names[ibpi];
 	else
 		ret = NULL;

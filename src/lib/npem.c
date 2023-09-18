@@ -73,7 +73,7 @@ const struct ibpi2value ibpi_to_npem_capability[] = {
 	{LED_IBPI_PATTERN_FAILED_DRIVE, PCI_NPEM_FAIL_CAP},
 	{LED_IBPI_PATTERN_LOCATE, PCI_NPEM_LOCATE_CAP},
 	{LED_IBPI_PATTERN_LOCATE_OFF, PCI_NPEM_OK_CAP},
-	{LED_IBPI_PATTERN_UNKNOWN}
+	{LED_IBPI_PATTERN_UNKNOWN, 0}
 };
 
 static struct pci_access *get_pci_access()

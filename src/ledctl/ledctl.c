@@ -279,14 +279,14 @@ static void _ledctl_help(void)
 		  "Ledctl will change state only for given devices.");
 	print_opt("--list-controllers", "-L",
 		  "Displays list of controllers detected by ledmon.");
-	print_opt("--list-slots --controller-type CONTROLLER", "-P -c CONTROLLER",
+	print_opt("--list-slots --controller-type CONTROLLER", "-P -n CONTROLLER",
 		  "List slots under the controller type, their led states, slot numbers and "
 		  "devnodes connected.");
 	print_opt("--get-slot --controller-type CONTROLLER --device DEVNODE / --slot SLOT",
-		  "-G -c CONTROLLER -d DEVNODE / -p SLOT",
+		  "-G -n CONTROLLER -d DEVNODE / -p SLOT",
 		  "Prints slot information, its led state, slot number and devnode.");
 	print_opt("--set-slot --controller-type CONTROLLER --slot SLOT --state STATE",
-		  "-S -c CONTROLLER -p SLOT -s STATE", "Sets given state for chosen slot "
+		  "-S -n CONTROLLER -p SLOT -s STATE", "Sets given state for chosen slot "
 		  "under the controller.");
 	print_opt("--log=PATH", "-l PATH",
 		  "Use local log file instead /var/log/ledctl.log.");
@@ -740,7 +740,7 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 		test_params = true;
 		break;
 #endif
-	case 'c':
+	case 'n':
 		req->cntrl = led_string_to_cntrl_type(optarg);
 		break;
 	case 's':

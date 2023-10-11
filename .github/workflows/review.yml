@@ -33,3 +33,16 @@ jobs:
       run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
     - name: 'Check public symbol visibility'
       run: tests/check_symbol_visibility.sh
+  clangcompile:
+    name: Compilation test with clang
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: 'Install clang'
+      run: sudo apt-get update && sudo apt-get install clang gcc
+    - name: 'Install dependencies'
+      run: sudo apt-get install pkg-config automake autoconf autoconf-archive make libsgutils2-dev libudev-dev libpci-dev check libtool
+    - name: 'Generate compiling configurations'
+      run: ./autogen.sh && CC=clang ./configure --enable-test --enable-library
+    - name: 'Make'
+      run: V=1 make -j$(nproc)

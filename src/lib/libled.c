@@ -176,7 +176,7 @@ led_status_t led_slots_get(struct led_ctx *ctx, struct led_slot_list **slots)
 	led_status_t status;
 	struct led_slot_list *rc = NULL;
 	struct slot_property *slot;
-	struct node *tmp;
+	struct node *tmp = NULL;
 
 	if (!slots)
 		return LED_STATUS_DATA_ERROR;
@@ -195,34 +195,21 @@ led_status_t led_slots_get(struct led_ctx *ctx, struct led_slot_list **slots)
 			goto error;
 		}
 
-		if (list_is_empty(&rc->slot_list)) {
-			if (!list_append(&rc->slot_list, entry)) {
-				free(entry);
-				status = LED_STATUS_OUT_OF_MEMORY;
-				goto error;
-			}
-			continue;
-		}
-
 		list_for_each_node(&rc->slot_list, tmp) {
 			struct led_slot_list_entry *slot_entry = tmp->item;
 
-			if (strcmp(entry->slot->slot_id, slot_entry->slot->slot_id) > 0) {
-				if (list_next(tmp) != NULL)
-					continue;
-				if (!list_append(&rc->slot_list, entry)) {
-					free(entry);
-					status = LED_STATUS_OUT_OF_MEMORY;
-					goto error;
-				}
-			} else {
-				if (!list_insert(&rc->slot_list, entry, tmp->prev)) {
-					free(entry);
-					status = LED_STATUS_OUT_OF_MEMORY;
-					goto error;
-				}
+			if (strcmp(entry->slot->slot_id, slot_entry->slot->slot_id) <= 0) {
+				tmp = tmp->prev;
 				break;
 			}
+			if (list_next(tmp) == NULL)
+				break;
+		}
+
+		if (!list_insert(&rc->slot_list, entry, tmp ? tmp : NULL)) {
+			free(entry);
+			status = LED_STATUS_OUT_OF_MEMORY;
+			goto error;
 		}
 	}
 

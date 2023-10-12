@@ -31,6 +31,9 @@ jobs:
         run: tests/check_symbol_visibility.sh
   clangcompile:
     name: Compilation test with clang
+    strategy:
+      matrix:
+        gcc-version: [12]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3

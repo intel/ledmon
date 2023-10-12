@@ -39,7 +39,8 @@ class TestSlot():
     def get_controllers_with_slot_functionality(self):
         supported = ["SCSI", "VMD", "NPEM"]
         rc = {}
-        result = subprocess.run([self.ledctl_bin, "--list-controllers"], capture_output=True, check=True)
+        result = subprocess.run(["sudo", self.ledctl_bin, "--list-controllers"],
+                                capture_output=True, check=True)
         out = result.stdout.decode("utf-8")
         for raw_line in out.split("\n"):
             line = raw_line.strip()
@@ -68,7 +69,8 @@ class TestSlot():
         return slot
 
     def get_slot(self, slot_o, slot_filter):
-        result = subprocess.run([self.ledctl_bin,
+        result = subprocess.run(["sudo",
+                                self.ledctl_bin,
                                 "--get-slot",
                                 "--controller-type", slot_o.cntrl_type,
                                 "--slot", slot_o.slot], capture_output=True, check=True)
@@ -77,7 +79,8 @@ class TestSlot():
 
     def get_slots(self, controller_type, slot_filter):
         rc = []
-        result = subprocess.run([self.ledctl_bin,
+        result = subprocess.run(["sudo",
+                                 self.ledctl_bin,
                                 "--list-slots",
                                 "--controller-type", controller_type], capture_output=True)
         if result.returncode == 0:
@@ -89,7 +92,8 @@ class TestSlot():
         return rc
 
     def set_slot_state(self, slot_o, state):
-        subprocess.run([self.ledctl_bin,
+        subprocess.run(["sudo",
+                        self.ledctl_bin,
                         "--set-slot",
                         "--controller-type", slot_o.cntrl_type,
                         "--slot", slot_o.slot,
@@ -103,7 +107,7 @@ class TestSlot():
 
     def set_state_by_dev_node(self, dev_node, state):
         option = "%s=%s" % (state, dev_node)
-        result = subprocess.run([self.ledctl_bin, option], capture_output=True)
+        result = subprocess.run(["sudo", self.ledctl_bin, option], capture_output=True)
         if result.returncode == 0:
             return True
         else:
@@ -117,6 +121,9 @@ class TestSlot():
         """
         self.ledctl_bin = ledctl_binary
         slots_with_device_nodes = [s for s in self.get_all_slots(slot_filters) if s.device_node is not None]
+
+        if len(slots_with_device_nodes) == 0:
+            pytest.skip("This test requires slots with devices but none found.")
 
         for slot in slots_with_device_nodes:
             for state in ["failure", "locate", "normal"]:
@@ -132,6 +139,9 @@ class TestSlot():
         """
         self.ledctl_bin = ledctl_binary
         slots = self.get_all_slots(slot_filters)
+
+        if len(slots) == 0:
+            pytest.skip("This test requires any slot but none found.")
 
         for slot in slots:
             for state in ["locate", "failure", "normal"]:

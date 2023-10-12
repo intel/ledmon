@@ -20,29 +20,52 @@ jobs:
         gcc-version: [7, 8, 9, 10, 11, 12, 13]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: 'Add ubuntu repository'
-      run: sudo add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu focal main universe"
-    - name: 'Install gcc'
-      run: sudo apt-get update && sudo apt-get install gcc-${{ matrix.gcc-version }} g++-${{ matrix.gcc-version }}
-    - name: 'Install dependencies'
-      run: sudo apt-get install pkg-config automake autoconf autoconf-archive make libsgutils2-dev libudev-dev libpci-dev check
-    - name: 'Generate compiling configurations'
-      run: ./autogen.sh && ./configure --enable-test --enable-library
-    - name: 'Make'
-      run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
-    - name: 'Check public symbol visibility'
-      run: tests/check_symbol_visibility.sh
+      - uses: actions/checkout@v3
+      - name: 'Add ubuntu repository and install dependencies'
+        run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
+      - name: 'Generate compiling configurations'
+        run: ./autogen.sh && ./configure --enable-test --enable-library
+      - name: 'Make'
+        run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+      - name: 'Check public symbol visibility'
+        run: tests/check_symbol_visibility.sh
   clangcompile:
     name: Compilation test with clang
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: 'Add ubuntu repository and install dependencies'
+      run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
     - name: 'Install clang'
-      run: sudo apt-get update && sudo apt-get install clang gcc
-    - name: 'Install dependencies'
-      run: sudo apt-get install pkg-config automake autoconf autoconf-archive make libsgutils2-dev libudev-dev libpci-dev check libtool
+      run: sudo apt-get install clang
     - name: 'Generate compiling configurations'
       run: ./autogen.sh && CC=clang ./configure --enable-test --enable-library
     - name: 'Make'
       run: V=1 make -j$(nproc)
+  tests:
+    name: Run tests
+    strategy:
+      matrix:
+        gcc-version: [12]
+        python-version: ["3.7"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Add ubuntu repository and install dependencies'
+        run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
+      - name: 'Generate compiling configurations'
+        run: ./autogen.sh && ./configure --enable-test --enable-library
+      - name: 'Make'
+        run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      - name: Run tests using pytest
+        run: |
+          # Run only non-hardware dependent tests
+          pytest --ledctl-binary=src/ledctl/ledctl

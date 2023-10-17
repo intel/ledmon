@@ -94,3 +94,14 @@ void list_append_ctx(struct list *list, void *item, struct led_ctx *ctx)
 	if (!list_insert(list, item, list->tail))
 		ctx->deferred_error = LED_STATUS_OUT_OF_MEMORY;
 }
+
+bool list_insert_compar(struct list *list, void *item, bool compar_fn(void *item1, void *item2))
+{
+	struct node *tmp = NULL;
+
+	list_for_each_node(list, tmp) {
+		if (compar_fn(item, tmp->item) == true)
+			return list_insert(list, item, list_prev(tmp));
+	}
+	return list_append(list, item);
+}

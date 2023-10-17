@@ -248,4 +248,15 @@ static inline int list_is_empty(const struct list *list)
 	return (list->head == NULL);
 }
 
+/**
+ * @brief Appends an item before, if compar_fn returns true.
+ *
+ * @param[in]      list           pointer to a list object.
+ * @param[in]      item           data item to be inserted into the list.
+ * @param[in]      compar_fn      function to compare item with items from the list.
+ *
+ * @return true on success, else false on memory allocation failure.
+ */
+bool list_insert_compar(struct list *list, void *item, bool compar_fn(void *item1, void *item2));
+
 #endif				/* _LIST_H_INCLUDED_ */

@@ -46,13 +46,13 @@ class TestParameters():
                 "--version",
                 "-L -T",
                 "--list-controllers -T",
-                "-P -c vmd -T",
+                "-P -n vmd -T",
                 "--list-slots --controller-type=vmd -T",
-                "-G -c vmd -d /dev/nvme0n1 -T",
+                "-G -n vmd -d /dev/nvme0n1 -T",
                 "--get-slot --controller-type=vmd --device=/dev/nvme0n1 -T",
-                "-G -c vmd -p 1 -T",
+                "-G -n vmd -p 1 -T",
                 "--get-slot --controller-type=vmd --slot=1 -T",
-                "-S -c vmd -p 1 -s normal -T",
+                "-S -n vmd -p 1 -s normal -T",
                 "--set-slot --controller-type=vmd --slot=1 --state=normal -T"
         ],)
         def test_parameters_are_valid_short_test_flag(self, ledctl_binary, valid_mode_commands):
@@ -60,7 +60,6 @@ class TestParameters():
                 self.verify_if_flag_is_enabled()
                 result = self.run_ledctl_command(valid_mode_commands)
                 assert result.returncode == self.SUCCESS_EXIT_CODE
-
 
         @pytest.mark.parametrize("valid_ibpi_commands", [
                 "normal=/dev/nvme0n1 -T",
@@ -74,7 +73,6 @@ class TestParameters():
                 "locate=/dev/nvme0n1 rebuild={ /sys/block/sd[a-b] } -T",
                 "off={ /dev/sda /dev/sdb } -T",
                 "locate=/dev/sda,/dev/sdb,/dev/sdc -T"
-
         ],)
         def test_ibpi_parameters_are_valid_short_test_flag(self, ledctl_binary, valid_ibpi_commands):
                 self.ledctl_bin = ledctl_binary

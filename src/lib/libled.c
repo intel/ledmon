@@ -199,12 +199,13 @@ led_status_t led_slots_get(struct led_ctx *ctx, struct led_slot_list **slots)
 	list_for_each(sysfs_get_slots(ctx), slot) {
 		struct led_slot_list_entry *entry = init_slot(slot);
 
-		if (entry) {
-			if (!list_insert_compar(&rc->slot_list, entry, slot_compar)) {
-				free(entry);
-				status = LED_STATUS_OUT_OF_MEMORY;
-				goto error;
-			}
+		if (!entry)
+			continue;
+
+		if (!list_insert_compar(&rc->slot_list, entry, slot_compar)) {
+			free(entry);
+			status = LED_STATUS_OUT_OF_MEMORY;
+			goto error;
 		}
 	}
 

@@ -165,21 +165,6 @@ static struct led_ctx *ctx;
 
 struct ledmon_conf conf;
 
-static int possible_params[] = {
-	OPT_HELP,
-	OPT_VERSION,
-	OPT_LIST_CTRL,
-	OPT_LISTED_ONLY,
-	OPT_LIST_SLOTS,
-	OPT_GET_SLOT,
-	OPT_SET_SLOT,
-	OPT_CNTRL_TYPE,
-	OPT_DEVICE,
-	OPT_SLOT,
-	OPT_STATE,
-	COMMON_GETOPT_ARGS
-};
-
 static int possible_params_modes[] = {
 	OPT_HELP,
 	OPT_VERSION,
@@ -716,24 +701,29 @@ bool _setup_mode_options(struct request * const req, char **shortopts, struct op
 bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, struct request *req)
 {
 	switch (opt) {
-	int log_level;
 
 	case 0:
-		switch (get_option_id(longopts[opt_index].name)) {
+	{
+		int option_id = get_option_id(longopts[opt_index].name);
+
+		switch (option_id) {
 		case OPT_LOG_LEVEL:
-			log_level = get_option_id(optarg);
+		{
+			int log_level = get_option_id(optarg);
 			if (log_level != -1)
 				set_verbose_level(&conf, log_level);
 			else
 				return false;
 			break;
+		}
 		case OPT_AMD_NVME_SLOT:
 			using_amd_nvme_slot = 1;
 			break;
 		default:
-			set_verbose_level(&conf, possible_params[opt_index]);
+			set_verbose_level(&conf, option_id);
 		}
 		break;
+	}
 	case 'l':
 		set_log_path(&conf, optarg);
 		break;

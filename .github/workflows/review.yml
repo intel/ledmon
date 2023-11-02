@@ -1,5 +1,7 @@
 name: review
 on: [pull_request]
+env:
+    cflags: -Werror
 jobs:
   checkpatch:
     name: checkpatch review
@@ -24,7 +26,7 @@ jobs:
       - name: 'Add ubuntu repository and install dependencies'
         run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
       - name: 'Generate compiling configurations'
-        run: ./autogen.sh && ./configure --enable-test --enable-library
+        run: . tests/build_configure.sh ${{ env.cflags }}
       - name: 'Make'
         run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
       - name: 'Check public symbol visibility'
@@ -42,7 +44,7 @@ jobs:
     - name: 'Install clang'
       run: sudo apt-get install clang
     - name: 'Generate compiling configurations'
-      run: ./autogen.sh && CC=clang ./configure --enable-test --enable-library
+      run: . tests/build_configure.sh ${{ env.cflags }} clang
     - name: 'Make'
       run: V=1 make -j$(nproc)
   tests:
@@ -57,7 +59,7 @@ jobs:
       - name: 'Add ubuntu repository and install dependencies'
         run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
       - name: 'Generate compiling configurations'
-        run: ./autogen.sh && ./configure --enable-test --enable-library
+        run: . tests/build_configure.sh ${{ env.cflags }}
       - name: 'Make'
         run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
       - name: Set up Python ${{ matrix.python-version }}

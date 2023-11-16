@@ -170,20 +170,15 @@ static struct led_slot_list_entry *init_slot(struct slot_property *slot)
 	if (!slot)
 		return NULL;
 
-	s = calloc(1, sizeof(struct led_slot_list_entry));
+	s = calloc(1, sizeof(*s));
 
 	if (!s)
 		return NULL;
 
 	s->slot = slot;
 
-	/* As the slot property doesn't have storage allocated for device path we have it in the
-	 * slot list entry. We want user friendly devnode here, so we need to ensure that it exists.
-	 * Assumption that "/sys/block/" device has a devnode is no longer true with nvme multipath.
-	 */
 	if (slot->bl_device)
 		str_cpy(s->device_name, slot->bl_device->devnode, PATH_MAX);
-
 
 	return s;
 }

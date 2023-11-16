@@ -67,7 +67,7 @@ int dev_directly_attached(const char *path)
 bool is_virt_nvme(const char * const name)
 {
 	/* Simple match by name */
-	if (strncmp(name, "nvme", 4) == 0 && name[5] == 'c')
+	if (is_subpath(name, "nvme", 4) && strchr(name, 'c'))
 		return true;
 	return false;
 }
@@ -234,24 +234,29 @@ struct _host_type *block_get_host(struct cntrl_device *cntrl, int host_id)
 /**
  * @brief Determine devnode for block device.
  *
- * This routine handles nvme multipath if namespace and controller numbers matches, it does
- * not handle dual-ports connections.
+ * This routine handles nvme multipath if namespace and nvme controller numbers matches, it does
+ * not dereference dual-ports connections.
  */
 static void block_set_devnode(struct block_device *device)
 {
 	struct stat st;
 	char tmp[PATH_MAX];
 	char *name = basename(device->sysfs_path);
+	char *n, *c;
 	int ret;
 
 	if (is_virt_nvme(name)) {
-		int nvme_num, ns;
+		char buf[NAME_MAX];
 
-		ret = sscanf(name, "nvme%dc%*dn%d", &nvme_num, &ns);
-		if (ret != 2)
+		str_cpy(buf, name, NAME_MAX);
+		c = strrchr(buf, 'c');
+		n = strrchr(buf, 'n');
+
+		if (!n || !c)
 			return;
+		*c = '\0';
 
-		ret = snprintf(tmp, PATH_MAX, SYSTEM_DEV_DIR "/nvme%dn%d", nvme_num, ns);
+		ret = snprintf(tmp, PATH_MAX, SYSTEM_DEV_DIR "/%s%s", buf, n);
 	} else {
 		ret = snprintf(tmp, PATH_MAX, SYSTEM_DEV_DIR "/%s", name);
 	}
@@ -261,8 +266,6 @@ static void block_set_devnode(struct block_device *device)
 
 	if (stat(tmp, &st) == 0)
 		str_cpy(device->devnode, tmp, PATH_MAX);
-	else
-		device->devnode[0] = 0;
 }
 
 struct block_device *get_block_device_from_sysfs_path(struct led_ctx *ctx, char *sub_path,

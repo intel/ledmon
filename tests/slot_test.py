@@ -62,6 +62,10 @@ class TestSlot():
             raise Exception(f"Text line '{line}' did not match regex '{regex_pat}'")
 
         slot = Slot(controller, match.group(1).strip(), match.group(2).strip(), match.group(3).strip())
+
+        if slot_filters == "none":
+            return slot
+
         for slot_filter in slot_filters:
             if slot.slot.startswith(slot_filter):
                 # Filter out this slot

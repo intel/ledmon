@@ -1,11 +1,10 @@
 import logging
-import pytest
 
 LOGGER = logging.getLogger(__name__)
 
 def pytest_addoption(parser):
     parser.addoption("--ledctl-binary", action="store", default="/usr/sbin/ledctl")
-    parser.addoption("--slot-filters", action="store", default="")
+    parser.addoption("--slot-filters", action="store", default="none")
 
 def pytest_collection_modifyitems(session, config, items):
     LOGGER.info(f'[CONFIG] ledctl binary: {config.getoption("--ledctl-binary")}')

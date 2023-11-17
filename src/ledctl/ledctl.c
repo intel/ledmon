@@ -150,6 +150,11 @@ struct request {
 	 * IBPI state.
 	 */
 	enum led_ibpi_pattern state;
+
+	/**
+	 * Slot parameter to be printed on output.
+	 */
+	int slot_param;
 };
 
 /**
@@ -188,6 +193,7 @@ static int possible_params_get_slot[] = {
 	OPT_CNTRL_TYPE,
 	OPT_DEVICE,
 	OPT_SLOT,
+	OPT_PRINT_PARAM,
 	COMMON_GETOPT_ARGS
 };
 
@@ -588,6 +594,25 @@ static void request_init(struct request *req)
 }
 
 /**
+ * @brief Set parameter to be printed on output.
+ *
+ * @param[in]       slot_param     parameter based on user input.
+ *
+ * @return Parameter id, or 0 if all will be printed.
+ */
+static int set_param_to_print(const char *slot_param)
+{
+	if (strcasecmp(slot_param, "slot") == 0)
+		return OPT_SLOT;
+	else if (strcasecmp(slot_param, "device") == 0)
+		return OPT_DEVICE;
+	else if (strcasecmp(slot_param, "state") == 0)
+		return OPT_STATE;
+	else
+		return 0;
+}
+
+/**
  * @brief Command line parser - modes.
  *
  * This is internal function of ledctl utility. The function parses modes
@@ -752,6 +777,9 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 	case 'p':
 		strncpy(req->slot, optarg, PATH_MAX - 1);
 		break;
+	case 'r':
+		req->slot_param = set_param_to_print(optarg);
+		break;
 	case ':':
 	case '?':
 	default:
@@ -859,14 +887,26 @@ static led_status_t verify_request(struct led_ctx *ctx, struct request *req)
 	return LED_STATUS_SUCCESS;
 }
 
-static inline void print_slot(struct led_slot_list_entry *s)
+static void print_slot(struct led_slot_list_entry *s, int slot_param)
 {
 	char buf[IPBI2STR_BUFF_SIZE];
 	const char *device_name = led_slot_device(s);
 
-	printf("slot: %-15s led state: %-15s device: %-15s\n",
-		basename(led_slot_id(s)), ibpi2str(led_slot_state(s), buf, sizeof(buf)),
-		(device_name != NULL) ? device_name : "(empty)");
+	switch (slot_param) {
+	case OPT_SLOT:
+		printf("%s\n", basename(led_slot_id(s)));
+		return;
+	case OPT_DEVICE:
+		printf("%s\n", (device_name != NULL) ? device_name : "(empty)");
+		return;
+	case OPT_STATE:
+		printf("%s\n", ibpi2str(led_slot_state(s), buf, sizeof(buf)));
+		return;
+	default:
+		printf("slot: %-15s led state: %-15s device: %-15s\n",
+			basename(led_slot_id(s)), ibpi2str(led_slot_state(s), buf, sizeof(buf)),
+			(device_name != NULL) ? device_name : "(empty)");
+	}
 }
 
 static void print_cntrl(struct led_cntrl_list_entry *cntrl)
@@ -901,7 +941,7 @@ static led_status_t list_slots(enum led_cntrl_type cntrl_type)
 
 	while ((slot = led_slot_next(slot_list))) {
 		if (cntrl_type == led_slot_cntrl(slot))
-			print_slot(slot);
+			print_slot(slot, 0);
 	}
 
 	led_slot_list_free(slot_list);
@@ -964,7 +1004,7 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 		return set_rc;
 	}
 	case OPT_GET_SLOT:
-		print_slot(slot);
+		print_slot(slot, req->slot_param);
 		led_slot_list_entry_free(slot);
 		return LED_STATUS_SUCCESS;
 	default:

@@ -390,7 +390,7 @@ struct cntrl_device *cntrl_device_init(const char *path, struct led_ctx *ctx)
 			char *cntrl = NULL;
 
 			list_for_each(&ctx->config.allowlist, cntrl) {
-				if (match_string(ctx, cntrl, path))
+				if (strncmp(cntrl, path, strlen(cntrl)) == 0)
 					break;
 				cntrl = NULL;
 			}
@@ -403,7 +403,7 @@ struct cntrl_device *cntrl_device_init(const char *path, struct led_ctx *ctx)
 			char *cntrl;
 
 			list_for_each(&ctx->config.excludelist, cntrl) {
-				if (match_string(ctx, cntrl, path)) {
+				if (strncmp(cntrl, path, strlen(cntrl)) == 0) {
 					lib_log(ctx, LED_LOG_LEVEL_DEBUG,
 						"%s found on EXCLUDELIST, ignoring", path);
 					return NULL;

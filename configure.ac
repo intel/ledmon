@@ -154,7 +154,7 @@ if test "x${with_test}" = "xyes"; then
         AC_MSG_ERROR([--enable-library is required when specifying --enable-test])
     fi
     ENABLE_TEST=" -DENABLE_TEST"
-    AC_SUBST([ENABLE_TEST])]
+    AC_SUBST([ENABLE_TEST])
 fi
 
 AM_CONDITIONAL([WITH_LIBRARY], [test "x$with_library" = "xyes"])

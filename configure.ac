@@ -153,8 +153,7 @@ if test "x${with_test}" = "xyes"; then
     if test "x${with_library}" = "xno"; then
         AC_MSG_ERROR([--enable-library is required when specifying --enable-test])
     fi
-    ENABLE_TEST=" -DENABLE_TEST"
-    AC_SUBST([ENABLE_TEST])
+    AC_SUBST([ENABLE_TEST], '-DENABLE_TEST')
 fi
 
 AM_CONDITIONAL([WITH_LIBRARY], [test "x$with_library" = "xyes"])
@@ -185,7 +184,7 @@ AC_MSG_RESULT([
 $PACKAGE_NAME $VERSION configuration:
 
   Source code location:    ${srcdir}
-  Preprocessor flags:      ${AM_CPPFLAGS} ${CPPFLAGS}
+  Preprocessor flags:      ${AM_CPPFLAGS} ${CPPFLAGS} ${ENABLE_TEST}
   C compiler flags:        ${AM_CFLAGS} ${CFLAGS}
   Linker flags:            ${AM_LDFLAGS} ${LDFLAGS}
   Common install location: ${prefix}

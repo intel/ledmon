@@ -129,7 +129,8 @@ AS_IF([test "x$enable_systemd" = xyes], [SYSTEMD_STR=yes], [SYSTEMD_STR=no])
 AM_CONDITIONAL([SYSTEMD_CONDITION], [test "$SYSTEMD_STR" = yes])
 
 # target directory for ledmon service file
-AC_SUBST([SYSTEMD_PATH], "$(pkg-config systemd --variable=systemdsystemunitdir)")
+SYSTEMD_PATH="$(pkg-config systemd --variable=systemdsystemunitdir)"
+AC_SUBST([SYSTEMD_PATH])
 
 # Add configure option to build without library
 AC_ARG_ENABLE([library],

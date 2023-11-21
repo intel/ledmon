@@ -1,0 +1,115 @@
+import subprocess
+import logging
+import re
+
+LOGGER = logging.getLogger(__name__)
+
+class Slot:
+    def __init__(self, cntrl_type, slot_id, state, device_node):
+        self.cntrl_type = cntrl_type
+        self.slot = slot_id
+        self.state = state.lower()
+        self.device_node = None
+        if device_node.startswith('/dev/'):
+            self.device_node = device_node
+
+    def __str__(self):
+        return "slot: %s state: %s device: %s" % (self.slot, self.state, self.device_node)
+
+class LedctlCmd:
+
+    def __init__(self, ledctl_bin="none", slot_filters="none"):
+         self.bin = ledctl_bin
+         # The purpose or slot filters is exclude unsupported but recognized slots, apply it
+         # globally.
+         self.slot_filters = slot_filters
+
+    def run_ledctl_cmd(self, params: list, output=False):
+        params.insert(0, "sudo")
+        params.insert(1, self.bin)
+
+        LOGGER.debug(f"Command: {params}")
+        return subprocess.run(params, capture_output=output, check=True)
+
+    def run_ledctl_cmd_decode(self, params: list):
+        result = self.run_ledctl_cmd(params, output=True)
+        out = result.stdout.decode("utf-8")
+
+        LOGGER.debug(f"Command returned:\n {out}")
+        return out
+
+    # Ledctl Commands
+
+    def set_slot_state(self, slot: Slot, state):
+        self.run_ledctl_cmd([ "--set-slot", "--controller-type", slot.cntrl_type,
+                              "--slot", slot.slot,  "--state", state])
+
+    def get_slot(self, slot: Slot):
+        out = self.run_ledctl_cmd_decode(["--get-slot", "--controller-type", slot.cntrl_type,
+                                          "--slot", slot.slot])
+        return self.parse_slot_line(slot.cntrl_type, out)
+
+    def list_slots(self, controller_type):
+        rc = []
+        out = self.run_ledctl_cmd_decode(["--list-slots", "--controller-type", controller_type])
+
+        for line in out.split("\n"):
+            s = self.parse_slot_line(controller_type, line)
+            if s is not None:
+                rc.append(s)
+        return rc
+
+    def set_ibpi(self, dev_node, state):
+        option = "%s=%s" % (state, dev_node)
+        self.run_ledctl_cmd([option])
+
+    # Helper Functions
+
+    def is_slot_excluded(self, slot: Slot):
+        if self.slot_filters == "none":
+            return False
+
+        for slot_filter in self.slot_filters:
+            if slot.slot.startswith(slot_filter):
+                # Filter out this slot
+                return True
+        return False
+
+    def get_controllers_with_slot_functionality(self):
+        supported = ["SCSI", "VMD", "NPEM"]
+        rc = {}
+
+        out = self.run_ledctl_cmd_decode(["--list-controllers"])
+        for raw_line in out.split("\n"):
+            line = raw_line.strip()
+            for ctrl in supported:
+                if ctrl in line:
+                    rc[ctrl] = True
+                    break
+        return rc.keys()
+
+    def get_all_slots(self):
+        all_slots = []
+        for controller in self.get_controllers_with_slot_functionality():
+            all_slots.extend(self.list_slots(controller))
+        return all_slots
+
+    # Output parsers
+
+    def parse_slot_line(self, controller, rawline):
+        regex_pat = r"^slot: (.+)led state: (.+)device: (.*)$"
+        slot_line_re = re.compile(regex_pat)
+
+        line = rawline.strip()
+        if len(line) == 0:
+            return None
+
+        match = slot_line_re.match(line)
+        if match is None:
+            raise Exception(f"Text line '{line}' did not match regex '{regex_pat}'")
+
+        slot = Slot(controller, match.group(1).strip(), match.group(2).strip(), match.group(3).strip())
+
+        if self.is_slot_excluded(slot):
+                return None
+        return slot

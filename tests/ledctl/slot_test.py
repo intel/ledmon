@@ -9,19 +9,12 @@ from ledctl_cmd import LedctlCmd
 
 LOGGER = logging.getLogger(__name__)
 
-# Note:
-# RH SES lab hardware has some enclosures which don't work, which includes the ses tools from sg_utils
-# and libStorageMgmt, so it's not something specific with ledmon project.
-#
-# To run this test do `pytest tests --ledctl-binary=../src/ledctl --slot-filters=sg3-,sg2-`
-# to filter out enclosures that don't work
-
-def test_non_slot_set_path(ledctl_binary, slot_filters):
+def test_non_slot_set_path(ledctl_binary, slot_filters, controller_filters):
     """
     Test setting the led status by using non-slot syntax, eg. ledctl locate=/dev/sda
     """
 
-    cmd = LedctlCmd(ledctl_binary, slot_filters)
+    cmd = LedctlCmd(ledctl_binary, slot_filters, controller_filters)
     slots_with_device_nodes = [s for s in cmd.get_all_slots() if s.device_node is not None]
 
     if len(slots_with_device_nodes) == 0:
@@ -34,12 +27,12 @@ def test_non_slot_set_path(ledctl_binary, slot_filters):
             assert cur.state == state,\
                 f"unable to set from \"{slot}\" to \"{state}\", current = \"{cur}\" using non-slot syntax"
 
-def test_slot_state_walk(ledctl_binary, slot_filters):
+def test_slot_state_walk(ledctl_binary, slot_filters, controller_filters):
     """
     Test that we can set slots to different states and verify that they reported a change
     """
 
-    cmd = LedctlCmd(ledctl_binary, slot_filters)
+    cmd = LedctlCmd(ledctl_binary, slot_filters, controller_filters)
     slots = cmd.get_all_slots()
 
     if len(slots) == 0:

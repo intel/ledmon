@@ -21,11 +21,18 @@ class Slot:
 
 class LedctlCmd:
 
-    def __init__(self, ledctl_bin="none", slot_filters="none"):
-         self.bin = ledctl_bin
-         # The purpose or slot filters is exclude unsupported but recognized slots, apply it
-         # globally.
-         self.slot_filters = slot_filters
+    slot_mgmt_ctrls = ["SCSI", "VMD", "NPEM"]
+
+    def __init__(self, ledctl_bin=["none"], slot_filters="none", controller_filters="none"):
+        # We cares about first entry (not full valdation but it is enough for test purposes)
+        self.bin = ledctl_bin[0]
+
+        # The purpose or slot filters is exclude unsupported but recognized slots, apply it
+        # globally.
+        self.slot_filters = slot_filters
+
+        # Give possibility to skip controllers.
+        self.slot_ctrls = [i for i in self.slot_mgmt_ctrls if i not in controller_filters]
 
     def run_ledctl_cmd(self, params: list, output=False, check=True):
         params.insert(0, "sudo")
@@ -85,13 +92,12 @@ class LedctlCmd:
         return False
 
     def get_controllers_with_slot_functionality(self):
-        supported = ["SCSI", "VMD", "NPEM"]
         rc = {}
 
         out = self.run_ledctl_cmd_decode(["--list-controllers"])
         for raw_line in out.split("\n"):
             line = raw_line.strip()
-            for ctrl in supported:
+            for ctrl in self.slot_ctrls:
                 if ctrl in line:
                     rc[ctrl] = True
                     break

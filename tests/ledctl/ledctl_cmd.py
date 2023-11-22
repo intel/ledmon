@@ -24,12 +24,12 @@ class LedctlCmd:
          # globally.
          self.slot_filters = slot_filters
 
-    def run_ledctl_cmd(self, params: list, output=False):
+    def run_ledctl_cmd(self, params: list, output=False, check=True):
         params.insert(0, "sudo")
         params.insert(1, self.bin)
 
         LOGGER.debug(f"Command: {params}")
-        return subprocess.run(params, capture_output=output, check=True)
+        return subprocess.run(params, capture_output=output, check=check)
 
     def run_ledctl_cmd_decode(self, params: list):
         result = self.run_ledctl_cmd(params, output=True)
@@ -62,6 +62,12 @@ class LedctlCmd:
     def set_ibpi(self, dev_node, state):
         option = "%s=%s" % (state, dev_node)
         self.run_ledctl_cmd([option])
+
+    def is_test_flag_enabled(self):
+        try:
+            self.run_ledctl_cmd(["-T"])
+        except subprocess.CalledProcessError:
+            raise AssertionError("Test flag is disabled. Please add configure option \"--enable-test\".")
 
     # Helper Functions
 

@@ -50,3 +50,25 @@ def test_ibpi_parameters_are_valid_short_test_flag(ledctl_binary, valid_ibpi_com
     cmd = LedctlCmd(ledctl_binary)
     cmd.is_test_flag_enabled()
     cmd.run_ledctl_cmd(valid_ibpi_commands.split())
+
+@pytest.mark.parametrize("log_path_commands", [
+    "--list-controllers --log=/root/test.log -T",
+    "normal=/dev/nvme0n1 --listed-only -l /root/test.log -T",
+],)
+def test_parameters_log_path(ledctl_binary, log_path_commands):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    output = cmd.run_ledctl_cmd_decode(log_path_commands.split())
+    assert "LOG_PATH=/root/test.log" in output
+
+def test_parameter_log_level_all_values(ledctl_binary):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    tested_log_levels = ["warning", "debug", "all", "info", "quiet", "error"]
+    for level in tested_log_levels:
+        args = "--list-controllers -T --log-level=" + level
+        output = cmd.run_ledctl_cmd_decode(args.split())
+        assert "LOG_LEVEL=" + level.upper() in output
+        args = "--list-controllers -T --" + level
+        output = cmd.run_ledctl_cmd_decode(args.split())
+        assert "LOG_LEVEL=" + level.upper() in output

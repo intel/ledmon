@@ -1045,6 +1045,34 @@ static led_status_t _init_ledctl_conf(void)
 	return ledmon_init_conf(&conf, LED_LOG_LEVEL_WARNING, LEDCTL_DEF_LOG_FILE);
 }
 
+static const char *get_log_level_name(enum led_log_level_enum log_level)
+{
+	switch (log_level) {
+	case LED_LOG_LEVEL_UNDEF:
+		return "UNDEF";
+	case LED_LOG_LEVEL_QUIET:
+		return "QUIET";
+	case LED_LOG_LEVEL_ERROR:
+		return "ERROR";
+	case LED_LOG_LEVEL_WARNING:
+		return "WARNING";
+	case LED_LOG_LEVEL_INFO:
+		return "INFO";
+	case LED_LOG_LEVEL_DEBUG:
+		return "DEBUG";
+	case LED_LOG_LEVEL_ALL:
+		return "ALL";
+	default:
+		return "UNDEF";
+	}
+}
+
+static void print_configuration(void)
+{
+	printf("LOG_LEVEL=%s\n", get_log_level_name(conf.log_level));
+	printf("LOG_PATH=%s\n", conf.log_path);
+}
+
 /**
  * @brief Propagate the configuration setting to the library settings
  */
@@ -1132,8 +1160,10 @@ int main(int argc, char *argv[])
 	_unset_unused_options();
 
 	status = _cmdline_parse(argc, argv, &req);
-	if (status != LED_STATUS_SUCCESS || test_params)
+	if (status != LED_STATUS_SUCCESS || test_params) {
+		print_configuration();
 		exit(status);
+	}
 
 	status = log_open(&conf);
 	if (status != LED_STATUS_SUCCESS)

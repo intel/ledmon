@@ -579,6 +579,7 @@ struct option longopt_all[] = {
 	[OPT_SLOT]         = {"slot", required_argument, NULL, 'p'},
 	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
 	[OPT_TEST]         = {"test", no_argument, NULL, 'T'},
+	[OPT_IBPI_MODE]    = {"ibpi", no_argument, NULL, 'I' },
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 
@@ -790,4 +791,18 @@ char *str_map(int scode, struct map *map)
 		map++;
 	}
 	return NULL;
+}
+
+/**
+ * @brief Check if string is null or empty.
+ *
+ * @param[in]      str        string to check.
+ *
+ * @return 1 if null or empty, otherwise 0.
+ */
+int is_string_null_or_empty(char *str)
+{
+	if (str == NULL || str[0] == 0)
+		return 1;
+	return 0;
 }

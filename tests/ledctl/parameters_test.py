@@ -3,6 +3,9 @@
 
 from ledctl.ledctl_cmd import LedctlCmd
 import pytest
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 SUCCESS_EXIT_CODE = 0
 CMDLINE_ERROR_EXIT_CODE = 35
@@ -17,6 +20,8 @@ def test_parameters_are_valid_long_test_flag(ledctl_binary):
     "--help",
     "-v",
     "--version",
+    "--ibpi --help",
+    "--ibpi -T",
     "-L -T",
     "--list-controllers -T",
     "-P -n vmd -T",
@@ -34,6 +39,9 @@ def test_parameters_are_valid_short_test_flag(ledctl_binary, valid_mode_commands
     cmd.run_ledctl_cmd(valid_mode_commands.split())
 
 @pytest.mark.parametrize("valid_ibpi_commands", [
+    "--ibpi normal=/dev/nvme0n1 -T",
+    "--ibpi locate=/dev/sda,/dev/sdb,/dev/sdc -T",
+    "--ibpi normal=/dev/nvme0n1 --listed-only -T",
     "normal=/dev/nvme0n1 -T",
     "normal=/dev/nvme0n1 -x -T",
     "normal=/dev/nvme0n1 --listed-only -T",
@@ -72,3 +80,51 @@ def test_parameter_log_level_all_values(ledctl_binary):
         args = "--list-controllers -T --" + level
         output = cmd.run_ledctl_cmd_decode(args.split())
         assert "LOG_LEVEL=" + level.upper() in output
+
+FIRST_LINE_HELP = b"Intel(R) Enclosure LED Control Application"
+LAST_LINE_HELP = b"Bugs should be reported at: https://github.com/intel/ledmon/issues\n"
+
+def test_main_help(ledctl_binary):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    res = cmd.run_ledctl_cmd("--help".split(), True)
+
+    LOGGER.debug(f"Command returned:\n {res}")
+    assert res.stdout.startswith(FIRST_LINE_HELP) and\
+        res.stdout.endswith(LAST_LINE_HELP) and\
+        res.stdout.find(b"Usage: ledctl --<mode> [option...] ...") != -1
+
+@pytest.mark.parametrize("valid_mode_help_commands", [
+    "--set-slot",
+    "--get-slot",
+    "--list-controllers",
+    "--ibpi",
+    "--list-slots"
+],)
+def test_mode_help(ledctl_binary, valid_mode_help_commands):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    mode_help = str(valid_mode_help_commands) + " --help"
+    res = cmd.run_ledctl_cmd(mode_help.split(), True)
+    expected_usage_line = "Usage: ledctl " + valid_mode_help_commands + " [option...] ..."
+
+    LOGGER.debug(f"Command returned:\n {res}")
+    assert res.stdout.startswith(FIRST_LINE_HELP) and\
+        res.stdout.endswith(LAST_LINE_HELP) and\
+        res.stdout.decode().find(expected_usage_line) != -1
+
+@pytest.mark.parametrize("valid_mode_help_commands_without_options", [
+    "--version",
+    "--help"
+],)
+def test_mode_help_without_options(ledctl_binary, valid_mode_help_commands_without_options):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    mode_help = str(valid_mode_help_commands_without_options) + " --help"
+    res = cmd.run_ledctl_cmd(mode_help.split(), True)
+    expected_usage_line = "Usage: ledctl " + valid_mode_help_commands_without_options
+
+    LOGGER.debug(f"Command returned:\n {res}")
+    assert res.stdout.startswith(FIRST_LINE_HELP) and\
+        res.stdout.endswith(LAST_LINE_HELP) and\
+        res.stdout.decode().find(expected_usage_line) != -1

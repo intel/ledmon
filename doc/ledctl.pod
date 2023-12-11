@@ -310,6 +310,12 @@ option is given).
 
 =over 8
 
+=item B<-I> or B<--ibpi>
+
+Set pattern on given devices and update devices states.
+To maintain backward compatibility, ibpi mode is also default for ldctl,
+and if no option is given, ibpi mode is executed.
+
 =item B<-l> or B<--log>=I<path>
 
 Sets a path to local log file. If this option is specified the global log

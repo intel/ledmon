@@ -530,5 +530,8 @@ const struct ibpi2value *get_by_value(const enum led_ibpi_pattern ibpi,
 const struct ibpi2value *get_by_bits(const enum led_ibpi_pattern ibpi,
 				     const struct ibpi2value *ibpi2val_arr,
 				     int ibpi2value_arr_cnt);
+/**
+ */
+int is_string_null_or_empty(char *str);
 
 #endif				/* _UTILS_H_INCLUDED_ */

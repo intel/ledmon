@@ -59,7 +59,8 @@
 	OPT_WARNING,		\
 	OPT_LOG,		\
 	OPT_LOG_LEVEL,		\
-	OPT_TEST
+	OPT_TEST,		\
+	OPT_AMD_NVME_SLOT
 #else
 #define COMMON_GETOPT_ARGS	\
 	OPT_ALL,		\
@@ -69,7 +70,8 @@
 	OPT_QUIET,		\
 	OPT_WARNING,		\
 	OPT_LOG,		\
-	OPT_LOG_LEVEL
+	OPT_LOG_LEVEL,		\
+	OPT_AMD_NVME_SLOT
 #endif
 
 struct map ledctl_status_map[] = {
@@ -724,6 +726,9 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 				set_verbose_level(&conf, log_level);
 			else
 				return false;
+			break;
+		case OPT_AMD_NVME_SLOT:
+			using_amd_nvme_slot = 1;
 			break;
 		default:
 			set_verbose_level(&conf, possible_params[opt_index]);

@@ -43,6 +43,7 @@
 #include "utils.h"
 #include "amd.h"
 #include "amd_sgpio.h"
+#include "amd_nvme_slot.h"
 #include "amd_ipmi.h"
 #include "libled_private.h"
 
@@ -125,12 +126,21 @@ int amd_em_enabled(const char *path, struct led_ctx *ctx)
 		amd_ipmi_platform = AMD_PLATFORM_DAYTONA_X;
 	}
 
+	/* Universal to nvme led ctl */
+	if (using_amd_nvme_slot) {
+		amd_interface = AMD_INTF_NVME_SLOT;
+		amd_ipmi_platform = AMD_PLATFORM_UNSET;
+	}
+
 	switch (amd_interface) {
 	case AMD_INTF_SGPIO:
 		rc = _amd_sgpio_em_enabled(path, ctx);
 		break;
 	case AMD_INTF_IPMI:
 		rc = _amd_ipmi_em_enabled(path, ctx);
+		break;
+	case AMD_INTF_NVME_SLOT:
+		rc = _amd_nvme_slot_cap_enabled(path, ctx);
 		break;
 	default:
 		lib_log(ctx, LED_LOG_LEVEL_ERROR,
@@ -157,6 +167,9 @@ int amd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 	case AMD_INTF_IPMI:
 		rc = _amd_ipmi_write(device, ibpi);
 		break;
+	case AMD_INTF_NVME_SLOT:
+		rc = _amd_nvme_slot_write(device, ibpi);
+		break;
 	case AMD_INTF_UNSET:
 	default:
 		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_ERROR,
@@ -178,6 +191,9 @@ char *amd_get_path(const char *cntrl_path, const char *sysfs_path, struct led_ct
 		break;
 	case AMD_INTF_IPMI:
 		path = _amd_ipmi_get_path(cntrl_path, sysfs_path);
+		break;
+	case AMD_INTF_NVME_SLOT:
+		path = _amd_nvme_slot_get_path(sysfs_path, ctx);
 		break;
 	case AMD_INTF_UNSET:
 	default:

@@ -20,9 +20,9 @@ SUBDIRS = include
 
 LIB_SRCS         = ahci.c block.c cntrl.c enclosure.c utils.c list.c \
                    raid.c scsi.c slave.c sysfs.c smp.c dellssd.c \
-                   pci_slot.c vmdssd.c amd.c amd_sgpio.c amd_ipmi.c\
+                   pci_slot.c vmdssd.c amd.c amd_sgpio.c amd_nvme_slot.c amd_ipmi.c\
                    ipmi.c npem.c ses.c slot.c \
-                   ahci.h amd_sgpio.h block.h cntrl.h dellssd.h utils.h \
+                   ahci.h amd_sgpio.h amd_nvme_slot.h block.h cntrl.h dellssd.h utils.h \
                    enclosure.h list.h pci_slot.h raid.h scsi.h \
                    ses.h slave.h smp.h status.h sysfs.h \
                    vmdssd.h ipmi.h amd.h amd_ipmi.h npem.h libled_internal.c \

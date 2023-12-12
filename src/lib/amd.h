@@ -38,6 +38,8 @@ enum amd_led_interfaces {
 	AMD_INTF_UNSET,
 	AMD_INTF_SGPIO,
 	AMD_INTF_IPMI,
+	/* The new way to control nvme led with less dependence */
+	AMD_INTF_NVME_SLOT,
 };
 
 extern enum amd_led_interfaces amd_interface;

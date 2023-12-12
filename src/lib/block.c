@@ -197,7 +197,9 @@ struct cntrl_device *block_get_controller(const struct list *cntrl_list, char *p
 		if (cntrl) {
 			if (strncmp(cntrl->sysfs_path, path,
 				strnlen(cntrl->sysfs_path, PATH_MAX)) == 0) {
-				if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM)
+				/* Avoid errors in the amd NVMe slot control path */
+				if (!using_amd_nvme_slot &&
+					cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM)
 					return cntrl;
 				non_npem_cntrl = cntrl;
 			}

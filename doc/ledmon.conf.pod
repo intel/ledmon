@@ -44,7 +44,8 @@ See also the examples section.
 
 B<EXCLUDELIST> - Ledmon will exclude scanning controllers listed on excludelist.
 When allowlist is also set in config file, the excludelist will be ignored.
-The controllers should be separated by comma (B<,>) character.
+The controllers should be separated by comma (B<,>) character. Only exact paths
+to the controller (e.g. /sys/devices/pci0000:c9/0000:c9:00.5) will be respected.
 The B<XBD Extended Regular Expressions> are supported.  The deprecated name of
 B<BLACKLIST> is supported for backwards compatibility.  It will be
 removed in a future release.
@@ -84,7 +85,9 @@ that is during rebuild will blink during this operation.
 
 B<ALLOWLIST> - Ledmon will limit changing LED state to controllers listed on
 allowlist. If any allowlist is set, only devices from list will be scanned by
-ledmon. The controllers should be separated by comma (B<,>) character.
+ledmon. The controllers should be separated by comma (B<,>) character. Only
+exact paths to the controller (e.g. /sys/devices/pci0000:c9/0000:c9:00.5)
+will be respected.
 The B<XBD Extended Regular Expressions> are supported.  The deprecated name of
 B<WHITELIST> is supported for backwards compatibility.  It will be
 removed in a future release.

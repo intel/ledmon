@@ -478,33 +478,6 @@ char *get_path_hostN(const char *path)
 	return s;
 }
 
-int match_string(struct led_ctx *ctx, const char *string, const char *pattern)
-{
-	int status;
-	regex_t regex;
-
-	if (!string || !pattern)
-		return 0;
-
-	if (strcmp(string, pattern) == 0)
-		return 1;
-
-	status = regcomp(&regex, pattern, REG_EXTENDED);
-	if (status != 0) {
-		lib_log(ctx, LED_LOG_LEVEL_ERROR,
-			"Failed to initialize regular expression pattern (%s), regcomp ret=%d",
-			pattern, status);
-		return 0;
-	}
-
-	status = regexec(&regex, string, 0, NULL, 0);
-	regfree(&regex);
-	if (status != 0)
-		return 0;
-
-	return 1;
-}
-
 int get_log_fd(struct ledmon_conf *conf)
 {
 	if (conf->s_log)

@@ -716,9 +716,11 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 				return false;
 			break;
 		}
+
 		case OPT_AMD_NVME_SLOT:
 			using_amd_nvme_slot = 1;
 			break;
+
 		default:
 			set_verbose_level(&conf, option_id);
 		}

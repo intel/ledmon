@@ -1156,7 +1156,8 @@ int main(int argc, char *argv[])
 
 	status = _cmdline_parse(argc, argv, &req);
 	if (status != LED_STATUS_SUCCESS || test_params) {
-		print_configuration();
+		if (test_params)
+			print_configuration();
 		exit(status);
 	}
 

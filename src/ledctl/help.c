@@ -473,7 +473,7 @@ void _print_main_help(void)
 	print_ledctl_help_footer();
 }
 
-void print_incorrect_help_usage(void)
+void _print_incorrect_help_usage(void)
 {
 	printf("Incorrect usage of --help.\nHelp can be used alone or with mode "
 	       "e.g %s --help, %s --ibpi --help\n", progname, progname);
@@ -493,6 +493,7 @@ void _cmdline_parse_mode_help(int argc, char *argv[], int command_id)
 	struct option *longopts;
 	int opt;
 	int opt_index;
+	int status = EXIT_SUCCESS;
 	int optind_backup = optind;
 	struct ledctl_mode *mode;
 
@@ -506,8 +507,9 @@ void _cmdline_parse_mode_help(int argc, char *argv[], int command_id)
 	opt = getopt_long(argc, argv, shortopts, longopts, &opt_index);
 	if (opt != 'h') {
 		if (argc > 2 && (command_id == OPT_HELP)) {
-			print_incorrect_help_usage();
-			exit(EXIT_FAILURE);
+			_print_incorrect_help_usage();
+			status = EXIT_FAILURE;
+			goto end;
 		}
 		/*
 		 * Restore option index to enable correct
@@ -517,17 +519,23 @@ void _cmdline_parse_mode_help(int argc, char *argv[], int command_id)
 		return;
 	}
 	if (argc > 3) {
-		print_incorrect_help_usage();
-		exit(EXIT_FAILURE);
+		_print_incorrect_help_usage();
+		status = EXIT_FAILURE;
+		goto end;
 	}
 
 	mode = get_mode_help(command_id);
 
 	if (mode == NULL) {
 		fprintf(stderr, "Help is unavailable for mode %s.\n", longopt_all[command_id].name);
-		exit(EXIT_FAILURE);
+		status = EXIT_FAILURE;
+		goto end;
 	}
 
 	print_mode_help(mode);
-	exit(EXIT_SUCCESS);
+
+end:
+	free(longopts);
+	free(shortopts);
+	exit(status);
 }

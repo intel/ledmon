@@ -22,5 +22,6 @@ struct ledctl_mode {
 void _cmdline_parse_mode_help(int argc, char *argv[], int req);
 void _print_main_help(void);
 void _ledctl_version(void);
+void _print_incorrect_help_usage(void);
 
 #endif // HELP_H_INCLUDED_

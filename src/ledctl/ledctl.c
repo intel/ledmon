@@ -60,6 +60,7 @@
 	OPT_WARNING,		\
 	OPT_LOG,		\
 	OPT_LOG_LEVEL,		\
+	OPT_HELP,		\
 	OPT_TEST
 #else
 #define COMMON_GETOPT_ARGS	\
@@ -70,7 +71,8 @@
 	OPT_QUIET,		\
 	OPT_WARNING,		\
 	OPT_LOG,		\
-	OPT_LOG_LEVEL
+	OPT_LOG_LEVEL,		\
+	OPT_HELP
 #endif
 
 struct map ledctl_status_map[] = {
@@ -618,9 +620,10 @@ bool _setup_mode_options(struct request * const req, char **shortopts, struct op
  * @param[in]      longopts       pointer to the first element of an array of struct option.
  * @param[in]      req            structure with request.
  *
- * @return bool if successful, otherwise false.
+ * @return LED_STATUS_SUCCESS if successful, otherwise one of failure led_status_t.
  */
-bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, struct request *req)
+led_status_t _cmdline_parse_params(int opt, int opt_index, struct option *longopts,
+				   struct request *req)
 {
 	switch (opt) {
 
@@ -632,10 +635,11 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 		case OPT_LOG_LEVEL:
 		{
 			int log_level = get_option_id(optarg);
+
 			if (log_level != -1)
 				set_verbose_level(&conf, log_level);
 			else
-				return false;
+				return LED_STATUS_CMDLINE_ERROR;
 			break;
 		}
 		default:
@@ -665,7 +669,7 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 			req->state = state->ibpi;
 		} else {
 			log_error("Invalid IBPI state: '%s'.", optarg);
-			return false;
+			return LED_STATUS_CMDLINE_ERROR;
 		}
 		free(state);
 		break;
@@ -676,13 +680,16 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 	case 'p':
 		strncpy(req->slot, optarg, PATH_MAX - 1);
 		break;
+	case 'h':
+		_print_incorrect_help_usage();
+		return LED_STATUS_NOT_SUPPORTED;
 	case ':':
 	case '?':
 	default:
-		return false;
+		return LED_STATUS_CMDLINE_ERROR;
 	}
 
-	return true;
+	return LED_STATUS_SUCCESS;
 }
 
 /**
@@ -713,13 +720,13 @@ led_status_t _cmdline_parse(int argc, char *argv[], struct request *req)
 
 		if (opt == -1)
 			break;
-
-		if (!_cmdline_parse_params(opt, opt_index, longopts, req)) {
+		ret = _cmdline_parse_params(opt, opt_index, longopts, req);
+		if (!ret)
+			continue;
+		if (ret == LED_STATUS_CMDLINE_ERROR)
 			log_error("Cannot parse parameter '%s'. It may be invalid or not supported for selected mode.",
 				   argv[optind - 1]);
-			ret = LED_STATUS_CMDLINE_ERROR;
-			break;
-		}
+		break;
 	} while (1);
 	free(longopts);
 	free(shortopts);

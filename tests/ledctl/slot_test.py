@@ -15,6 +15,7 @@ from ledctl_cmd import LedctlCmd
 
 LOGGER = logging.getLogger(__name__)
 
+
 def get_slots_with_device_or_skip(cmd: LedctlCmd, cntrl):
     try:
         slots_with_device_node = cmd.get_slots_with_device(cntrl)
@@ -24,6 +25,7 @@ def get_slots_with_device_or_skip(cmd: LedctlCmd, cntrl):
     if len(slots_with_device_node) == 0:
         pytest.skip("No slot with device found")
     return slots_with_device_node
+
 
 @pytest.mark.parametrize("cntrl", LedctlCmd.slot_mgmt_ctrls)
 def test_ibpi(ledctl_binary, slot_filters, controller_filters, cntrl):
@@ -42,8 +44,10 @@ def test_ibpi(ledctl_binary, slot_filters, controller_filters, cntrl):
             assert cur.state == state,\
                 f"unable to set \"{slot.device_node}\" to \"{state}\", current = \"{cur}\" using ibpi syntax"
 
+
 @pytest.mark.parametrize("cntrl", LedctlCmd.slot_mgmt_ctrls)
-def test_set_slot_by_slot(ledctl_binary, slot_filters, controller_filters, cntrl):
+def test_set_slot_by_slot(ledctl_binary, slot_filters, controller_filters,
+                          cntrl):
     """
     Test that we can set slots to different states and verify that they reported a change, using --slot.
     """
@@ -64,15 +68,18 @@ def test_set_slot_by_slot(ledctl_binary, slot_filters, controller_filters, cntrl
             assert cur.state == state,\
                 f"unable to set \"{slot}\" to \"{state}\", current = \"{cur}\" using slot"
 
+
 def slot_set_and_get_by_device_all(cmd: LedctlCmd, slot):
-        for state in LedctlCmd.base_states:
-            cmd.set_device_state(slot, state)
-            cur = cmd.get_slot_by_device(slot)
-            assert cur.state == state,\
-                f"unable to set \"{slot}\" to \"{state}\", current = \"{cur}\" using --device"
+    for state in LedctlCmd.base_states:
+        cmd.set_device_state(slot, state)
+        cur = cmd.get_slot_by_device(slot)
+        assert cur.state == state,\
+            f"unable to set \"{slot}\" to \"{state}\", current = \"{cur}\" using --device"
+
 
 @pytest.mark.parametrize("cntrl", LedctlCmd.slot_mgmt_ctrls)
-def test_set_slot_by_device(ledctl_binary, slot_filters, controller_filters, cntrl):
+def test_set_slot_by_device(ledctl_binary, slot_filters, controller_filters,
+                            cntrl):
     """
     Test that we can set slots to different states and verify that they reported a change, using device.
     """
@@ -83,8 +90,10 @@ def test_set_slot_by_device(ledctl_binary, slot_filters, controller_filters, cnt
     for slot in slots_with_device_node:
         slot_set_and_get_by_device_all(cmd, slot)
 
+
 @pytest.mark.parametrize("cntrl", ["VMD", "NPEM"])
-def test_nvme_multipath_drives(ledctl_binary, slot_filters, controller_filters, cntrl):
+def test_nvme_multipath_drives(ledctl_binary, slot_filters, controller_filters,
+                               cntrl):
     """
     Special test for multipath drives using both set methods and get via device. We need to check
     if ledctl provides nvme multipath minimal support.
@@ -100,7 +109,7 @@ def test_nvme_multipath_drives(ledctl_binary, slot_filters, controller_filters, 
 
     for slot in slots_with_device_node:
         if slot.device_node not in mp_drives:
-                continue
+            continue
         any_found = True
 
         LOGGER.debug(f"Found nvme multipath drive {slot}")

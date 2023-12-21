@@ -120,6 +120,13 @@ struct ibpi_state {
  */
 static struct list ibpi_list;
 
+enum print_param {
+	PRINT_ALL,
+	PRINT_STATE,
+	PRINT_SLOT,
+	PRINT_DEVICE
+};
+
 /**
  * @brief slot request parameters
  *
@@ -154,7 +161,7 @@ struct request {
 	/**
 	 * Slot parameter to be printed on output.
 	 */
-	int slot_param;
+	enum print_param to_print;
 };
 
 /**
@@ -594,22 +601,22 @@ static void request_init(struct request *req)
 }
 
 /**
- * @brief Set parameter to be printed on output.
+ * @brief Gets parameter to be printed on output.
  *
- * @param[in]       slot_param     parameter based on user input.
+ * @param[in]       to_print     parameter based on user input.
  *
- * @return Parameter id, or 0 if all will be printed.
+ * @return Parameter name or PRINT_ALL if all will be printed.
  */
-static int set_param_to_print(const char *slot_param)
+static enum print_param get_param_to_print(const char *to_print)
 {
-	if (strcasecmp(slot_param, "slot") == 0)
-		return OPT_SLOT;
-	else if (strcasecmp(slot_param, "device") == 0)
-		return OPT_DEVICE;
-	else if (strcasecmp(slot_param, "state") == 0)
-		return OPT_STATE;
+	if (strcasecmp(to_print, "state") == 0)
+		return PRINT_STATE;
+	else if (strcasecmp(to_print, "slot") == 0)
+		return PRINT_SLOT;
+	else if (strcasecmp(to_print, "device") == 0)
+		return PRINT_DEVICE;
 	else
-		return 0;
+		return PRINT_ALL;
 }
 
 /**
@@ -778,7 +785,7 @@ bool _cmdline_parse_params(int opt, int opt_index, struct option *longopts, stru
 		strncpy(req->slot, optarg, PATH_MAX - 1);
 		break;
 	case 'r':
-		req->slot_param = set_param_to_print(optarg);
+		req->to_print = get_param_to_print(optarg);
 		break;
 	case ':':
 	case '?':
@@ -887,25 +894,29 @@ static led_status_t verify_request(struct led_ctx *ctx, struct request *req)
 	return LED_STATUS_SUCCESS;
 }
 
-static void print_slot(struct led_slot_list_entry *s, int slot_param)
+static void print_slot(struct led_slot_list_entry *s, int to_print)
 {
 	char buf[IPBI2STR_BUFF_SIZE];
 	const char *device_name = led_slot_device(s);
+	const char *slot_id = basename(led_slot_id(s));
+	const char *ibpi_str = ibpi2str(led_slot_state(s), buf, sizeof(buf));
 
-	switch (slot_param) {
-	case OPT_SLOT:
-		printf("%s\n", basename(led_slot_id(s)));
+	if (!device_name)
+		device_name = "(empty)";
+
+	switch (to_print) {
+	case PRINT_SLOT:
+		printf("%s\n", slot_id);
 		return;
-	case OPT_DEVICE:
-		printf("%s\n", (device_name != NULL) ? device_name : "(empty)");
+	case PRINT_DEVICE:
+		printf("%s\n", device_name);
 		return;
-	case OPT_STATE:
-		printf("%s\n", ibpi2str(led_slot_state(s), buf, sizeof(buf)));
+	case PRINT_STATE:
+		printf("%s\n", ibpi_str);
 		return;
 	default:
 		printf("slot: %-15s led state: %-15s device: %-15s\n",
-			basename(led_slot_id(s)), ibpi2str(led_slot_state(s), buf, sizeof(buf)),
-			(device_name != NULL) ? device_name : "(empty)");
+			slot_id, ibpi_str, device_name);
 	}
 }
 
@@ -1004,7 +1015,7 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 		return set_rc;
 	}
 	case OPT_GET_SLOT:
-		print_slot(slot, req->slot_param);
+		print_slot(slot, req->to_print);
 		led_slot_list_entry_free(slot);
 		return LED_STATUS_SUCCESS;
 	default:

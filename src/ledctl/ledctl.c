@@ -894,7 +894,7 @@ static led_status_t verify_request(struct led_ctx *ctx, struct request *req)
 	return LED_STATUS_SUCCESS;
 }
 
-static void print_slot(struct led_slot_list_entry *s, int to_print)
+static void print_slot(struct led_slot_list_entry *s, enum print_param to_print)
 {
 	char buf[IPBI2STR_BUFF_SIZE];
 	const char *device_name = led_slot_device(s);
@@ -952,7 +952,7 @@ static led_status_t list_slots(enum led_cntrl_type cntrl_type)
 
 	while ((slot = led_slot_next(slot_list))) {
 		if (cntrl_type == led_slot_cntrl(slot))
-			print_slot(slot, 0);
+			print_slot(slot, PRINT_ALL);
 	}
 
 	led_slot_list_free(slot_list);

@@ -345,19 +345,23 @@ VMD - PCI Express Hot Plug Controller Driver slot number
 
 NPEM - PCI Express Downstream Port address
 
+=item
+
+SCSI
+
 =back
 
-Command returns a list of all slots for the controller type with current state and
-attached device name (if any). I<controller-type> is type of controller
-(vmd, NPEM) that should be scanned here.
+=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--device>=I<device> B<--print>=I<print>
 
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--device>=I<device>
+Command returns a slot specified for the controller type with current state and attached
+device name (if any). I<Controller-type> is type of controller (VMD, NPEM, SCSI)
+that should be scanned here. I<Device> is devnode of selected drive. I<Print> is
+optional parameter, which can be set to retrieve only one specific parameter in
+the output (device, slot or state).
 
-Displays slot details of given device. I<device> is devnode of selected drive.
+=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--print>=I<print>
 
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controlle-typer> B<--slot>=I<slot>
-
-Displays details of given slot. I<slot> is unique slot identifier.
+Displays slot details. I<slot> is a unique slot identifier.
 
 =item B<-S> or B<--set-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--state>=I<IBPI_state>
 

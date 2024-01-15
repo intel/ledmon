@@ -585,6 +585,7 @@ struct option longopt_all[] = {
 	[OPT_DEVICE]       = {"device", required_argument, NULL, 'd'},
 	[OPT_SLOT]         = {"slot", required_argument, NULL, 'p'},
 	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
+	[OPT_PRINT_PARAM]  = {"print", required_argument, NULL, 'r'},
 	[OPT_TEST]         = {"test", no_argument, NULL, 'T'},
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };

@@ -51,7 +51,7 @@
 
 #include <lib/raid.h>
 #include <lib/scsi.h>
-#include <lib/slave.h>
+#include <lib/member.h>
 #include <lib/smp.h>
 #include <lib/sysfs.h>
 #include <lib/utils.h>

@@ -32,7 +32,7 @@
 #include "led/libled.h"
 #include "list.h"
 #include "raid.h"
-#include "slave.h"
+#include "member.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"

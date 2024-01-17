@@ -18,24 +18,24 @@
  *
  */
 
-#ifndef _SLAVE_H_INCLUDED_
-#define _SLAVE_H_INCLUDED_
+#ifndef _MEMBER_H_INCLUDED_
+#define _MEMBER_H_INCLUDED_
 
 #include "block.h"
 #include "raid.h"
 
 /**
  */
-#define SLAVE_STATE_UNKNOWN      0x00
-#define SLAVE_STATE_IN_SYNC      0x01
-#define SLAVE_STATE_SPARE        0x02
-#define SLAVE_STATE_FAULTY       0x04
-#define SLAVE_STATE_WRITE_MOSTLY 0x08
-#define SLAVE_STATE_BLOCKED      0x10
+#define MEMBER_STATE_UNKNOWN      0x00
+#define MEMBER_STATE_IN_SYNC      0x01
+#define MEMBER_STATE_SPARE        0x02
+#define MEMBER_STATE_FAULTY       0x04
+#define MEMBER_STATE_WRITE_MOSTLY 0x08
+#define MEMBER_STATE_BLOCKED      0x10
 
 /**
  */
-struct slave_device {
+struct member_device {
 	struct raid_device *raid;
 	unsigned int errors;
 	unsigned int slot;
@@ -45,10 +45,10 @@ struct slave_device {
 
 /**
  */
-struct slave_device *slave_device_init(const char *path, struct list *block_list);
+struct member_device *member_device_init(const char *path, struct list *block_list);
 
 /**
  */
-void slave_device_fini(struct slave_device *device);
+void member_device_fini(struct member_device *device);
 
-#endif				/* _SLAVE_H_INCLUDED_ */
+#endif				/* _MEMBER_H_INCLUDED_ */

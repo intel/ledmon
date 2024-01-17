@@ -21,5 +21,5 @@
 
 #define BMC_SA 0x20
 
-int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datalen, void *data,
+int ipmicmd(struct led_ctx *ctx, int ma, int lun, int netfn, int cmd, int datalen, void *data,
 	    int resplen, int *rlen, void *resp);

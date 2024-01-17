@@ -65,8 +65,8 @@ const struct ibpi2value ibpi2amd_ipmi[] = {
 #define AMD_ETHANOL_X_CHANNEL	0x0d
 #define AMD_DAYTONA_X_CHANNEL	0x17
 
-#define AMD_BASE_SLAVE_ADDR	0xc0
-#define AMD_NVME_SLAVE_ADDR	0xc4
+#define AMD_BASE_MEMBER_ADDR	0xc0
+#define AMD_NVME_MEMBER_ADDR	0xc4
 
 /* The path we are given should be similar to
  * /sys/devices/pci0000:e0/0000:e0:03.3/0000:e3:00.0
@@ -254,40 +254,40 @@ static int _ipmi_platform_channel(struct amd_drive *drive)
 	return rc;
 }
 
-static int _ipmi_platform_slave_address(struct amd_drive *drive)
+static int _ipmi_platform_member_address(struct amd_drive *drive)
 {
 	int rc = 0;
 
 	switch (amd_ipmi_platform) {
 	case AMD_PLATFORM_ETHANOL_X:
-		drive->slave_addr = AMD_BASE_SLAVE_ADDR;
+		drive->member_addr = AMD_BASE_MEMBER_ADDR;
 		break;
 	case AMD_PLATFORM_DAYTONA_X:
 		if (drive->dev == AMD_NO_DEVICE) {
-			/* Assume base slave address, we may not be able
+			/* Assume base member address, we may not be able
 			 * to retrieve a valid amd_drive yet.
 			 */
-			drive->slave_addr = AMD_BASE_SLAVE_ADDR;
+			drive->member_addr = AMD_BASE_MEMBER_ADDR;
 		} else if (drive->dev == AMD_NVME_DEVICE) {
 			/* On DaytonaX systems only drive bays 19 - 24
-			 * support NVMe devices so use the slave address
+			 * support NVMe devices so use the member address
 			 * for the corresponding MG9098 chip.
 			 */
-			drive->slave_addr = AMD_NVME_SLAVE_ADDR;
+			drive->member_addr = AMD_NVME_MEMBER_ADDR;
 		} else {
 			if (drive->port <= 8)
-				drive->slave_addr = AMD_BASE_SLAVE_ADDR;
+				drive->member_addr = AMD_BASE_MEMBER_ADDR;
 			else if (drive->port > 8 && drive->port < 17)
-				drive->slave_addr = AMD_BASE_SLAVE_ADDR + 2;
+				drive->member_addr = AMD_BASE_MEMBER_ADDR + 2;
 			else
-				drive->slave_addr = AMD_NVME_SLAVE_ADDR;
+				drive->member_addr = AMD_NVME_MEMBER_ADDR;
 		}
 
 		break;
 	default:
 		rc = -1;
 		lib_log(drive->ctx, LED_LOG_LEVEL_ERROR,
-			"AMD Platform does not have a defined IPMI slave address\n");
+			"AMD Platform does not have a defined IPMI member address\n");
 		break;
 	}
 
@@ -305,12 +305,12 @@ static int _set_ipmi_register(int enable, uint8_t reg, struct amd_drive *drive)
 	memset(cmd_data, 0, sizeof(cmd_data));
 
 	rc = _ipmi_platform_channel(drive);
-	rc |= _ipmi_platform_slave_address(drive);
+	rc |= _ipmi_platform_member_address(drive);
 	if (rc)
 		return -1;
 
 	cmd_data[0] = drive->channel;
-	cmd_data[1] = drive->slave_addr;
+	cmd_data[1] = drive->member_addr;
 	cmd_data[2] = 0x1;
 	cmd_data[3] = reg;
 
@@ -319,7 +319,7 @@ static int _set_ipmi_register(int enable, uint8_t reg, struct amd_drive *drive)
 
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "Retrieving current register status\n");
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "channel", cmd_data[0],
-		"slave addr", cmd_data[1]);
+		"member addr", cmd_data[1]);
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "len", cmd_data[2],
 		"register", cmd_data[3]);
 
@@ -346,7 +346,7 @@ static int _set_ipmi_register(int enable, uint8_t reg, struct amd_drive *drive)
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "Updating register status: %x -> %x\n",
 		drives_status, new_drives_status);
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "channel", cmd_data[0],
-		"slave addr", cmd_data[1]);
+		"member addr", cmd_data[1]);
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_2, "len", cmd_data[2],
 		"register", cmd_data[3]);
 	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, REG_FMT_1, "status", cmd_data[4]);
@@ -409,12 +409,12 @@ int _amd_ipmi_em_enabled(const char *path, struct led_ctx *ctx)
 	memset(&drive, 0, sizeof(struct amd_drive));
 
 	rc = _ipmi_platform_channel(&drive);
-	rc |= _ipmi_platform_slave_address(&drive);
+	rc |= _ipmi_platform_member_address(&drive);
 	if (rc)
 		return -1;
 
 	cmd_data[0] = drive.channel;
-	cmd_data[1] = drive.slave_addr;
+	cmd_data[1] = drive.member_addr;
 	cmd_data[2] = 0x1;
 	cmd_data[3] = MG9098_CHIP_ID_REG;
 

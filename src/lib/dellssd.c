@@ -43,7 +43,7 @@
 #include "list.h"
 #include "raid.h"
 #include "scsi.h"
-#include "slave.h"
+#include "member.h"
 #include "smp.h"
 #include "status.h"
 #include "sysfs.h"

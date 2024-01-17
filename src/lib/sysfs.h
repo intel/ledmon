@@ -57,11 +57,11 @@ struct sysfs {
 
 	/**
 	 * This is internal variable global to sysfs module only. It is a list of
-	 * slave devices registered in the system. Use sysfs_init()
+	 * member devices registered in the system. Use sysfs_init()
 	 * function to initialize the variable. Use sysfs_scan() function to populate
 	 * the list. Use sysfs_reset() function to delete the content of the list.
 	 */
-	struct list slave_list;
+	struct list member_list;
 
 	/**
 	 * This is internal variable global to sysfs module only. It is a list of
@@ -116,7 +116,7 @@ void sysfs_reset(struct led_ctx *ctx);
  * @brief Scans sysfs tree and populates internal lists.
  *
  * This function scans sysfs tree for storage controllers, block devices, RAID
- * devices, container devices, slave devices and enclosure devices registered
+ * devices, container devices, member devices and enclosure devices registered
  * in the system. Only supported block and controller devices are put on a list.
  */
 void sysfs_scan(struct led_ctx *ctx);

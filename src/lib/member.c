@@ -31,7 +31,7 @@
 
 #include "config.h"
 #include "list.h"
-#include "slave.h"
+#include "member.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
@@ -41,7 +41,7 @@
 static unsigned char _get_state(const char *path)
 {
 	char *p, *t, *s;
-	unsigned char result = SLAVE_STATE_UNKNOWN;
+	unsigned char result = MEMBER_STATE_UNKNOWN;
 
 	s = p = get_text(path, "state");
 	if (p) {
@@ -50,15 +50,15 @@ static unsigned char _get_state(const char *path)
 			if (t)
 				*(t++) = '\0';
 			if (strcmp(s, "spare") == 0)
-				result |= SLAVE_STATE_SPARE;
+				result |= MEMBER_STATE_SPARE;
 			else if (strcmp(s, "in_sync") == 0)
-				result |= SLAVE_STATE_IN_SYNC;
+				result |= MEMBER_STATE_IN_SYNC;
 			else if (strcmp(s, "faulty") == 0)
-				result |= SLAVE_STATE_FAULTY;
+				result |= MEMBER_STATE_FAULTY;
 			else if (strcmp(s, "write_mostly") == 0)
-				result |= SLAVE_STATE_WRITE_MOSTLY;
+				result |= MEMBER_STATE_WRITE_MOSTLY;
 			else if (strcmp(s, "blocked") == 0)
-				result |= SLAVE_STATE_BLOCKED;
+				result |= MEMBER_STATE_BLOCKED;
 			s = t;
 		}
 		free(p);
@@ -105,7 +105,7 @@ static struct block_device *_get_block(const char *path, struct list *block_list
 	if (!realpath(temp, link))
 		return NULL;
 
-	/* translate partition to master block dev */
+	/* translate partition to primary block dev */
 	if (snprintf(temp, PATH_MAX, "%s/partition", link) > 0) {
 		struct stat sb;
 		char *ptr;
@@ -126,14 +126,14 @@ static struct block_device *_get_block(const char *path, struct list *block_list
 
 /**
  */
-struct slave_device *slave_device_init(const char *path, struct list *block_list)
+struct member_device *member_device_init(const char *path, struct list *block_list)
 {
-	struct slave_device *device = NULL;
+	struct member_device *device = NULL;
 	struct block_device *block;
 
 	block = _get_block(path, block_list);
 	if (block) {
-		device = malloc(sizeof(struct slave_device));
+		device = malloc(sizeof(struct member_device));
 		if (device && _get_slot(path, &device->slot) == 0) {
 			device->raid = NULL;
 			device->state = _get_state(path);
@@ -149,7 +149,7 @@ struct slave_device *slave_device_init(const char *path, struct list *block_list
 
 /**
  */
-void slave_device_fini(struct slave_device *device)
+void member_device_fini(struct member_device *device)
 {
 	free(device);
 }

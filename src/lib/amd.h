@@ -29,7 +29,7 @@ struct amd_drive {
 	int		drive_bay;
 	int		initiator;
 	uint8_t		channel;
-	uint8_t		slave_addr;
+	uint8_t		member_addr;
 	enum amd_device_type dev;
 	struct led_ctx	*ctx;
 };

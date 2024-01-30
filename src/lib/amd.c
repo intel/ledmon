@@ -100,7 +100,7 @@ int _find_file_path(const char *start_path, const char *filename,
 
 /* For AMD platforms to use IPMI for LED control we need to know
  * the platform we're running on. This enables us to select the
- * proper channel and member address when making IPMI requests.
+ * proper channel and tail address when making IPMI requests.
  * Platforms not checked for IPMI enablement default to using SGPIO.
  */
 int amd_em_enabled(const char *path, struct led_ctx *ctx)

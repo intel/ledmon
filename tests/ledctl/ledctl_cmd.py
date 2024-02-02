@@ -119,6 +119,8 @@ class LedctlCmd:
             return False
 
         for slot_filter in self.slot_filters:
+            if not slot_filter:
+                return False
             if slot.slot.startswith(slot_filter):
                 # Filter out this slot
                 return True

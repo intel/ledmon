@@ -587,6 +587,7 @@ struct option longopt_all[] = {
 	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
 	[OPT_PRINT_PARAM]  = {"print", required_argument, NULL, 'r'},
 	[OPT_TEST]         = {"test", no_argument, NULL, 'T'},
+	[OPT_IBPI]         = {"ibpi", no_argument, NULL, 'I' },
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 

@@ -293,92 +293,115 @@ I<failure> or I<disk_failed> is translated to I<ses_fault>
 
 =back
 
-=head2 List of Devices
+=head1 MODES AND MODES SPECIFIC OPTIONS
 
-The application accepts a list of devices in two formats. The first
-format is a list with comma separated elements. The second format is S<a
-list> in curly braces and elements are separated by space. See examples
-section below for details.
+This chapter describes modes and options that can be used with for particular mode. If mode is not
+specified then it fallbacks to IBPI mode.
 
-A device is a path to file in /dev directory or in /sys/block directory.
+=head2 B<-I> or B<--ibpi>
 
-The LEDs of devices listed in I<list_of_devices> are set to the given
-pattern I<pattern_name> and all other LEDs, on all devices, are turned off (unless --listed-only
-option is given).
+Sets pattern on given devices. Allows ledctl to determine best controller automatically. Must be
+followed by IBPI option.
 
-=head1 OPTIONS
+=over 4
 
-=over 8
+=item B<PATTERN={device1 device2}> or B<PATTERN=device1,device2>
 
-=item B<-l> or B<--log>=I<path>
+IBPI option with special syntax. It accepts a list of devices in two formats. The first format is
+a list with comma separated elements. The second format is a list in curly braces and elements are
+separated by space. Reffer to "Pattern names" for supported states list.
+See "EXAMPLES" for examples of usage.
 
-Sets a path to local log file. If this option is specified the global log
-file F</var/log/ledctl.log> is not used.
+=item B<-x> or B<--listed-only>
+
+By default ledctl checks all devices and may update states on different ones than requested if state
+change is determined (generally it happens for devices in raid array). With this option ledctl will
+change state only on devices listed in CLI. It is optional.
+
+=back
+
+=head2 B<-L> or B<--list-controllers>
+
+Prints information (system path and type) of all controllers detected by ledctl and exits.
+
+=head2 B<-P> or B<--list-slots>
+
+Prints all slots for the controller type. Must be followed by B<--controller-type>.
+
+=head2 B<-G> or B<--get-slot>
+
+Displays particular slot details. Must be followed by B<--controller-type> and slot identificatior
+B<--device> or B<--slot>. B<--print> can be used to control output.
+
+=over 4
+
+=item B<-r=I<print>> or B<--print>=I<print>>
+
+It is optional parameter for B<--get-slot>. It is used to retrieve only one specific property
+from output per every slot. Supported values are: slot, device and state.
+
+=back
+
+=head2 B<-S> or B<--set-slot>
+
+Changes led state for slot. Must be followed by B<--controller-type>, slot identificatior
+B<--device> or B<--slot> and B<--state>.
+
+=over 4
+
+=item B<-p=I<state>> or B<--state=I<state>>
+
+It is mandatory parmeter for B<--set-slot>. It provides state to be set for the slot. Reffer to
+"Pattern names" for supported states list.
+
+=back
+
+=head2 SLOT MANAGEMENT OPTIONS
+
+This section describes options necessary by varius slot management modes.
+
+=over 4
+
+=item B<-n=I<controller_type>> or B<--controller-type=I<controller_type>>
+
+Controller type chosen for the request. Supported types are: VMD, NPEM and SCSI.
+
+=item B<-d=I<device>> or B<--device=I<device>>
+
+Block device node for device attached to the slot. It can be used instead of B<--slot>.
+
+=item B<-p=I<slot>> or B<--slot=I<slot>>
+
+Unique slot identifier It can be used instead of B<--device>. Use B<--list-slots> to determine slot
+identifiers. Slot definition depends on the controller and is unique across all controllers of the
+same type. Slot identifier is always available, even if device is not connected.
+
+=back
+
+=head1 GENERAL OPTIONS
+
+This section describes options aviable for every mode.
+
+=over 4
+
+=item B<-l-I<path>> or B<--log>=I<path>
+
+Sets a path to log file. If this option is not specified then default log file
+F</var/log/ledctl.log> is used.
 
 =item B<-h> or B<--help>
 
-Prints this text out and exits.
+Prints help text out and exits. Use B<--MODE --help> to get help for requested mode or B<--help> to
+get general help.
 
 =item B<-v> or B<--version>
 
 Displays version of ledctl and information about the license and exits.
 
-=item B<-L> or B<--list-controllers>
+=item B<--log_level=I<log_level>>
 
-Prints information (system path and type) of all controllers detected by
-ledmon and exits.
-
-=item B<-P> or B<--list-slots> B<--controller-type>=I<controller-type>
-
-Prints all slots for the controller type. Slot definition depends on the controller
-and is unique across all controllers of the same type.
-
-Definitions for supported controller types are described below:
-
-=over
-
-=item
-
-VMD - PCI Express Hot Plug Controller Driver slot number
-
-=item
-
-NPEM - PCI Express Downstream Port address
-
-=item
-
-SCSI
-
-=back
-
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--device>=I<device> B<--print>=I<print>
-
-Command returns a slot specified for the controller type with current state and attached
-device name (if any). I<Controller-type> is type of controller (VMD, NPEM, SCSI)
-that should be scanned here. I<Device> is devnode of selected drive. I<Print> is
-optional parameter, which can be set to retrieve only one specific parameter in
-the output (device, slot or state).
-
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--print>=I<print>
-
-Displays slot details. I<slot> is a unique slot identifier.
-
-=item B<-S> or B<--set-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--state>=I<IBPI_state>
-
-Changes led state for given slot. I<controller-type> is type of the controller.
-I<slot> is unique slot identifier. I<IBPI_state> is led pattern.
-
-=item B<-x> or B<--listed-only>
-
-With this option ledctl will change state only on devices listed in CLI. The
-rest of devices will not be touched.
-
-=item B<--quiet> or B<--error> or B<--warning> or B<--info> or B<--debug> or B<--all>
-
-Verbose level - 'quiet' means no logging at all and 'all' means to log
-everything. The levels are given in order. If user specifies more then one
-verbose option the last option comes into effect. The default level is
-'warning'. Verbose level also can be set by B<--log-level>=I<level>.
+Sets log level for application. Following levels can be used, starting from the most verbose:
+ALL, DEBUG, INFO, WARNING, ERROR, QUIET. By default WARNING is set.
 
 =back
 

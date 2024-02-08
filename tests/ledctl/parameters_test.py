@@ -3,6 +3,9 @@
 
 from ledctl.ledctl_cmd import LedctlCmd
 import pytest
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 SUCCESS_EXIT_CODE = 0
 CMDLINE_ERROR_EXIT_CODE = 35
@@ -82,3 +85,89 @@ def test_parameter_log_level_all_values(ledctl_binary):
         args = "--list-controllers -T --" + level
         output = cmd.run_ledctl_cmd_decode(args.split())
         assert "LOG_LEVEL=" + level.upper() in output
+
+
+def parse_version(lines):
+    help_header = [
+        "Intel(R) Enclosure LED Control Application",
+        "Copyright (C) 2009-2023 Intel Corporation."
+    ]
+
+    assert (lines[0].startswith(help_header[0]))
+    assert (lines[1] == help_header[1])
+    assert [lines[2] == ""]
+
+
+# Check help style and verify that size is no longer than 100 lines.
+def parse_help(lines):
+    parse_version(lines)
+
+    line_inter = iter(lines[3:])
+
+    line = next(line_inter)
+    assert (line.startswith("Usage: ledctl --"))
+    assert (line.endswith(" [option...] ..."))
+    assert (next(line_inter) == "")
+
+    # Now description comes, ended by empty line.
+    while next(line_inter) != "":
+        continue
+
+    # Here options are listed
+    line = next(line_inter)
+    assert (line == "Options:" or line == "Modes:")
+    # Control place of short option printing to keep columns equals
+    length = 0
+    while True:
+        line = next(line_inter)
+        if line == "": break
+        LOGGER.debug(f"line {line}")
+        if length == 0:
+            length = line.find(" -")
+        else:
+            assert (line.find(" -") == length)
+
+    help_footer = [
+        "Refer to ledctl(8) man page for more detailed description (man ledctl).",
+        "Bugs should be reported at: https://github.com/intel/ledmon/issues"
+    ]
+
+    assert (next(line_inter) == help_footer[0])
+    assert (next(line_inter) == help_footer[1])
+    assert (next(line_inter) == "")
+    assert (next(line_inter, "end") == "end")
+
+    # Check globally that line limit is not exceeded.
+    for line in lines:
+        assert (len(line) <= 100)
+
+
+@pytest.mark.parametrize(
+    "help_cmd",
+    [
+        "--help", "-h", "--help --badflag", "-hd", "-h -s",
+        "--set-slot --help", "-S -h --badflag", "-Sh --badflag",
+        "--get-slot --help", "-Ghb", "--list-controllers --help",
+        "--ibpi --help", "--list-slots --help", "-L -h"
+    ],
+)
+# Check if all lines are formated correctly and same header and footers are used.
+# Test does not check options/mode content and description, just if formating is as expetcted.
+def test_main_help(ledctl_binary, help_cmd):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    res = cmd.run_ledctl_cmd_decode(help_cmd.split())
+    lines = res.split('\n')
+    parse_help(lines)
+
+
+@pytest.mark.parametrize(
+    "version_cmd",
+    ["--version", "-v", "-vh", "--version --badflag"],
+)
+def test_version(ledctl_binary, version_cmd):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    res = cmd.run_ledctl_cmd_decode(version_cmd.split())
+    lines = res.split('\n')
+    parse_version(lines)

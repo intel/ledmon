@@ -1148,7 +1148,7 @@ int main(int argc, char *argv[])
 
 	if (req.chosen_opt == OPT_VERSION && argc > 2) {
 		fprintf(stderr, "Parameter '%s' can be used alone only.\n",
-				longopt_all[req.chosen_opt].name);
+			longopt_all[req.chosen_opt].name);
 		exit(LED_STATUS_CMDLINE_ERROR);
 	}
 

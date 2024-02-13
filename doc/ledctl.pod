@@ -293,7 +293,7 @@ I<failure> or I<disk_failed> is translated to I<ses_fault>
 
 =back
 
-=head1 MODES AND MODES SPECIFIC OPTIONS
+=head1 MODES AND MODE SPECIFIC OPTIONS
 
 This chapter describes modes and options that can be used with for particular mode. If mode is not
 specified then it fallbacks to IBPI mode.

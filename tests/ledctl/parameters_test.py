@@ -10,6 +10,9 @@ LOGGER = logging.getLogger(__name__)
 SUCCESS_EXIT_CODE = 0
 CMDLINE_ERROR_EXIT_CODE = 35
 
+# Line length limit for best user experience.
+MAX_LINE_LENGTH = 100
+
 
 def test_parameters_are_valid_long_test_flag(ledctl_binary):
     cmd = LedctlCmd(ledctl_binary)
@@ -95,7 +98,7 @@ def parse_version(lines):
 
     assert (lines[0].startswith(help_header[0]))
     assert (lines[1] == help_header[1])
-    assert [lines[2] == ""]
+    assert (lines[2] == "")
 
 
 # Check help style and verify that size is no longer than 100 lines.
@@ -139,7 +142,7 @@ def parse_help(lines):
 
     # Check globally that line limit is not exceeded.
     for line in lines:
-        assert (len(line) <= 100)
+        assert (len(line) <= MAX_LINE_LENGTH)
 
 
 @pytest.mark.parametrize(

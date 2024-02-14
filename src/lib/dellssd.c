@@ -254,11 +254,9 @@ int dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 	ibpi2val = get_by_ibpi(ibpi, ibpi2ssd, ARRAY_SIZE(ibpi2ssd));
 
 	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
-		char buf[IPBI2STR_BUFF_SIZE];
 
 		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_INFO,
-			"SSD: Controller doesn't support %s pattern\n",
-			ibpi2str(ibpi, buf, sizeof(buf)));
+			"SSD: Controller doesn't support %s pattern\n", ibpi2str(ibpi));
 		__set_errno_and_return(EINVAL);
 	}
 

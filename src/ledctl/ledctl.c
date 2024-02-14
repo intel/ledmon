@@ -376,75 +376,12 @@ static struct ibpi_state *_ibpi_find(const struct list *ibpi_local_list,
  */
 static struct ibpi_state *_ibpi_state_get(const char *name)
 {
+	enum led_ibpi_pattern ibpi = string2ibpi(name);
 	struct ibpi_state *state = NULL;
-	enum led_ibpi_pattern ibpi;
 
-	if (strcmp(name, "locate") == 0) {
-		ibpi = LED_IBPI_PATTERN_LOCATE;
-	} else if (strcmp(name, "locate_off") == 0) {
-		ibpi = LED_IBPI_PATTERN_LOCATE_OFF;
-	} else if (strcmp(name, "normal") == 0) {
-		ibpi = LED_IBPI_PATTERN_NORMAL;
-	} else if (strcmp(name, "off") == 0) {
-		ibpi = LED_IBPI_PATTERN_NORMAL;
-	} else if ((strcmp(name, "ica") == 0) ||
-		   (strcmp(name, "degraded") == 0)) {
-		ibpi = LED_IBPI_PATTERN_DEGRADED;
-	} else if (strcmp(name, "rebuild") == 0) {
-		ibpi = LED_IBPI_PATTERN_REBUILD;
-	} else if ((strcmp(name, "ifa") == 0) ||
-		   (strcmp(name, "failed_array") == 0)) {
-		ibpi = LED_IBPI_PATTERN_FAILED_ARRAY;
-	} else if (strcmp(name, "hotspare") == 0) {
-		ibpi = LED_IBPI_PATTERN_HOTSPARE;
-	} else if (strcmp(name, "pfa") == 0) {
-		ibpi = LED_IBPI_PATTERN_PFA;
-	} else if ((strcmp(name, "failure") == 0) ||
-		   (strcmp(name, "disk_failed") == 0)) {
-		ibpi = LED_IBPI_PATTERN_FAILED_DRIVE;
-	} else if (strcmp(name, "locate_and_failure") == 0) {
-		ibpi = LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE;
-	} else if (strcmp(name, "ses_abort") == 0) {
-		ibpi = LED_SES_REQ_ABORT;
-	} else if (strcmp(name, "ses_rebuild") == 0) {
-		ibpi = LED_SES_REQ_REBUILD;
-	} else if (strcmp(name, "ses_ifa") == 0) {
-		ibpi = LED_SES_REQ_IFA;
-	} else if (strcmp(name, "ses_ica") == 0) {
-		ibpi = LED_SES_REQ_ICA;
-	} else if (strcmp(name, "ses_cons_check") == 0) {
-		ibpi = LED_SES_REQ_CONS_CHECK;
-	} else if (strcmp(name, "ses_hotspare") == 0) {
-		ibpi = LED_SES_REQ_HOTSPARE;
-	} else if (strcmp(name, "ses_rsvd_dev") == 0) {
-		ibpi = LED_SES_REQ_RSVD_DEV;
-	} else if (strcmp(name, "ses_ok") == 0) {
-		ibpi = LED_SES_REQ_OK;
-	} else if (strcmp(name, "ses_ident") == 0) {
-		ibpi = LED_SES_REQ_IDENT;
-	} else if (strcmp(name, "ses_rm") == 0) {
-		ibpi = LED_SES_REQ_RM;
-	} else if (strcmp(name, "ses_insert") == 0) {
-		ibpi = LED_SES_REQ_INS;
-	} else if (strcmp(name, "ses_missing") == 0) {
-		ibpi = LED_SES_REQ_MISSING;
-	} else if (strcmp(name, "ses_dnr") == 0) {
-		ibpi = LED_SES_REQ_DNR;
-	} else if (strcmp(name, "ses_active") == 0) {
-		ibpi = LED_SES_REQ_ACTIVE;
-	} else if (strcmp(name, "ses_enable_bb") == 0) {
-		ibpi = LED_SES_REQ_EN_BB;
-	} else if (strcmp(name, "ses_enable_ba") == 0) {
-		ibpi = LED_SES_REQ_EN_BA;
-	} else if (strcmp(name, "ses_devoff") == 0) {
-		ibpi = LED_SES_REQ_DEV_OFF;
-	} else if (strcmp(name, "ses_fault") == 0) {
-		ibpi = LED_SES_REQ_FAULT;
-	} else if (strcmp(name, "ses_prdfail") == 0) {
-		ibpi = LED_SES_REQ_PRDFAIL;
-	} else {
+	if (ibpi == LED_IBPI_PATTERN_UNKNOWN)
 		return NULL;
-	}
+
 	state = _ibpi_find(&ibpi_list, ibpi);
 	if (state == NULL)
 		state = _ibpi_state_init(ibpi);
@@ -499,9 +436,7 @@ static led_status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 			return LED_STATUS_OUT_OF_MEMORY;
 		}
 	} else {
-		char buf[IPBI2STR_BUFF_SIZE];
-		log_info("%s: %s: device already on the list.",
-			 ibpi2str(state->ibpi, buf, sizeof(buf)), path);
+		log_info("%s: %s: device already on the list.", ibpi2str(state->ibpi), path);
 	}
 	return LED_STATUS_SUCCESS;
 }
@@ -510,14 +445,11 @@ static led_status_t verify_block_lists(void)
 {
 	if (!list_is_empty(&ibpi_list)) {
 		struct ibpi_state *state;
-		char buf[IPBI2STR_BUFF_SIZE];
 
-		list_for_each(&ibpi_list, state) {
-			if (list_is_empty(&state->block_list)) {
+		list_for_each(&ibpi_list, state)
+			if (list_is_empty(&state->block_list))
 				log_warning("IBPI %s: missing block device(s)... pattern ignored.",
-						ibpi2str(state->ibpi, buf, sizeof(buf)));
-			}
-		}
+					    ibpi2str(state->ibpi));
 	} else {
 		log_error("missing operand(s)... run %s --help for details.", progname);
 		return LED_STATUS_LIST_EMPTY;
@@ -896,10 +828,9 @@ static led_status_t verify_request(struct led_ctx *ctx, struct request *req)
 
 static void print_slot(struct led_slot_list_entry *s, enum print_param to_print)
 {
-	char buf[IPBI2STR_BUFF_SIZE];
 	const char *device_name = led_slot_device(s);
 	const char *slot_id = basename(led_slot_id(s));
-	const char *ibpi_str = ibpi2str(led_slot_state(s), buf, sizeof(buf));
+	const char *ibpi_str = ibpi2str(led_slot_state(s));
 
 	if (!device_name)
 		device_name = "(empty)";
@@ -1002,12 +933,11 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 	case OPT_SET_SLOT:
 	{
 		led_status_t set_rc = LED_STATUS_SUCCESS;
-		char buf[IPBI2STR_BUFF_SIZE];
 
 		if (req->state != LED_IBPI_PATTERN_LOCATE_OFF
 		    && led_slot_state(slot) == req->state) {
 			log_warning("Led state: %s is already set for the slot.",
-				    ibpi2str(req->state, buf, sizeof(buf)));
+				    ibpi2str(req->state));
 		} else {
 			set_rc = led_slot_set(ctx, slot, req->state);
 		}

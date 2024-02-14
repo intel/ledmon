@@ -472,13 +472,11 @@ static int _is_failed_array(struct raid_device *raid)
  */
 static void _set_block_state(struct block_device *block, enum led_ibpi_pattern ibpi)
 {
-	char buf[IPBI2STR_BUFF_SIZE];
 	char *debug_dev = strrchr(block->sysfs_path, '/');
 	debug_dev = debug_dev ? debug_dev + 1 : block->sysfs_path;
 
 	lib_log(block->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
-		"(%s): device: %s, state: %s", __func__, debug_dev,
-		ibpi2str(ibpi, buf, sizeof(buf)));
+		"(%s): device: %s, state: %s", __func__, debug_dev, ibpi2str(ibpi));
 	if (block->ibpi < ibpi)
 		block->ibpi = ibpi;
 }

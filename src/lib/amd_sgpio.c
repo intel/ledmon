@@ -624,14 +624,12 @@ static int _set_ibpi(struct block_device *device, enum led_ibpi_pattern ibpi)
 	struct transmit_register tx_reg;
 	struct cache_entry *cache;
 	struct cache_entry cache_dup;
-	char buf[IPBI2STR_BUFF_SIZE];
 
 	memset(&drive, 0, sizeof(struct amd_drive));
 	drive.ctx = device->cntrl->ctx;
 
 	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "\n");
-	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "Setting %s...",
-		ibpi2str(ibpi, buf, sizeof(buf)));
+	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "Setting %s...", ibpi2str(ibpi));
 	lib_log(drive.ctx, LED_LOG_LEVEL_DEBUG, "\tdevice: ...%s",
 		strstr(device->sysfs_path, "/ata"));
 	lib_log(drive.ctx, LED_LOG_LEVEL_DEBUG, "\tbuffer: ...%s",

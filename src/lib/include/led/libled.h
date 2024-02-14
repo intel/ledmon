@@ -224,7 +224,7 @@ enum led_ibpi_pattern {
 	LED_IBPI_PATTERN_LOCATE_OFF = 11,
 	LED_IBPI_PATTERN_ADDED = 12,
 	LED_IBPI_PATTERN_REMOVED = 13,
-	LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE = 14,
+	LED_IBPI_PATTERN_LOCATE_AND_FAIL = 14,
 	/*
 	 * Below are SES-2 codes. Note that by default most IBPI messages are
 	 * translated into SES when needed but SES codes can be added also.

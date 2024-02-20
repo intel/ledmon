@@ -58,7 +58,7 @@ static int ipmi_open(void)
 	return -1;
 }
 
-int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datalen, void *data,
+int ipmicmd(struct led_ctx *ctx, int ta, int lun, int netfn, int cmd, int datalen, void *data,
 	    int resplen, int *rlen, void *resp)
 {
 	struct ipmi_system_interface_addr saddr = {0};
@@ -76,7 +76,7 @@ int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datale
 
 	memset(tresp, 0, sizeof(tresp));
 
-	if (sa == BMC_SA) {
+	if (ta == BMC_TA) {
 		saddr.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 		saddr.channel = IPMI_BMC_CHANNEL;
 		saddr.lun = 0;
@@ -85,7 +85,7 @@ int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datale
 	} else {
 		iaddr.addr_type = IPMI_IPMB_ADDR_TYPE;
 		iaddr.channel = 0;
-		iaddr.slave_addr = sa;
+		iaddr.slave_addr = ta;
 		iaddr.lun = lun;
 		req.addr = (void *)&iaddr;
 		req.addr_len = sizeof(iaddr);

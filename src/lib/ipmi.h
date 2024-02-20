@@ -19,7 +19,7 @@
 
 #include "led/libled.h"
 
-#define BMC_SA 0x20
+#define BMC_TA 0x20
 
 int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	    int resplen, int *rlen, void *resp);

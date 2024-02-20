@@ -40,7 +40,7 @@
 #include "npem.h"
 #include "pci_slot.h"
 #include "raid.h"
-#include "slave.h"
+#include "tail.h"
 #include "slot.h"
 #include "stdio.h"
 #include "sysfs.h"
@@ -107,11 +107,11 @@ static void _get_id(const char *path, struct device_id *d_id)
 }
 
 /**
- * @brief Adds slave device to RAID volume.
+ * @brief Adds tail device to RAID volume.
  *
- * This is internal function of sysfs module. The function puts slave device on
- * list of slave devices of RAID volume. The memory is allocated and structure
- * fields populated. RAID device is link to slave device.
+ * This is internal function of sysfs module. The function puts tail device on
+ * list of tail devices of RAID volume. The memory is allocated and structure
+ * fields populated. RAID device is link to tail device.
  *
  * @param[in]      path           Path to 'md' directory of RAID device in sysfs
  *                                tree.
@@ -120,37 +120,37 @@ static void _get_id(const char *path, struct device_id *d_id)
  *
  * @return The function does not return a value.
  */
-static void _slave_vol_add(struct led_ctx *ctx, const char *path, struct raid_device *raid)
+static void _tail_vol_add(struct led_ctx *ctx, const char *path, struct raid_device *raid)
 {
-	struct slave_device *device;
+	struct tail_device *device;
 
 	char *t = strrchr(path, '/');
 	if (strncmp(t + 1, "dev-", 4) == 0) {
-		device = slave_device_init(path, &ctx->sys.sysfs_block_list);
+		device = tail_device_init(path, &ctx->sys.sysfs_block_list);
 		if (device) {
 			device->raid = raid;
-			list_append_ctx(&ctx->sys.slave_list, device, ctx);
+			list_append_ctx(&ctx->sys.tail_list, device, ctx);
 		}
 	}
 }
 
 /**
- * @brief Checks for duplicate entries on list of slave devices.
+ * @brief Checks for duplicate entries on list of tail devices.
  *
  * This is internal function of sysfs module. The functions checks if the given
- * slave device is already on list with slave devices. This function is used by
- * _slave_cnt_add() function to avoid duplicate entries.
+ * tail device is already on list with tail devices. This function is used by
+ * _tail_cnt_add() function to avoid duplicate entries.
  *
- * @param[in]      slave          Pointer to slave device structure to check.
+ * @param[in]      tail          Pointer to tail device structure to check.
  *
  * @return 1 the given device is on the list, otherwise the function returns 0.
  */
-static int _is_duplicate(struct list *slave_list, struct slave_device *slave)
+static int _is_duplicate(struct list *tail_list, struct tail_device *tail)
 {
-	struct slave_device *device;
+	struct tail_device *device;
 
-	list_for_each(slave_list, device) {
-		if (device->block == slave->block)
+	list_for_each(tail_list, device) {
+		if (device->block == tail->block)
 			return 1;
 	}
 	return 0;
@@ -160,18 +160,18 @@ static int _is_duplicate(struct list *slave_list, struct slave_device *slave)
  * @brief Checks if given disk can be removed from sysfs_block_list if
  * metadata is not present.
  *
- * This is internal function (action) of sysfs module. The slave_list keeps
- * all devices with metadata (raid devices). If disk is not included in slave
+ * This is internal function (action) of sysfs module. The tail_list keeps
+ * all devices with metadata (raid devices). If disk is not included in tail
  * list there is not metadata on it.
  *
  * @return 1 if can be removed, otherwise 0.
  */
-static int _is_non_raid_device(struct list *slave_list, struct block_device *block_device)
+static int _is_non_raid_device(struct list *tail_list, struct block_device *block_device)
 {
-	struct slave_device *slave_device;
+	struct tail_device *tail_device;
 
-	list_for_each(slave_list, slave_device) {
-		if (strcmp(slave_device->block->sysfs_path,
+	list_for_each(tail_list, tail_device) {
+		if (strcmp(tail_device->block->sysfs_path,
 			   block_device->sysfs_path) == 0)
 			return 0;
 	}
@@ -181,9 +181,9 @@ static int _is_non_raid_device(struct list *slave_list, struct block_device *blo
 
 /**
  */
-static void _slave_cnt_add(struct led_ctx *ctx, const char *path, struct raid_device *raid)
+static void _tail_cnt_add(struct led_ctx *ctx, const char *path, struct raid_device *raid)
 {
-	struct slave_device *device;
+	struct tail_device *device;
 
 	char *t = strrchr(path, '/');
 
@@ -191,13 +191,13 @@ static void _slave_cnt_add(struct led_ctx *ctx, const char *path, struct raid_de
 		return;
 
 	if (strncmp(t + 1, "dev-", 4) == 0) {
-		device = slave_device_init(path, &ctx->sys.sysfs_block_list);
+		device = tail_device_init(path, &ctx->sys.sysfs_block_list);
 		if (device) {
-			if (!_is_duplicate(&ctx->sys.slave_list, device)) {
+			if (!_is_duplicate(&ctx->sys.tail_list, device)) {
 				device->raid = raid;
-				list_append_ctx(&ctx->sys.slave_list, device, ctx);
+				list_append_ctx(&ctx->sys.tail_list, device, ctx);
 			} else {
-				slave_device_fini(device);
+				tail_device_fini(device);
 			}
 		}
 	}
@@ -216,9 +216,9 @@ static void _link_raid_device(struct led_ctx *ctx, struct raid_device *device,
 
 		list_for_each(&dir, dir_path) {
 			if (type == DEVICE_TYPE_VOLUME)
-				_slave_vol_add(ctx, dir_path, device);
+				_tail_vol_add(ctx, dir_path, device);
 			else if (type == DEVICE_TYPE_CONTAINER)
-				_slave_cnt_add(ctx, dir_path, device);
+				_tail_cnt_add(ctx, dir_path, device);
 		}
 		list_erase(&dir);
 	}
@@ -369,7 +369,7 @@ static void _scan_cntrl(struct led_ctx *ctx)
 	}
 }
 
-static void _scan_slave(struct led_ctx *ctx)
+static void _scan_tail(struct led_ctx *ctx)
 {
 	struct raid_device *device;
 
@@ -381,7 +381,7 @@ static void _scan_slave(struct led_ctx *ctx)
 		struct node *node;
 
 		list_for_each_node(&ctx->sys.sysfs_block_list, node) {
-			if (_is_non_raid_device(&ctx->sys.slave_list, node->item))
+			if (_is_non_raid_device(&ctx->sys.tail_list, node->item))
 				list_delete(node);
 		}
 	}
@@ -514,7 +514,7 @@ static void _set_array_state(struct led_ctx *ctx,
 
 /**
  */
-static void _determine(struct led_ctx *ctx, struct slave_device *device)
+static void _determine(struct led_ctx *ctx, struct tail_device *device)
 {
 	if (!device->block->raid_dev ||
 	     (device->block->raid_dev->type == DEVICE_TYPE_CONTAINER &&
@@ -523,12 +523,12 @@ static void _determine(struct led_ctx *ctx, struct slave_device *device)
 		device->block->raid_dev = raid_device_duplicate(device->raid);
 	}
 
-	if ((device->state & SLAVE_STATE_FAULTY) != 0) {
+	if ((device->state & TAIL_STATE_FAULTY) != 0) {
 		_set_block_state(device->block, LED_IBPI_PATTERN_FAILED_DRIVE);
 	} else if ((device->
-	     state & (SLAVE_STATE_BLOCKED | SLAVE_STATE_WRITE_MOSTLY)) != 0) {
+	     state & (TAIL_STATE_BLOCKED | TAIL_STATE_WRITE_MOSTLY)) != 0) {
 		_set_block_state(device->block, LED_IBPI_PATTERN_NORMAL);
-	} else if ((device->state & SLAVE_STATE_SPARE) != 0) {
+	} else if ((device->state & TAIL_STATE_SPARE) != 0) {
 		if (_is_failed_array(device->raid) == 0) {
 			if (device->raid->sync_action != RAID_ACTION_RESHAPE ||
 				ctx->config.blink_on_migration == 1)
@@ -537,7 +537,7 @@ static void _determine(struct led_ctx *ctx, struct slave_device *device)
 		} else {
 			_set_block_state(device->block, LED_IBPI_PATTERN_HOTSPARE);
 		}
-	} else if ((device->state & SLAVE_STATE_IN_SYNC) != 0) {
+	} else if ((device->state & TAIL_STATE_IN_SYNC) != 0) {
 		switch (_is_failed_array(device->raid)) {
 		case 0:
 			_set_block_state(device->block, LED_IBPI_PATTERN_DEGRADED);
@@ -551,11 +551,11 @@ static void _determine(struct led_ctx *ctx, struct slave_device *device)
 	}
 }
 
-static void _determine_slaves(struct led_ctx *ctx)
+static void _determine_tails(struct led_ctx *ctx)
 {
-	struct slave_device *device;
+	struct tail_device *device;
 
-	list_for_each(&ctx->sys.slave_list, device)
+	list_for_each(&ctx->sys.tail_list, device)
 		_determine(ctx, device);
 }
 
@@ -564,7 +564,7 @@ void sysfs_init(struct led_ctx *ctx)
 	list_init(&ctx->sys.sysfs_block_list, (item_free_t)block_device_fini);
 	list_init(&ctx->sys.volum_list, (item_free_t)raid_device_fini);
 	list_init(&ctx->sys.cntrl_list, (item_free_t)cntrl_device_fini);
-	list_init(&ctx->sys.slave_list, (item_free_t)slave_device_fini);
+	list_init(&ctx->sys.tail_list, (item_free_t)tail_device_fini);
 	list_init(&ctx->sys.cntnr_list, (item_free_t)raid_device_fini);
 	list_init(&ctx->sys.enclo_list, (item_free_t)enclosure_device_fini);
 	list_init(&ctx->sys.pci_slots_list, (item_free_t)pci_slot_fini);
@@ -576,7 +576,7 @@ void sysfs_reset(struct led_ctx *ctx)
 	list_erase(&ctx->sys.sysfs_block_list);
 	list_erase(&ctx->sys.volum_list);
 	list_erase(&ctx->sys.cntrl_list);
-	list_erase(&ctx->sys.slave_list);
+	list_erase(&ctx->sys.tail_list);
 	list_erase(&ctx->sys.cntnr_list);
 	list_erase(&ctx->sys.enclo_list);
 	list_erase(&ctx->sys.pci_slots_list);
@@ -591,9 +591,9 @@ void sysfs_scan(struct led_ctx *ctx)
 	_scan_block(ctx);
 	_scan_raid(ctx);
 	_scan_slots(ctx);
-	_scan_slave(ctx);
+	_scan_tail(ctx);
 
-	_determine_slaves(ctx);
+	_determine_tails(ctx);
 }
 
 /*

@@ -31,7 +31,7 @@
 
 #include "config.h"
 #include "list.h"
-#include "slave.h"
+#include "tail.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
@@ -41,7 +41,7 @@
 static unsigned char _get_state(const char *path)
 {
 	char *p, *t, *s;
-	unsigned char result = SLAVE_STATE_UNKNOWN;
+	unsigned char result = TAIL_STATE_UNKNOWN;
 
 	s = p = get_text(path, "state");
 	if (p) {
@@ -50,15 +50,15 @@ static unsigned char _get_state(const char *path)
 			if (t)
 				*(t++) = '\0';
 			if (strcmp(s, "spare") == 0)
-				result |= SLAVE_STATE_SPARE;
+				result |= TAIL_STATE_SPARE;
 			else if (strcmp(s, "in_sync") == 0)
-				result |= SLAVE_STATE_IN_SYNC;
+				result |= TAIL_STATE_IN_SYNC;
 			else if (strcmp(s, "faulty") == 0)
-				result |= SLAVE_STATE_FAULTY;
+				result |= TAIL_STATE_FAULTY;
 			else if (strcmp(s, "write_mostly") == 0)
-				result |= SLAVE_STATE_WRITE_MOSTLY;
+				result |= TAIL_STATE_WRITE_MOSTLY;
 			else if (strcmp(s, "blocked") == 0)
-				result |= SLAVE_STATE_BLOCKED;
+				result |= TAIL_STATE_BLOCKED;
 			s = t;
 		}
 		free(p);
@@ -126,14 +126,14 @@ static struct block_device *_get_block(const char *path, struct list *block_list
 
 /**
  */
-struct slave_device *slave_device_init(const char *path, struct list *block_list)
+struct tail_device *tail_device_init(const char *path, struct list *block_list)
 {
-	struct slave_device *device = NULL;
+	struct tail_device *device = NULL;
 	struct block_device *block;
 
 	block = _get_block(path, block_list);
 	if (block) {
-		device = malloc(sizeof(struct slave_device));
+		device = malloc(sizeof(struct tail_device));
 		if (device && _get_slot(path, &device->slot) == 0) {
 			device->raid = NULL;
 			device->state = _get_state(path);
@@ -149,7 +149,7 @@ struct slave_device *slave_device_init(const char *path, struct list *block_list
 
 /**
  */
-void slave_device_fini(struct slave_device *device)
+void tail_device_fini(struct tail_device *device)
 {
 	free(device);
 }

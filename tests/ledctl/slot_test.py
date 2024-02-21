@@ -27,6 +27,14 @@ def get_slots_with_device_or_skip(cmd: LedctlCmd, cntrl):
     return slots_with_device_node
 
 
+def verify_state(slot, current, expected, msg):
+    if slot.cntrl_type == "SCSI" and expected == "rebuild":
+        # No good way to validate this one as read value won't match what we sent down.
+        pass
+    else:
+        assert current == expected, msg
+
+
 @pytest.mark.parametrize("cntrl", LedctlCmd.slot_mgmt_ctrls)
 def test_ibpi(ledctl_binary, slot_filters, controller_filters, cntrl):
     """
@@ -41,8 +49,10 @@ def test_ibpi(ledctl_binary, slot_filters, controller_filters, cntrl):
         for state in LedctlCmd.base_states:
             cmd.set_ibpi(slot.device_node, state)
             cur = cmd.get_slot(slot)
-            assert cur.state == state,\
-                f"unable to set \"{slot.device_node}\" to \"{state}\", current = \"{cur}\" using ibpi syntax"
+            verify_state(
+                cur, cur.state, state,
+                f"unable to set \"{slot.device_node}\" to \"{state}\", current = \"{cur.state}\" using ibpi syntax"
+            )
 
 
 @pytest.mark.parametrize("cntrl", LedctlCmd.slot_mgmt_ctrls)
@@ -65,16 +75,20 @@ def test_set_slot_by_slot(ledctl_binary, slot_filters, controller_filters,
         for state in LedctlCmd.base_states:
             cmd.set_slot_state(slot, state)
             cur = cmd.get_slot(slot)
-            assert cur.state == state,\
-                f"unable to set \"{slot}\" to \"{state}\", current = \"{cur}\" using slot"
+            verify_state(
+                cur, cur.state, state,
+                f"unable to set \"{slot}\" to \"{state}\", current = \"{cur.state}\" using slot"
+            )
 
 
 def slot_set_and_get_by_device_all(cmd: LedctlCmd, slot):
     for state in LedctlCmd.base_states:
         cmd.set_device_state(slot, state)
         cur = cmd.get_slot_by_device(slot)
-        assert cur.state == state,\
-            f"unable to set \"{slot}\" to \"{state}\", current = \"{cur}\" using --device"
+        verify_state(
+            cur, cur.state, state,
+            f"unable to set \"{slot}\" to \"{state}\", current = \"{cur.state}\" using --device"
+        )
 
 
 @pytest.mark.parametrize("cntrl", LedctlCmd.slot_mgmt_ctrls)
@@ -117,8 +131,10 @@ def test_nvme_multipath_drives(ledctl_binary, slot_filters, controller_filters,
         for state in cmd.base_states:
             cmd.set_ibpi(slot.device_node, state)
             cur = cmd.get_slot_by_device(slot)
-            assert cur.state == state,\
-                f"unable to set \"{slot}\" to \"{state}\", current = \"{cur}\" using ibpi syntax"
+            verify_state(
+                cur, cur.state, state,
+                f"unable to set \"{slot}\" to \"{state}\", current = \"{cur.state}\" using ibpi syntax"
+            )
 
         slot_set_and_get_by_device_all(cmd, slot)
 

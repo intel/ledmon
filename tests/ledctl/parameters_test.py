@@ -93,7 +93,7 @@ def test_parameter_log_level_all_values(ledctl_binary):
 def parse_version(lines):
     help_header = [
         "Intel(R) Enclosure LED Control Application",
-        "Copyright (C) 2009-2023 Intel Corporation."
+        "Copyright (C) 2009-2024 Intel Corporation."
     ]
 
     assert (lines[0].startswith(help_header[0]))
@@ -101,7 +101,7 @@ def parse_version(lines):
     assert (lines[2] == "")
 
 
-# Check help style and verify that size is no longer than 100 lines.
+# Check help style and verify that size is no longer than 100.
 def parse_help(lines):
     parse_version(lines)
 
@@ -116,9 +116,10 @@ def parse_help(lines):
     while next(line_inter) != "":
         continue
 
-    # Here options are listed
+    # Here options comes.
     line = next(line_inter)
     assert (line == "Options:" or line == "Modes:")
+
     # Control place of short option printing to keep columns equals
     length = 0
     while True:
@@ -154,8 +155,8 @@ def parse_help(lines):
         "--ibpi --help", "--list-slots --help", "-L -h"
     ],
 )
-# Check if all lines are formated correctly and same header and footers are used.
-# Test does not check options/mode content and description, just if formating is as expetcted.
+# Check formatting, header and footer.
+# Test does not check options/mode content and description.
 def test_main_help(ledctl_binary, help_cmd):
     cmd = LedctlCmd(ledctl_binary)
     cmd.is_test_flag_enabled()

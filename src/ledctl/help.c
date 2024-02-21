@@ -1,6 +1,21 @@
 /*
- * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright (C) 2023 Intel Corporation.
+ * Intel(R) Enclosure LED Utilities
+ * Copyright (C) 2022-2024 Intel Corporation.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
 
 #include <assert.h>
@@ -32,7 +47,7 @@ struct help_option {
 {"LEVEL", "Set log level, optional.",  &longopt_all[OPT_LOG_LEVEL]}
 
 #define HELP_OPTION_PRINT_PARAM \
-{"TO_PRINT", "Print chosen property, optional.",  &longopt_all[OPT_PRINT_PARAM]}
+{"PROP", "Print chosen property of the output, optional.",  &longopt_all[OPT_PRINT_PARAM]}
 
 #define HELP_OPTION_SLOT \
 {"SLOT", "Unique slot identifier.",  &longopt_all[OPT_SLOT]}
@@ -45,7 +60,7 @@ struct help_option {
 
 /* This one is special because it is not parsed by get_opt_long() */
 #define HELP_OPTION_IBPI \
-{"<PATTERN>={devices}", "Set IBPI pattern on given devices.", NULL}
+{"<PATTERN>={ devices }", "Set IBPI pattern on given devices.", NULL}
 
 static struct help_option IBPI_HELP_OPTS[] = {
 	HELP_OPTION_IBPI,
@@ -107,10 +122,11 @@ struct help_mode {
 static struct help_mode modes[] = {
 	HELP_MODE(IBPI,
 		  "Set IBPI pattern or patterns on given devices.\n"
-		  "Refer to ledctl(8) manpage for more examples of usage."),
+		  "By default, It may update states on the remaining devices.\n"
+		  "Refer to ledctl(8) man page for more examples of usage."),
 
 	HELP_MODE(GET_SLOT,
-		  "Print slot information for given device or slot.\n"
+		  "Print slot details for given slot or device under the given controller.\n"
 		  "Options \"--slot\" and \"--device\" cannot be used simultaneously."),
 
 	HELP_MODE(LIST_CTRL,
@@ -120,7 +136,7 @@ static struct help_mode modes[] = {
 		  "Print all slots for a controller in the request."),
 
 	HELP_MODE(SET_SLOT,
-		  "Set given state for chosen slot/device under the controller.\n"
+		  "Set given state for given slot or device under the given controller.\n"
 		  "Options \"--slot\" and \"--device\" cannot be used simultaneously."),
 };
 
@@ -128,12 +144,11 @@ static struct help_mode modes[] = {
  * @brief Displays the credits.
  *
  * It prints out the name and version of the program.
- *
  */
 void _ledctl_version(void)
 {
 	printf("Intel(R) Enclosure LED Control Application %s %s\n"
-	       "Copyright (C) 2009-2023 Intel Corporation.\n\n", PACKAGE_VERSION, BUILD_LABEL);
+	       "Copyright (C) 2009-2024 Intel Corporation.\n\n", PACKAGE_VERSION, BUILD_LABEL);
 }
 
 /**
@@ -179,12 +194,12 @@ static void print_ledctl_help_header(struct help_mode *mode)
  * The function prepares long option with example argument if applicable:
  * - optional argument "[<arg>]"
  * - required argument "<arg>"
- * Length of generated string is returned.
  *
  * @param[in]      help_opt     option.
  * @param[out]     res          prepared long opt string.
  * @param[in]      res_size     result buffer size.
  *
+ * @return Length of generated string is returned or negative value on error.
  */
 static int prepare_longopt_string(struct help_option *opt, char *res, int res_size)
 {
@@ -207,55 +222,54 @@ static int prepare_longopt_string(struct help_option *opt, char *res, int res_si
 }
 
 /**
- * Long option generated string max size.
+ * Max size of generated long option string.
  */
-#define LONG_OPT_MAX 30
+#define LONG_OPT_HELP_STR_MAX 30
 
 /**
- * @brief Displays the mode help.
+ * @brief Displays struct help_mode content.
  *
- * This is internal function of ledctl utility.
- * The function prints description and available help options of mode.
+ * The function prints description and available help options of help_mode.
  * First, all long options strings are generated to determine short option width to keep output
  * consistent.
  *
- * @param[in]      mode       mode to print help.
+ * @param[in]      help_mode       help_mode to be printed.
  *
  */
-static void print_mode(struct help_mode *mode)
+static void print_help_mode(struct help_mode *help_mode)
 {
-	char longopts[mode->help_opts_count][LONG_OPT_MAX];
-	int short_opt_width = 0;
+	char longopts[help_mode->help_opts_count][LONG_OPT_HELP_STR_MAX];
+	int max_long_opt_length = 0;
 	int i;
 
-	print_ledctl_help_header(mode);
-	printf("%s\n", mode->long_description);
+	print_ledctl_help_header(help_mode);
+	printf("%s\n", help_mode->long_description);
 
 	/* mode->opt is not set for general help */
-	if (mode->opt)
+	if (help_mode->opt)
 		printf("\nOptions:\n");
 	else
 		printf("\nModes:\n");
 
-	for (i = 0; i < mode->help_opts_count; i++) {
-		int long_opt_length = prepare_longopt_string(&mode->help_opts[i], longopts[i],
-							     LONG_OPT_MAX);
+	for (i = 0; i < help_mode->help_opts_count; i++) {
+		int long_opt_length = prepare_longopt_string(&help_mode->help_opts[i], longopts[i],
+							     LONG_OPT_HELP_STR_MAX);
 
 		/* String may be truncated if it is longer than buffer */
-		assert(long_opt_length < LONG_OPT_MAX);
+		assert(long_opt_length < LONG_OPT_HELP_STR_MAX);
 
-		if (long_opt_length > short_opt_width)
-			short_opt_width = long_opt_length;
+		if (long_opt_length > max_long_opt_length)
+			max_long_opt_length = long_opt_length;
 	}
 
-	for (i = 0; i < mode->help_opts_count; i++) {
-		struct help_option *help_opt = &mode->help_opts[i];
+	for (i = 0; i < help_mode->help_opts_count; i++) {
+		struct help_option *help_opt = &help_mode->help_opts[i];
 		char shortopt = ' ';
 
 		if (help_opt->option && help_opt->option->val != '\0')
 			shortopt = help_opt->option->val;
 
-		printf("%-*s  -%-4c%s\n", short_opt_width, longopts[i], shortopt,
+		printf("%-*s  -%-4c%s\n", max_long_opt_length, longopts[i], shortopt,
 		       help_opt->description);
 	}
 
@@ -278,14 +292,14 @@ void print_mode_help(enum opt mode_id)
 
 	/* All modes are described */
 	assert(mode && mode->help_opts_count > 0);
-	print_mode(mode);
+	print_help_mode(mode);
 }
 
 /**
  * Array of general help modes with description.
  */
 static struct help_option GENERAL_HELP_OPTS[] = {
-	{NULL, "Print slot information.",  &longopt_all[OPT_GET_SLOT]},
+	{NULL, "Print slot details for device/slot.",  &longopt_all[OPT_GET_SLOT]},
 	{NULL, "Indicate IBPI mode, it is used as default.", &longopt_all[OPT_IBPI]},
 	{NULL, "Display list of controllers recognizable by ledctl.", &longopt_all[OPT_LIST_CTRL]},
 	{NULL, "Print all slots for a controller requested.", &longopt_all[OPT_LIST_SLOTS]},
@@ -311,5 +325,5 @@ static struct help_mode general_mode = {
  */
 void _print_main_help(void)
 {
-	print_mode(&general_mode);
+	print_help_mode(&general_mode);
 }

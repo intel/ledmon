@@ -140,7 +140,7 @@ const char *ibpi_str_ledmon[] = {
  * information about the version of monitor service.
  */
 static char *ledmon_version = "Intel(R) Enclosure LED Monitor Service %s %s\n"
-			      "Copyright (C) 2009-2023 Intel Corporation.\n";
+			      "Copyright (C) 2009-2024 Intel Corporation.\n\n";
 
 /**
  * Internal variable of monitor service. It is used to help parse command line
@@ -264,9 +264,6 @@ static void _ledmon_status(void)
 static void _ledmon_version(void)
 {
 	printf(ledmon_version, PACKAGE_VERSION, BUILD_LABEL);
-	printf("\nThis is free software; see the source for copying conditions."
-	       " There is NO warranty;\nnot even for MERCHANTABILITY or FITNESS"
-	       " FOR A PARTICULAR PURPOSE.\n\n");
 }
 
 /**

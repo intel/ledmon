@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2023 Red Hat Inc.
+# Copyright (C) 2023-2024 Red Hat Inc.
 
 # The purpose of this file is testing interactions with hardware. Tests are projected
 # to be executed only if possible (required hardware is available).
 # Ledctl support many blinking standards, there is no possibility to test them all at once.
 # We parametrize each test by controller type to gather logs confirming that it was run
 # on appropriative hardware.
-# Collecting such results will be benefitable for release stuff, it gives some creditability that it
+# Collecting such results will be beneficial for release stuff, it gives some creditability that it
 # was minimally tested.
 
 import pytest

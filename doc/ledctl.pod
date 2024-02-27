@@ -25,10 +25,11 @@ B<ledctl> [I<MODE>] [I<OPTIONS>] ...
 
 =head1 DESCRIPTION
 
-The ledctl is an user space application designed to control LEDs associated with each
-slot in an enclosure or a drive bay. User must have root privileges to use this application.
+The ledctl is an user-space application designed to control LEDs associated with each
+slot in an enclosure or a drive bay. Root privileges are required for its operation.
 
-The ledctl application supports LED management of the SAS/SATA and PCIe storages.
+
+The ledctl application facilitates LED management for SAS/SATA and PCIe storage devices.
 
 =head4 Supported protocols/methods for LED management are:
 
@@ -289,8 +290,8 @@ I<failure> or I<disk_failed> is translated to I<ses_fault>
 
 =head1 MODES AND MODE SPECIFIC OPTIONS
 
-This chapter describes modes and options that can be used with for particular mode. If mode is not
-specified then, it fallbacks to IBPI mode.
+This chapter outlines the modes and options applicable to specific modes. If no mode is
+specified, it defaults to IBPI mode.
 
 =head2 B<-I> or B<--ibpi>
 
@@ -303,10 +304,9 @@ array).
 
 =item B<PATTERN={ device1 device2 }> or B<PATTERN=device1,device2>
 
-IBPI option with special syntax. It accepts a list of devices in two formats. The first format is
-a list with comma separated elements. The second format is a list in curly braces and elements are
-separated by space. Refer to "Pattern names" for supported states list.
-See "EXAMPLES" for examples of usage.
+The IBPI option accepts device lists in two formats: comma-separated elements and elements
+enclosed in curly braces with spaces between them. Refer to "Pattern names" for supported states.
+For usage examples, see "EXAMPLES".
 
 =item B<-x> or B<--listed-only>
 
@@ -324,15 +324,15 @@ Prints all slots for the controller type. Must be followed by B<--controller-typ
 
 =head2 B<-G> or B<--get-slot>
 
-Displays particular slot details. Must be followed by B<--controller-type> and slot identifier
+Displays specific slot details. Must be followed by B<--controller-type> and slot identifier
 B<--device> or B<--slot>. B<--print> can be used to control output.
 
 =over 4
 
 =item B<-r I<print>> or B<--print>=I<print>
 
-Optional parameter for B<--get-slot>. It is used to retrieve only one specific property
-from output. Supported values are: slot, device and state.
+Optional parameter for B<--get-slot>. It is utilized to retrieve a specific property
+from the output. Supported values include: slot, device, and state.
 
 =back
 
@@ -369,7 +369,7 @@ Block device node for device attached to the slot. It can be used instead of B<-
 
 Unique slot identifier. It can be used instead of B<--device>. Use B<--list-slots> to determine slot
 identifiers. Slot definition depends on the controller and is unique across all controllers of the
-same type. Slot identifier is always available, even if a device is not connected.
+same type. The slot identifier is always available, even if a device is not connected.
 
 =back
 
@@ -395,8 +395,8 @@ Displays version of ledctl and information about the license.
 
 =item B<--log_level=I<log_level>>
 
-Sets log level for application. Following levels can be used, starting from the most verbose:
-ALL, DEBUG, INFO, WARNING, ERROR, QUIET. By default, WARNING is set.
+Set the application's logging level. Available levels, listed from most verbose to least verbose,
+include: ALL, DEBUG, INFO, WARNING, ERROR, and QUIET. The default setting is WARNING.
 
 =back
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2023 Intel Corporation.
+# Copyright (C) 2023-2024 Intel Corporation.
 
 from ledctl.ledctl_cmd import LedctlCmd
 import pytest

@@ -1,6 +1,6 @@
 #
 #  Intel(R) Enclosure LED Utilities
-#  Copyright (C) 2009-2023 Intel Corporation.
+#  Copyright (C) 2009-2024 Intel Corporation.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms and conditions of the GNU General Public License,
@@ -21,20 +21,15 @@ ledctl - Intel(R) LED control application for a storage enclosures.
 
 =head1 SYNOPSIS
 
-B<ledctl> [I<OPTIONS>] I<pattern_name>=I<list_of_devices> ...
+B<ledctl> [I<MODE>] [I<OPTIONS>] ...
 
 =head1 DESCRIPTION
 
-The ledctl is an user space application designed to control LEDs associated with each
-slot in an enclosure or a drive bay. The LEDs of devices listed in I<list_of_devices>
-are set to the given pattern I<pattern_name> and all other LEDs are turned off.
-User must have root privileges to use this application.
+The ledctl is an user-space application designed to control LEDs associated with each
+slot in an enclosure or a drive bay. Root privileges are required for its operation.
 
-There are two types of systems: 2-LEDs systems (Activity LED, Status LED)
-and 3-LEDs systems (Activity LED, Locate LED, Fail LED).
 
-The ledctl application supports LED management of the SAS/SATA and PCIe
-storages.
+The ledctl application facilitates LED management for SAS/SATA and PCIe storage devices.
 
 =head4 Supported protocols/methods for LED management are:
 
@@ -293,92 +288,115 @@ I<failure> or I<disk_failed> is translated to I<ses_fault>
 
 =back
 
-=head2 List of Devices
+=head1 MODES AND MODE SPECIFIC OPTIONS
 
-The application accepts a list of devices in two formats. The first
-format is a list with comma separated elements. The second format is S<a
-list> in curly braces and elements are separated by space. See examples
-section below for details.
+This chapter outlines the modes and options applicable to specific modes. If no mode is
+specified, it defaults to IBPI mode.
 
-A device is a path to file in /dev directory or in /sys/block directory.
+=head2 B<-I> or B<--ibpi>
 
-The LEDs of devices listed in I<list_of_devices> are set to the given
-pattern I<pattern_name> and all other LEDs, on all devices, are turned off (unless --listed-only
-option is given).
+Sets pattern on given devices. Allows ledctl to determine the best controller automatically. Must be
+followed by IBPI option. By default, it checks all devices and may update states on different
+drives than requested if state change is determined (generally it happens for devices in raid
+array).
 
-=head1 OPTIONS
+=over 4
 
-=over 8
+=item B<PATTERN={ device1 device2 }> or B<PATTERN=device1,device2>
 
-=item B<-l> or B<--log>=I<path>
-
-Sets a path to local log file. If this option is specified the global log
-file F</var/log/ledctl.log> is not used.
-
-=item B<-h> or B<--help>
-
-Prints this text out and exits.
-
-=item B<-v> or B<--version>
-
-Displays version of ledctl and information about the license and exits.
-
-=item B<-L> or B<--list-controllers>
-
-Prints information (system path and type) of all controllers detected by
-ledmon and exits.
-
-=item B<-P> or B<--list-slots> B<--controller-type>=I<controller-type>
-
-Prints all slots for the controller type. Slot definition depends on the controller
-and is unique across all controllers of the same type.
-
-Definitions for supported controller types are described below:
-
-=over
-
-=item
-
-VMD - PCI Express Hot Plug Controller Driver slot number
-
-=item
-
-NPEM - PCI Express Downstream Port address
-
-=item
-
-SCSI
-
-=back
-
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--device>=I<device> B<--print>=I<print>
-
-Command returns a slot specified for the controller type with current state and attached
-device name (if any). I<Controller-type> is type of controller (VMD, NPEM, SCSI)
-that should be scanned here. I<Device> is devnode of selected drive. I<Print> is
-optional parameter, which can be set to retrieve only one specific parameter in
-the output (device, slot or state).
-
-=item B<-G> or B<--get-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--print>=I<print>
-
-Displays slot details. I<slot> is a unique slot identifier.
-
-=item B<-S> or B<--set-slot> B<--controller-type>=I<controller-type> B<--slot>=I<slot> B<--state>=I<IBPI_state>
-
-Changes led state for given slot. I<controller-type> is type of the controller.
-I<slot> is unique slot identifier. I<IBPI_state> is led pattern.
+The IBPI option accepts device lists in two formats: comma-separated elements and elements
+enclosed in curly braces with spaces between them. Refer to "Pattern names" for supported states.
+For usage examples, see "EXAMPLES".
 
 =item B<-x> or B<--listed-only>
 
-With this option ledctl will change state only on devices listed in CLI. The
-rest of devices will not be touched.
+Suppresses default behavior, changes state only on devices listed in CLI. It is optional.
 
-=item B<--quiet> or B<--error> or B<--warning> or B<--info> or B<--debug> or B<--all>
+=back
 
-Verbose level - 'quiet' means no logging at all and 'all' means to log
-everything. The levels are given in order. If user specifies more then one
-verbose option the last option comes into effect. The default level is
-'warning'. Verbose level also can be set by B<--log-level>=I<level>.
+=head2 B<-L> or B<--list-controllers>
+
+Prints information (system path and type) of all controllers detected.
+
+=head2 B<-P> or B<--list-slots>
+
+Prints all slots for the controller type. Must be followed by B<--controller-type>.
+
+=head2 B<-G> or B<--get-slot>
+
+Displays specific slot details. Must be followed by B<--controller-type> and slot identifier
+B<--device> or B<--slot>. B<--print> can be used to control output.
+
+=over 4
+
+=item B<-r I<print>> or B<--print>=I<print>
+
+Optional parameter for B<--get-slot>. It is utilized to retrieve a specific property
+from the output. Supported values include: slot, device, and state.
+
+=back
+
+=head2 B<-S> or B<--set-slot>
+
+Changes led state for slot. Must be followed by B<--controller-type>, slot identifier B<--device>
+or B<--slot> and B<--state>.
+
+=over 4
+
+=item B<-p I<state>> or B<--state=I<state>>
+
+It is mandatory for B<--set-slot>. It provides state to be set for the slot. Refer to
+"Pattern names" for supported states list.
+
+=back
+
+=head2 SLOT MANAGEMENT OPTIONS
+
+This section describes options necessary by various slot management modes.
+
+=over 4
+
+=item B<-n I<controller_type>> or B<--controller-type=I<controller_type>>
+
+Controller type chosen for the request. It aggregates multiple controllers of the same
+type. Supported types are: VMD, NPEM and SCSI.
+
+=item B<-d I<device>> or B<--device=I<device>>
+
+Block device node for device attached to the slot. It can be used instead of B<--slot>.
+
+=item B<-p I<slot>> or B<--slot=I<slot>>
+
+Unique slot identifier. It can be used instead of B<--device>. Use B<--list-slots> to determine slot
+identifiers. Slot definition depends on the controller and is unique across all controllers of the
+same type. The slot identifier is always available, even if a device is not connected.
+
+=back
+
+=head1 GENERAL OPTIONS
+
+This section describes options available for every mode.
+
+=over 4
+
+=item B<-l I<path>> or B<--log>=I<path>
+
+Sets a path to log file. If this option is not specified then default log file
+F</var/log/ledctl.log> is used.
+
+=item B<-h> or B<--help>
+
+Prints help text out. Use B<--MODE --help> to get help for requested mode or B<--help> to
+get general help.
+
+=item B<-v> or B<--version>
+
+Displays version of ledctl and information about the license.
+
+=item B<--log_level=I<log_level>>
+
+Set the application's logging level. Available levels, listed from most verbose to least verbose,
+include: ALL, DEBUG, INFO, WARNING, ERROR, and QUIET. The default setting is WARNING.
 
 =back
 
@@ -395,48 +413,74 @@ to user defined file use I<-l> option switch.
 
 =head1 EXAMPLES
 
-The following example illustrates how to set I<locate> on a single
-block device. Note that all remaining LEDs, on all devices, will be turned off.
+=head2 The following example illustrates how to set I<locate> on a single block device. Note that
+all remaining LEDs, might be changed.
 
-    ledctl locate=/dev/sda
+C<ledctl --ibpi locate=/dev/sda>
 
-The following example illustrates how to set I<locate_off> on a single
-block device.
+=head2 The following example illustrates how to set I<locate_off> on a single block device.
 
-    ledctl --listed-only locate_off=/dev/sda
+C<ledctl --ibpi --listed-only locate_off=/dev/sda>
 
-The following example illustrates how to set I<off> on the given devices. It
-uses second format of device list.
+=head2 The following example illustrates how to set I<off> on the given devices. It uses second
+format of device list.
 
-     ledctl --listed-only off={ /dev/sda /dev/sdb }
+C<ledctl --ibpi --listed-only off={ /dev/sda /dev/sdb }>
 
-The following example illustrates how to set I<locate> and I<rebuild> on
-different devices at the same time. It uses the second format of device list.
+=head2 The following example illustrates how to set I<locate> and I<rebuild> on different devices
+at the same time. It uses the second format of device list.
 
-     ledctl --listed-only locate={ /dev/sdb } rebuild={ /sys/block/sdc }
+C<ledctl --ibpi --listed-only locate={ /dev/sdb } rebuild={ /sys/block/sdc }>
 
-The following example illustrates how to I<locate> on three block devices. It
-uses the first format of device list.
+=head2 The following example illustrates how to I<locate> on three block devices. It uses the first
+format of device list.
 
-     ledctl --listed-only locate=/dev/sda,/dev/sdb,/dev/sdc
+C<ledctl --ibpi --listed-only locate=/dev/sda,/dev/sdb,/dev/sdc>
 
-The following example illustrates how to set I<locate> and I<rebuild> on
-different devices at the same time. It uses the first format of device list.
+=head2 The following example illustrates how to set I<locate> and I<rebuild> on different devices
+at the same time. It uses the first format of device list.
 
-     ledctl --listed-only locate=/dev/sdb rebuild=/sys/block/sdc
+C<ledctl --ibpi --listed-only locate=/dev/sdb rebuild=/sys/block/sdc>
 
-The following example illustrates how to set I<locate> and I<rebuild> on
-different devices at the same time. It uses the both formats of device list.
+=head2 The following example illustrates how to set I<locate> and I<rebuild> on different devices
+at the same time. It uses the both formats of device list.
 
-     ledctl --listed-only locate={ /dev/sdb } rebuild=/sys/block/sdc
+C<ledctl --ibpi --listed-only locate={ /dev/sdb } rebuild=/sys/block/sdc>
+
+=head2 The following example illustrates how to get all detected controllers.
+
+C<ledctl --list-controllers>
+
+=head2 The following example illustrates how to get all slots for controller type I<NPEM>.
+
+C<ledctl --list-slots --controller-type=npem>
+
+=head2 The following example illustrates how to get particular slot with I<device> specified, for
+controller type I<SCSI>. Print I<state> only.
+
+C<ledctl --get-slot --controller-type=scsi --device=/dev/sda --print=state>
+
+=head2 The following example illustrates how to get particular slot with I<slot> specified, for
+controller type I<NPEM>. Print I<device> only.
+
+C<ledctl --get-slot --controller-type=npem --slot=10000:02:04.0 --print=device>
+
+=head2 The following example illustrates how to set I<locate> for slot with I<device> specified,
+for controller type I<VMD>.
+
+C<ledctl --set-slot --controller-type=vmd --device=/dev/nvme0n1 --state=locate>
+
+=head2 The following example illustrates how to set I<failure> for slot with I<slot> specified
+for controller type I<VMD>.
+
+C<ledctl --set-slot --controller-type=vmd --slot=1 --state=failure>
 
 =head1 LICENSE
 
-Copyright (c) 2009-2023 Intel Corporation.
+Copyright (c) 2009-2024 Intel Corporation.
 
 This program is distributed under the terms of the GNU General Public License
-as published by the Free Software Foundation. See the built-in help for
-details on the License and the lack of warranty.
+as published by the Free Software Foundation.
 
 =head1 SEE ALSO
 

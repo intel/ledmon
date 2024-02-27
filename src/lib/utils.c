@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2022-2023 Intel Corporation.
+ * Copyright (C) 2022-2024 Intel Corporation.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -587,6 +587,7 @@ struct option longopt_all[] = {
 	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
 	[OPT_PRINT_PARAM]  = {"print", required_argument, NULL, 'r'},
 	[OPT_TEST]         = {"test", no_argument, NULL, 'T'},
+	[OPT_IBPI]         = {"ibpi", no_argument, NULL, 'I' },
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}
 };
 

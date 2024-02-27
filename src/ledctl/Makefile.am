@@ -1,6 +1,6 @@
 #
 #  Intel(R) Enclosure LED Utilities
-#  Copyright (C) 2009-2023 Intel Corporation.
+#  Copyright (C) 2009-2024 Intel Corporation.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms and conditions of the GNU General Public License,
@@ -17,7 +17,7 @@
 #
 
 sbin_PROGRAMS  = ledctl
-ledctl_SOURCES = ledctl.c
+ledctl_SOURCES = ledctl.c help.c help.h
 
 ledctl_LDADD = ../lib/libledinternal.la ../common/libcommon.la
 ledctl_CFLAGS = -I$(top_srcdir)/src/lib/include -I$(top_srcdir)/src -I$(top_srcdir)/config \

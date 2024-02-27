@@ -1,6 +1,6 @@
 /*
  * Intel(R) Enclosure LED Utilities
- * Copyright (C) 2022-2023 Intel Corporation.
+ * Copyright (C) 2022-2024 Intel Corporation.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -487,8 +487,8 @@ enum opt {
 	OPT_DEVICE,
 	OPT_SLOT,
 	OPT_STATE,
-	OPT_IBPI_MODE,
 	OPT_PRINT_PARAM,
+	OPT_IBPI,
 	OPT_TEST,
 	OPT_NULL_ELEMENT
 };

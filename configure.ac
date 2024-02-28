@@ -2,13 +2,13 @@
 AC_PREREQ([2.69])
 
 
-m4_define([MAJOR_VERSION], 0)
-m4_define([MINOR_VERSION], 97)
+m4_define([MAJOR_VERSION], 1)
+m4_define([MINOR_VERSION], 0)
 m4_define([MICRO_VERSION], 0)
 
 AC_INIT([ledmon],[MAJOR_VERSION.MINOR_VERSION.MICRO_VERSION])
 AC_CONFIG_MACRO_DIR([m4])
-AC_SUBST([PACKAGE_DATE], "May 2023")
+AC_SUBST([PACKAGE_DATE], "March 2024")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 LT_PREREQ([2.4.6])
@@ -31,9 +31,6 @@ AX_CHECK_PROG([make])
 # Add 1 or more library functions, eg. led_foo and do a release -> 0.97.0
 # Fix 1 or more bugs in project and do a release -> 0.97.1
 # Fix 1 or more bugs and add API additions and do a release -> 0.98.0
-#
-# Change this to 1.0.0 when we have API stable, before then the convention is to
-# have X == 0 which means unstable API.
 #
 # Full details for semantic versioning:
 # https://semver.org/

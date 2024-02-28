@@ -1,6 +1,6 @@
-# This package contains the Enclosure LED Utilities, version 0.97
+# This package contains the Enclosure LED Utilities, version 1.0.0
 
-Copyright (C) 2009-2023 Intel Corporation.
+Copyright (C) 2009-2024 Intel Corporation.
 
 Files in this package can be freely distributed and used according
 to the terms of the GNU General Public License, version 2 or the

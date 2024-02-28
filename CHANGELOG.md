@@ -1,3 +1,33 @@
+### v1.0.0 / 2024-02-28
+
+[Commit list](https://github.com/intel/ledmon/compare/v0.97...v1.0.0)
+
+Enhancements
+
+* lib: introduce library
+* tests: migrate tests to pytest
+* Introduce "make check" option
+* Allow disabling documentation installation
+* Add minimal Nvme subsystem support
+* Allow choosing output format from get-slot
+* Rework handling --help option
+* Update manual
+
+Bug fixes
+
+* Fix log severity, messages and level detection
+* Ledctl: skip slot state check for set locate_off
+* ci: Compile with tests and library enabled
+* configure.ac: build library when "--enbable-test"
+* Allow setting multiple LEDs per slot on SES
+* Prevent compiler from optimizing out security checks
+* Fix compilation warnings
+* Add compiler defenses flags
+* Add support for clang compiler
+* utils.c: remove duplicated "-c" short parameter
+* Remove parsing ALLOWLIST and EXCLUDELIST using regex
+* ledctl: Fix exit ledctl with test flag
+
 ### v0.97 / 2023-05-16
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.96...v0.97)

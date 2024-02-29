@@ -1,0 +1,102 @@
+---
+name: Bug report
+description: Create a BUG report.
+title: "[BUG]: Title"
+labels: Bug
+body:
+- type: markdown
+  attributes:
+    value: |
+      Before you submit this request, please be aware that this is an
+      open source project, so you are invited to become a contributor to this project.
+
+      During reproduction please enable all logs e.g. ledctl --log-level=all --list-controllers
+
+      If the issue is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont) in the description.
+
+- type: textarea
+  attributes:
+    label: Description
+    description: >-
+      A clear and concise description of what the bug is.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Steps to reproduce bug
+    description: >-
+      Describe the steps to reproduce this bug.
+    placeholder: |
+      1.
+      2.
+      3.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Expected behavior
+    description: >-
+      A clear and concise description of what you expected to happen.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Actual behavior
+    description: >-
+      Tell us what happens instead.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Environment
+    description: |
+      Please add your environment description.
+    value: |
+      OS:
+      Controller Type:
+      Disk type:
+      Disk multipath enabled(Yes|No|N/A)?:
+      Controllers list($ ls -l /sys/block/):
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Ledmon version
+    description: Pleas add ledmon version, $ ledmon --version, if ledmon is built directly from
+     the repository, please provide commit_id.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Ledmon logs
+    description: Please add or attach ledmon logs, $ /var/log/ledmon.log.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Ledctl logs
+    description: Please add or attach ledctl logs, $ /var/log/ledctl.log.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Ledmon supported controllers
+    description: Please add list of ledmon supported controllers, $ ledctl --list-controllers.
+  validations:
+    required: true
+
+
+- type: textarea
+  attributes:
+    label: Additional information
+  validations:
+    required: false
+...

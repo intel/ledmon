@@ -1,0 +1,40 @@
+---
+name: Question
+description: Ask a question.
+title: "[QUESTION] Title"
+labels: Question
+body:
+- type: markdown
+  attributes:
+    value: |
+      If the question is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont).
+
+- type: textarea
+  attributes:
+    label: Question
+    description: >-
+      Ask a question.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Motivation
+    description: >-
+      Why are you asking? Is there any need other than curiosity?
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Environment
+    description: |
+      Please add your environment description.
+    value: |
+      Include as many relevant details about the environment you're working in.
+      OS:
+      Controller Type:
+      Disk type:
+  validations:
+    required: false
+...

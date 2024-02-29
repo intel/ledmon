@@ -1,0 +1,44 @@
+---
+name: Feature/Change request
+description: Suggest an idea for this project.
+title: "[ENHANCEMENT] Title"
+labels: Enhancement
+body:
+- type: markdown
+  attributes:
+    value: |
+      Suggest an idea for this project.
+      Before you submit this request, please be aware that this is an open source project,
+      so you are invited to become a contributor to this project.
+
+      If the request is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont).
+
+- type: textarea
+  attributes:
+    label: Description
+    description: >-
+      Provide a more detailed description of wanted functionality or change.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Reason
+    description: >-
+      Why do you need this functionality/change? What's the gain of introducing it?
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Environment
+    description: |
+      Please add your environment description.
+    value: |
+      Include as many relevant details about the environment you're working in.
+      OS:
+      Controller Type:
+      Disk type:
+  validations:
+    required: false
+...

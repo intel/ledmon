@@ -58,8 +58,8 @@ body:
       Please describe your environment.
     value: |
       OS:
-      Controller Type(supported: [man](https://github.com/intel/ledmon/blob/master/doc/ledmon.pod)):
-      Disk types:
+      Controller Type(supported: https://github.com/intel/ledmon/blob/master/doc/ledmon.pod):
+      Disk types($ ls -l /sys/block):
       NVMe multipath enabled(Yes|No|N/A)($ cat /sys/module/nvme_core/parameters/multipath)?:
       Controllers list($ ls -l /sys/block/):
   validations:

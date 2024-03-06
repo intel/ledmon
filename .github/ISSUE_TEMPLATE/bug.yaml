@@ -1,6 +1,6 @@
 ---
 name: Bug report
-description: Create a BUG report.
+description: Use this form to report problems with application, unwanted behaviors, crashes etc.
 title: "[BUG]: Title"
 labels: Bug
 body:
@@ -10,6 +10,8 @@ body:
       This is an open source project, so you are invited to become a contributor.
 
       For reproduction please enable all logs e.g. ledctl --log-level=all --list-controllers.
+
+      Before submitting a bug, please test if it reproduces using ledmon upstream [README](https://github.com/intel/ledmon/blob/master/README.md).
 
       If the issue is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont) in the description.
 
@@ -56,9 +58,9 @@ body:
       Please describe your environment.
     value: |
       OS:
-      Controller Type:
-      Disk type:
-      Disk multipath enabled(Yes|No|N/A)?:
+      Controller Type(supported: [man](https://github.com/intel/ledmon/blob/master/doc/ledmon.pod)):
+      Disk types:
+      NVMe multipath enabled(Yes|No|N/A)($ cat /sys/module/nvme_core/parameters/multipath)?:
       Controllers list($ ls -l /sys/block/):
   validations:
     required: true

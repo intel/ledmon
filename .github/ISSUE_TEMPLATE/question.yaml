@@ -19,14 +19,6 @@ body:
 
 - type: textarea
   attributes:
-    label: Motivation
-    description: >-
-      Why are you asking? Is there any need other than curiosity?
-  validations:
-    required: false
-
-- type: textarea
-  attributes:
     label: Environment
     description: |
       Please describe your environment.

@@ -1,6 +1,6 @@
 ---
 name: Feature/Change request
-description: Suggest an idea for this project.
+description: If you need enhancement, feature or if you would like to change current behavior use this form.
 title: "[ENHANCEMENT] Title"
 labels: Enhancement
 body:

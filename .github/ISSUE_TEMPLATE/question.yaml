@@ -29,9 +29,9 @@ body:
   attributes:
     label: Environment
     description: |
-      Please add your environment description.
+      Please describe your environment.
     value: |
-      Include as many relevant details about the environment you're working in.
+      Include relevant details about the environment you're working in.
       OS:
       Controller Type:
       Disk type:

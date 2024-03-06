@@ -7,10 +7,9 @@ body:
 - type: markdown
   attributes:
     value: |
-      Before you submit this request, please be aware that this is an
-      open source project, so you are invited to become a contributor to this project.
+      This is an open source project, so you are invited to become a contributor.
 
-      During reproduction please enable all logs e.g. ledctl --log-level=all --list-controllers
+      For reproduction please enable all logs e.g. ledctl --log-level=all --list-controllers.
 
       If the issue is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont) in the description.
 
@@ -46,7 +45,7 @@ body:
   attributes:
     label: Actual behavior
     description: >-
-      Tell us what happens instead.
+      A clear and concise description of what happened instead.
   validations:
     required: true
 
@@ -54,7 +53,7 @@ body:
   attributes:
     label: Environment
     description: |
-      Please add your environment description.
+      Please describe your environment.
     value: |
       OS:
       Controller Type:
@@ -67,7 +66,7 @@ body:
 - type: textarea
   attributes:
     label: Ledmon version
-    description: Pleas add ledmon version, $ ledmon --version, if ledmon is built directly from
+    description: Please add ledmon version, $ ledmon --version, if ledmon is built directly from
      the repository, please provide commit_id.
   validations:
     required: true
@@ -89,7 +88,7 @@ body:
 - type: textarea
   attributes:
     label: Ledmon supported controllers
-    description: Please add list of ledmon supported controllers, $ ledctl --list-controllers.
+    description: List of controllers supported by ledmon, $ ledctl --list-controllers.
   validations:
     required: true
 

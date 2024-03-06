@@ -8,8 +8,7 @@ body:
   attributes:
     value: |
       Suggest an idea for this project.
-      Before you submit this request, please be aware that this is an open source project,
-      so you are invited to become a contributor to this project.
+      This is an open source project, so you are invited to become a contributor.
 
       If the request is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont).
 
@@ -17,7 +16,7 @@ body:
   attributes:
     label: Description
     description: >-
-      Provide a more detailed description of wanted functionality or change.
+      Provide detailed description of wanted functionality or change.
   validations:
     required: true
 
@@ -33,9 +32,9 @@ body:
   attributes:
     label: Environment
     description: |
-      Please add your environment description.
+      Please describe your environment.
     value: |
-      Include as many relevant details about the environment you're working in.
+      Include relevant details about the environment you're working in.
       OS:
       Controller Type:
       Disk type:

@@ -11,7 +11,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_SUBST([PACKAGE_DATE], "May 2023")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
-LT_PREREQ([2.4.6])
+LT_PREREQ([2.4.2])
 AM_PROG_AR
 LT_INIT
 

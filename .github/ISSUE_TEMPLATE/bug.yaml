@@ -1,0 +1,103 @@
+---
+name: Bug report
+description: Use this form to report problems with application, unwanted behaviors, crashes etc.
+title: "[BUG]: Title"
+labels: Bug
+body:
+- type: markdown
+  attributes:
+    value: |
+      Before submitting a bug, please test if your issue reproduces using ledmon upstream [README](https://github.com/intel/ledmon/blob/master/README.md).
+      It is an open-source project, so we highly encourage you to fix issue yourself
+      and to become a contributor.
+
+      Please enable highest log level when collecting logs, it could speed up investigation
+      e.g. ledctl --log-level=all locate=/dev/nvme0n1
+
+      If the issue is related to AMD hardware, please care to mention [Nathan Fontenot](https://github.com/nfont) in the description.
+
+- type: textarea
+  attributes:
+    label: Description
+    description: >-
+      A clear and concise description of what the bug is.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Steps to reproduce bug
+    description: >-
+      Describe the steps to reproduce this bug.
+    placeholder: |
+      1.
+      2.
+      3.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Expected behavior
+    description: >-
+      A clear and concise description of what you expected to happen.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Actual behavior
+    description: >-
+      A clear and concise description of what happened instead.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Environment
+    description: |
+      Please describe your environment.
+    value: |
+      OS:
+      Controller Type(supported: https://github.com/intel/ledmon/blob/master/doc/ledmon.pod):
+      Disks($ ls -l /sys/block):
+      NVMe multipath enabled(Yes|No|N/A)($ cat /sys/module/nvme_core/parameters/multipath)?:
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Ledmon version
+    description: Please add ledmon version, $ ledmon --version, if ledmon is built directly from
+     the repository, please provide commit_id.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Ledmon logs
+    description: Please add or attach ledmon logs, $ /var/log/ledmon.log.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Ledctl logs
+    description: Please add or attach ledctl logs, $ /var/log/ledctl.log.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Ledmon supported controllers
+    description: List of controllers supported by ledmon, $ ledctl --list-controllers.
+  validations:
+    required: true
+
+
+- type: textarea
+  attributes:
+    label: Additional information
+  validations:
+    required: false
+...

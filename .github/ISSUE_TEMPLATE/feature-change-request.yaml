@@ -1,0 +1,42 @@
+---
+name: Feature/Change request
+description: If you need enhancement, feature or if you would like to change current behavior use this form.
+title: "[ENHANCEMENT] Title"
+labels: Enhancement
+body:
+- type: markdown
+  attributes:
+    value: |
+      Suggest an idea for this project.
+      This is an open source project, so you are invited to become a contributor.
+
+      If the request is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont).
+
+- type: textarea
+  attributes:
+    label: Description
+    description: >-
+      Provide detailed description of wanted functionality or change.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Reason
+    description: >-
+      Why do you need this functionality/change? What's the gain of introducing it?
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Environment
+    description: |
+      Please describe your environment.
+    value: |
+      Include relevant details about the environment you're working in.
+      OS:
+      What type of controller and disk the request is directed to:
+  validations:
+    required: false
+...

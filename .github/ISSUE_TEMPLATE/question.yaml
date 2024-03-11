@@ -25,8 +25,7 @@ body:
     value: |
       Include relevant details about the environment you're working in.
       OS:
-      Controller Type:
-      Disk type:
+      What type of controller and disk the question is directed to:
   validations:
     required: false
 ...

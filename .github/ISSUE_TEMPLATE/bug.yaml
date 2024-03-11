@@ -7,13 +7,14 @@ body:
 - type: markdown
   attributes:
     value: |
-      This is an open source project, so you are invited to become a contributor.
+      Before submitting a bug, please test if your issue reproduces using ledmon upstream [README](https://github.com/intel/ledmon/blob/master/README.md).
+      It is an open-source project, so we highly encourage you to fix issue yourself
+      and to become a contributor.
 
-      For reproduction please enable all logs e.g. ledctl --log-level=all --list-controllers.
+      Please enable highest log level when collecting logs, it could speed up investigation
+      e.g. ledctl --log-level=all locate=/dev/nvme0n1
 
-      Before submitting a bug, please test if it reproduces using ledmon upstream [README](https://github.com/intel/ledmon/blob/master/README.md).
-
-      If the issue is related to AMD hardware, please mention [Nathan Fontenot](https://github.com/nfont) in the description.
+      If the issue is related to AMD hardware, please care to mention [Nathan Fontenot](https://github.com/nfont) in the description.
 
 - type: textarea
   attributes:
@@ -59,9 +60,8 @@ body:
     value: |
       OS:
       Controller Type(supported: https://github.com/intel/ledmon/blob/master/doc/ledmon.pod):
-      Disk types($ ls -l /sys/block):
+      Disks($ ls -l /sys/block):
       NVMe multipath enabled(Yes|No|N/A)($ cat /sys/module/nvme_core/parameters/multipath)?:
-      Controllers list($ ls -l /sys/block/):
   validations:
     required: true
 

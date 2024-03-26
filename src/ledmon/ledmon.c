@@ -726,7 +726,7 @@ static void _add_block(struct block_device *block)
 			temp->sysfs_path = strdup(block->sysfs_path);
 			if (!temp->sysfs_path) {
 				log_error("Memory allocation error!");
-				exit(1);
+				EXIT(1);
 			}
 		}
 	} else {
@@ -737,7 +737,7 @@ static void _add_block(struct block_device *block)
 				 ibpi2str_table(temp->ibpi, ibpi_str_ledmon, buf, sizeof(buf)));
 			if (!list_append(&ledmon_block_list, temp)) {
 				log_error("Memory allocation error!");
-				exit(1);
+				EXIT(1);
 			}
 		}
 	}
@@ -950,47 +950,47 @@ int main(int argc, char *argv[])
 	lib_rc = led_new(&ctx);
 	if (lib_rc != LED_STATUS_SUCCESS) {
 		fprintf(stderr, "Unable to initialize lib LED %u\n", lib_rc);
-		return lib_rc;
+		EXIT(lib_rc);
 	}
 
 	openlog(progname, LOG_PID | LOG_PERROR, LOG_DAEMON);
 
 	if (atexit(_ledmon_status))
-		return LEDMON_STATUS_ONEXIT_ERROR;
+		EXIT(LEDMON_STATUS_ONEXIT_ERROR);
 
 	if (_cmdline_parse_non_daemonize(argc, argv) != LEDMON_STATUS_SUCCESS)
-		return LEDMON_STATUS_CMDLINE_ERROR;
+		EXIT(LEDMON_STATUS_CMDLINE_ERROR);
 
 	if (geteuid() != 0) {
 		fprintf(stderr, "Only root can run this application.\n");
-		return LEDMON_STATUS_NOT_A_PRIVILEGED_USER;
+		EXIT(LEDMON_STATUS_NOT_A_PRIVILEGED_USER);
 	}
 
 	status = _init_ledmon_conf();
 	if (status != LEDMON_STATUS_SUCCESS)
-		return status;
+		EXIT(status);
 
 	status = ledmon_read_conf(ledmon_conf_path, &conf);
 	if (status != LEDMON_STATUS_SUCCESS)
-		return status;
+		EXIT(status);
 
 	if (_cmdline_parse(argc, argv) != LEDMON_STATUS_SUCCESS)
-		return LEDMON_STATUS_CMDLINE_ERROR;
+		EXIT(LEDMON_STATUS_CMDLINE_ERROR);
 
 	ledmon_write_shared_conf(&conf);
 
 	if (log_open(&conf) != LEDMON_STATUS_SUCCESS)
-		return LEDMON_STATUS_LOG_FILE_ERROR;
+		EXIT(LEDMON_STATUS_LOG_FILE_ERROR);
 
 	status = load_library_prefs();
 	if (status != LEDMON_STATUS_SUCCESS)
-		return status;
+		EXIT(status);
 
 	free(shortopt);
 	free(longopt);
 	if (pidfile_check(progname, NULL) == 0) {
 		log_warning("daemon is running...");
-		return LEDMON_STATUS_LEDMON_RUNNING;
+		EXIT(LEDMON_STATUS_LEDMON_RUNNING);
 	}
 	if (!foreground) {
 		pid_t pid = fork();
@@ -1016,7 +1016,7 @@ int main(int argc, char *argv[])
 		int t = open("/dev/null", O_RDWR);
 		if (t < 0) {
 			log_debug("%s: open(/dev/null) failed (errno=%d).", __func__, errno);
-			exit(EXIT_FAILURE);
+			EXIT(EXIT_FAILURE);
 		}
 		UNUSED(dup(t));
 		UNUSED(dup(t));
@@ -1044,7 +1044,7 @@ int main(int argc, char *argv[])
 		timestamp = time(NULL);
 		if (led_scan(ctx) != LED_STATUS_SUCCESS) {
 			log_error("Error on led_scan\n");
-			exit(1);
+			EXIT(1);
 		}
 		_ledmon_execute();
 		_ledmon_wait(conf.scan_interval);

@@ -217,7 +217,7 @@ static enum led_ibpi_pattern ibpi_to_ses(enum led_ibpi_pattern ibpi)
 		return LED_SES_REQ_HOTSPARE;
 	case LED_IBPI_PATTERN_PFA:
 		return LED_SES_REQ_PRDFAIL;
-	case LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE:
+	case LED_IBPI_PATTERN_LOCATE_AND_FAIL:
 		return LED_SES_REQ_IDENT_AND_FAULT;
 	default:
 		return ibpi;
@@ -482,7 +482,7 @@ static void get_led_status(struct ses_pages *sp, int idx, enum led_ibpi_pattern 
 	*led_status = LED_IBPI_PATTERN_NORMAL;
 
 	if ((desc_element->b2 & 0x02) && (desc_element->b3 & 0x60))
-		*led_status = LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE;
+		*led_status = LED_IBPI_PATTERN_LOCATE_AND_FAIL;
 	else if (desc_element->b2 & 0x02)
 		*led_status = LED_IBPI_PATTERN_LOCATE;
 	else if (desc_element->b3 & 0x60)

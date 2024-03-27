@@ -15,12 +15,6 @@ LT_PREREQ([2.4.2])
 AM_PROG_AR
 LT_INIT
 
-# Checks for programs.
-
-AX_CHECK_PROG([gcc])
-AX_CHECK_PROG([make])
-
-
 # Using the version parts we will construct the appropriate libtool version.
 # Following semantic versioning (X.Y.Z) we will bump X when we have an incompatible
 # library version, bump Y when we add a new public function to the library and, bump
@@ -43,7 +37,7 @@ LIBLED_LIBTOOL_VERSION=$CURRENT:$REVISION:$AGE
 
 AC_SUBST([LIBLED_LIBTOOL_VERSION])
 
-AC_PROG_CC_STDC
+AC_PROG_CC
 AC_PROG_INSTALL
 
 AC_CONFIG_HEADERS([config_ac.h])

@@ -147,8 +147,8 @@ static struct help_mode modes[] = {
  */
 void _ledctl_version(void)
 {
-	printf("Intel(R) Enclosure LED Control Application %s %s\n"
-	       "Copyright (C) 2009-2024 Intel Corporation.\n\n", PACKAGE_VERSION, BUILD_LABEL);
+	printf("Intel(R) Enclosure LED Control Application %s\n"
+	       "Copyright (C) 2009-2024 Intel Corporation.\n\n", PACKAGE_VERSION);
 }
 
 /**

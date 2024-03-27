@@ -19,6 +19,7 @@
  */
 
 #include <errno.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdint.h>

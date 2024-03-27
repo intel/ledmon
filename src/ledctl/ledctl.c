@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <linux/limits.h>
 #include <inttypes.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>

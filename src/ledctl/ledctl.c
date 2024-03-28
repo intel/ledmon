@@ -406,8 +406,10 @@ static led_status_t _ibpi_state_add_block(struct ibpi_state *state, char *name)
 	char path[PATH_MAX];
 	led_status_t rc = led_device_name_lookup(ctx, name, path);
 
-	if (rc != LED_STATUS_SUCCESS)
+	if (rc != LED_STATUS_SUCCESS) {
+		log_error("Could not find %s.", name);
 		return rc;
+	}
 
 	if (!led_is_management_supported(ctx, path)) {
 		log_error("%s: device not supported", name);

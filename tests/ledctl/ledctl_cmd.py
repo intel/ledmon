@@ -52,14 +52,21 @@ class LedctlCmd:
         params.insert(1, self.bin)
 
         LOGGER.debug(f"Command: {params}")
-        return subprocess.run(params, capture_output=output, check=check)
+        # Without "shell=True" returncode and some output lines are omitted
+        return subprocess.run(" ".join(params),
+                              shell=True,
+                              universal_newlines=True,
+                              capture_output=output)
 
-    def run_ledctl_cmd_decode(self, params: list):
+    # Run ledctl command and expect it to succeed
+    def run_ledctl_cmd_valid(self, params: list):
         result = self.run_ledctl_cmd(params, output=True)
-        out = result.stdout.decode("utf-8")
+        if result.returncode != 0:
+            raise Exception(
+                "Command expected to succeed, but non 0 status was returned!")
 
-        LOGGER.debug(f"Command returned:\n {out}")
-        return out
+        LOGGER.debug(f"Command returned:\n {result.stdout}")
+        return result
 
     # Ledctl Commands
 
@@ -76,23 +83,23 @@ class LedctlCmd:
         ])
 
     def get_slot(self, slot: Slot):
-        out = self.run_ledctl_cmd_decode([
+        out = self.run_ledctl_cmd_valid([
             "--get-slot", "--controller-type", slot.cntrl_type, "--slot",
             slot.slot
-        ])
+        ]).stdout
         return self.parse_slot_line(slot.cntrl_type, out)
 
     def get_slot_by_device(self, slot: Slot):
-        out = self.run_ledctl_cmd_decode([
+        out = self.run_ledctl_cmd_valid([
             "--get-slot", "--controller-type", slot.cntrl_type, "--device",
             slot.device_node
-        ])
+        ]).stdout
         return self.parse_slot_line(slot.cntrl_type, out)
 
     def list_slots(self, controller_type):
         rc = []
-        out = self.run_ledctl_cmd_decode(
-            ["--list-slots", "--controller-type", controller_type])
+        out = self.run_ledctl_cmd_valid(
+            ["--list-slots", "--controller-type", controller_type]).stdout
 
         for line in out.split("\n"):
             s = self.parse_slot_line(controller_type, line)
@@ -129,7 +136,7 @@ class LedctlCmd:
     def get_controllers_with_slot_functionality(self):
         rc = {}
 
-        out = self.run_ledctl_cmd_decode(["--list-controllers"])
+        out = self.run_ledctl_cmd_valid(["--list-controllers"]).stdout
         for raw_line in out.split("\n"):
             line = raw_line.strip()
             for ctrl in self.slot_ctrls:

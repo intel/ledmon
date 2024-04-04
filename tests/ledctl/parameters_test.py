@@ -73,7 +73,7 @@ def test_ibpi_parameters_are_valid_short_test_flag(ledctl_binary,
 def test_parameters_log_path(ledctl_binary, log_path_commands):
     cmd = LedctlCmd(ledctl_binary)
     cmd.is_test_flag_enabled()
-    output = cmd.run_ledctl_cmd_decode(log_path_commands.split())
+    output = cmd.run_ledctl_cmd_valid(log_path_commands.split()).stdout
     assert "LOG_PATH=/root/test.log" in output
 
 
@@ -83,10 +83,10 @@ def test_parameter_log_level_all_values(ledctl_binary):
     tested_log_levels = ["warning", "debug", "all", "info", "quiet", "error"]
     for level in tested_log_levels:
         args = "--list-controllers -T --log-level=" + level
-        output = cmd.run_ledctl_cmd_decode(args.split())
+        output = cmd.run_ledctl_cmd_valid(args.split()).stdout
         assert "LOG_LEVEL=" + level.upper() in output
         args = "--list-controllers -T --" + level
-        output = cmd.run_ledctl_cmd_decode(args.split())
+        output = cmd.run_ledctl_cmd_valid(args.split()).stdout
         assert "LOG_LEVEL=" + level.upper() in output
 
 
@@ -160,7 +160,7 @@ def parse_help(lines):
 def test_main_help(ledctl_binary, help_cmd):
     cmd = LedctlCmd(ledctl_binary)
     cmd.is_test_flag_enabled()
-    res = cmd.run_ledctl_cmd_decode(help_cmd.split())
+    res = cmd.run_ledctl_cmd_valid(help_cmd.split()).stdout
     lines = res.split('\n')
     parse_help(lines)
 
@@ -172,6 +172,6 @@ def test_main_help(ledctl_binary, help_cmd):
 def test_version(ledctl_binary, version_cmd):
     cmd = LedctlCmd(ledctl_binary)
     cmd.is_test_flag_enabled()
-    res = cmd.run_ledctl_cmd_decode(version_cmd.split())
+    res = cmd.run_ledctl_cmd_valid(version_cmd.split()).stdout
     lines = res.split('\n')
     parse_version(lines)

@@ -68,6 +68,15 @@ class LedctlCmd:
         LOGGER.debug(f"Command returned:\n {result.stdout}")
         return result
 
+    # Run ledctl command and expect it to fail
+    def run_ledctl_cmd_not_valid(self, params: list):
+        result = self.run_ledctl_cmd(params, output=True)
+        if result.returncode == 0:
+            raise Exception("Command succeed, but was expected to fail!")
+
+        LOGGER.debug(f"Command returned:\n {result.stderr}")
+        return result
+
     # Ledctl Commands
 
     def set_slot_state(self, slot: Slot, state):

@@ -175,3 +175,21 @@ def test_version(ledctl_binary, version_cmd):
     res = cmd.run_ledctl_cmd_valid(version_cmd.split()).stdout
     lines = res.split('\n')
     parse_version(lines)
+
+
+@pytest.mark.parametrize("nexist_dev", ["/dev/nvr_gon_giv_u_up"])
+# Check if proper message is returned for not existing device.
+def test_nexist_dev_output(ledctl_binary, nexist_dev):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    res = cmd.run_ledctl_cmd_not_valid(["locate={}".format(nexist_dev)])
+    assert "Could not find {}".format(nexist_dev) in res.stderr
+
+
+@pytest.mark.parametrize("unsprtd_dev", ["/dev/zero"])
+# Check if proper message is returned for unsupported device.
+def test_unsprtd_dev_output(ledctl_binary, unsprtd_dev):
+    cmd = LedctlCmd(ledctl_binary)
+    cmd.is_test_flag_enabled()
+    res = cmd.run_ledctl_cmd_not_valid(["locate={}".format(unsprtd_dev)])
+    assert "{}: device not supported".format(unsprtd_dev) in res.stderr

@@ -11,6 +11,10 @@ body:
       It is an open-source project, so we highly encourage you to fix issue yourself
       and to become a contributor.
 
+      If the issue is submitted against compilation, please double check that all
+      dependencies listed [here](https://github.com/intel/ledmon?tab=readme-ov-file#1-dependencies)
+      are installed.
+
       Please enable highest log level when collecting logs, it could speed up investigation
       e.g. ledctl --log-level=all locate=/dev/nvme0n1
 

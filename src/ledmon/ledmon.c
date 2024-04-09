@@ -114,28 +114,6 @@ static char *ledmon_conf_path;
 static int foreground;
 
 /**
- * @brief Name of IBPI patterns.
- *
- * This is internal array with names of IBPI patterns. Logging routines use this
- * entries to translate enumeration type into the string.
- */
-const char *ibpi_str_ledmon[] = {
-	[LED_IBPI_PATTERN_UNKNOWN]        = "None",
-	[LED_IBPI_PATTERN_NORMAL]         = "Off",
-	[LED_IBPI_PATTERN_ONESHOT_NORMAL] = "Oneshot Off",
-	[LED_IBPI_PATTERN_DEGRADED]       = "In a Critical Array",
-	[LED_IBPI_PATTERN_REBUILD]        = "Rebuild",
-	[LED_IBPI_PATTERN_FAILED_ARRAY]   = "In a Failed Array",
-	[LED_IBPI_PATTERN_HOTSPARE]       = "Hotspare",
-	[LED_IBPI_PATTERN_PFA]            = "Predicted Failure Analysis",
-	[LED_IBPI_PATTERN_FAILED_DRIVE]   = "Failure",
-	[LED_IBPI_PATTERN_LOCATE]         = "Locate",
-	[LED_IBPI_PATTERN_LOCATE_OFF]     = "Locate Off",
-	[LED_IBPI_PATTERN_ADDED]          = "Added",
-	[LED_IBPI_PATTERN_REMOVED]        = "Removed"
-};
-
-/**
  * Internal variable of monitor service. It is the pattern used to print out
  * information about the version of monitor service.
  */
@@ -677,7 +655,6 @@ static void _handle_fail_state(struct block_device *block,
 static void _add_block(struct block_device *block)
 {
 	struct block_device *temp = NULL;
-	char buf[IPBI2STR_BUFF_SIZE];
 
 	list_for_each(&ledmon_block_list, temp) {
 		if (block_compare(temp, block))
@@ -712,12 +689,10 @@ static void _add_block(struct block_device *block)
 
 		_handle_fail_state(block, temp);
 
-		if (ibpi != temp->ibpi && ibpi <= LED_IBPI_PATTERN_REMOVED) {
-			log_info("CHANGE %s: from '%s' to '%s'.",
-				 temp->sysfs_path,
-				 ibpi2str_table(ibpi, ibpi_str_ledmon, buf, sizeof(buf)),
-				 ibpi2str_table(temp->ibpi, ibpi_str_ledmon, buf, sizeof(buf)));
-		}
+		if (ibpi != temp->ibpi && ibpi <= LED_IBPI_PATTERN_REMOVED)
+			log_info("CHANGE %s: from '%s' to '%s'", temp->sysfs_path, ibpi2str(ibpi),
+				 ibpi2str(temp->ibpi));
+
 		/* Check if name of the device changed.*/
 		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
 			log_info("NAME CHANGED %s to %s",
@@ -733,8 +708,8 @@ static void _add_block(struct block_device *block)
 		/* Device not found, it's a new one! */
 		temp = block_device_duplicate(block);
 		if (temp != NULL) {
-			log_info("NEW %s: state '%s'.", temp->sysfs_path,
-				 ibpi2str_table(temp->ibpi, ibpi_str_ledmon, buf, sizeof(buf)));
+			log_info("NEW %s: state '%s'.", temp->sysfs_path, ibpi2str(temp->ibpi));
+
 			if (!list_append(&ledmon_block_list, temp)) {
 				log_error("Memory allocation error!");
 				EXIT(1);
@@ -760,7 +735,6 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
-	char buf[IPBI2STR_BUFF_SIZE];
 	if (!block->cntrl) {
 		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
@@ -769,11 +743,9 @@ static void _send_msg(struct block_device *block)
 	if (block->timestamp != timestamp ||
 	    block->ibpi == LED_IBPI_PATTERN_REMOVED) {
 		if (block->ibpi != LED_IBPI_PATTERN_FAILED_DRIVE) {
-			log_info("CHANGE %s: from '%s' to '%s'.",
-				 block->sysfs_path,
-				 ibpi2str_table(block->ibpi, ibpi_str_ledmon, buf, sizeof(buf)),
-				 ibpi2str_table(LED_IBPI_PATTERN_FAILED_DRIVE, ibpi_str_ledmon,
-						buf, sizeof(buf)));
+			log_info("CHANGE %s: from '%s' to '%s'.", block->sysfs_path,
+				 ibpi2str(block->ibpi), ibpi2str(LED_IBPI_PATTERN_FAILED_DRIVE));
+
 			block->ibpi = LED_IBPI_PATTERN_FAILED_DRIVE;
 		} else {
 			char *host = strstr(block->sysfs_path, "host");

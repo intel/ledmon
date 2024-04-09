@@ -452,16 +452,15 @@ int scsi_smp_fill_buffer(struct block_device *device, enum led_ibpi_pattern ibpi
 	}
 
 	if (device->cntrl->isci_present && !ibpi2sgpio[ibpi].support_mask) {
-		char buf[IPBI2STR_BUFF_SIZE];
 		char *c = strrchr(device->sysfs_path, '/');
+
 		if (c++) {
 			lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
-				"pattern %s not supported for device (/dev/%s)",
-				ibpi2str(ibpi, buf, sizeof(buf)), c);
+				"pattern %s not supported for device (/dev/%s)", ibpi2str(ibpi), c);
 		} else {
 			lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
-				"pattern %s not supported for device %s",
-				ibpi2str(ibpi, buf, sizeof(buf)), device->sysfs_path);
+				"pattern %s not supported for device %s", ibpi2str(ibpi),
+				device->sysfs_path);
 		}
 		__set_errno_and_return(ENOTSUP);
 	}

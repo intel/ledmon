@@ -499,10 +499,8 @@ void setup_options(struct option **longopt, char **shortopt, int *options,
 int get_option_id(const char *optarg);
 status_t set_verbose_level(struct ledmon_conf *conf, int log_level);
 
-#define IPBI2STR_BUFF_SIZE 32
-const char *ibpi2str(enum led_ibpi_pattern ibpi, char *buf, size_t buf_size);
-const char *ibpi2str_table(enum led_ibpi_pattern ibpi, const char *names[], char *buf,
-			   size_t buf_size);
+const char *ibpi2str(enum led_ibpi_pattern ibpi);
+enum led_ibpi_pattern string2ibpi(const char *name);
 
 /**
  * @brief Returns ibpi2value entry if IBPI matches

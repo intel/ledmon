@@ -369,19 +369,17 @@ static int _enable_smbus_control(struct amd_drive *drive)
 
 static int _change_ibpi_state(struct amd_drive *drive, enum led_ibpi_pattern ibpi, bool enable)
 {
-	char buf[IPBI2STR_BUFF_SIZE];
 	const struct ibpi2value *ibpi2val = get_by_ibpi(ibpi, ibpi2amd_ipmi,
 							ARRAY_SIZE(ibpi2amd_ipmi));
 
 	if (ibpi2val->ibpi == LED_IBPI_PATTERN_UNKNOWN) {
 		lib_log(drive->ctx, LED_LOG_LEVEL_INFO,
-			"AMD_IPMI: Controller doesn't support %s pattern\n",
-			ibpi2str(ibpi, buf, sizeof(buf)));
+			"AMD_IPMI: Controller doesn't support %s pattern\n", ibpi2str(ibpi));
 		return LED_STATUS_INVALID_STATE;
 	}
 
-	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "%s %s LED\n",
-		(enable) ? "Enabling":"Disabling", ibpi2str(ibpi, buf, sizeof(buf)));
+	lib_log(drive->ctx, LED_LOG_LEVEL_DEBUG, "%s %s LED\n", (enable) ? "Enabling" : "Disabling",
+		ibpi2str(ibpi));
 
 	return _set_ipmi_register(enable, ibpi2val->value, drive);
 }
@@ -442,14 +440,12 @@ int _amd_ipmi_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	int rc;
 	struct amd_drive drive;
-	char buf[IPBI2STR_BUFF_SIZE];
 
 	memset(&drive, 0, sizeof(struct amd_drive));
 	drive.ctx = device->cntrl->ctx;
 
 	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "\n");
-	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "Setting %s...",
-		ibpi2str(ibpi, buf, sizeof(buf)));
+	lib_log(drive.ctx, LED_LOG_LEVEL_INFO, "Setting %s...", ibpi2str(ibpi));
 
 	rc = _get_amd_ipmi_drive(device->cntrl_path, &drive);
 	if (rc)

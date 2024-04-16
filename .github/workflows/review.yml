@@ -25,10 +25,26 @@ jobs:
       - uses: actions/checkout@v3
       - name: 'Add ubuntu repository and install dependencies'
         run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
-      - name: 'Generate compiling configurations'
+      - name: 'Generate compiling configurations with library disabled'
+        run: . ./autogen.sh && ./configure
+      - name: 'Make'
+        run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+      - name: 'Hardening check: ledmon'
+        run: hardening-check src/ledmon/ledmon
+      - name: 'Hardening check: ledctl'
+        run: hardening-check src/ledctl/ledctl
+      - name: 'Check public symbol visibility'
+        run: tests/check_symbol_visibility.sh
+      - name: "Clean before retest with library enabled"
+        run: make clean
+      - name: 'Generate compiling configurations with library enabled'
         run: . tests/build_configure.sh ${{ env.cflags }}
       - name: 'Make'
         run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+      - name: 'Hardening check: ledmon'
+        run: hardening-check src/ledmon/ledmon
+      - name: 'Hardening check: ledctl'
+        run: hardening-check src/ledctl/ledctl
       - name: 'Check public symbol visibility'
         run: tests/check_symbol_visibility.sh
   clangcompile:

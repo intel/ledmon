@@ -26,7 +26,7 @@ jobs:
       - name: 'Add ubuntu repository and install dependencies'
         run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
       - name: 'Generate compiling configurations with library disabled'
-        run: . ./autogen.sh && ./configure
+        run: . ./autogen.sh && ./configure CFLAGS=${{ env.cflags }}
       - name: 'Make'
         run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
       - name: 'Hardening check: ledmon'

@@ -10,6 +10,9 @@ AC_INIT([ledmon],[MAJOR_VERSION.MINOR_VERSION.MICRO_VERSION])
 AC_CONFIG_MACRO_DIR([m4])
 AC_SUBST([PACKAGE_DATE], "March 2024")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
+
+# If CFLAGS was not set, do not set default compiler flags, leave it empty.
+# https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fPROG_005fCC-1
 : ${CFLAGS=""}
 
 LT_PREREQ([2.4.2])

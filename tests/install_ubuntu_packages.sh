@@ -10,4 +10,4 @@ sudo add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu $VERS
 sudo apt-get update && sudo apt-get install gcc-$1 g++-$1
 # Install dependencies
 sudo apt-get install pkg-config automake autoconf autoconf-archive make libsgutils2-dev \
-        libudev-dev libpci-dev check
+        libudev-dev libpci-dev check devscripts

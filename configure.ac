@@ -11,6 +11,10 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_SUBST([PACKAGE_DATE], "March 2024")
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
+# If CFLAGS was not set, do not set default compiler flags, leave it empty.
+# https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.72/autoconf.html#index-AC_005fPROG_005fCC-1
+: ${CFLAGS=""}
+
 LT_PREREQ([2.4.2])
 AM_PROG_AR
 LT_INIT
@@ -49,7 +53,7 @@ AC_PROG_INSTALL
 AC_CONFIG_HEADERS([config_ac.h])
 
 # Add compiler flags.
-AM_CFLAGS='-Wall -I../config'
+AM_CFLAGS='-Wall -I../config -O2'
 AM_CPPFLAGS='-D_DEBUG -D_GNU_SOURCE -D_DEFAULT_SOURCE -DDMALLOC_DISABLE -DBUILD_LABEL=\""$(BUILD_LABEL)"\"'
 
 AC_DEFUN([AX_AM_CFLAGS_ADD],[AX_CHECK_COMPILE_FLAG($1, AM_CFLAGS="$AM_CFLAGS $1")])

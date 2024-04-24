@@ -12,3 +12,8 @@ jobs:
       with:
         nitpicks: './.github/nitpicks.yml'
         token: '${{ secrets.GITHUB_TOKEN }}'
+    - name: nitpicker1
+      uses: ethanis/nitpicker@v1.6
+      with:
+        nitpicks: './.github/nitpicks.yml'
+        token: '${{ secrets.GITHUB_TOKEN }}'

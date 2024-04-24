@@ -1,0 +1,15 @@
+- markdown: |
+    Hey test, a file(s) you own were modified in this PR! Could you take a look?
+  pathFilter:
+    - 'src/lib/ses*'
+    - 'src/lib/smp*'
+
+- markdown: |
+    Hey test1, a file(s) you own were modified in this PR! Could you take a look?
+  pathFilter:
+    - 'src/lib/amd*'
+
+- markdown: |
+    Hey test2, a file(s) you own were modified in this PR! Could you take a look?
+  pathFilter:
+    - 'src/lib/dell*'

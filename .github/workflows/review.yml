@@ -9,7 +9,7 @@ jobs:
     steps:
     - name: 'Calculate PR commits + 1'
       run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> $GITHUB_ENV
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: ${{ env.PR_FETCH_DEPTH }}
@@ -22,7 +22,7 @@ jobs:
         gcc-version: [7, 8, 9, 10, 11, 12, 13]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: 'Add ubuntu repository and install dependencies'
         run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
       - name: 'Generate compiling configurations with library disabled'
@@ -54,7 +54,7 @@ jobs:
         gcc-version: [12]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: 'Add ubuntu repository and install dependencies'
       run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
     - name: 'Install clang'
@@ -71,7 +71,7 @@ jobs:
         python-version: ["3.7"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: 'Add ubuntu repository and install dependencies'
         run: tests/install_ubuntu_packages.sh ${{ matrix.gcc-version }}
       - name: 'Generate compiling configurations'
@@ -79,7 +79,7 @@ jobs:
       - name: 'Make'
         run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install python dependencies

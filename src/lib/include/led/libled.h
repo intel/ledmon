@@ -168,10 +168,6 @@ const LED_SYM_PUBLIC char *led_cntrl_path(struct led_cntrl_list_entry *c);
  */
 enum led_cntrl_type LED_SYM_PUBLIC  led_cntrl_type(struct led_cntrl_list_entry *c);
 
-
-
-
-
 /**
  * @brief IBPI pattern identifies.
  *
@@ -251,6 +247,9 @@ enum led_ibpi_pattern {
 	LED_SES_REQ_IDENT_AND_FAULT = 39,
 	LED_IBPI_PATTERN_COUNT = 50,
 };
+
+/* Backward compatibility, it was exposed in library API */
+#define LED_IBPI_PATTERN_LOCATE_AND_FAILED_DRIVE LED_IBPI_PATTERN_LOCATE_AND_FAIL
 
 /**
  * @brief Library context

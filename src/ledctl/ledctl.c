@@ -230,7 +230,7 @@ static void ibpi_state_fini(struct ibpi_state *p)
  *
  * @return The function does not return a value.
  */
-static void _ledctl_fini(int _i, void *_arg)
+static void _ledctl_fini(void)
 {
 	led_free(ctx);
 	list_erase(&ibpi_list);
@@ -1101,7 +1101,7 @@ int main(int argc, char *argv[])
 	if (status != LED_STATUS_SUCCESS)
 		return status;
 
-	if (on_exit(_ledctl_fini, progname))
+	if (atexit(_ledctl_fini))
 		exit(LED_STATUS_ONEXIT_ERROR);
 
 	status = _read_shared_conf();

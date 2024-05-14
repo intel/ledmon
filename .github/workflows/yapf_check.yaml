@@ -1,5 +1,6 @@
 name: YAPF Formatting Check
 on: [pull_request]
+permissions: read-all
 jobs:
   formatting-check:
     name: Formatting Check

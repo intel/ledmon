@@ -1,5 +1,7 @@
 name: Nitpicker
 on: [pull_request]
+permissions:
+  pull-requests: write
 jobs:
   formatting-check:
     if: github.repository == 'intel/ledmon'

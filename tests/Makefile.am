@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 Intel Corporation.
+
 AM_CPPFLAGS = -I@srcdir@./src/lib/include
 
 EXTRA_DIST=lib_unit_test.c

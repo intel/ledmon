@@ -1,10 +1,10 @@
 #!/usr/bin/bash
-#
+
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2023 Red Hat Inc.
-#
+
 # Ensure we only have shared library symbols which start with "led_*"
-#
+
 
 tmpf=$(mktemp /tmp/ledmon_sym.XXXXXXXX) || exit 1
 

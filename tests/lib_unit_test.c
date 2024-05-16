@@ -1,7 +1,5 @@
-/*
- * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright (C) 2023 Red Hat, Inc.
- */
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2023 Red Hat, Inc.
 
 #define _GNU_SOURCE
 #include <stdlib.h>

@@ -1,14 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (C) 2017 Intel Corporation.
+// Copyright (C) 2009 Karel Zak <kzak@redhat.com>
+
 /*
- * Intel(R) Enclosure LED Utilities
- *
- * Copyright (C) 2017-2024 Intel Corporation.
- * Copyright (C) 2009 Karel Zak <kzak@redhat.com>
- *
- * SPDX-License-Identifier: GPL-2.0
- *
  * Contains code from util-linux/libblkid/src/config.c
  * originally released under LGPL.
-*/
+ */
 
 #include <stdio.h>
 #include <string.h>

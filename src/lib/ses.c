@@ -396,7 +396,7 @@ static int ses_set_message(enum led_ibpi_pattern ibpi, struct ses_slot_ctrl_elem
 	return 0;
 }
 
-int ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx)
+status_t ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx)
 {
 	/* Move do descriptors */
 	struct ses_slot_ctrl_elem *descriptors = (void *)(sp->page2.buf + 8);
@@ -430,7 +430,7 @@ int ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx)
 	if (desc_element) {
 		int ret = ses_set_message(ibpi, desc_element);
 		if (ret)
-			return ret;
+			return STATUS_INVALID_STATE;
 
 		sp->changes++;
 
@@ -443,10 +443,10 @@ int ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx)
 		if (local_element_type != SES_ARRAY_DEVICE_SLOT)
 			desc_element->array_slot_control = 0;
 
-		return 0;
+		return STATUS_SUCCESS;
 	}
 
-	return 1;
+	return STATUS_FILE_WRITE_ERROR;
 }
 
 int ses_send_diag(int fd, struct ses_pages *sp)

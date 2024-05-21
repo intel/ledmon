@@ -10,7 +10,7 @@
 #include "sysfs.h"
 
 int is_npem_capable(const char *path, struct led_ctx *ctx);
-int npem_write(struct block_device *device, enum led_ibpi_pattern ibpi);
+status_t npem_write(struct block_device *device, enum led_ibpi_pattern ibpi);
 char *npem_get_path(const char *cntrl_path);
 
 /**

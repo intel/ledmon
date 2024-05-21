@@ -16,7 +16,7 @@
 #define ATTENTION_REBUILD    0x5  /* (0101) Attention On, Power On */
 #define ATTENTION_FAILURE    0xD  /* (1101) Attention On, Power Off */
 
-int vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi);
+status_t vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi);
 char *vmdssd_get_path(const char *cntrl_path);
 char *vmdssd_get_domain(const char *path);
 struct pci_slot *vmdssd_find_pci_slot(struct led_ctx *ctx, char *device_path);

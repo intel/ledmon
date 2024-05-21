@@ -270,10 +270,7 @@ status_t npem_set_slot(struct led_ctx *ctx, const char *sysfs_path, enum led_ibp
 	return STATUS_SUCCESS;
 }
 
-/*
- * FIXME: Error is not checked, no need to translate to errno based codes.
- */
-int npem_write(struct block_device *device, enum led_ibpi_pattern ibpi)
+status_t npem_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	if (ibpi == device->ibpi_prev)
 		return STATUS_SUCCESS;

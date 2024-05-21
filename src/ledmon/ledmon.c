@@ -719,6 +719,8 @@ static void _add_block(struct block_device *block)
  */
 static void _send_msg(struct block_device *block)
 {
+	status_t status;
+
 	if (!block->cntrl) {
 		log_debug("Missing cntrl for dev: %s. Not sending anything.",
 			  strstr(block->sysfs_path, "host"));
@@ -737,8 +739,51 @@ static void _send_msg(struct block_device *block)
 				  host ? host : block->sysfs_path);
 		}
 	}
-	block->send_fn(block, block->ibpi);
+
+	status = block->send_fn(block, block->ibpi);
+	if (status == STATUS_INVALID_STATE) {
+		switch (block->ibpi) {
+		/**
+		 * These two states are treated as neutral by ledmon. Therefore, do not display an
+		 * error message if the controller does not support them.
+		 */
+		case LED_IBPI_PATTERN_UNKNOWN:
+		case LED_IBPI_PATTERN_NONE:
+			status = STATUS_SUCCESS;
+			break;
+		/**
+		 * These states are imposed by ledmon but they are not commonly supported.
+		 * In case the controller does not support following statuses, ledmon will attempt
+		 * to reset state to normal. It is mandatory because it leads to misbehaviors during
+		 * BLINK_ON_MIGR or REBUILD_BLINK_ON_ALL config option switches in rebuild/migration
+		 * runtime.
+		 */
+		case LED_IBPI_PATTERN_DEGRADED:
+		case LED_IBPI_PATTERN_HOTSPARE:
+			log_info("Pattern %s not supported by controller on %s. Overwrite by %s.",
+				 ibpi2str(block->ibpi), block->sysfs_path,
+				 ibpi2str(LED_IBPI_PATTERN_NORMAL));
+			block->ibpi = LED_IBPI_PATTERN_NORMAL;
+			status = block->send_fn(block, block->ibpi);
+			break;
+		case LED_IBPI_PATTERN_ADDED:
+		case LED_IBPI_PATTERN_REMOVED:
+			log_info("Inappropiate IBPI LED status to set: %s on %s",
+				    ibpi2str(block->ibpi), block->sysfs_path);
+		default:
+			break;
+		}
+	}
+
+	/**
+	 * ibpi_prev is always updated regardless send_message_fn status. It works this way from
+	 * the beginning.
+	 */
 	block->ibpi_prev = block->ibpi;
+
+	if (status)
+		log_error("Unable to set %s IBPI state on %s. Status: %d",
+			  ibpi2str(block->ibpi), block->sysfs_path, status);
 }
 
 static void _flush_msg(struct block_device *block)

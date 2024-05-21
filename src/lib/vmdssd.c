@@ -165,7 +165,7 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern
 	return STATUS_SUCCESS;
 }
 
-int vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
+status_t vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	struct pci_slot *slot;
 	char *short_name = strrchr(device->sysfs_path, '/');
@@ -176,16 +176,16 @@ int vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 		short_name = device->sysfs_path;
 
 	if (ibpi == device->ibpi_prev)
-		return 0;
+		return STATUS_SUCCESS;
 
 	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
-		__set_errno_and_return(ERANGE);
+		return STATUS_INVALID_STATE;
 
 	slot = vmdssd_find_pci_slot(device->cntrl->ctx, device->sysfs_path);
 	if (!slot) {
 		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
 			"PCI hotplug slot not found for %s\n", short_name);
-		__set_errno_and_return(ENODEV);
+		return STATUS_NULL_POINTER;
 	}
 
 	return vmdssd_write_attention_buf(slot, ibpi);

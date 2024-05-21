@@ -99,31 +99,30 @@ int scsi_get_enclosure(struct led_ctx *ctx, struct block_device *device)
 
 /**
  */
-int scsi_ses_write(struct block_device *device, enum led_ibpi_pattern ibpi)
+status_t scsi_ses_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	if (!device || !device->sysfs_path || !device->enclosure ||
 	    device->encl_index == -1)
-		__set_errno_and_return(EINVAL);
+		return STATUS_DATA_ERROR;
 
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
-		return 1;
+		return STATUS_SUCCESS;
 
 	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_SES_REQ_FAULT))
-		__set_errno_and_return(ERANGE);
+		return LED_STATUS_INVALID_STATE;
 
 	return ses_write_msg(ibpi, &device->enclosure->ses_pages, device->encl_index);
 }
 
-int scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx,
-			     enum led_ibpi_pattern ibpi)
+status_t scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx,
+				  enum led_ibpi_pattern ibpi)
 {
-	if (!enclosure || idx == -1) {
-		__set_errno_and_return(EINVAL);
-	}
+	if (!enclosure || idx == -1)
+		return STATUS_DATA_ERROR;
 
 	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_SES_REQ_FAULT))
-		__set_errno_and_return(ERANGE);
+		return STATUS_INVALID_STATE;
 
 	return ses_write_msg(ibpi, &enclosure->ses_pages, idx);
 }

@@ -833,20 +833,22 @@ int _amd_sgpio_em_enabled(const char *path, struct led_ctx *ctx)
 	return rc ? 0 : 1;
 }
 
-int _amd_sgpio_write(struct block_device *device, enum led_ibpi_pattern ibpi)
+status_t _amd_sgpio_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
-		return 1;
+		return STATUS_SUCCESS;
 
 	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
-		__set_errno_and_return(ERANGE);
+		return STATUS_INVALID_STATE;
 
 	if ((ibpi == LED_IBPI_PATTERN_DEGRADED) ||
 	    (ibpi == LED_IBPI_PATTERN_FAILED_ARRAY))
-		__set_errno_and_return(ENOTSUP);
+		return STATUS_INVALID_STATE;
 
-	return _set_ibpi(device, ibpi);
+	if (_set_ibpi(device, ibpi))
+		return STATUS_FILE_WRITE_ERROR;
+	return STATUS_SUCCESS;
 }
 
 char *_amd_sgpio_get_path(const char *cntrl_path, struct led_ctx *ctx)

@@ -126,7 +126,7 @@ int get_dell_server_type(struct led_ctx *ctx)
 	return 0;
 }
 
-static int ipmi_setled(struct led_ctx *ctx, int b, int d, int f, int state)
+static status_t ipmi_setled(struct led_ctx *ctx, int b, int d, int f, int state)
 {
 	uint8_t data[20], rdata[20];
 	int rc, rlen, bay = 0xFF, slot = 0xFF, devfn, gen = 0;
@@ -134,7 +134,7 @@ static int ipmi_setled(struct led_ctx *ctx, int b, int d, int f, int state)
 	/* Check if this is a supported Dell server */
 	gen = get_dell_server_type(ctx);
 	if (!gen)
-		return 0;
+		return STATUS_FILE_WRITE_ERROR;
 	devfn = (((d & 0x1F) << 3) | (f & 0x7));
 
 	/* Get mapping of BDF to bay:slot */
@@ -174,7 +174,7 @@ static int ipmi_setled(struct led_ctx *ctx, int b, int d, int f, int state)
 		lib_log(ctx, LED_LOG_LEVEL_ERROR,
 			"Unable to determine bay/slot for device %.2x:%.2x.%x\n",
 			(unsigned int)b, (unsigned int)d, (unsigned int)f);
-		return 0;
+		return STATUS_FILE_WRITE_ERROR;
 	}
 
 	/* Set Bay:Slot to Mask */
@@ -214,8 +214,9 @@ static int ipmi_setled(struct led_ctx *ctx, int b, int d, int f, int state)
 		lib_log(ctx, LED_LOG_LEVEL_ERROR,
 			"Unable to issue SetDriveState for %.2x:%.2x.%x\n",
 			(unsigned int)b, (unsigned int)d, (unsigned int)f);
+		return STATUS_FILE_WRITE_ERROR;
 	}
-	return 0;
+	return STATUS_SUCCESS;
 }
 
 char *dellssd_get_path(const char *cntrl_path)
@@ -223,7 +224,7 @@ char *dellssd_get_path(const char *cntrl_path)
 	return strdup(cntrl_path);
 }
 
-int dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
+status_t dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
 	unsigned int bus, dev, fun;
 	char *t;
@@ -231,10 +232,10 @@ int dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 
 	/* write only if state has changed */
 	if (ibpi == device->ibpi_prev)
-		return 1;
+		return STATUS_SUCCESS;
 
 	if ((ibpi < LED_IBPI_PATTERN_NORMAL) || (ibpi > LED_IBPI_PATTERN_LOCATE_OFF))
-		__set_errno_and_return(ERANGE);
+		return STATUS_INVALID_STATE;
 
 	ibpi2val = get_by_ibpi(ibpi, ibpi2ssd, ARRAY_SIZE(ibpi2ssd));
 
@@ -242,14 +243,14 @@ int dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 
 		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_INFO,
 			"SSD: Controller doesn't support %s pattern\n", ibpi2str(ibpi));
-		__set_errno_and_return(EINVAL);
+		return STATUS_INVALID_STATE;
 	}
 
 	t = strrchr(device->cntrl_path, '/');
-	if (t != NULL) {
-		/* Extract PCI bus:device.function */
-		if (sscanf(t + 1, "%*x:%x:%x.%x", &bus, &dev, &fun) == 3)
-			ipmi_setled(device->cntrl->ctx, bus, dev, fun, ibpi2val->value);
-	}
-	return 0;
+
+	/* Extract PCI bus:device.function */
+	if (t == NULL || sscanf(t + 1, "%*x:%x:%x.%x", &bus, &dev, &fun) != 3)
+		return STATUS_DATA_ERROR;
+
+	return ipmi_setled(device->cntrl->ctx, bus, dev, fun, ibpi2val->value);
 }

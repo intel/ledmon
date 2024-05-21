@@ -54,10 +54,9 @@ struct gpio_tx_register_byte {
  * @param[in]      device         Path to a smp device in sysfs.
  * @param[in]      ibpi           IBPI pattern to visualize.
  *
- * @return 1 if successful or -1 in case of error
- *         and errno is set to appropriate error code.
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-int scsi_smp_fill_buffer(struct block_device *device, enum led_ibpi_pattern ibpi);
+status_t scsi_smp_fill_buffer(struct block_device *device, enum led_ibpi_pattern ibpi);
 
 /**
  * @brief Sends message to SMP device.

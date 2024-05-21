@@ -26,10 +26,9 @@ struct block_device;
  *                                @see block_device::cntrl_path.
  * @param[in]    ibpi             an IBPI pattern (state) to visualize.
  *
- * @return 1 if successful, otherwise the function returns 0.
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-typedef int (*send_message_t) (struct block_device *device,
-			       enum led_ibpi_pattern ibpi);
+typedef status_t (*send_message_t) (struct block_device *device, enum led_ibpi_pattern ibpi);
 
 /**
  * @brief Pointer to a flush buffer function.

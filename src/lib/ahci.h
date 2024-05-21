@@ -30,9 +30,8 @@ char *ahci_get_port_path(const char *path);
  * @param[in]      ibpi           IBPI pattern to visualize on LEDs associated
  *                                with the given slot.
  *
- * @return Number of bytes send to controller, -1 means error occurred and
- *         errno has additional error information.
+ * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-int ahci_sgpio_write(struct block_device *path, enum led_ibpi_pattern ibpi);
+status_t ahci_sgpio_write(struct block_device *path, enum led_ibpi_pattern ibpi);
 
 #endif				/* _AHCI_H_INCLUDED_ */

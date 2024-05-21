@@ -27,9 +27,9 @@ char *scsi_get_host_path(const char *path, const char *cntrl_path);
  * @param[in]      device         Sysfs path of a drive in enclosure.
  * @param[in]      ibpi           IBPI pattern to visualize.
  *
- * @return 0 on success, otherwise error.
+ * @return STATUS_SUCCESS on success, otherwise a valid status_t status code.
  */
-int scsi_ses_write(struct block_device *device, enum led_ibpi_pattern ibpi);
+status_t scsi_ses_write(struct block_device *device, enum led_ibpi_pattern ibpi);
 
 /**
  * @brief Sends message to SES processor of an enclosure.
@@ -74,10 +74,10 @@ struct block_device *locate_block_by_sas_addr(struct led_ctx *ctx, uint64_t sas_
  * @param[in]      idx            slot in enclosure
  * @param[in]      ibpi           IBPI pattern to visualize.
  *
- * @return 0 on success, otherwise error.
+ * @return STATUS_SUCCESS on success, otherwise a valid status_t status code.
  */
-int scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx,
-			     enum led_ibpi_pattern ibpi);
+status_t scsi_ses_write_enclosure(struct enclosure_device *enclosure, int idx,
+				  enum led_ibpi_pattern ibpi);
 
 /**
  * @brief Sends message to SES processor of an enclosure.

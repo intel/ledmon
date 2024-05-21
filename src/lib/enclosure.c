@@ -258,12 +258,14 @@ status_t enclosure_set_state(struct slot_property *sp, enum led_ibpi_pattern sta
 {
 	struct enclosure_device *enclosure_device = sp->slot_spec.ses.encl;
 	int index = sp->slot_spec.ses.slot_num;
+	int rc;
 
-	int rc = scsi_ses_write_enclosure(enclosure_device, index, state);
-	if (rc != 0) {
+	status_t status = scsi_ses_write_enclosure(enclosure_device, index, state);
+
+	if (status != STATUS_SUCCESS) {
 		lib_log(enclosure_device->ctx, LED_LOG_LEVEL_ERROR,
-			"SCSI: ses write failed %d\n", rc);
-		return STATUS_FILE_WRITE_ERROR;
+			"SCSI: ses write failed %d\n", status);
+		return status;
 	}
 
 	rc = scsi_ses_flush_enclosure(enclosure_device);

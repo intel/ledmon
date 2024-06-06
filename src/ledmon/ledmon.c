@@ -740,7 +740,7 @@ static void _send_msg(struct block_device *block)
 		}
 	}
 
-	status = block->send_fn(block, block->ibpi);
+	status = block->send_message_fn(block, block->ibpi);
 	if (status == STATUS_INVALID_STATE) {
 		switch (block->ibpi) {
 		/**
@@ -764,7 +764,7 @@ static void _send_msg(struct block_device *block)
 				 ibpi2str(block->ibpi), block->sysfs_path,
 				 ibpi2str(LED_IBPI_PATTERN_NORMAL));
 			block->ibpi = LED_IBPI_PATTERN_NORMAL;
-			status = block->send_fn(block, block->ibpi);
+			status = block->send_message_fn(block, block->ibpi);
 			break;
 		case LED_IBPI_PATTERN_ADDED:
 		case LED_IBPI_PATTERN_REMOVED:
@@ -790,7 +790,7 @@ static void _flush_msg(struct block_device *block)
 {
 	if (!block->cntrl)
 		return;
-	block->flush_fn(block);
+	block->flush_message_fn(block);
 }
 
 static void _revalidate_dev(struct block_device *block)

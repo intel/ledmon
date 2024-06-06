@@ -52,8 +52,8 @@ void off_all(struct led_ctx *ctx)
 	struct block_device *device;
 
 	list_for_each(sysfs_get_block_devices(ctx), device) {
-		device->send_fn(device, LED_IBPI_PATTERN_LOCATE_OFF);
-		device->flush_fn(device);
+		device->send_message_fn(device, LED_IBPI_PATTERN_LOCATE_OFF);
+		device->flush_message_fn(device);
 	}
 }
 

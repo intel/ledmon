@@ -17,29 +17,6 @@
 struct block_device;
 
 /**
- * @brief Pointer to a send message function.
- *
- * The pointer to a function which knows how to send LED message to a driver of
- * storage controller using the given protocol.
- *
- * @param[in]    path             path in sysfs to a host device
- *                                @see block_device::cntrl_path.
- * @param[in]    ibpi             an IBPI pattern (state) to visualize.
- *
- * @return STATUS_SUCCESS if successful, otherwise a valid status_t status code.
- */
-typedef status_t (*send_message_t) (struct block_device *device, enum led_ibpi_pattern ibpi);
-
-/**
- * @brief Pointer to a flush buffer function.
- *
- * @param[in]    device           pointer to a block device
- *
- * @return 1 if successful, otherwise the function returns 0.
- */
-typedef int (*flush_message_t) (struct block_device *device);
-
-/**
  * @brief Describes a block device.
  *
  * This structure describes a block device. It does not describe virtual devices
@@ -62,15 +39,21 @@ struct block_device {
 
 /**
  * The pointer to a function which sends a message to driver in order to
- * control LEDs in an enclosure or DAS system - @see send_message_t for details.
- * This field cannot have NULL pointer assigned.
+ * control LEDs in an enclosure or DAS system.
+ * Params:
+ *	device - pointer to a block device.
+ *	ibpi - an IBPI pattern (state) to visualize.
+ * Return: STATUS_SUCCESS if successful, otherwise a valid status_t status code.
  */
-	send_message_t send_fn;
+	status_t (*send_message_fn)(struct block_device *device, enum led_ibpi_pattern ibpi);
 
 /**
- * The pointer to a function which flush buffers filled by send_fn.
+ * The pointer to a function which flush buffers filled by send_message_fn.
+ * Params:
+ *	device - pointer to a block device.
+ * Return 1 if successful, otherwise the function returns 0.
  */
-	flush_message_t flush_fn;
+	int (*flush_message_fn)(struct block_device *device);
 
 /**
  * Canonical path to block device where enclosure management fields are located.

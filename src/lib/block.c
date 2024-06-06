@@ -56,45 +56,42 @@ bool is_virt_nvme(const char * const name)
 }
 
 /**
- * @brief Determines a send function.
+ * @brief Determines a send message function.
  *
  * This is the internal function of 'block device' module. The function tries to
- * determine a LED management protocol based on controller type and the given
- * path to block device in sysfs tree. First it checks whether to use
- * the default send function. If not it tries to read the content
- * of em_message_type field from sysfs tree and determines
- * the LED control protocol.
+ * determine a LED management protocol based on controller type and
+ * path in sysfs tree of given block device.
  *
- * @param[in]    cntrl            type of a controller a device is connected to.
- * @param[in]    path             path to a block device in sysfs tree.
- *
- * @return Pointer to send message function if successful, otherwise the function
- *         returns the NULL pointer and it means either the controller does not
- *         support enclosure management or LED control protocol
- *         is not supported.
+ * @param[in]    device               block device to retrieve.
  */
-static send_message_t _get_send_fn(struct cntrl_device *cntrl, const char *path)
+static void _set_send_message_fn(struct block_device *device)
 {
-	send_message_t result = NULL;
-
-	if (cntrl->cntrl_type == LED_CNTRL_TYPE_AHCI) {
-		result = ahci_sgpio_write;
-	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI
-		   && !dev_directly_attached(path)) {
-		result = scsi_ses_write;
-	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI
-		   && dev_directly_attached(path)) {
-		result = scsi_smp_fill_buffer;
-	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_DELLSSD) {
-		result = dellssd_write;
-	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_VMD) {
-		result = vmdssd_write;
-	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_NPEM) {
-		result = npem_write;
-	} else if (cntrl->cntrl_type == LED_CNTRL_TYPE_AMD) {
-		result = amd_write;
+	switch (device->cntrl->cntrl_type) {
+	case LED_CNTRL_TYPE_AHCI:
+		device->send_message_fn = ahci_sgpio_write;
+		break;
+	case LED_CNTRL_TYPE_SCSI:
+		if (dev_directly_attached(device->sysfs_path))
+			device->send_message_fn = scsi_smp_fill_buffer;
+		else
+			device->send_message_fn = scsi_ses_write;
+		break;
+	case LED_CNTRL_TYPE_DELLSSD:
+		device->send_message_fn = dellssd_write;
+		break;
+	case LED_CNTRL_TYPE_VMD:
+		device->send_message_fn = vmdssd_write;
+		break;
+	case LED_CNTRL_TYPE_NPEM:
+		device->send_message_fn = npem_write;
+		break;
+	case LED_CNTRL_TYPE_AMD:
+		device->send_message_fn = amd_write;
+		break;
+	default:
+		lib_log(device->cntrl->ctx, LED_LOG_LEVEL_DEBUG,
+			"(%s) Unknown controller of device %s", __func__, device->sysfs_path);
 	}
-	return result;
 }
 
 static int do_not_flush(struct block_device *device __attribute__ ((unused)))
@@ -102,19 +99,21 @@ static int do_not_flush(struct block_device *device __attribute__ ((unused)))
 	return 1;
 }
 
-static flush_message_t _get_flush_fn(struct cntrl_device *cntrl, const char *path)
+/**
+ * @brief Determine a flush buffer function.
+ *
+ * @param[in]    device           pointer to a block device
+ */
+static void _set_flush_message_fn(struct block_device *device)
 {
-	flush_message_t result = NULL;
-
-	if (cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI) {
-		if (dev_directly_attached(path))
-			result = scsi_smp_write_buffer;
+	if (device->cntrl->cntrl_type == LED_CNTRL_TYPE_SCSI) {
+		if (dev_directly_attached(device->sysfs_path))
+			device->flush_message_fn = scsi_smp_write_buffer;
 		else
-			result = scsi_ses_flush;
+			device->flush_message_fn = scsi_ses_flush;
 	} else {
-		result = do_not_flush;
+		device->flush_message_fn = do_not_flush;
 	}
-	return result;
 }
 
 /**
@@ -316,10 +315,11 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 	block_set_devnode(device);
 	device->ibpi = LED_IBPI_PATTERN_UNKNOWN;
 	device->ibpi_prev = LED_IBPI_PATTERN_NONE;
-	device->send_fn = _get_send_fn(cntrl, link);
-	if (!device->send_fn)
+
+	_set_send_message_fn(device);
+	if (!device->send_message_fn)
 		goto error;
-	device->flush_fn = _get_flush_fn(cntrl, link);
+	_set_flush_message_fn(device);
 	device->timestamp = timestamp;
 	device->host = NULL;
 	device->host_id = host_id;
@@ -396,8 +396,8 @@ struct block_device *block_device_duplicate(struct block_device *block)
 			else
 				result->ibpi = LED_IBPI_PATTERN_ONESHOT_NORMAL;
 			result->ibpi_prev = block->ibpi_prev;
-			result->send_fn = block->send_fn;
-			result->flush_fn = block->flush_fn;
+			result->send_message_fn = block->send_message_fn;
+			result->flush_message_fn = block->flush_message_fn;
 			result->timestamp = block->timestamp;
 			result->cntrl = block->cntrl;
 			result->host = block->host;

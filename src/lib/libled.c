@@ -119,7 +119,7 @@ led_status_t led_set(struct led_ctx *ctx, const char *path, enum led_ibpi_patter
 
 	list_for_each(sysfs_get_block_devices(ctx), device) {
 		if (strcmp(device->sysfs_path, path) == 0) {
-			device->send_fn(device, ibpi);
+			device->send_message_fn(device, ibpi);
 			return LED_STATUS_SUCCESS;
 		}
 	}
@@ -131,7 +131,7 @@ void led_flush(struct led_ctx *ctx)
 	struct block_device *device;
 
 	list_for_each(sysfs_get_block_devices(ctx), device) {
-		device->flush_fn(device);
+		device->flush_message_fn(device);
 	}
 }
 

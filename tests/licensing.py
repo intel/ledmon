@@ -20,6 +20,16 @@ comment_marks = {
 }
 
 
+# For each used SPDX header, there must be full license file in dir.
+# It does not check file content.
+def check_license_files(path, spdx_licenses):
+    for license in spdx_licenses:
+        if not os.path.isfile(f"{path}/LICENSES/LICENSE.{license}"):
+            raise Exception(
+                f"License {license} does not have a license file in LICENSES directory"
+            )
+
+
 #FIXME: Should it be configurable by Yaml?
 class Directory_license(NamedTuple):
     licenses: dict[str, set[str]]
@@ -65,6 +75,16 @@ DIRECTORY_LICENSES: dict[str, Directory_license] = {
             ".pod": ["GPL-2.0-only"]
         }),
 }
+
+
+def get_licenses_set():
+    spdx_licenses = set()
+
+    for directory in DIRECTORY_LICENSES.values():
+        for licenses in directory.licenses.values():
+            spdx_licenses.update(licenses)
+
+    return spdx_licenses
 
 
 # It compares DIRECTORY_LICENSES keys, first match wins. Order matters
@@ -175,6 +195,9 @@ def main():
         ch.setLevel(logging.getLevelNamesMapping()[args.log_level])
 
     path = os.getcwd()
+
+    # Ensure that there is a file with SPDX header in LICENSES directory.
+    check_license_files(path, get_licenses_set())
 
     files = []
     # Normalize them to full paths

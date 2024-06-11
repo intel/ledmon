@@ -27,6 +27,7 @@ jobs:
         files_ignore: |
           .checkpatch.conf
           .github/**
+          LICENSES/**
           .gitignore
           *.md
           autogen.sh

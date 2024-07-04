@@ -162,10 +162,16 @@ static int possible_params_modes[] = {
 	OPT_SET_SLOT,
 	OPT_LIST_SLOTS,
 	OPT_LIST_CTRL,
+	OPT_BEST_CTRL,
 	OPT_IBPI
 };
 
 static int possible_params_list_ctrl[] = {
+	COMMON_GETOPT_ARGS
+};
+
+static int possible_params_best_ctrl[] = {
+	OPT_DEVICE,
 	COMMON_GETOPT_ARGS
 };
 
@@ -541,6 +547,9 @@ void _cmdline_parse_modes(int argc, char *argv[], struct request *req)
 	case 'L':
 		req->chosen_opt = OPT_LIST_CTRL;
 		break;
+	case 'B':
+		req->chosen_opt = OPT_BEST_CTRL;
+		break;
 	case 'I':
 		req->chosen_opt = OPT_IBPI;
 		break;
@@ -580,6 +589,10 @@ bool _setup_mode_options(struct request * const req, char **shortopts, struct op
 	case OPT_LIST_CTRL:
 		setup_options(longopts, shortopts, possible_params_list_ctrl,
 			      ARRAY_SIZE(possible_params_list_ctrl));
+		break;
+	case OPT_BEST_CTRL:
+		setup_options(longopts, shortopts, possible_params_best_ctrl,
+			      ARRAY_SIZE(possible_params_best_ctrl));
 		break;
 	case OPT_IBPI:
 		setup_options(longopts, shortopts, possible_params_ibpi,
@@ -756,6 +769,13 @@ static led_status_t verify_request(struct led_ctx *ctx, struct request *req)
 {
 	if (req->chosen_opt == OPT_LIST_CTRL)
 		return LED_STATUS_SUCCESS;
+	if (req->chosen_opt == OPT_BEST_CTRL) {
+		if (!req->device[0]) {
+			log_error("Device is missing, aborting.");
+			return LED_STATUS_CMDLINE_ERROR;
+		} else
+			return LED_STATUS_SUCCESS;
+	}
 	if (req->cntrl == LED_CNTRL_TYPE_UNKNOWN) {
 		log_error("Invalid controller in the request.");
 		return LED_STATUS_INVALID_CONTROLLER;
@@ -858,6 +878,14 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 
 	if (req->chosen_opt == OPT_LIST_SLOTS)
 		return list_slots(req->cntrl);
+	if (req->chosen_opt == OPT_BEST_CTRL) {
+		char device_path[PATH_MAX];
+
+		led_device_name_lookup(ctx, req->device, device_path);
+		printf("%s\n", led_cntrl_type_to_string(
+			       led_is_management_supported(ctx, device_path)));
+		return STATUS_SUCCESS;
+	}
 
 	if (req->chosen_opt == OPT_LIST_CTRL) {
 		struct led_cntrl_list_entry *cntrl = NULL;

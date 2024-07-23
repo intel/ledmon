@@ -68,7 +68,6 @@ AX_AM_CFLAGS_ADD([-Walloca])
 AX_AM_CFLAGS_ADD([-Wmissing-field-initializers])
 AX_AM_CFLAGS_ADD([-Wformat-signedness])
 AX_AM_CFLAGS_ADD([-D_FORTIFY_SOURCE=2])
-AX_AM_CFLAGS_ADD([-fstack-protector-strong])
 AX_AM_CFLAGS_ADD([-fPIE])
 
 # Add linker flags.
@@ -123,6 +122,12 @@ AC_FUNC_MMAP
 AC_CHECK_FUNCS([ftruncate memset munmap realpath regcomp select strcasecmp strchr strdup strerror strrchr strstr strtol strtoul])
 
 # configure options
+AC_ARG_ENABLE([stack-protector], AS_HELP_STRING([--disable-stack-protector], [Disable stack-protector]))
+
+if test "x${enable_stack_protector}" != "xno"; then
+AX_AM_CFLAGS_ADD([-fstack-protector-strong])
+fi
+
 AC_ARG_ENABLE(systemd, AS_HELP_STRING([--enable-systemd], [install ledmon systemd service]))
 
 AS_IF([test "x$enable_systemd" = xyes], [SYSTEMD_STR=yes], [SYSTEMD_STR=no])

@@ -5,21 +5,27 @@ env:
 permissions: read-all
 jobs:
   make:
+    # when gcc is not found, it may be needed to update runner version
+    runs-on: ubuntu-24.04
     name: Compilation test with gcc
     strategy:
       matrix:
-        gcc-version: [7, 8, 9, 10, 11, 12, 13]
-    runs-on: ubuntu-latest
+        # gcc-versions are used to test up to 5 years old
+        gcc-version: [9, 10, 11, 12, 13, 14]
     steps:
       - uses: actions/checkout@v4
       - name: 'Add ubuntu repositories'
         run: .github/configure_apt.sh
       - name: 'Install building dependencies'
         run: .github/install_debs_compilation.sh ${{ matrix.gcc-version }}
+      - name: 'Check if gcc was installed correctly'
+        run: gcc-${{ matrix.gcc-version }} --version
+      - name: 'Check if g++ was installed correctly'
+        run: g++-${{ matrix.gcc-version }} --version
       - name: 'Generate compiling configurations with library disabled'
         run: . ./autogen.sh && ./configure CFLAGS=${{ env.cflags }}
       - name: 'Make'
-        run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+        run: V=1 make -j$(nproc) CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} 
       - name: 'Hardening check: ledmon'
         run: hardening-check src/ledmon/ledmon
       - name: 'Hardening check: ledctl'
@@ -31,7 +37,7 @@ jobs:
       - name: 'Generate compiling configurations with library enabled'
         run: . .github/build_configure.sh ${{ env.cflags }}
       - name: 'Make'
-        run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+        run: V=1 make -j$(nproc) CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }}
       - name: 'Hardening check: ledmon'
         run: hardening-check src/ledmon/ledmon
       - name: 'Hardening check: ledctl'
@@ -40,7 +46,7 @@ jobs:
         run: tests/check_symbol_visibility.sh
   clangcompile:
     name: Compilation test with clang
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: 'Add ubuntu repositories'
@@ -57,9 +63,9 @@ jobs:
     name: Run tests
     strategy:
       matrix:
-        gcc-version: [12]
-        python-version: ["3.7"]
-    runs-on: ubuntu-latest
+        gcc-version: [13]
+        python-version: ["3.9"]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: 'Add ubuntu repositories'
@@ -69,7 +75,7 @@ jobs:
       - name: 'Generate compiling configurations'
         run: .github/build_configure.sh ${{ env.cflags }}
       - name: 'Make'
-        run: CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} && V=1 make -j$(nproc)
+        run: V=1 make -j$(nproc) CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }}
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:

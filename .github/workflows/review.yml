@@ -8,12 +8,10 @@ jobs:
     name: Commits review
     runs-on: ubuntu-latest
     steps:
-    - name: 'Calculate PR commits + 1'
-      run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> $GITHUB_ENV
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
-        fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+        fetch-depth: 0
     - name: 'Move prepared .checkpatch.conf file to main directory'
       run: mv .github/.checkpatch.conf .
     - name: Run checkpatch review

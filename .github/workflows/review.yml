@@ -14,6 +14,8 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+    - name: 'Move prepared .checkpatch.conf file to main directory'
+      run: mv .github/.checkpatch.conf .
     - name: Run checkpatch review
       uses: webispy/checkpatch-action@v9
     - name: Set up Python 3.11

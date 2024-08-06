@@ -13,16 +13,16 @@ B<ledmon> [I<OPTIONS>]
 
 =head1 DESCRIPTION
 
-The ledmon application is a daemon process used to monitor a state of
-software RAID devices (md only) or a state of block devices. The state
-is visualizing on LEDs associated to each slot in an enclosure or a
-drive bay. There are two types of system: 2-LEDs system (Activity LED,
-Status LED) and 3-LEDs system (Activity LED, Locate LED, Fail
+The ledmon application is a daemon process used to monitor the state(s) of
+software RAID devices (md only) or the state(s) of block devices. The state
+is visualized on LEDs associated with each slot in an enclosure or a
+drive bay. There are two types of systems: 2-LEDs systems (Activity LED,
+Status LED) and 3-LEDs systems (Activity LED, Locate LED, Fail
 LED). This application has the highest priority when accessing the
 LEDs.
 
 The ledmon application supports LED management of the SAS/SATA and PCIe
-storages.
+storage.
 
 =head4 Supported protocols/methods for LED management are:
 
@@ -44,22 +44,22 @@ B<VMD and NPEM> for PCIe.
 
 B<SAF-TE> protocol is not supported.
 
-For SAS/SATA storages supporting controllers may transmit LED management
+For SAS/SATA supported storage, controllers may transmit LED management
 information to the backplane controllers via the SGPIO interface. The SGPIO
 bus carries bit patterns, which translate into LED blink patterns in
 accordance with the International Blinking Pattern Interpretation (IBPI)
 of SFF-8489 specification for SGPIO.
-Please note some enclosures do not stick close to the SFF-8489
-specification. It might happen that the enclosure processor will accept
+Please note some enclosures do not stick closely to the SFF-8489
+specification. It might occur that the enclosure processor will accept
 the IBPI pattern but it will blink LEDs not according to SFF-8489
-specification or it has a limited number of patterns supported.
+specification.  Or, it may have a limited number of patterns supported.
 
 For more information about communication methods please consult the
 appropriate Specifications.
 
 There's no method provided to specify which RAID volume should be monitored
 and which not. The ledmon application monitors all RAID devices and visualizes
-their state.
+their state(s).
 
 The ledmon application has been verified to work with Intel(R) storage
 controllers (i.e. Intel(R) AHCI controller and Intel(R) SAS controller).

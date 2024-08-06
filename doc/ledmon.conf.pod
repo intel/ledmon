@@ -10,19 +10,19 @@ ledmon.conf - Configuration file for Intel(R) Enclosure LED Utilities.
 =head1 DESCRIPTION
 
 The ledmon configuration file allows you to use advanced settings and functions
-of Intel(R) Enclosure LED Utilities. The global location of the configuration
+of the Intel(R) Enclosure LED Utilities. The global location of the configuration
 file is F</etc/ledmon.conf>. Instead of a global configuration file, you can
 specify a local config file using the I<-c> option when running ledmon.
 
 =head2 SYNTAX
 
-One line should keep exactly one option and value in the configuration file in
-format: OPTION=VALUE. Any word that begins with a hash sign (B<#>) starts a
+One line should have exactly one option and value in the configuration file in
+format: OPTION=VALUE. Any word that begins with a hash sign (B<#>) is considered a
 comment and that word together with the remainder of the line is ignored. Empty
 lines are allowed. Either single quotes (B<'>) or double quotes (B<">) should
 not be used.
 
-Values are considered as truth: enabled, true, yes, 1.
+Values are considered as true: enabled, true, yes, 1.
 
 Values are considered as false: disabled, false, no, 0.
 
@@ -30,7 +30,7 @@ See also the examples section.
 
 =head2 List of configurable options:
 
-B<EXCLUDELIST> - Ledmon will exclude scanning controllers listed on excludelist.
+B<EXCLUDELIST> - Ledmon will exclude scanning controllers listed on the excludelist.
 When allowlist is also set in config file, the excludelist will be ignored.
 The controllers should be separated by comma (B<,>) character. Only exact paths
 to the controller (e.g. /sys/devices/pci0000:c9/0000:c9:00.5) will be respected.
@@ -45,7 +45,7 @@ process. If value is set to false, processes like init or verifications will not
 be reported by LEDs. The default value is true.
 
 B<BLINK_ON_MIGR> - RAID can be migrated between some levels or strip sizes and
-the flag is related with this processes. Also RAID Grow operation will be
+the flag is related with these processes. Also, the RAID Grow operation will be
 reported along with this flag. If value is set to true - status LEDs of all
 member drives will blink with proper pattern if RAID volume is under reshape.
 If value is set to false, listed actions will not be reported by LEDs. The
@@ -72,8 +72,8 @@ with appropriate LED pattern. If value is set to true all drives from RAID
 that is during rebuild will blink during this operation.
 
 B<ALLOWLIST> - Ledmon will limit changing LED state to controllers listed on
-allowlist. If any allowlist is set, only devices from list will be scanned by
-ledmon. The controllers should be separated by comma (B<,>) character. Only
+allowlist. If any allowlist is set, only devices from the list will be scanned by
+ledmon. The controllers should be separated by a comma (B<,>) character. Only
 exact paths to the controller (e.g. /sys/devices/pci0000:c9/0000:c9:00.5)
 will be respected.
 The B<XBD Extended Regular Expressions> are supported.  The deprecated name of

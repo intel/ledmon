@@ -14,7 +14,7 @@ See http://www.gnu.org/ for details.
 
 -------------------------
 
-Following packages are required to compile:
+The following packages are required for compilation:
 
 |RHEL|SLES|Debian/Ubuntu|
 |:---:|:---:|:---:|
@@ -34,7 +34,7 @@ Following packages are required to compile:
 
 -------------------------
 
-Run `autogen.sh` to generate compiling configurations:
+Run `autogen.sh` to generate compilation configurations:
    `./autogen.sh`
    `./configure`
 
@@ -57,22 +57,22 @@ Run `./configure` with:
 
 Run `make` command to compile the package.
 
-## 4. (Un)installing the package
+## 4. Installing or uninstalling the package
 
 -------------------------
 
-Run following commands to install package:
+Run the following command to install the package:
    `make install`
 
-Run following commands to uninstall package:
+Run the following command to uninstall the package:
    `make uninstall`
 
 ## 5. Release notes
 
 -------------------------
 
-a. Enclosure LED Utilities is meant as a part of RHEL, SLES and Debian/Ubuntu linux
+a. Enclosure LED Utilities are included as a part of RHEL, SLES and Debian/Ubuntu linux
    distributions.
 
-b. For backplane enclosures attached to ISCI controller support is limited to
+b. For backplane enclosures attached to an iSCI controller support is limited to
    Intel(R) Intelligent Backplane.

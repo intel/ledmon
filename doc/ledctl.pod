@@ -13,7 +13,7 @@ B<ledctl> [I<MODE>] [I<OPTIONS>] ...
 
 =head1 DESCRIPTION
 
-The ledctl is an user-space application designed to control LEDs associated with each
+Ledctl is a user-space application designed to control LEDs associated with each
 slot in an enclosure or a drive bay. Root privileges are required for its operation.
 
 
@@ -39,15 +39,15 @@ B<VMD and NPEM> for PCIe.
 
 B<SAF-TE> protocol is not supported.
 
-For SAS/SATA storages supporting controllers may transmit LED management
+For SAS/SATA storage, supporting controllers may transmit LED management
 information to the backplane controllers via the SGPIO interface. The SGPIO
 bus carries bit patterns, which translate into LED blink patterns in
 accordance with the International Blinking Pattern Interpretation (IBPI)
 of SFF-8489 specification for SGPIO.
-Please note some enclosures do not stick close to the SFF-8489
-specification. It might happen that the enclosure processor will accept
-the IBPI pattern but it will blink LEDs not according to SFF-8489
-specification or it has a limited number of patterns supported.
+Please note some enclosures do not stick closely to the SFF-8489
+specification. It might occur that the enclosure processor will accept
+the IBPI pattern but will not blink LEDs according to SFF-8489
+specification.  Or, it may have a limited number of patterns supported.
 
 The ledctl application has been verified to work with Intel(R) storage
 controllers (i.e. Intel(R) AHCI controller and Intel(R) SAS controller).
@@ -56,8 +56,8 @@ The application might work with storage controllers of other vendors
 vendors have not been tested.
 
 The ledmon application has the highest priority when accessing LEDs.
-It means that some patterns set by ledctl may have no effect if ledmon is running
-(except Locate pattern).
+Meaning that some patterns set by ledctl may have no effect if ledmon is running
+(exception: Locate pattern).
 
 The ledctl application is a part of Intel(R) Enclosure LED Utilities.
 
@@ -233,8 +233,8 @@ SES-2 PRDFAIL
 
 =head2 Patterns Translation
 
-When non SES-2 pattern is send to device in enclosure automatic
-translation is being done.
+When a non SES-2 pattern is sent to device an enclosure automatic
+translation is done.
 
 =over 8
 
@@ -279,7 +279,7 @@ I<failure> or I<disk_failed> is translated to I<ses_fault>
 =head1 MODES AND MODE SPECIFIC OPTIONS
 
 This chapter outlines the modes and options applicable to specific modes. If no mode is
-specified, it defaults to IBPI mode.
+specified, the default is IBPI mode.
 
 =head2 B<-I> or B<--ibpi>
 
@@ -333,7 +333,7 @@ or B<--slot> and B<--state>.
 
 =item B<-p I<state>> or B<--state=I<state>>
 
-It is mandatory for B<--set-slot>. It provides state to be set for the slot. Refer to
+It is mandatory for B<--set-slot>. It provides the state to be set for the slot. Refer to
 "Pattern names" for supported states list.
 
 =back
@@ -411,27 +411,27 @@ C<ledctl --ibpi locate=/dev/sda>
 C<ledctl --ibpi --listed-only locate_off=/dev/sda>
 
 =head2 The following example illustrates how to set I<off> on the given devices. It uses second
-format of device list.
+format of the device list.
 
 C<ledctl --ibpi --listed-only off={ /dev/sda /dev/sdb }>
 
 =head2 The following example illustrates how to set I<locate> and I<rebuild> on different devices
-at the same time. It uses the second format of device list.
+at the same time. It uses the second format of the device list.
 
 C<ledctl --ibpi --listed-only locate={ /dev/sdb } rebuild={ /sys/block/sdc }>
 
 =head2 The following example illustrates how to I<locate> on three block devices. It uses the first
-format of device list.
+format of the device list.
 
 C<ledctl --ibpi --listed-only locate=/dev/sda,/dev/sdb,/dev/sdc>
 
 =head2 The following example illustrates how to set I<locate> and I<rebuild> on different devices
-at the same time. It uses the first format of device list.
+at the same time. It uses the first format of the device list.
 
 C<ledctl --ibpi --listed-only locate=/dev/sdb rebuild=/sys/block/sdc>
 
 =head2 The following example illustrates how to set I<locate> and I<rebuild> on different devices
-at the same time. It uses the both formats of device list.
+at the same time. It uses the both formats of the device list.
 
 C<ledctl --ibpi --listed-only locate={ /dev/sdb } rebuild=/sys/block/sdc>
 

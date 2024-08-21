@@ -78,7 +78,7 @@ DECLARE_SGPIO(req, frame_type, 0, 0xFFL)
 DECLARE_SGPIO(req, function, 8, 0xFFL)
 DECLARE_SGPIO(req, reg_type, 16, 0xFFL)
 DECLARE_SGPIO(req, reg_index, 24, 0xFFL)
-DECLARE_SGPIO(req, reg_count, 32, 0xFFL)
+DECLARE_SGPIO(req, reg_count, 32, 0xFFULL)
 
 typedef uint32_t sgpio_amd_t;
 
@@ -95,12 +95,12 @@ DECLARE_SGPIO_RO(cfg, cfg_reg_count, 20, 0x7);
 DECLARE_SGPIO(cfg, gpio_enable, 23, 0x1);
 DECLARE_SGPIO_RO(cfg, drive_count, 24, 0xFF);
 
-DECLARE_SGPIO(cfg, blink_gen_a, 40, 0xFL);
-DECLARE_SGPIO(cfg, blink_gen_b, 44, 0xFL);
-DECLARE_SGPIO(cfg, max_on, 48, 0xFL);
-DECLARE_SGPIO(cfg, force_off, 52, 0xFL);
-DECLARE_SGPIO(cfg, stretch_on, 56, 0xFL);
-DECLARE_SGPIO(cfg, stretch_off, 60, 0xFL);
+DECLARE_SGPIO(cfg, blink_gen_a, 40, 0xFULL);
+DECLARE_SGPIO(cfg, blink_gen_b, 44, 0xFULL);
+DECLARE_SGPIO(cfg, max_on, 48, 0xFULL);
+DECLARE_SGPIO(cfg, force_off, 52, 0xFULL);
+DECLARE_SGPIO(cfg, stretch_on, 56, 0xFULL);
+DECLARE_SGPIO(cfg, stretch_off, 60, 0xFULL);
 
 #define DECLARE_LED(name, shift, mask)					\
 	uint32_t	_led_##name##_shift = shift;			\

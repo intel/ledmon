@@ -98,8 +98,12 @@ uint64_t get_uint64(const char *path, uint64_t defval, const char *name)
 	if (!p)
 		return defval;
 
-	str_toul(&defval, p, NULL, 16);
-	return defval;
+	errno = 0;
+	uint64_t t = strtoull(p, NULL, 16);
+
+	if (errno)
+		return defval;
+	return t;
 }
 
 int get_int(const char *path, int defval, const char *name)

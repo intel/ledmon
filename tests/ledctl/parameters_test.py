@@ -33,7 +33,8 @@ def test_parameters_are_valid_long_test_flag(ledctl_binary):
         "-G -n vmd -p 1 -r state -T",
         "--get-slot --controller-type=vmd --slot=1 --print=state -T",
         "-S -n vmd -p 1 -s normal -T",
-        "--set-slot --controller-type=vmd --slot=1 --state=normal -T"
+        "--set-slot --controller-type=vmd --slot=1 --state=normal -T",
+        "-B -d /dev/nvme0n1 -T", "--best-controller --device /dev/nvme0n1 -T"
     ],
 )
 def test_parameters_are_valid_short_test_flag(ledctl_binary,

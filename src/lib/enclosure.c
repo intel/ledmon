@@ -96,22 +96,30 @@ static char *_get_dev_sg(const char *encl_path)
 	return ret;
 }
 
-static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *encl, int index)
+static int slot_array_offset_to_ses_id(struct enclosure_device *encl, int slot_array_idx)
+{
+	if (encl && encl->slots && (slot_array_idx >= 0 && slot_array_idx < encl->slots_count))
+		return encl->slots[slot_array_idx].index;
+	return -1;
+}
+
+static struct ses_slot *find_enclosure_slot_by_index(struct enclosure_device *encl, int ses_index)
 {
 	for (int i = 0; i < encl->slots_count; i++) {
-		if (encl->slots[i].index == index)
+		if (encl->slots[i].index == ses_index)
 			return &encl->slots[i];
 	}
 	return NULL;
 }
 
-static struct block_device *enclosure_get_block_device(struct enclosure_device *encl, int index)
+static struct block_device *enclosure_get_block_device(struct enclosure_device *encl, int ses_index)
 {
-	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, index);
+	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, ses_index);
 
 	if (!s_slot) {
 		lib_log(encl->ctx, LED_LOG_LEVEL_ERROR,
-			"SCSI: Unable to locate slot in enclosure %d\n", index);
+			"SCSI: Unable to locate slot in enclosure %d\n", ses_index);
+
 		return NULL;
 	}
 
@@ -142,13 +150,24 @@ int enclosure_reload(struct enclosure_device * enclosure)
 
 	/* If there is an associated block device with a slot, we need to update the block ibpi */
 	for (int i = 0; i < enclosure->slots_count; i++) {
-		struct block_device *bd = enclosure_get_block_device(enclosure, i);
-		struct ses_slot *s_slot = find_enclosure_slot_by_index(enclosure, i);
+		struct block_device *bd = NULL;
+		struct ses_slot *s_slot = NULL;
+		int ses_id = slot_array_offset_to_ses_id(enclosure, i);
 
-		if (bd && s_slot) {
-			bd->ibpi_prev = bd->ibpi;
-			bd->ibpi = s_slot->ibpi_status;
-		}
+		if (ses_id == -1)
+			continue;
+
+		bd = enclosure_get_block_device(enclosure, ses_id);
+		if (!bd)
+			continue;
+
+		s_slot = find_enclosure_slot_by_index(enclosure, ses_id);
+		if (!s_slot)
+			continue;
+
+		bd->ibpi_prev = bd->ibpi;
+		bd->ibpi = s_slot->ibpi_status;
+
 	}
 	return 0;
 }
@@ -232,19 +251,29 @@ const struct slot_property_common ses_slot_common = {
 	.set_slot_fn = enclosure_set_state
 };
 
-struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl, int slot_idx)
+struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl,
+						   int slot_array_offset)
 {
 	struct slot_property *result = NULL;
-	struct ses_slot *slot_ptr = find_enclosure_slot_by_index(encl, slot_idx);
+	struct ses_slot *slot_ptr = NULL;
+	int ses_idx = slot_array_offset_to_ses_id(encl, slot_array_offset);
+
+	// Entry for array offset could be empty
+	if (ses_idx == -1)
+		return NULL;
+
+	slot_ptr = find_enclosure_slot_by_index(encl, ses_idx);
+	if (!slot_ptr)
+		return NULL;
 
 	result = calloc(1, sizeof(struct slot_property));
 	if (result == NULL)
 		return NULL;
 
-	result->bl_device = enclosure_get_block_device(encl, slot_idx);
+	result->bl_device = enclosure_get_block_device(encl, ses_idx);
 	result->slot_spec.ses.encl = encl;
-	result->slot_spec.ses.slot_num = slot_idx;
-	snprintf(result->slot_id, PATH_MAX, "%s-%d", encl->dev_path, slot_idx);
+	result->slot_spec.ses.slot_num = ses_idx;
+	snprintf(result->slot_id, PATH_MAX, "%s-%d", encl->dev_path, ses_idx);
 	result->c = &ses_slot_common;
 
 	/* If we have an associated block device, set its ibpi value */

@@ -116,12 +116,8 @@ static struct block_device *enclosure_get_block_device(struct enclosure_device *
 {
 	struct ses_slot *s_slot = find_enclosure_slot_by_index(encl, ses_index);
 
-	if (!s_slot) {
-		lib_log(encl->ctx, LED_LOG_LEVEL_ERROR,
-			"SCSI: Unable to locate slot in enclosure %d\n", ses_index);
-
+	if (!s_slot)
 		return NULL;
-	}
 
 	return locate_block_by_sas_addr(encl->ctx, s_slot->sas_addr);
 }

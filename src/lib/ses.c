@@ -35,6 +35,7 @@ static int get_ses_page(int fd, struct ses_page *p, int pg_code)
 	int retry_count = 3;
 
 	do {
+		memset(p->buf, 0, sizeof(p->buf));
 		ret = sg_ll_receive_diag(fd, 1, pg_code, p->buf, sizeof(p->buf),
 					 0, debug);
 	} while (ret && retry_count--);

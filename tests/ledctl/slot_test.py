@@ -134,6 +134,8 @@ def test_nvme_multipath_drives(ledctl_binary, slot_filters,
     for mp_drive in mp_drives:
         mp_cntrl = cmd.best_controller_by_device(mp_drive)
         slot = cmd.get_slot_by_device_cntrl(mp_drive, mp_cntrl)
+        if slot is None:
+            continue
 
         for state in cmd.base_states:
             cmd.set_ibpi(slot.device_node, state)

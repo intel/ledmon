@@ -153,7 +153,8 @@ def parse_help(lines):
         "--help", "-h", "--help --badflag", "-hd", "-h -s",
         "--set-slot --help", "-S -h --badflag", "-Sh --badflag",
         "--get-slot --help", "-Ghb", "--list-controllers --help",
-        "--ibpi --help", "--list-slots --help", "-L -h"
+        "--ibpi --help", "--list-slots --help", "-L -h",
+        "--best-controller --help", "-Bh",
     ],
 )
 # Check formatting, header and footer.

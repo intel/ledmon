@@ -879,11 +879,17 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 	if (req->chosen_opt == OPT_LIST_SLOTS)
 		return list_slots(req->cntrl);
 	if (req->chosen_opt == OPT_BEST_CTRL) {
+		enum led_cntrl_type cntrl_type;
 		char device_path[PATH_MAX];
 
 		led_device_name_lookup(ctx, req->device, device_path);
-		printf("%s\n", led_cntrl_type_to_string(
-			       led_is_management_supported(ctx, device_path)));
+		cntrl_type = led_is_management_supported(ctx, device_path);
+
+		if (cntrl_type == LED_CNTRL_TYPE_UNKNOWN)
+			printf("Unsupported controller type\n");
+		else
+			printf("%s\n", led_cntrl_type_to_string(cntrl_type));
+
 		return STATUS_SUCCESS;
 	}
 

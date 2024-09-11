@@ -150,11 +150,22 @@ def parse_help(lines):
 @pytest.mark.parametrize(
     "help_cmd",
     [
-        "--help", "-h", "--help --badflag", "-hd", "-h -s",
-        "--set-slot --help", "-S -h --badflag", "-Sh --badflag",
-        "--get-slot --help", "-Ghb", "--list-controllers --help",
-        "--ibpi --help", "--list-slots --help", "-L -h",
-        "--best-controller --help", "-Bh",
+        "--help",
+        "-h",
+        "--help --badflag",
+        "-hd",
+        "-h -s",
+        "--set-slot --help",
+        "-S -h --badflag",
+        "-Sh --badflag",
+        "--get-slot --help",
+        "-Ghb",
+        "--list-controllers --help",
+        "--ibpi --help",
+        "--list-slots --help",
+        "-L -h",
+        "--best-controller --help",
+        "-Bh",
     ],
 )
 # Check formatting, header and footer.

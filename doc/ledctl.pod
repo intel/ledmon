@@ -306,6 +306,11 @@ Suppresses default behavior, changes state only on devices listed in CLI. It is 
 
 Prints information (system path and type) of all controllers detected.
 
+=head2 B<-B> or B<--best-controller>
+
+Prints information about controller supported for this device with the highest priority.
+Must be followed by B<--device>, for which controller will be printed.
+
 =head2 B<-P> or B<--list-slots>
 
 Prints all slots for the controller type. Must be followed by B<--controller-type>.

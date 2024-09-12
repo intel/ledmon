@@ -29,11 +29,11 @@ jobs:
           .github/**
           LICENSES/**
           .gitignore
-          *.md
           autogen.sh
           pytest.ini
           *.yapf
           COPYING*
+          */*.md
     - name: Run license review
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}

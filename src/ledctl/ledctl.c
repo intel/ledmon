@@ -886,7 +886,7 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 		cntrl_type = led_is_management_supported(ctx, device_path);
 
 		if (cntrl_type == LED_CNTRL_TYPE_UNKNOWN)
-			printf("Unsupported controller type\n");
+			printf("Unable to find controller for device\n");
 		else
 			printf("%s\n", led_cntrl_type_to_string(cntrl_type));
 

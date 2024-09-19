@@ -41,3 +41,4 @@ jobs:
         for FILE in ${ALL_CHANGED_FILES}; do
         python3.11 ./tests/licensing.py --file ${FILE} --log-level=INFO
         done
+

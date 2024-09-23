@@ -28,11 +28,12 @@ def get_slots_with_device_or_skip(cmd: LedctlCmd, cntrl):
 
 
 def filter_by_best_controller(cmd: LedctlCmd, slots_to_test):
+    filtered_slots = []
     for slot in slots_to_test:
         best_cntrl = cmd.best_controller_by_device(slot.device_node)
-        if best_cntrl != slot.cntrl_type:
-            slots_to_test.remove(slot)
-    return slots_to_test
+        if best_cntrl == slot.cntrl_type:
+            filtered_slots.append(slot)
+    return filtered_slots
 
 
 def verify_state(slot, current, expected, msg):

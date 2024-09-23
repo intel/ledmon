@@ -308,7 +308,12 @@ Prints information (system path and type) of all controllers detected.
 
 =head2 B<-B> or B<--best-controller>
 
-Prints information about controller supported for this device with the highest priority.
+There is a possibility that device is supported by more than one controller (e.g. NPEM and VMD).
+In that case, this command can be used to query ledctl to return preferred controller type.
+The returned controller type is used by subset of routines which not taking controller type
+directly (ledctl IBPI mode, ledmon daemon).
+
+Prints preferred controller type which should be used to control LED for this device.
 Must be followed by B<--device>, for which controller will be printed.
 
 =head2 B<-P> or B<--list-slots>

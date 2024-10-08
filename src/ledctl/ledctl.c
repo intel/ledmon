@@ -162,7 +162,7 @@ static int possible_params_modes[] = {
 	OPT_SET_SLOT,
 	OPT_LIST_SLOTS,
 	OPT_LIST_CTRL,
-	OPT_BEST_CTRL,
+	OPT_DEFAULT_CTRL,
 	OPT_IBPI
 };
 
@@ -170,7 +170,7 @@ static int possible_params_list_ctrl[] = {
 	COMMON_GETOPT_ARGS
 };
 
-static int possible_params_best_ctrl[] = {
+static int possible_params_default_ctrl[] = {
 	OPT_DEVICE,
 	COMMON_GETOPT_ARGS
 };
@@ -548,7 +548,7 @@ void _cmdline_parse_modes(int argc, char *argv[], struct request *req)
 		req->chosen_opt = OPT_LIST_CTRL;
 		break;
 	case 'B':
-		req->chosen_opt = OPT_BEST_CTRL;
+		req->chosen_opt = OPT_DEFAULT_CTRL;
 		break;
 	case 'I':
 		req->chosen_opt = OPT_IBPI;
@@ -590,9 +590,9 @@ bool _setup_mode_options(struct request * const req, char **shortopts, struct op
 		setup_options(longopts, shortopts, possible_params_list_ctrl,
 			      ARRAY_SIZE(possible_params_list_ctrl));
 		break;
-	case OPT_BEST_CTRL:
-		setup_options(longopts, shortopts, possible_params_best_ctrl,
-			      ARRAY_SIZE(possible_params_best_ctrl));
+	case OPT_DEFAULT_CTRL:
+		setup_options(longopts, shortopts, possible_params_default_ctrl,
+			      ARRAY_SIZE(possible_params_default_ctrl));
 		break;
 	case OPT_IBPI:
 		setup_options(longopts, shortopts, possible_params_ibpi,
@@ -769,7 +769,7 @@ static led_status_t verify_request(struct led_ctx *ctx, struct request *req)
 {
 	if (req->chosen_opt == OPT_LIST_CTRL)
 		return LED_STATUS_SUCCESS;
-	if (req->chosen_opt == OPT_BEST_CTRL) {
+	if (req->chosen_opt == OPT_DEFAULT_CTRL) {
 		if (!req->device[0]) {
 			log_error("Device is missing, aborting.");
 			return LED_STATUS_CMDLINE_ERROR;
@@ -878,7 +878,7 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 
 	if (req->chosen_opt == OPT_LIST_SLOTS)
 		return list_slots(req->cntrl);
-	if (req->chosen_opt == OPT_BEST_CTRL) {
+	if (req->chosen_opt == OPT_DEFAULT_CTRL) {
 		enum led_cntrl_type cntrl_type;
 		char device_path[PATH_MAX];
 
@@ -886,7 +886,8 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 		cntrl_type = led_is_management_supported(ctx, device_path);
 
 		if (cntrl_type == LED_CNTRL_TYPE_UNKNOWN)
-			printf("Unable to find controller for device\n");
+			lib_log(ctx, LED_LOG_LEVEL_ERROR,
+				"Unable to determine controller for device\n");
 		else
 			printf("%s\n", led_cntrl_type_to_string(cntrl_type));
 

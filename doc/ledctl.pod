@@ -306,12 +306,12 @@ Suppresses default behavior, changes state only on devices listed in CLI. It is 
 
 Prints information (system path and type) of all controllers detected.
 
-=head2 B<-B> or B<--best-controller>
+=head2 B<-B> or B<--default-controller>
 
 There is a possibility that device is supported by more than one controller (e.g. NPEM and VMD).
 In that case, this command can be used to query ledctl to return preferred controller type.
-The returned controller type is used by subset of routines which not taking controller type
-directly (ledctl IBPI mode, ledmon daemon).
+The returned controller type is used by subset of routines which do not take controller type
+directly (e.g. --get-slot, --list-slots, --set-slot).
 
 Prints preferred controller type which should be used to control LED for this device.
 Must be followed by B<--device>, for which controller will be printed.

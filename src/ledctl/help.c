@@ -81,7 +81,7 @@ static struct help_option LIST_CTRL_HELP_OPTS[] = {
 	HELP_OPTION_LOG_LEVEL,
 };
 
-static struct help_option BEST_CTRL_HELP_OPTS[] = {
+static struct help_option DEFAULT_CTRL_HELP_OPTS[] = {
 	HELP_OPTION_DEVICE,
 	HELP_OPTION_HELP,
 	HELP_OPTION_LOG_LEVEL,
@@ -128,7 +128,7 @@ static struct help_mode modes[] = {
 		  "Set given state for given slot or device under the given controller.\n"
 		  "Options \"--slot\" and \"--device\" cannot be used simultaneously."),
 
-	HELP_MODE(BEST_CTRL,
+	HELP_MODE(DEFAULT_CTRL,
 		  "Print the controller with the highest priority for given device."),
 };
 
@@ -294,7 +294,8 @@ static struct help_option GENERAL_HELP_OPTS[] = {
 	{NULL, "Print slot details for device/slot.",  &longopt_all[OPT_GET_SLOT]},
 	{NULL, "Indicate IBPI mode, it is used as default.", &longopt_all[OPT_IBPI]},
 	{NULL, "Display list of controllers recognizable by ledctl.", &longopt_all[OPT_LIST_CTRL]},
-	{NULL, "Print the best supported controller for device.", &longopt_all[OPT_BEST_CTRL]},
+	{NULL, "Print the preferred supported controller for device.",
+	 &longopt_all[OPT_DEFAULT_CTRL]},
 	{NULL, "Print all slots for a controller requested.", &longopt_all[OPT_LIST_SLOTS]},
 	{NULL, "Set state for slot/device by controller requested.", &longopt_all[OPT_SET_SLOT]}
 };

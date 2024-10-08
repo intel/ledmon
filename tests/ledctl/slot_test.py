@@ -27,11 +27,11 @@ def get_slots_with_device_or_skip(cmd: LedctlCmd, cntrl):
     return slots_with_device_node
 
 
-def filter_by_best_controller(cmd: LedctlCmd, slots_to_test):
+def filter_by_default_controller(cmd: LedctlCmd, slots_to_test):
     filtered_slots = []
     for slot in slots_to_test:
-        best_cntrl = cmd.best_controller_by_device(slot.device_node)
-        if best_cntrl == slot.cntrl_type:
+        default_cntrl = cmd.default_controller_by_device(slot.device_node)
+        if default_cntrl == slot.cntrl_type:
             filtered_slots.append(slot)
     return filtered_slots
 
@@ -53,7 +53,7 @@ def test_ibpi(ledctl_binary, slot_filters, controller_filters, cntrl):
 
     cmd = LedctlCmd(ledctl_binary, slot_filters, controller_filters)
     slots_to_test = get_slots_with_device_or_skip(cmd, cntrl)
-    slots_to_test = filter_by_best_controller(cmd, slots_to_test)
+    slots_to_test = filter_by_default_controller(cmd, slots_to_test)
 
     if not slots_to_test:
         pytest.skip(
@@ -133,7 +133,7 @@ def test_nvme_multipath_drives(ledctl_binary, slot_filters,
         pytest.skip("No nvme multipath drives found")
 
     for mp_drive in mp_drives:
-        mp_cntrl = cmd.best_controller_by_device(mp_drive)
+        mp_cntrl = cmd.default_controller_by_device(mp_drive)
         slot = cmd.get_slot_by_device_cntrl(mp_drive, mp_cntrl)
         if slot is None:
             continue

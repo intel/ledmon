@@ -34,7 +34,8 @@ def test_parameters_are_valid_long_test_flag(ledctl_binary):
         "--get-slot --controller-type=vmd --slot=1 --print=state -T",
         "-S -n vmd -p 1 -s normal -T",
         "--set-slot --controller-type=vmd --slot=1 --state=normal -T",
-        "-B -d /dev/nvme0n1 -T", "--best-controller --device /dev/nvme0n1 -T"
+        "-B -d /dev/nvme0n1 -T",
+        "--default-controller --device /dev/nvme0n1 -T"
     ],
 )
 def test_parameters_are_valid_short_test_flag(ledctl_binary,
@@ -164,7 +165,7 @@ def parse_help(lines):
         "--ibpi --help",
         "--list-slots --help",
         "-L -h",
-        "--best-controller --help",
+        "--default-controller --help",
         "-Bh",
     ],
 )

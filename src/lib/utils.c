@@ -573,6 +573,7 @@ struct option longopt_all[] = {
 	[OPT_SLOT]         = {"slot", required_argument, NULL, 'p'},
 	[OPT_STATE]        = {"state", required_argument, NULL, 's'},
 	[OPT_PRINT_PARAM]  = {"print", required_argument, NULL, 'r'},
+	[OPT_DEFAULT_CTRL] = {"default-controller", no_argument, NULL, 'B'},
 	[OPT_TEST]         = {"test", no_argument, NULL, 'T'},
 	[OPT_IBPI]         = {"ibpi", no_argument, NULL, 'I' },
 	[OPT_NULL_ELEMENT] = {NULL, no_argument, NULL, '\0'}

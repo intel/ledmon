@@ -105,6 +105,22 @@ class LedctlCmd:
         ]).stdout
         return self.parse_slot_line(slot.cntrl_type, out)
 
+    def get_slot_by_device_cntrl(self, dev_node, cntrl):
+        # While using this method controllers may be not filtered out.
+        # Do not return slot for controller removed from test.
+        if cntrl not in self.slot_ctrls:
+            return None
+
+        out = self.run_ledctl_cmd_valid(
+            ["--get-slot", "--controller-type", cntrl, "--device",
+             dev_node]).stdout
+        return self.parse_slot_line(cntrl, out)
+
+    def default_controller_by_device(self, dev_node):
+        result = self.run_ledctl_cmd_valid(
+            ["--default-controller", "--device", dev_node]).stdout
+        return result.rstrip()
+
     def list_slots(self, controller_type):
         rc = []
         out = self.run_ledctl_cmd_valid(

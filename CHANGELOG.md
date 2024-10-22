@@ -1,3 +1,21 @@
+### v1.1.0
+
+[Commit list](https://github.com/intel/ledmon/compare/v1.0.0...v1.1.0)
+
+Enhancements
+
+* Various enhancements in tests, licensing and deployment
+* Add --default-controller command to ledctl
+
+Bug fixes
+
+* ledctl: add error message for missing devices
+* ledctl: fix musl build failure by replacing on_exit() by atexit()
+* Improve error handling for unsupported patters by falling back to normal
+* Fix incorrect conversion of large integer values
+* Fix compilation warnings
+* Fix incorrect array index usage for block device and SES slot lookup
+
 ### v1.0.0 / 2024-02-28
 
 [Commit list](https://github.com/intel/ledmon/compare/v0.97...v1.0.0)

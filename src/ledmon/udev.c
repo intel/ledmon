@@ -116,7 +116,7 @@ static enum udev_action _get_udev_action(const char *action)
 
 static void _clear_raid_dev_info(struct block_device *block, char *raid_dev)
 {
-	if (block->raid_dev && block->raid_dev->sysfs_path) {
+	if (block->raid_dev) {
 		char *tmp = strrchr(block->raid_dev->sysfs_path, '/');
 
 		if (tmp == NULL) {

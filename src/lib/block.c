@@ -308,10 +308,8 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 
 	hosts = cntrl->hosts;
 	device->cntrl = cntrl;
-	device->sysfs_path = strdup(link);
-	if (!device->sysfs_path)
-		goto error;
-	device->cntrl_path = host;
+	str_cpy(device->sysfs_path, link, PATH_MAX);
+	str_cpy(device->cntrl_path, host, PATH_MAX);
 	block_set_devnode(device);
 	device->ibpi = LED_IBPI_PATTERN_UNKNOWN;
 	device->ibpi_prev = LED_IBPI_PATTERN_NONE;
@@ -345,10 +343,8 @@ struct block_device *block_device_init(const struct list *cntrl_list, const char
 	return device;
 error:
 	free(host);
-	if (device) {
-		free(device->sysfs_path);
+	if (device)
 		free(device);
-	}
 	return NULL;
 }
 
@@ -358,12 +354,6 @@ error:
 void block_device_fini(struct block_device *device)
 {
 	if (device) {
-		if (device->sysfs_path)
-			free(device->sysfs_path);
-
-		if (device->cntrl_path)
-			free(device->cntrl_path);
-
 		if (device->raid_dev)
 			raid_device_fini(device->raid_dev);
 
@@ -381,16 +371,8 @@ struct block_device *block_device_duplicate(struct block_device *block)
 	if (block) {
 		result = calloc(1, sizeof(*result));
 		if (result) {
-			result->sysfs_path = strdup(block->sysfs_path);
-			result->cntrl_path = strdup(block->cntrl_path);
-
-			if (!result->sysfs_path || !result->cntrl_path) {
-				free(result->sysfs_path);
-				free(result->cntrl_path);
-				free(result);
-				return NULL;
-			}
-
+			str_cpy(result->sysfs_path, block->sysfs_path, PATH_MAX);
+			str_cpy(result->cntrl_path, block->cntrl_path, PATH_MAX);
 			if (block->ibpi != LED_IBPI_PATTERN_UNKNOWN)
 				result->ibpi = block->ibpi;
 			else

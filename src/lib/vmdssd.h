@@ -19,7 +19,7 @@
 status_t vmdssd_write(struct block_device *device, enum led_ibpi_pattern ibpi);
 char *vmdssd_get_path(const char *cntrl_path);
 char *vmdssd_get_domain(const char *path);
-struct pci_slot *vmdssd_find_pci_slot(struct led_ctx *ctx, char *device_path);
+struct pci_slot *vmdssd_find_pci_slot(struct led_ctx *ctx, const char *device_path);
 status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern ibpi);
 enum led_ibpi_pattern vmdssd_get_attention(struct pci_slot *slot);
 bool vmdssd_check_slot_module(struct led_ctx *ctx, const char *slot_path);

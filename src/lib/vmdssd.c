@@ -35,7 +35,7 @@ struct ibpi2value ibpi_to_attention[] = {
 #define SYSFS_PCIEHP         "/sys/module/pciehp"
 #define SYSFS_VMD            "/sys/bus/pci/drivers/vmd"
 
-static char *get_slot_from_syspath(char *path)
+static char *get_slot_from_syspath(const char *path)
 {
 	char *cur, *ret = NULL;
 	char *temp_path = strdup(path);
@@ -97,7 +97,7 @@ bool vmdssd_check_slot_module(struct led_ctx *ctx, const char *slot_path)
 	return false;
 }
 
-struct pci_slot *vmdssd_find_pci_slot(struct led_ctx *ctx, char *device_path)
+struct pci_slot *vmdssd_find_pci_slot(struct led_ctx *ctx, const char *device_path)
 {
 	char *pci_addr;
 	struct pci_slot *slot = NULL;
@@ -132,7 +132,7 @@ enum led_ibpi_pattern vmdssd_get_attention(struct pci_slot *slot)
 
 status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern ibpi)
 {
-	char attention_path[PATH_MAX];
+	char attention_path[PATH_MAX + strlen("/attention")];
 	char buf[WRITE_BUFFER_SIZE];
 	const struct ibpi2value *ibpi2val;
 
@@ -152,7 +152,7 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern
 	val = (uint16_t)ibpi2val->value;
 
 	snprintf(buf, WRITE_BUFFER_SIZE, "%u", val);
-	snprintf(attention_path, PATH_MAX, "%s/attention", slot->sysfs_path);
+	snprintf(attention_path, sizeof(attention_path), "%s/attention", slot->sysfs_path);
 	if (buf_write(attention_path, buf) != (ssize_t) strnlen(buf, WRITE_BUFFER_SIZE)) {
 		lib_log(slot->ctx, LED_LOG_LEVEL_ERROR,
 			"%s write error: %d\n", slot->sysfs_path, errno);

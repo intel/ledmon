@@ -765,7 +765,7 @@ enum led_ibpi_pattern string2ibpi(const char *name)
 		if (!input_name)
 			continue;
 
-		if (strncmp(input_name, name, strlen(input_name)) == 0)
+		if (strcmp(input_name, name) == 0)
 			return ipbi_names[i].ibpi;
 	}
 

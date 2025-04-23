@@ -124,11 +124,7 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num,
 		if (!device)
 			return NULL;
 
-		device->sysfs_path = strdup(path);
-		if (!device->sysfs_path) {
-			free(device);
-			return NULL;
-		}
+		str_cpy(device->sysfs_path, path, PATH_MAX);
 		device->device_num = device_num;
 		device->sync_action = _get_sync_action(path);
 		device->array_state = state;
@@ -150,11 +146,8 @@ struct raid_device *raid_device_init(const char *path, unsigned int device_num,
  */
 void raid_device_fini(struct raid_device *device)
 {
-	if (device) {
-		if (device->sysfs_path)
-			free(device->sysfs_path);
+	if (device)
 		free(device);
-	}
 }
 
 /**
@@ -165,14 +158,8 @@ struct raid_device *raid_device_duplicate(struct raid_device *device)
 
 	if (device) {
 		new_device = malloc(sizeof(struct raid_device));
-		if (new_device) {
+		if (new_device)
 			*new_device = *device;
-			new_device->sysfs_path = strdup(device->sysfs_path);
-			if (!new_device->sysfs_path) {
-				free(new_device);
-				return NULL;
-			}
-		}
 	}
 	return new_device;
 }

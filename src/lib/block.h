@@ -29,7 +29,7 @@ struct block_device {
  * may not exist in sysfs if connection to physical drive is lost. This filed
  * cannot have NULL pointer assigned.
  */
-	char *sysfs_path;
+	char sysfs_path[PATH_MAX];
 
 /**
  * Main devnode we can reach this device. It may not match /sys/dev/block/MAJ:MIN
@@ -62,7 +62,7 @@ struct block_device {
  * this path points to SES entry associated with the slot in an enclosure.
  * This field cannot have NULL pointer assign.
  */
-	char *cntrl_path;
+	char cntrl_path[PATH_MAX];
 
 /**
  * The current state of block device. This is an IBPI pattern and it is used

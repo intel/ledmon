@@ -15,12 +15,12 @@
  * This structure describes a PCI hotplug slot exposed by the hotplug driver.
  */
 struct pci_slot {
- /**
+/**
  * Path to PCI hotplug slot in sysfs tree.
  */
-	char *sysfs_path;
+	char sysfs_path[PATH_MAX];
 
- /**
+/**
  * PCI hotplug slot address.
  */
 	char *address;

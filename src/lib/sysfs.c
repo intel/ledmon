@@ -188,7 +188,7 @@ static void _tail_cnt_add(struct led_ctx *ctx, const char *path, struct raid_dev
 static void _link_raid_device(struct led_ctx *ctx, struct raid_device *device,
 			      enum device_type type)
 {
-	char temp[PATH_MAX];
+	char temp[PATH_MAX + strlen("/md")];
 	struct list dir;
 
 	snprintf(temp, sizeof(temp), "%s/md", device->sysfs_path);

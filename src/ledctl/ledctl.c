@@ -2,8 +2,6 @@
 // Copyright (C) 2009 Intel Corporation.
 
 #include <config_ac.h>
-#include <ctype.h>
-#include <errno.h>
 #include <getopt.h>
 #include <linux/limits.h>
 #include <inttypes.h>
@@ -16,7 +14,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <syslog.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/sysmacros.h>
 #include <stdbool.h>
@@ -25,13 +22,11 @@
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
 #include <common/config_file.h>
 #include <lib/utils.h>
 #include <lib/list.h>
 #include <led/libled.h>
 #include "libled_internal.h"
-#include "slot.h"
 #include "help.h"
 
 #ifdef ENABLE_TEST

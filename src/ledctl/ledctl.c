@@ -891,7 +891,7 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 		else
 			printf("%s\n", led_cntrl_type_to_string(cntrl_type));
 
-		return STATUS_SUCCESS;
+		return LED_STATUS_SUCCESS;
 	}
 
 	if (req->chosen_opt == OPT_LIST_CTRL) {

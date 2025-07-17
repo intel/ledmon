@@ -3,11 +3,12 @@
 
 #ifndef _SMP_H_INCLUDED_
 #define _SMP_H_INCLUDED_
-#include "led/libled.h"
-#include "block.h"
 
-#ifndef _SMP_H_INCLUDED
-#define _SMP_H_INCLUDED
+/* Project headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "block.h"
 
 /* smp constants */
 #define SMP_FRAME_TYPE_REQ	0x40

@@ -4,10 +4,15 @@
 #ifndef _SES_H_INCLUDED_
 #define _SES_H_INCLUDED_
 
+/* System headers */
 #include <asm/types.h>
+#include <stdint.h>
 
-#include "led/libled.h"
-#include <status.h>
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "status.h"
 
 /* Size of buffer for SES-2 Messages. */
 #define SES_ALLOC_BUFF 4096

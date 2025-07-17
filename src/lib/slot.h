@@ -4,9 +4,12 @@
 #ifndef _SLOT_H_INCLUDED_
 #define _SLOT_H_INCLUDED_
 
+/* Project headers */
+#include <led/libled.h>
+
+/* Local headers */
 #include "block.h"
 #include "cntrl.h"
-#include "led/libled.h"
 
 /* Forward decl. */
 struct slot_property;

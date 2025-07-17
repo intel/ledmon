@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>

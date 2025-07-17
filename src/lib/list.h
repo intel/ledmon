@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-struct led_ctx;
+#include "led/libled.h"
 
 struct node {
 	struct node *next, *prev;

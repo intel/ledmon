@@ -2,7 +2,6 @@
 // Copyright (C) 2022 Intel Corporation.
 
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <linux/bsg.h>
@@ -15,6 +14,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/sysmacros.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -23,16 +23,12 @@
 #include "led/libled.h"
 #include "block.h"
 #include "cntrl.h"
-#include "config.h"
-#include "enclosure.h"
+
 #include "led/libled.h"
-#include "list.h"
-#include "scsi.h"
 #include "smp.h"
 #include "status.h"
-#include "sysfs.h"
 #include "utils.h"
-#include "libled_private.h"
+#include "libled_internal.h"
 
 #define GPIO_TX_GP1	0x01
 

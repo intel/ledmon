@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -17,7 +18,6 @@
 #include <scsi/sg_cmds_extra.h>
 
 #include "ses.h"
-#include "utils.h"
 #include "libled_private.h"
 
 static int debug = 0;

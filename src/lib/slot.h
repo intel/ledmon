@@ -4,14 +4,9 @@
 #ifndef SLOT_H_
 #define SLOT_H_
 
-#include <stdio.h>
-
 #include "block.h"
 #include "cntrl.h"
 #include "led/libled.h"
-#include "utils.h"
-
-#include "libled_private.h"
 
 /* Forward decl. */
 struct slot_property;

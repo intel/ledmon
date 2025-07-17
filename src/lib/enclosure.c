@@ -11,15 +11,14 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
 #include "enclosure.h"
 #include "scsi.h"
-#include "sysfs.h"
 #include "utils.h"
 #include "libled_private.h"
 

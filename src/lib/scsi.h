@@ -4,9 +4,9 @@
 #ifndef _SCSI_H_INCLUDED
 #define _SCSI_H_INCLUDED
 
+#include <stdint.h>
 #include "block.h"
 #include "led/libled.h"
-#include "sysfs.h"
 
 /**
  * @brief Gets the sas host path of the device.

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -14,11 +15,10 @@
 
 #include "led/libled.h"
 #include "cntrl.h"
-#include "config.h"
+
 #include <common/config_file.h>
 #include "list.h"
 #include "smp.h"
-#include "status.h"
 #include "sysfs.h"
 #include "utils.h"
 #include "amd.h"

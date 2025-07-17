@@ -5,22 +5,19 @@
 
 #include "led/libled.h"
 
-#include <errno.h>
 #include <linux/limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <unistd.h>
 
-#include "enclosure.h"
 #include "libled_private.h"
 #include "list.h"
-#include "npem.h"
 #include "sysfs.h"
 #include "utils.h"
 #include "block.h"
-#include "pci_slot.h"
 #include "slot.h"
 
 

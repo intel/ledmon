@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
@@ -19,14 +20,11 @@
 #include "libled_private.h"
 #include "ahci.h"
 #include "block.h"
-#include "config.h"
 #include "dellssd.h"
 #include "pci_slot.h"
 #include "raid.h"
 #include "scsi.h"
-#include "tail.h"
 #include "smp.h"
-#include "status.h"
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"

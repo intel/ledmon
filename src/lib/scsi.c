@@ -2,20 +2,18 @@
 // Copyright (C) 2022 Intel Corporation.
 
 #include <dirent.h>
-#include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "cntrl.h"
-#include "config.h"
 #include "enclosure.h"
 #include "list.h"
 #include "scsi.h"

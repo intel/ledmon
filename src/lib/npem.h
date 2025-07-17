@@ -3,11 +3,12 @@
 
 #ifndef NPEM_H_INCLUDED_
 #define NPEM_H_INCLUDED_
+
 #include "block.h"
+#include "cntrl.h"
 #include "led/libled.h"
 #include "slot.h"
 #include "status.h"
-#include "sysfs.h"
 
 int is_npem_capable(const char *path, struct led_ctx *ctx);
 status_t npem_write(struct block_device *device, enum led_ibpi_pattern ibpi);

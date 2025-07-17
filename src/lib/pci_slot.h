@@ -7,7 +7,6 @@
 #include "led/libled.h"
 #include "slot.h"
 #include "status.h"
-#include "sysfs.h"
 
 /**
  * @brief PCI hotplug slot structure.

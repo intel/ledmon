@@ -8,8 +8,6 @@
 
 #include "block.h"
 #include "led/libled.h"
-#include "utils.h"
-#include "sysfs.h"
 
 #define ATTENTION_OFF        0xF  /* (1111) Attention Off, Power Off */
 #define ATTENTION_LOCATE     0x7  /* (0111) Attention Off, Power On */

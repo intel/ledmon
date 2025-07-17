@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
+/* System headers */
 #include <assert.h>
 #include <stdbool.h>
 
+/* Local headers */
 #include "list.h"
 #include "libled_private.h"
 #include "utils.h"

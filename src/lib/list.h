@@ -4,10 +4,12 @@
 #ifndef _LIST_H_INCLUDED_
 #define _LIST_H_INCLUDED_
 
-#include <stdlib.h>
+/* System headers */
 #include <stdbool.h>
+#include <stdlib.h>
 
-#include "led/libled.h"
+/* Public headers */
+#include <led/libled.h>
 
 struct node {
 	struct node *next, *prev;

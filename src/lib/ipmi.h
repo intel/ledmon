@@ -4,7 +4,9 @@
 
 #ifndef _IPMI_H_INCLUDED_
 #define _IPMI_H_INCLUDED_
-#include "led/libled.h"
+
+/* Project headers */
+#include <led/libled.h>
 
 #define BMC_TA 0x20
 

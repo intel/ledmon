@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2009 Intel Corporation.
 
+/* System headers */
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -11,15 +12,17 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
-#if _HAVE_DMALLOC_H
-#include <dmalloc.h>
-#endif
-
+/* Local headers */
 #include "config.h"
 #include "pidfile.h"
 #include "status.h"
 #include <lib/utils.h>
+
+#if _HAVE_DMALLOC_H
+#include <dmalloc.h>
+#endif
 
 #define RUN_DIR "/var/run/"
 #define PID ".pid"

@@ -4,7 +4,10 @@
 #ifndef _SYSFS_H_INCLUDED_
 #define _SYSFS_H_INCLUDED_
 
+/* System headers */
 #include <stdbool.h>
+
+/* Local headers */
 #include "list.h"
 #include "status.h"
 

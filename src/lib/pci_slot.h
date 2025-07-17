@@ -4,7 +4,10 @@
 #ifndef _PCI_SLOT_H_INCLUDED_
 #define _PCI_SLOT_H_INCLUDED_
 
-#include "led/libled.h"
+/* Project headers */
+#include <led/libled.h>
+
+/* Local headers */
 #include "slot.h"
 #include "status.h"
 

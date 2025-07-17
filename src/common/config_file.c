@@ -7,22 +7,22 @@
  * originally released under LGPL.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
+/* System headers */
+#include <dirent.h>
 #include <fcntl.h>
-#include <ctype.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include <errno.h>
-#include <stdint.h>
-#include <stdarg.h>
+#include <unistd.h>
 
-#include <lib/utils.h>
-#include <lib/status.h>
-
+/* Local headers */
+#include "lib/status.h"
+#include "lib/utils.h"
 #include "config_file.h"
 
 

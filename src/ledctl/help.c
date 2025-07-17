@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2024 Intel Corporation.
 
+/* System headers */
 #include <assert.h>
-#include <string.h>
 #include <stdio.h>
+
+/* Local headers */
+#include "config_ac.h"
 #include "help.h"
 #include "utils.h"
-#include "config_ac.h"
 
 struct help_option {
 	char *example;

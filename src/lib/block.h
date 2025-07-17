@@ -4,11 +4,15 @@
 #ifndef _BLOCK_H_INCLUDED_
 #define _BLOCK_H_INCLUDED_
 
+/* System headers */
 #include <stdbool.h>
 #include <time.h>
 
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
 #include "cntrl.h"
-#include "led/libled.h"
 #include "list.h"
 #include "raid.h"
 #include "status.h"

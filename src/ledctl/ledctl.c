@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2009 Intel Corporation.
 
-#include <config_ac.h>
+/* System headers */
+#include <dirent.h>
+#include <fcntl.h>
 #include <getopt.h>
-#include <linux/limits.h>
-#include <inttypes.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,19 +14,19 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <sys/sysmacros.h>
-#include <stdbool.h>
+
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "config.h"
+#include "common/config_file.h"
+#include "help.h"
+#include "libled_internal.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
-
-#include <common/config_file.h>
-#include <lib/utils.h>
-#include <lib/list.h>
-#include <led/libled.h>
-#include "libled_internal.h"
-#include "help.h"
 
 #ifdef ENABLE_TEST
 #define COMMON_GETOPT_ARGS	\

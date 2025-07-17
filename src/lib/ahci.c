@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
+/* System headers */
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
@@ -8,15 +9,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/* Local headers */
+#include "ahci.h"
 #include "config.h"
+#include "libled_internal.h"
+#include "utils.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
-
-#include "ahci.h"
-#include "utils.h"
-#include "libled_internal.h"
 
 /**
  * Time interval in nano seconds to wait before enclosure management message

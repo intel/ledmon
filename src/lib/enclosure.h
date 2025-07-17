@@ -4,9 +4,11 @@
 #ifndef _ENCLOSURE_H_INCLUDED_
 #define _ENCLOSURE_H_INCLUDED_
 
-#include <stdint.h>
+/* System headers */
 #include <limits.h>
+#include <stdint.h>
 
+/* Local headers */
 #include "ses.h"
 #include "slot.h"
 #include "status.h"

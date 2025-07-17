@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#include <libudev.h>
+/* System headers */
+#include <errno.h>
 #include <limits.h>
+#include <libudev.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+/* Public headers */
+#include <led/libled.h>
+#include <lib/utils.h>
+
+/* Local headers */
 #include "block.h"
-#include "led/libled.h"
 #include "status.h"
 #include "sysfs.h"
 #include "udev.h"
-#include <lib/utils.h>
 
 extern struct ledmon_conf conf;
 

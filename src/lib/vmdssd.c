@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
+/* System headers */
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+/* Local headers */
 #include "list.h"
+#include "libled_internal.h"
 #include "pci_slot.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
-#include "libled_internal.h"
 
 #define ATTENTION_OFF        0xF  /* (1111) Attention Off, Power Off */
 #define ATTENTION_LOCATE     0x7  /* (0111) Attention Off, Power On */

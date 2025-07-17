@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
+/* System headers */
 #include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -11,16 +12,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "config.h"
 
-#if _HAVE_DMALLOC_H
-#include <dmalloc.h>
-#endif
-
-#include "libled_private.h"
+/* Local headers */
+#include "amd.h"
 #include "ahci.h"
 #include "block.h"
+#include "config.h"
 #include "dellssd.h"
+#include "libled_private.h"
+#include "npem.h"
 #include "pci_slot.h"
 #include "raid.h"
 #include "scsi.h"
@@ -28,8 +28,10 @@
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
-#include "npem.h"
-#include "amd.h"
+
+#if _HAVE_DMALLOC_H
+#include <dmalloc.h>
+#endif
 
 /* Global timestamp value. It shell be used to update a timestamp field of block
    device structure. See block.h for details. */

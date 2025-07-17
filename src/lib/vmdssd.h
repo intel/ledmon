@@ -4,10 +4,14 @@
 #ifndef _VMDSSD_H_INCLUDED_
 #define _VMDSSD_H_INCLUDED_
 
+/* System headers */
 #include <stdbool.h>
 
+/* Project headers */
+#include <led/libled.h>
+
+/* Local headers */
 #include "block.h"
-#include "led/libled.h"
 
 #define ATTENTION_OFF        0xF  /* (1111) Attention Off, Power Off */
 #define ATTENTION_LOCATE     0x7  /* (0111) Attention Off, Power On */

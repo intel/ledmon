@@ -5,6 +5,7 @@
 #define _CONFIG_H_INCLUDED_
 
 #include <features.h>
+#include <errno.h>
 
 /**
  */

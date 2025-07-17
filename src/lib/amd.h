@@ -3,8 +3,8 @@
 
 /* AMD LED control */
 
+#include <stdint.h>
 #include "block.h"
-#include "sysfs.h"
 
 enum amd_device_type {AMD_NO_DEVICE, AMD_SATA_DEVICE, AMD_NVME_DEVICE};
 

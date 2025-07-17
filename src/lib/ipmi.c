@@ -8,7 +8,6 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -21,7 +20,6 @@
 #include <dmalloc.h>
 #endif
 
-#include "utils.h"
 #include "ipmi.h"
 
 static int ipmi_open(void)

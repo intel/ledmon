@@ -10,7 +10,6 @@
 #include "ses.h"
 #include "slot.h"
 #include "status.h"
-#include "sysfs.h"
 
 /**
  * @brief Enclosure device structure.

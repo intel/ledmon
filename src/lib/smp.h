@@ -3,7 +3,6 @@
 
 #include "led/libled.h"
 #include "block.h"
-#include "sysfs.h"
 
 #ifndef _SMP_H_INCLUDED
 #define _SMP_H_INCLUDED

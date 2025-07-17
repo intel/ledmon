@@ -5,14 +5,13 @@
 #define _BLOCK_H_INCLUDED_
 
 #include <stdbool.h>
+#include <time.h>
 
 #include "cntrl.h"
 #include "led/libled.h"
-#include "time.h"
 #include "list.h"
 #include "raid.h"
 #include "status.h"
-#include "sysfs.h"
 
 struct block_device;
 

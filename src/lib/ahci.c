@@ -8,15 +8,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
 #include "ahci.h"
-#include "config.h"
 #include "utils.h"
-#include "libled_private.h"
+#include "libled_internal.h"
 
 /**
  * Time interval in nano seconds to wait before enclosure management message

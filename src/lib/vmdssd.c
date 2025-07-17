@@ -8,14 +8,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "config.h"
 #include "list.h"
 #include "pci_slot.h"
 #include "status.h"
 #include "sysfs.h"
 #include "utils.h"
 #include "vmdssd.h"
-#include "libled_private.h"
+#include "libled_internal.h"
 
 #define ATTENTION_OFF        0xF  /* (1111) Attention Off, Power Off */
 #define ATTENTION_LOCATE     0x7  /* (0111) Attention Off, Power On */

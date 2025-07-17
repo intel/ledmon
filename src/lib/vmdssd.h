@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#ifndef _VMDSSD_H
-#define _VMDSSD_H
+#ifndef _VMDSSD_H_INCLUDED_
+#define _VMDSSD_H_INCLUDED_
 
 #include <stdbool.h>
 

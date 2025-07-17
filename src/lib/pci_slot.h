@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#ifndef PCI_SLOT_H_INCLUDED_
-#define PCI_SLOT_H_INCLUDED_
+#ifndef _PCI_SLOT_H_INCLUDED_
+#define _PCI_SLOT_H_INCLUDED_
 
 #include "led/libled.h"
 #include "slot.h"
@@ -87,4 +87,4 @@ status_t pci_set_slot(struct slot_property *slot, enum led_ibpi_pattern state);
  */
 struct slot_property *pci_slot_property_init(struct pci_slot *pci_slot);
 
-#endif // PCI_SLOT_H_INCLUDED_
+#endif // _PCI_SLOT_H_INCLUDED_

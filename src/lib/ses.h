@@ -62,4 +62,4 @@ status_t ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx
 int ses_send_diag(int fd, struct ses_pages *sp);
 int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count);
 
-#endif
+#endif /* _SES_H_INCLUDED_ */

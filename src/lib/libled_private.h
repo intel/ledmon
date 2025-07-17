@@ -3,10 +3,10 @@
 
 /* LED library private */
 
+#ifndef _LIBLED_PRIVATE_H_INCLUDED_
+#define _LIBLED_PRIVATE_H_INCLUDED_
 /* Note: This file "libled_private.h" should never be included in a header file! */
 
-#ifndef _LIB_LED_PRIVATE_INCLUDED_
-#define _LIB_LED_PRIVATE_INCLUDED_
 
 #include "led/libled.h"
 #include "sysfs.h"
@@ -90,4 +90,4 @@ struct led_ctx {
 	struct led_slot_list sl;
 };
 
-#endif
+#endif /* _LIBLED_PRIVATE_H_INCLUDED_ */

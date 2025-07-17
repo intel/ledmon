@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#ifndef NPEM_H_INCLUDED_
-#define NPEM_H_INCLUDED_
+#ifndef _NPEM_H_INCLUDED_
+#define _NPEM_H_INCLUDED_
 
 #include "block.h"
 #include "cntrl.h"
@@ -45,4 +45,4 @@ status_t npem_set_state(struct slot_property *slot, enum led_ibpi_pattern state)
  */
 struct slot_property *npem_slot_property_init(struct cntrl_device *npem_cntrl);
 
-#endif // NPEM_H_INCLUDED_
+#endif // _NPEM_H_INCLUDED_

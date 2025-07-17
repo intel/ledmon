@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2023 Intel Corporation.
 
-#ifndef SLOT_H_
-#define SLOT_H_
+#ifndef _SLOT_H_INCLUDED_
+#define _SLOT_H_INCLUDED_
 
 #include "block.h"
 #include "cntrl.h"

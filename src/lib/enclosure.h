@@ -42,6 +42,11 @@ struct enclosure_device {
 	int slots_count;
 
 	struct led_ctx *ctx;
+
+  /**
+   * Enclosure logical identifier
+   */
+	uint64_t logical_identifier;
 };
 
 /**

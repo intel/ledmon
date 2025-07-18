@@ -71,6 +71,15 @@ struct slot_property {
 	 * Unique slot ID.
 	 */
 	char slot_id[PATH_MAX];
+
+	/**
+	 * @brief Persistent ID for the slot.
+	 *
+	 * This string that is the persistent ID for the slot.
+	 * It is used to identify the slot across reboots. Empty string if not supported.
+	 */
+	char persistent_id[PATH_MAX];
+
 };
 
 /**

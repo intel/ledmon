@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -532,4 +533,26 @@ int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_sl
 	}
 
 	return 1;
+}
+
+uint64_t ses_get_primary_logical_id(struct ses_pages *sp)
+{
+	/*
+	 * SES page 1 spec. states
+	 * "The primary subenclosure shall be described by the first enclosure descriptor"
+	 *
+	 * The first enclosure is located at byte 8 in page 1 and the enclosure logical identifier
+	 * is an additional 4 bytes offset in the enclosure descriptor (bytes 4-11).
+	 */
+	uint64_t lid = be64toh(*(uint64_t *)&sp->page1.buf[8 + 4]);
+	uint8_t naa_type = lid >> 60;  /* upper 4 bits is naa type */
+
+	/*
+	 * Do a simple validity check based on the specification. These are the only NAA types that
+	 * are 8 bytes in size. The 0x06 NAA identifier is 16 bytes in size.
+	 */
+	if (naa_type == 0x2 || naa_type == 0x3 || naa_type == 0x05)
+		return lid;
+
+	return 0;
 }

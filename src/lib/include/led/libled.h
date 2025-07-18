@@ -418,6 +418,17 @@ const LED_SYM_PUBLIC char *led_slot_device(struct led_slot_list_entry *se);
 const LED_SYM_PUBLIC char *led_slot_id(struct led_slot_list_entry *se);
 
 /**
+ * @brief Retrieve the persistent ID for the specified slot
+ *
+ * @param[in]	se	Slot entry of interest
+ * @return string pointer representing persistent ID, NULL if not supported
+ *
+ * Note: This pointer has a lifetime of ctx or until reset is called.
+ * Copy value if you need longer lifetime.
+ */
+const LED_SYM_PUBLIC char *led_slot_persistent_id(struct led_slot_list_entry *se);
+
+/**
  * @brief Retrieve the enumerated slot type for the specified slot
  *
  * @param[in]	se	 Slot entry of interest
@@ -470,6 +481,18 @@ LED_SYM_PUBLIC struct led_slot_list_entry *led_slot_find_by_device_name(struct l
  * @param[in]	se	Slot entry to free
  */
 LED_SYM_PUBLIC void led_slot_list_entry_free(struct led_slot_list_entry *se);
+
+/**
+ * @brief Check if the specified slot supports persistent IDs
+ *
+ * @param[in]	ctx	Library context
+ * @param[in]	cntrl	Controller type to check for persistent ID support
+ * @return true if controller should support persistent IDs, false otherwise
+ *
+ * Note: This function is used to check if the controller should support persistent IDs. For any
+ *       specific hardware implementation, this may or may not be true.
+ */
+bool LED_SYM_PUBLIC led_slot_persistent_id_support(struct led_ctx *ctx, enum led_cntrl_type cntrl);
 
 /**
  * @brief Set the ipbi pattern for a specified slot

@@ -2,9 +2,15 @@
 
 /* Generic IPMI Interface */
 
-#include "led/libled.h"
+#ifndef _IPMI_H_INCLUDED_
+#define _IPMI_H_INCLUDED_
+
+/* Project headers */
+#include <led/libled.h>
 
 #define BMC_TA 0x20
 
 int ipmicmd(struct led_ctx *ctx, int sa, int lun, int netfn, int cmd, int datalen, void *data,
 	    int resplen, int *rlen, void *resp);
+
+#endif /* _IPMI_H_INCLUDED_ */

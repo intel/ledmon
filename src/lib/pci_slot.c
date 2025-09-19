@@ -6,17 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
+#include "led/libled.h"
+
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
+
 #include "pci_slot.h"
-#include "sysfs.h"
+
 #include "utils.h"
 #include "vmdssd.h"
-#include "libled_private.h"
 
 /*
  * Allocates memory for PCI hotplug slot structure and initializes fields of

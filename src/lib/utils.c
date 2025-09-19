@@ -20,12 +20,12 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/sysmacros.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
 #include "list.h"
 #include "status.h"
 #include "utils.h"

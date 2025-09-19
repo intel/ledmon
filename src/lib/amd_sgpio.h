@@ -6,10 +6,10 @@
 #ifndef _AMD_SGPIO_INCLUDED_
 #define _AMD_SGPIO_INCLUDED_
 
+#include <stdint.h>
+
 #include "block.h"
 #include "led/libled.h"
-
-#include <stdint.h>
 
 typedef uint8_t drive_led_t;
 

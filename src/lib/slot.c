@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2023 Intel Corporation.
 
-#include <stdio.h>
 #include <string.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "enclosure.h"
-#include "npem.h"
 #include "slot.h"
 #include "sysfs.h"
-#include "pci_slot.h"
+
 
 struct slot_property *find_slot_by_device_name(struct led_ctx *ctx, char *device_name,
 					       enum led_cntrl_type cntrl_type)

@@ -4,7 +4,6 @@
 #ifndef _CNTRL_H_INCLUDED_
 #define _CNTRL_H_INCLUDED_
 
-#include "sysfs.h"
 #include "led/libled.h"
 
 #include <limits.h>

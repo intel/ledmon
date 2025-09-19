@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#include "led/libled.h"
-#include "block.h"
-#include "sysfs.h"
+#ifndef _SMP_H_INCLUDED_
+#define _SMP_H_INCLUDED_
 
-#ifndef _SMP_H_INCLUDED
-#define _SMP_H_INCLUDED
+/* Project headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "block.h"
 
 /* smp constants */
 #define SMP_FRAME_TYPE_REQ	0x40

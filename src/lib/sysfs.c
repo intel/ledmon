@@ -1,34 +1,39 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
+/* System headers */
 #include <fcntl.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#if _HAVE_DMALLOC_H
-#include <dmalloc.h>
-#endif
+/* Public headers */
+#include <led/libled.h>
 
+/* Local headers */
 #include "block.h"
+#include "config.h"
 #include "cntrl.h"
 #include "enclosure.h"
-#include "led/libled.h"
 #include "list.h"
+#include "libled_private.h"
 #include "npem.h"
 #include "pci_slot.h"
 #include "raid.h"
-#include "tail.h"
 #include "slot.h"
-#include "stdio.h"
 #include "sysfs.h"
+#include "tail.h"
 #include "utils.h"
 #include "vmdssd.h"
-#include "libled_private.h"
+
+#if _HAVE_DMALLOC_H
+#include <dmalloc.h>
+#endif
 
 #define SYSFS_CLASS_BLOCK       "/sys/block"
 #define SYSFS_CLASS_ENCLOSURE   "/sys/class/enclosure"

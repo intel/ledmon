@@ -5,22 +5,19 @@
 
 #include "led/libled.h"
 
-#include <errno.h>
 #include <linux/limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <unistd.h>
 
-#include "enclosure.h"
 #include "libled_private.h"
 #include "list.h"
-#include "npem.h"
 #include "sysfs.h"
 #include "utils.h"
 #include "block.h"
-#include "pci_slot.h"
 #include "slot.h"
 
 
@@ -219,6 +216,11 @@ struct led_slot_list_entry *led_slot_find_by_device_name(struct led_ctx *ctx,
 	return init_slot(find_slot_by_device_name(ctx, device_name, cntrl));
 }
 
+bool led_slot_persistent_id_support(struct led_ctx *ctx, enum led_cntrl_type cntrl)
+{
+	return cntrl == LED_CNTRL_TYPE_SCSI;
+}
+
 led_status_t led_slot_set(struct led_ctx *ctx, struct led_slot_list_entry *se,
 				enum led_ibpi_pattern state)
 {
@@ -262,6 +264,14 @@ const char *led_slot_id(struct led_slot_list_entry *se)
 {
 	return se->slot->slot_id;
 }
+
+const char *led_slot_persistent_id(struct led_slot_list_entry *se)
+{
+	if (se->slot->persistent_id[0] == '\0')
+		return NULL;
+	return se->slot->persistent_id;
+}
+
 enum led_cntrl_type led_slot_cntrl(struct led_slot_list_entry *se)
 {
 	return se->slot->c->cntrl_type;

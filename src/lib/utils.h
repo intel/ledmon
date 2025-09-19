@@ -4,16 +4,21 @@
 #ifndef _UTILS_H_INCLUDED_
 #define _UTILS_H_INCLUDED_
 
+/* System headers */
 #include <getopt.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <common/config_file.h>
-#include "stdlib.h"
-#include "stdint.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <syslog.h>
+
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "common/config_file.h"
 #include "list.h"
 #include "status.h"
-#include "syslog.h"
-#include <led/libled.h>
 
 struct map {
 	char *name;

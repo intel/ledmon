@@ -3,7 +3,6 @@
 
 /* AMD LED control */
 
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdint.h>
@@ -17,12 +16,12 @@
 #include <sys/mman.h>
 #include <sys/sysinfo.h>
 #include <sys/file.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
 #include "led/libled.h"
 #include "list.h"
 #include "utils.h"

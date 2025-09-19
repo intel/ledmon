@@ -1,25 +1,23 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#include <limits.h>
-#include <stdint.h>
+/* System headers */
 #include <stdlib.h>
 #include <string.h>
+
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "config.h"
+#include "list.h"
+#include "raid.h"
+#include "utils.h"
+#include "libled_internal.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
-
-#include "block.h"
-#include "config.h"
-#include "led/libled.h"
-#include "list.h"
-#include "raid.h"
-#include "tail.h"
-#include "status.h"
-#include "sysfs.h"
-#include "utils.h"
-#include "libled_private.h"
 
 /**
  */

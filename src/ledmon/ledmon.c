@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2009 Intel Corporation.
 
-#include <config_ac.h>
+/* System headers */
+#include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -14,36 +16,40 @@
 #include <sys/param.h>
 #include <sys/select.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
-#if _HAVE_DMALLOC_H
-#include <dmalloc.h>
-#endif
+/* Public headers */
+#include <led/libled.h>
 
+/* Local headers */
+#include "common/config_file.h"
+#include "config.h"
+#include "config_ac.h"
+#include "pidfile.h"
+#include "udev.h"
+
+/* Library headers */
 #include <lib/ahci.h>
 #include <lib/block.h>
 #include <lib/cntrl.h>
-
-#include <common/config_file.h>
-#include <led/libled.h>
 #include <lib/list.h>
 #include <lib/libled_internal.h>
-
 #include <lib/raid.h>
 #include <lib/scsi.h>
-#include <lib/tail.h>
 #include <lib/smp.h>
 #include <lib/sysfs.h>
+#include <lib/tail.h>
 #include <lib/utils.h>
 #include <lib/vmdssd.h>
 
-#include "config.h"
-#include "udev.h"
-#include "pidfile.h"
+#if _HAVE_DMALLOC_H
+#include <dmalloc.h>
+#endif
 
 
 static struct led_ctx *ctx;

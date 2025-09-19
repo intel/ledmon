@@ -11,15 +11,14 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
 #include "enclosure.h"
 #include "scsi.h"
-#include "sysfs.h"
 #include "utils.h"
 #include "libled_private.h"
 
@@ -143,6 +142,8 @@ int enclosure_reload(struct enclosure_device * enclosure)
 	ret = ses_get_slots(&enclosure->ses_pages, &enclosure->slots, &enclosure->slots_count);
 	if (ret)
 		return ret;
+
+	enclosure->logical_identifier = ses_get_primary_logical_id(&enclosure->ses_pages);
 
 	/* If there is an associated block device with a slot, we need to update the block ibpi */
 	for (int i = 0; i < enclosure->slots_count; i++) {
@@ -270,6 +271,12 @@ struct slot_property *enclosure_slot_property_init(struct enclosure_device *encl
 	result->slot_spec.ses.encl = encl;
 	result->slot_spec.ses.slot_num = ses_idx;
 	snprintf(result->slot_id, PATH_MAX, "%s-%d", encl->dev_path, ses_idx);
+
+	/* If logical identifier is not supported, the logical identifier will be 0. */
+	if (encl->logical_identifier != 0)
+		snprintf(result->persistent_id, PATH_MAX, "%"PRIx64"-%d",
+			encl->logical_identifier, ses_idx);
+
 	result->c = &ses_slot_common;
 
 	/* If we have an associated block device, set its ibpi value */

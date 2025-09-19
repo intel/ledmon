@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#ifndef NPEM_H_INCLUDED_
-#define NPEM_H_INCLUDED_
+#ifndef _NPEM_H_INCLUDED_
+#define _NPEM_H_INCLUDED_
+
+/* Project headers */
+#include <led/libled.h>
+
+/* Local headers */
 #include "block.h"
-#include "led/libled.h"
+#include "cntrl.h"
 #include "slot.h"
 #include "status.h"
-#include "sysfs.h"
 
 int is_npem_capable(const char *path, struct led_ctx *ctx);
 status_t npem_write(struct block_device *device, enum led_ibpi_pattern ibpi);
@@ -44,4 +48,4 @@ status_t npem_set_state(struct slot_property *slot, enum led_ibpi_pattern state)
  */
 struct slot_property *npem_slot_property_init(struct cntrl_device *npem_cntrl);
 
-#endif // NPEM_H_INCLUDED_
+#endif // _NPEM_H_INCLUDED_

@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2023 Intel Corporation.
 
-#ifndef SLOT_H_
-#define SLOT_H_
+#ifndef _SLOT_H_INCLUDED_
+#define _SLOT_H_INCLUDED_
 
-#include <stdio.h>
+/* Project headers */
+#include <led/libled.h>
 
+/* Local headers */
 #include "block.h"
 #include "cntrl.h"
-#include "led/libled.h"
-#include "utils.h"
-
-#include "libled_private.h"
 
 /* Forward decl. */
 struct slot_property;
@@ -73,6 +71,15 @@ struct slot_property {
 	 * Unique slot ID.
 	 */
 	char slot_id[PATH_MAX];
+
+	/**
+	 * @brief Persistent ID for the slot.
+	 *
+	 * This string that is the persistent ID for the slot.
+	 * It is used to identify the slot across reboots. Empty string if not supported.
+	 */
+	char persistent_id[PATH_MAX];
+
 };
 
 /**

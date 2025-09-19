@@ -4,10 +4,12 @@
 #ifndef _LIST_H_INCLUDED_
 #define _LIST_H_INCLUDED_
 
-#include <stdlib.h>
+/* System headers */
 #include <stdbool.h>
+#include <stdlib.h>
 
-struct led_ctx;
+/* Public headers */
+#include <led/libled.h>
 
 struct node {
 	struct node *next, *prev;
@@ -242,4 +244,4 @@ static inline int list_is_empty(const struct list *list)
  */
 bool list_insert_compar(struct list *list, void *item, bool compar_fn(void *item1, void *item2));
 
-#endif				/* _LIST_H_INCLUDED_ */
+#endif /* _LIST_H_INCLUDED_ */

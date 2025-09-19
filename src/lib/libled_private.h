@@ -3,19 +3,21 @@
 
 /* LED library private */
 
-/* Note: This file "libled_private.h" should never be included in a header file! */
+#ifndef _LIBLED_PRIVATE_H_INCLUDED_
+#define _LIBLED_PRIVATE_H_INCLUDED_
 
-#ifndef _LIB_LED_PRIVATE_INCLUDED_
-#define _LIB_LED_PRIVATE_INCLUDED_
-
-#include "led/libled.h"
-#include "sysfs.h"
-#include "list.h"
-#include "amd_sgpio.h"
-#include "slot.h"
-#include "libled_internal.h"
-
+/* System headers */
 #include <linux/limits.h>
+
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "amd_sgpio.h"
+#include "list.h"
+#include "libled_internal.h"
+#include "slot.h"
+#include "sysfs.h"
 
 /**
  * @brief Embedded structure within the library context used for amd state and caching.
@@ -90,4 +92,4 @@ struct led_ctx {
 	struct led_slot_list sl;
 };
 
-#endif
+#endif /* _LIBLED_PRIVATE_H_INCLUDED_ */

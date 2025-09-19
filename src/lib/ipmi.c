@@ -8,21 +8,20 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <sys/ioctl.h>
 #include <linux/ipmi.h>
 
+/* Local headers */
+#include "config.h"
+#include "ipmi.h"
 #include "libled_private.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "utils.h"
-#include "ipmi.h"
 
 static int ipmi_open(void)
 {

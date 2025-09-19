@@ -4,10 +4,15 @@
 #ifndef _SES_H_INCLUDED_
 #define _SES_H_INCLUDED_
 
+/* System headers */
 #include <asm/types.h>
+#include <stdint.h>
 
-#include "led/libled.h"
-#include <status.h>
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "status.h"
 
 /* Size of buffer for SES-2 Messages. */
 #define SES_ALLOC_BUFF 4096
@@ -61,5 +66,6 @@ int ses_load_pages(int fd, struct ses_pages *sp, struct led_ctx *ctx);
 status_t ses_write_msg(enum led_ibpi_pattern ibpi, struct ses_pages *sp, int idx);
 int ses_send_diag(int fd, struct ses_pages *sp);
 int ses_get_slots(struct ses_pages *sp, struct ses_slot **out_slots, int *out_slots_count);
+uint64_t ses_get_primary_logical_id(struct ses_pages *sp);
 
-#endif
+#endif /* _SES_H_INCLUDED_ */

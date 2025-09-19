@@ -7,16 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
-#include "config.h"
 #include "list.h"
 #include "tail.h"
-#include "status.h"
-#include "sysfs.h"
 #include "utils.h"
 
 /**

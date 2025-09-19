@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2009 Intel Corporation.
 
-#include <config_ac.h>
-#include <ctype.h>
-#include <errno.h>
+/* System headers */
+#include <dirent.h>
+#include <fcntl.h>
 #include <getopt.h>
-#include <linux/limits.h>
-#include <inttypes.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,23 +13,20 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <syslog.h>
-#include <time.h>
 #include <unistd.h>
-#include <sys/sysmacros.h>
-#include <stdbool.h>
+
+/* Public headers */
+#include <led/libled.h>
+
+/* Local headers */
+#include "config.h"
+#include "common/config_file.h"
+#include "help.h"
+#include "libled_internal.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
-
-#include "config.h"
-#include <common/config_file.h>
-#include <lib/utils.h>
-#include <lib/list.h>
-#include <led/libled.h>
-#include "libled_internal.h"
-#include "slot.h"
-#include "help.h"
 
 #ifdef ENABLE_TEST
 #define COMMON_GETOPT_ARGS	\
@@ -60,7 +54,7 @@
 #endif
 
 struct map ledctl_status_map[] = {
-	{ "STATUS_SUCCESSS", LED_STATUS_SUCCESS },
+	{ "STATUS_SUCCESS", LED_STATUS_SUCCESS },
 	{ "STATUS_IBPI_DETERMINE_ERROR", LED_STATUS_IBPI_DETERMINE_ERROR },
 	{ "STATUS_INVALID_PATH", LED_STATUS_INVALID_PATH },
 	{ "STATUS_INVALID_STATE", LED_STATUS_INVALID_STATE },
@@ -891,7 +885,7 @@ led_status_t execute_request(struct led_ctx *ctx, struct request *req)
 		else
 			printf("%s\n", led_cntrl_type_to_string(cntrl_type));
 
-		return STATUS_SUCCESS;
+		return LED_STATUS_SUCCESS;
 	}
 
 	if (req->chosen_opt == OPT_LIST_CTRL) {

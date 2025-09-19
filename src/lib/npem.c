@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2022 Intel Corporation.
 
-#include <errno.h>
+/* System headers */
 #include <stdio.h>
 #include <string.h>
 #include <pci/pci.h>
 #include <time.h>
 #include <stdbool.h>
 
-#include "config.h"
+/* Local headers */
 #include "libled_private.h"
 #include "cntrl.h"
-#include "list.h"
 #include "npem.h"
-#include "sysfs.h"
 #include "utils.h"
 
 #define PCI_EXT_CAP_ID_NPEM	0x29	/* Native PCIe Enclosure Management */

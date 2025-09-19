@@ -4,7 +4,6 @@
 /* Dell Backplane LED control */
 
 #include "block.h"
-#include "sysfs.h"
 
 status_t dellssd_write(struct block_device *device, enum led_ibpi_pattern ibpi);
 char *dellssd_get_path(const char *cntrl_path);

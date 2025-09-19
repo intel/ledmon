@@ -3,35 +3,28 @@
 
 /* Dell Backplane LED control */
 
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <sys/ioctl.h>
 #include <linux/ipmi.h>
+#include "config.h"
 
 #if _HAVE_DMALLOC_H
 #include <dmalloc.h>
 #endif
 
 #include "libled_private.h"
-#include "ahci.h"
 #include "cntrl.h"
-#include "config.h"
+
 #include "dellssd.h"
 #include "led/libled.h"
-#include "list.h"
-#include "raid.h"
-#include "scsi.h"
-#include "tail.h"
 #include "smp.h"
 #include "status.h"
-#include "sysfs.h"
 #include "utils.h"
 #include "ipmi.h"
 

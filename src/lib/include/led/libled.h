@@ -489,7 +489,7 @@ LED_SYM_PUBLIC void led_slot_list_entry_free(struct led_slot_list_entry *se);
  * @param[in]	cntrl	Controller type to check for persistent ID support
  * @return true if controller should support persistent IDs, false otherwise
  *
- * Note: This function is used to check if the controller should support persistent IDs.  For any
+ * Note: This function is used to check if the controller should support persistent IDs. For any
  *       specific hardware implementation, this may or may not be true.
  */
 bool LED_SYM_PUBLIC led_slot_persistent_id_support(struct led_ctx *ctx, enum led_cntrl_type cntrl);

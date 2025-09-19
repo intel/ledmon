@@ -26,4 +26,4 @@ status_t vmdssd_write_attention_buf(struct pci_slot *slot, enum led_ibpi_pattern
 enum led_ibpi_pattern vmdssd_get_attention(struct pci_slot *slot);
 bool vmdssd_check_slot_module(struct led_ctx *ctx, const char *slot_path);
 
-#endif
+#endif	// _VMDSSD_H_INCLUDED_

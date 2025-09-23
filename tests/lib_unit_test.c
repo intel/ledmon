@@ -297,6 +297,64 @@ START_TEST(test_led_by_path)
 END_TEST
 
 
+START_TEST(test_persistent_id)
+{
+	/* Test persistent ID functionality */
+	struct led_slot_list *sl = NULL;
+	bool scsi_controller_found = false;
+	bool persistent_id_found = false;
+	led_status_t status = led_slots_get(ctx, &sl);
+
+	ck_assert_msg(status == LED_STATUS_SUCCESS, "led_slots_get %u", status);
+	if (status == LED_STATUS_SUCCESS) {
+		struct led_slot_list_entry *se;
+
+		while ((se = led_slot_next(sl))) {
+			enum led_cntrl_type cntrl_type = led_slot_cntrl(se);
+			bool persistent_support = led_slot_persistent_id_support(ctx, cntrl_type);
+			const char *persistent_id = led_slot_persistent_id(se);
+			const char *slot_id = led_slot_id(se);
+
+			/*
+			 * Test that persistent ID support function behaves
+			 * correctly for all controller types
+			 */
+			if (cntrl_type == LED_CNTRL_TYPE_SCSI) {
+				scsi_controller_found = true;
+				ck_assert_msg(persistent_support == true,
+						"SCSI controller should support persistent IDs");
+
+				/*
+				 * For SCSI controllers, persistent ID may be NULL
+				 * if hardware doesn't implement it
+				 */
+				if (persistent_id != NULL) {
+					persistent_id_found = true;
+					ck_assert_msg(strlen(persistent_id) > 0,
+						"Persistent ID empty string for slot %s", slot_id);
+					/* Persistent ID should be different from regular slot ID */
+					ck_assert_msg(strcmp(persistent_id, slot_id) != 0,
+						"Persistent ID = slot ID for slot %s", slot_id);
+				}
+			} else {
+				/* For non-SCSI controllers, should not support persistent IDs */
+				ck_assert_msg(persistent_support == false,
+					"Cntrl %u, should not support persistent ID", cntrl_type);
+				ck_assert_msg(persistent_id == NULL,
+					"Persistent ID != NULL for slot ID %s", slot_id);
+			}
+		}
+		led_slot_list_free(sl);
+	}
+
+	/* Report what we found for debugging purposes */
+	printf("Test summary: SCSI controllers found: %s, Persistent IDs found: %s\n",
+		   scsi_controller_found ? "yes" : "no",
+		   persistent_id_found ? "yes" : "no");
+}
+END_TEST
+
+
 Suite *led_lib_suite(void)
 {
 	// We could use the setup/teardown functions to create/free the ctx before each test.
@@ -310,6 +368,7 @@ Suite *led_lib_suite(void)
 	tcase_add_test(tc_main, test_list_slots);
 	tcase_add_test(tc_main, test_toggle_slots);
 	tcase_add_test(tc_main, test_led_by_path);
+	tcase_add_test(tc_main, test_persistent_id);
 	suite_add_tcase(s, tc_main);
 	return s;
 }

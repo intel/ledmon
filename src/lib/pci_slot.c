@@ -29,10 +29,7 @@ struct pci_slot *pci_slot_init(const char *path, struct led_ctx *ctx)
 	result = calloc(1, sizeof(struct pci_slot));
 	if (result == NULL)
 		return NULL;
-	result->sysfs_path = strdup(path);
-	if (!result->sysfs_path) {
-		goto error;
-	}
+	strncpy(result->sysfs_path, path, PATH_MAX - 1);
 	result->address = get_text(path, "address");
 	if (!result->address)
 		goto error;
@@ -42,7 +39,6 @@ struct pci_slot *pci_slot_init(const char *path, struct led_ctx *ctx)
 	return result;
 error:
 	free(result->address);
-	free(result->sysfs_path);
 	free(result);
 	return NULL;
 }
@@ -54,7 +50,6 @@ error:
 void pci_slot_fini(struct pci_slot *slot)
 {
 	if (slot) {
-		free(slot->sysfs_path);
 		free(slot->address);
 		free(slot);
 	}

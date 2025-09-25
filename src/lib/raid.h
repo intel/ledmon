@@ -59,7 +59,7 @@ enum raid_action {
 struct raid_device {
 	enum device_type type;
 	int device_num;
-	char *sysfs_path;
+	char sysfs_path[PATH_MAX];
 	int raid_disks;
 	int degraded;
 	enum raid_state array_state;

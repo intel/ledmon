@@ -681,12 +681,6 @@ static void _add_block(struct block_device *block)
 		if (strcmp(temp->sysfs_path, block->sysfs_path)) {
 			log_info("NAME CHANGED %s to %s",
 				 temp->sysfs_path, block->sysfs_path);
-			free(temp->sysfs_path);
-			temp->sysfs_path = strdup(block->sysfs_path);
-			if (!temp->sysfs_path) {
-				log_error("Memory allocation error!");
-				EXIT(1);
-			}
 		}
 	} else {
 		/* Device not found, it's a new one! */

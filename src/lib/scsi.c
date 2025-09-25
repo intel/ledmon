@@ -75,7 +75,7 @@ int scsi_get_enclosure(struct led_ctx *ctx, struct block_device *device)
 	struct enclosure_device *encl;
 	uint64_t addr;
 
-	if (!device || !device->sysfs_path)
+	if (!device)
 		return 0;
 
 	addr = get_drive_sas_addr(device->sysfs_path);
@@ -101,7 +101,7 @@ int scsi_get_enclosure(struct led_ctx *ctx, struct block_device *device)
  */
 status_t scsi_ses_write(struct block_device *device, enum led_ibpi_pattern ibpi)
 {
-	if (!device || !device->sysfs_path || !device->enclosure ||
+	if (!device || !device->enclosure ||
 	    device->encl_index == -1)
 		return STATUS_DATA_ERROR;
 
